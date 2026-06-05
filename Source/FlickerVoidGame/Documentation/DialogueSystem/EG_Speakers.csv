@@ -1,0 +1,8 @@
+SpeakerId,DisplayName,SubtitleColor_R,SubtitleColor_G,SubtitleColor_B,SubtitleColor_A,VoicePitch,DefaultMood,Tags
+"Player","???",0.8,0.9,1.0,1.0,1.0,"Neutral","Character.Protagonist"
+"NPC_Barkeeper","Marcus",0.9,0.8,0.6,1.0,0.95,"Neutral","Character.NPC;Location.Bar"
+"NPC_Dealer","Shady Figure",0.5,0.5,0.5,1.0,1.05,"Suspicious","Character.NPC;Character.Criminal"
+"NPC_Stranger","Stranger",0.7,0.7,0.7,1.0,1.0,"Neutral","Character.NPC;Character.Generic"
+"Radio","Radio Broadcast",0.6,0.7,0.8,1.0,1.0,"Neutral","Ambient;Device"
+"NPC_Doctor","Dr. Chen",0.9,0.95,1.0,1.0,1.0,"Calm","Character.NPC;Character.Medical"
+"NPC_Detective","Detective Vasquez",0.7,0.65,0.6,1.0,0.9,"Serious","Character.NPC;Character.Authority"

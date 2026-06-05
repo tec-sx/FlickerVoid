@@ -1,0 +1,13 @@
+ConditionId,ConditionType,TargetKey,TargetId,Comparison,CompareValue,bRequireTagPresent,bNegate,Weight
+"COND_Chapter1","WorldState","WorldState.Chapter_1","","Equal",0,true,false,1.0
+"COND_Chapter2","WorldState","WorldState.Chapter_2","","Equal",0,true,false,1.0
+"COND_LowSanity","Attribute","Sanity","","LessThanOrEqual",0.3,true,false,2.0
+"COND_HighSanity","Attribute","Sanity","","GreaterThanOrEqual",0.7,true,false,1.5
+"COND_Addicted_Alcohol","Attribute","AlcoholDependency","","GreaterThanOrEqual",0.7,true,false,2.5
+"COND_Withdrawal","Tag","Addiction.State_Withdrawal","","Equal",0,true,false,3.0
+"COND_Trust_Barkeeper_Low","Relationship","Trust","NPC_Barkeeper","LessThan",0.3,true,false,1.0
+"COND_Trust_Barkeeper_High","Relationship","Trust","NPC_Barkeeper","GreaterThanOrEqual",0.6,true,false,1.5
+"COND_Quest_Main01_Active","Quest","MainQuest_01","","Equal",0,true,false,2.0
+"COND_Memory_Few","Attribute","MemoryFragmentsFound","","LessThanOrEqual",5,true,false,1.0
+"COND_IsRecovering","Tag","Addiction.State_Recovering","","Equal",0,true,false,2.0
+"COND_MetBarkeeper","WorldState","WorldState.MetBarkeeper","","Equal",0,true,false,0.5

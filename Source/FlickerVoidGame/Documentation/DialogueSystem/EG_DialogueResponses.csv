@@ -1,0 +1,10 @@
+ResponseId,TriggerSignal,Text,ConditionOperator,InlineConditions,Priority,InlineEffects,NextSignal,ResponseType,bEndsConversation,TooltipText
+"RESP_Barkeeper_Yes_Usual","Barkeeper_WaitOrder","Yeah, the usual.","And","","0","ModifyRelationship:NPC_Barkeeper:0.02;AddTag:Substance.Alcohol.Used","Barkeeper_ServesDrink","Neutral",false,""
+"RESP_Barkeeper_No_Thanks","Barkeeper_WaitOrder","No thanks, just information today.","And","","0","","Barkeeper_AskInfo","Neutral",false,""
+"RESP_Barkeeper_Ask_Rumors","Barkeeper_AskInfo","Heard any interesting rumors lately?","And","Relationship:NPC_Barkeeper:>=:0.2","5","","Barkeeper_SharesRumor","Curious",false,"Requires some trust with the barkeeper"
+"RESP_Barkeeper_Ask_About_Self","Barkeeper_AskInfo","Do you... know who I am?","And","Memory:Total:<=:5","10","ModifyAttribute:Sanity:-0.01","Barkeeper_React_Identity","Vulnerable",false,"Ask about your past"
+"RESP_Barkeeper_Intervention_Accept","Barkeeper_Intervention","You're right. I need to get clean.","And","","0","AddTag:Quest.Rehabilitation.Started;ModifyRelationship:NPC_Barkeeper:0.1","Barkeeper_Support",true,false,"Begin rehabilitation questline"
+"RESP_Barkeeper_Intervention_Refuse","Barkeeper_Intervention","Mind your own business.","And","","0","ModifyRelationship:NPC_Barkeeper:-0.2","Barkeeper_Disappointed","Aggressive",true,"Damage relationship"
+"RESP_Dealer_Accept","Dealer_OfferDrugs","What do you have?","And","","0","","Dealer_ShowsWares","Neutral",false,""
+"RESP_Dealer_Refuse","Dealer_OfferDrugs","Not interested.","And","","0","","",true,true,""
+"RESP_Dealer_Refuse_Recovery","Dealer_OfferDrugs","I'm trying to stay clean.","And","Addiction:State_Recovering:Present","15","ModifyAttribute:Sanity:0.05","Dealer_Mocks","Determined",true,"Staying strong in recovery"

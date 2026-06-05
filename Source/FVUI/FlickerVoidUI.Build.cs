@@ -1,0 +1,30 @@
+using System.IO;
+using UnrealBuildTool;
+
+public class FlickerVoidUI : ModuleRules
+{
+    public FlickerVoidUI(ReadOnlyTargetRules Target) : base(Target)
+    {
+        PublicDependencyModuleNames.AddRange(new string[] 
+        { 
+            "Core",
+            "CoreUObject",
+            "Engine",
+            "GameplayTags",
+            "FlickerVoidCore",
+            "FlickerVoidItems",
+            "FlickerVoidNarrative",
+            "FlickerVoidGameplay"
+        });
+
+        PrivateDependencyModuleNames.AddRange(new string[] 
+        { 
+            "UMG",
+            "Slate",
+            "SlateCore",
+        });
+
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
+        PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
+    }
+}
