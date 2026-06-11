@@ -1,5 +1,4 @@
 #include "Interaction/FVInteractionAction.h"
-#include "Interaction/FVInteractionRequirement.h"
 
 bool FFVInteractionAction::CheckRequirements(AActor* Instigator, FText& OutFirstUnmetReason) const
 {

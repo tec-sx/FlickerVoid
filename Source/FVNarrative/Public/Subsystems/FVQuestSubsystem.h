@@ -50,10 +50,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Quest")
 	TArray<UFVQuestInstance*> GetActiveQuests() const;
 
-	/** Get all quests of a specific type */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Quest")
-	TArray<UFVQuestInstance*> GetQuestsByType(FGameplayTag QuestType) const;
-
 	/** Get the currently tracked quest */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Quest")
 	UFVQuestInstance* GetTrackedQuest() const;

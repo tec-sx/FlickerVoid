@@ -14,7 +14,8 @@ public class FlickerVoidNarrative : ModuleRules
             "GameplayAbilities",
             "FlickerVoidCore",
             "FlickerVoidWorld",
-            "FlickerVoidGameplay"
+            "FlickerVoidGameplay",
+            "StateTreeModule"
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));

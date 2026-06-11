@@ -1,113 +1,115 @@
-// Examine overlay task (Tomb Raider style).
-//
-// Sends Interaction.Event.ExamineStarted to open the UI widget.
-// The widget calls OnExamineRotationUpdated() each frame and CloseExamine() to finish.
-// Secrets are granted as gameplay tags when the item is rotated to the configured angles.
-//
-// Configure in the State Tree editor:
-//   ExamineArmLength — camera distance while examining
-//   Secrets          — array of (TriggerRotation, ToleranceDegrees, SecretTag, DiscoveryMessage)
+// // Examine overlay task (Tomb Raider style).
+// //
+// // Sends Interaction.Event.ExamineStarted to open the UI widget.
+// // The widget calls OnExamineRotationUpdated() each frame and CloseExamine() to finish.
+// // Secrets are granted as gameplay tags when the item is rotated to the configured angles.
+// //
+// // Configure in the State Tree editor:
+// //   ExamineArmLength — camera distance while examining
+// //   Secrets          — array of (TriggerRotation, ToleranceDegrees, SecretTag, DiscoveryMessage)
 
-struct FFVExamineSecret
-{
-    UPROPERTY()
-    FRotator TriggerRotation;
+// struct FFVExamineSecret
+// {
+//     UPROPERTY()
+//     FRotator TriggerRotation;
 
-    UPROPERTY()
-    float TriggerToleranceDegrees = 15.f;
+//     UPROPERTY()
+//     float TriggerToleranceDegrees = 15.f;
 
-    UPROPERTY()
-    FGameplayTag SecretTag;
+//     UPROPERTY()
+//     FGameplayTag SecretTag;
 
-    UPROPERTY()
-    FText DiscoveryMessage;
-}
+//     UPROPERTY()
+//     FText DiscoveryMessage;
+// }
 
-class UFVExamineTask : UFVInteractionStateTreeTaskBase
-{
-    UPROPERTY(Category = "Examine")
-    float ExamineArmLength = 80.f;
+// struct FFVExamineTaskInstanceData
+// {
+//     UPROPERTY()
+//     float ExamineArmLength = 80.f;
 
-    UPROPERTY(Category = "Examine")
-    TArray<FFVExamineSecret> Secrets;
+//     UPROPERTY()
+//     TArray<FFVExamineSecret> Secrets;
+// }
 
-    // Runtime
-    AActor CachedOwnerActor;
-    bool bIsExamining = false;
-    TSet<FGameplayTag> TriggeredSecrets;
+// class UFVExamineTask : UFVInteractionStateTaskBase
+// {
 
-    UFUNCTION(BlueprintOverride)
-    EStateTreeStateChangeType ReceiveEnterState(AActor OwnerActor,
-        EStateTreeActionType ActionType, FStateTreeTransitionResult Transition)
-    {
-        CachedOwnerActor = OwnerActor;
-        bIsExamining = true;
-        TriggeredSecrets.Empty();
+//     // Runtime
+//     AActor CachedOwnerActor;
+//     bool bIsExamining = false;
+//     TSet<FGameplayTag> TriggeredSecrets;
 
-        FGameplayEventData EventData;
-        EventData.Instigator = GetInstigator(OwnerActor);
-        EventData.Target     = OwnerActor;
+//     UFUNCTION(BlueprintOverride)
+//     EStateTreeStateChangeType ReceiveEnterState(FStateTreeTransitionResult Transition)
+//     {
+//         CachedOwnerActor = OwnerActor;
+//         bIsExamining = true;
+//         TriggeredSecrets.Empty();
 
-        AbilitySystem::SendGameplayEventToActor(
-            GetInstigator(OwnerActor),
-            FGameplayTag::RequestGameplayTag(n"Interaction.Event.ExamineStarted"),
-            EventData);
+//         FGameplayEventData EventData;
+//         EventData.Instigator = GetInstigator(OwnerActor);
+//         EventData.Target     = OwnerActor;
 
-        return EStateTreeStateChangeType::Changed;
-    }
+//         AbilitySystem::SendGameplayEventToActor(
+//             GetInstigator(OwnerActor),
+//             FGameplayTag::RequestGameplayTag(n"Interaction.Event.ExamineStarted"),
+//             EventData);
 
-    UFUNCTION(BlueprintOverride)
-    void ReceiveExitState(AActor OwnerActor,
-        EStateTreeActionType ActionType, FStateTreeTransitionResult Transition)
-    {
-        bIsExamining = false;
-        CachedOwnerActor = nullptr;
-    }
+//         return EStateTreeStateChangeType::Changed;
+//     }
 
-    // Called each frame by the examine UI widget while open
-    UFUNCTION(BlueprintCallable)
-    void OnExamineRotationUpdated(FRotator CurrentRotation)
-    {
-        if (!bIsExamining || !IsValid(CachedOwnerActor))
-        {
-            return;
-        }
+//     UFUNCTION(BlueprintOverride)
+//     void ReceiveExitState(FStateTreeTransitionResult Transition)
+//     {
+//         bIsExamining = false;
+//         CachedOwnerActor = nullptr;
+//     }
 
-        AActor Instigator = GetInstigator(CachedOwnerActor);
+//     // Called each frame by the examine UI widget while open
+//     UFUNCTION(BlueprintCallable)
+//     void OnExamineRotationUpdated(FRotator CurrentRotation)
+//     {
+//         if (!bIsExamining || !IsValid(CachedOwnerActor))
+//         {
+//             return;
+//         }
 
-        for (FFVExamineSecret& Secret : Secrets)
-        {
-            if (TriggeredSecrets.Contains(Secret.SecretTag))
-            {
-                continue;
-            }
+//         AActor Instigator = GetInstigator(CachedOwnerActor);
 
-            float Delta = Math::RadiansToDegrees(
-                FQuat::FindBetweenNormals(
-                    Secret.TriggerRotation.RotateVector(FVector::ForwardVector),
-                    CurrentRotation.RotateVector(FVector::ForwardVector)).GetAngle());
+//         for (FFVExamineSecret& Secret : Secrets)
+//         {
+//             if (TriggeredSecrets.Contains(Secret.SecretTag))
+//             {
+//                 continue;
+//             }
 
-            if (Delta <= Secret.TriggerToleranceDegrees)
-            {
-                TriggeredSecrets.Add(Secret.SecretTag);
-                AbilitySystem::SendGameplayEventToActor(
-                    Instigator,
-                    Secret.SecretTag,
-                    FGameplayEventData());
-            }
-        }
-    }
+//             float Delta = Math::RadiansToDegrees(
+//                 FQuat::FindBetweenNormals(
+//                     Secret.TriggerRotation.RotateVector(FVector::ForwardVector),
+//                     CurrentRotation.RotateVector(FVector::ForwardVector)).GetAngle());
 
-    // Called by the examine widget's close button (mapped to Secondary / F)
-    UFUNCTION(BlueprintCallable)
-    void CloseExamine()
-    {
-        if (!bIsExamining)
-        {
-            return;
-        }
+//             if (Delta <= Secret.TriggerToleranceDegrees)
+//             {
+//                 TriggeredSecrets.Add(Secret.SecretTag);
+//                 AbilitySystem::SendGameplayEventToActor(
+//                     Instigator,
+//                     Secret.SecretTag,
+//                     FGameplayEventData());
+//             }
+//         }
+//     }
 
-        bIsExamining = false;
-        CompleteTask(CachedOwnerActor, true);
-    }
-}
+//     // Called by the examine widget's close button (mapped to Secondary / F)
+//     UFUNCTION(BlueprintCallable)
+//     void CloseExamine()
+//     {
+//         if (!bIsExamining)
+//         {
+//             return;
+//         }
+
+//         bIsExamining = false;
+//         CompleteTask(CachedOwnerActor, true);
+//     }
+// }

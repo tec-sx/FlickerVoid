@@ -1,13 +1,12 @@
 #include "Abilities/FVGameplayAbility.h"
 
-#include "Abilities/AFVAbilitySystemComponent.h"
+#include "Abilities/FVAbilitySystemComponent.h"
 #include "Abilities/FVAbilityFailureMessage.h"
 #include "AbilitySystemGlobals.h"
 #include "Abilities/FVAbilityCost.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Physics/PhysicalMaterialWithTags.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
-#include "FVCoreTags.h"
 #include "FVGameplayTags.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVGameplayAbility)
@@ -277,7 +276,7 @@ bool UFVGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemC
 
 		if (AbilitySystemComponentTags.HasAny(AllBlockedTags))
 		{
-			if (OptionalRelevantTags && AbilitySystemComponentTags.HasTag(FVCoreTags::Status_Death))
+			if (OptionalRelevantTags && AbilitySystemComponentTags.HasTag(FVGameplayTags::Status_Death))
 			{
 				OptionalRelevantTags->AddTag(FVGameplayTags::Ability_ActivateFail_IsDead);
 			}

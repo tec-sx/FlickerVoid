@@ -19,11 +19,13 @@ public class FlickerVoidGameplay : ModuleRules
 			"PhysicsCore",
 			"FlickerVoidCore",
 			"StateTreeModule",
+			"GameplayStateTreeModule",
 		});
 
         PrivateDependencyModuleNames.AddRange(new string[] {
             "UMG",
             "GameplayMessageRuntime",
+            "StateTreeEditorModule"
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));

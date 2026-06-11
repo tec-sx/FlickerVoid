@@ -1,30 +1,29 @@
-UCLASS(DisplayName = "Tag Requirement", meta = (DisplayThumbnail = "false"))
-class UFVTagRequirement : UFVInteractionRequirement
-{
-    UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = "Requirement")
-	FGameplayTag Tag;
+// class UFVTagRequirement : UFVInteractionRequirement
+// {
+//     UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = "Requirement")
+// 	FGameplayTag Tag;
 
-    UFUNCTION(BlueprintOverride)
-    bool IsMet(AActor Instigator) const
-    {
-        if (!Instigator)
-	    {
-	    	return false;
-	    }
+//     UFUNCTION(BlueprintOverride)
+//     bool IsMet(AActor Instigator) const
+//     {
+//         if (!Instigator)
+// 	    {
+// 	    	return false;
+// 	    }
 
-	    UAbilitySystemComponent ASC = AbilitySystem::GetAbilitySystemComponent(Instigator);
+// 	    UAbilitySystemComponent ASC = AbilitySystem::GetAbilitySystemComponent(Instigator);
 
-	    if (!ASC)
-	    {
-	    	return false;
-	    }
+// 	    if (!ASC)
+// 	    {
+// 	    	return false;
+// 	    }
 
-	    return ASC->HasMatchingGameplayTag(Tag);
-    }
+// 	    return ASC.HasMatchingGameplayTag(Tag);
+//     }
 
-    UFUNCTION(BlueprintOverride)
-    FText GetUnmetReason(AActor Instigator) const 
-    { 
-        return NSLOCTEXT("FVInteraction", "TagReqUnmet", "Missing required skill or status.");
-    }
-}
+//     UFUNCTION(BlueprintOverride)
+//     FText GetUnmetReason(AActor Instigator) const 
+//     { 
+//         return NSLOCTEXT("FVInteraction", "TagReqUnmet", "Missing required skill or status.");
+//     }
+// }

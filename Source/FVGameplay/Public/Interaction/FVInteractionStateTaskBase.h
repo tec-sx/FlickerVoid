@@ -2,8 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "Tasks/StateTreeTaskBlueprintBase.h"
-#include "FVInteractionStateTreeTaskBase.generated.h"
+#include "StateTreeExecutionContext.h"
+#include "StateTreePropertyBindings.h"
+#include "Blueprint//StateTreeTaskBlueprintBase.h"
+#include "FVInteractionStateTaskBase.generated.h"
 
 class UFVInteractableComponent;
 
@@ -31,15 +33,11 @@ class UFVInteractableComponent;
 //~=============================================================================
 
 UCLASS(Abstract, Blueprintable, BlueprintType)
-class FLICKERVOIDGAMEPLAY_API UFVInteractionStateTreeTaskBase : public UStateTreeTaskBlueprintBase
+class FLICKERVOIDGAMEPLAY_API UFVInteractionStateTaskBase : public UStateTreeTaskBlueprintBase
 {
 	GENERATED_BODY()
 
 public:
-	//~=========================================================================
-	// Context helpers — pass OwnerActor from ReceiveEnterState / ReceiveTick
-	//~=========================================================================
-
 	UFUNCTION(BlueprintPure, Category = "Interaction|Task")
 	static UFVInteractableComponent* GetInteractable(AActor* OwnerActor);
 
@@ -61,9 +59,4 @@ public:
 	// Async tasks: call from your dialogue-ended / mini-game-finished callback.
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Task")
 	static void CompleteTask(AActor* OwnerActor, bool bSuccess);
-
-protected:
-	// Default ReceiveTick polls UFVInteractableComponent::IsActiveTaskDone().
-	// Override for per-frame logic, but call Super first to preserve this check.
-	virtual EStateTreeRunStatus ReceiveTick_Implementation(AActor* OwnerActor, float DeltaTime) override;
 };

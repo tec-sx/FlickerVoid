@@ -10,7 +10,7 @@
 #define UE_API FLICKERVOIDITEMS_API
 
 class UFVItemDataAsset;
-class AFVItemPickupActor;
+class AFVItemPickup;
 class AFVCharacter;
 
 /**
@@ -144,7 +144,7 @@ protected:
 
 	/** Class to spawn when dropping items */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlickerVoid|Inventory")
-	TSubclassOf<AFVItemPickupActor> PickupActorClass;
+	TSubclassOf<AFVItemPickup> PickupActorClass;
 
 private:
 	UPROPERTY()

@@ -1,34 +1,33 @@
-UCLASS(Abstract, DisplayName = "Item Requirement", meta = (DisplayThumbnail = "false"))
-class UFVItemRequirement : UFVInteractionRequirement
-{
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Requirement")
-    TSubclassOf<AFVItem> ItemClass;
+// class UFVItemRequirement : UFVInteractionRequirement
+// {
+//     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Requirement")
+//     TSubclassOf<AFVItem> ItemClass;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Requirement")
-    int32 MinimumQuantity = 1;
+//     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Requirement")
+//     int32 MinimumQuantity = 1;
 
-    UFUNCTION(BlueprintOverride)
-    bool IsMet(AActor Instigator) const
-    {
-        if (!Instigator)
-        {
-        	return false;
-        }
+//     UFUNCTION(BlueprintOverride)
+//     bool IsMet(AActor Instigator) const
+//     {
+//         if (!Instigator)
+//         {
+//         	return false;
+//         }
 
-        UFVInventoryComponent Inventory = Instigator->GetComponentByClass(UFVInventoryComponent);
+//         UFVInventoryComponent Inventory = Instigator.GetComponentByClass(UFVInventoryComponent);
 
-        if (!Inventory)
-        {
-        	return false;
-        }
+//         if (!Inventory)
+//         {
+//         	return false;
+//         }
 
-        int32 Quantity = Inventory->GetItemQuantity(ItemClass);
-        return Quantity >= MinimumQuantity;
-    }
+//         int32 Quantity = Inventory.GetItemQuantity(ItemClass);
+//         return Quantity >= MinimumQuantity;
+//     }
 
-    UFUNCTION(BlueprintOverride)
-    FText GetUnmetReason(AActor Instigator) const 
-    { 
-        return NSLOCTEXT("FVInteraction", "ItemReqUnmet", "Missing required item(s)."); 
-    }
-}
+//     UFUNCTION(BlueprintOverride)
+//     FText GetUnmetReason(AActor Instigator) const 
+//     { 
+//         return NSLOCTEXT("FVInteraction", "ItemReqUnmet", "Missing required item(s)."); 
+//     }
+// }

@@ -3,25 +3,10 @@
 #include "FVCharacterMovementTypes.generated.h"
 
 UENUM(BlueprintType)
-enum class EFVGait: uint8
-{
-	Walking,
-	Running,
-	Sprinting
-};
-
-UENUM(BlueprintType)
 enum class EFVMovementState : uint8
 {
 	Idle,
 	Moving
-};
-
-UENUM(BlueprintType)
-enum class EFVStance : uint8
-{
-	Stand,
-	Crouch
 };
 
 UENUM(BlueprintType)
@@ -41,17 +26,6 @@ enum class EFVMovementHipDirection : uint8
 	Left_HipRight,
 	Right_HipLeft,
 	Right_HipRight
-};
-
-UENUM(BlueprintType)
-enum class EFVMovementMode : uint8
-{
-	None,
-	OnGround,
-	InAir,
-	Sliding,
-	Traversing,
-	Swimming
 };
 
 USTRUCT(BlueprintType)

@@ -12,7 +12,7 @@
 
 FFVCharacterAnimInstanceProxy::FFVCharacterAnimInstanceProxy()
 	: FAnimInstanceProxy()
-	, CharacterData()  // Initialize with default values
+	, CharacterRuntimeState()  // Initialize with default values
 	, DeltaTime(0.0f)
 	, SmoothedGroundSpeed(0.0f)
 	, SmoothedVelocity(FVector::ZeroVector)
@@ -29,7 +29,7 @@ FFVCharacterAnimInstanceProxy::FFVCharacterAnimInstanceProxy()
 
 FFVCharacterAnimInstanceProxy::FFVCharacterAnimInstanceProxy(UAnimInstance* InAnimInstance)
 	: FAnimInstanceProxy(InAnimInstance)
-	, CharacterData()  // Initialize with default values
+	, CharacterRuntimeState()  // Initialize with default values
 	, DeltaTime(0.0f)
 	, SmoothedGroundSpeed(0.0f)
 	, SmoothedVelocity(FVector::ZeroVector)
@@ -106,11 +106,11 @@ void FFVCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* InAnimInstance, flo
 	}
 
 	// Copy character snapshot for thread-safe access in Update()
-	CharacterData = Character->GetAnimationData();
+	CharacterRuntimeState = Character->GetRuntimeState();
 
 	// Cache previous frame data for delta calculations
-	PreviousTransform = CharacterData.ActorTransform;
-	PreviousVelocity = CharacterData.Velocity;
+	PreviousTransform = CharacterRuntimeState.ActorTransform;
+	PreviousVelocity = CharacterRuntimeState.Velocity;
 }
 
 void FFVCharacterAnimInstanceProxy::Update(float DeltaSeconds)
@@ -132,7 +132,7 @@ void FFVCharacterAnimInstanceProxy::Update(float DeltaSeconds)
 	// Smooth velocity for animation
 	SmoothedVelocity = FMath::VInterpTo(
 		SmoothedVelocity,
-		CharacterData.Velocity,
+		CharacterRuntimeState.Velocity,
 		DeltaTime,
 		ConfigPtr->VelocityInterpSpeed
 	);
@@ -140,7 +140,7 @@ void FFVCharacterAnimInstanceProxy::Update(float DeltaSeconds)
 	// Smooth acceleration
 	SmoothedAcceleration = FMath::VInterpTo(
 		SmoothedAcceleration,
-		CharacterData.InputAcceleration,
+		CharacterRuntimeState.InputAcceleration,
 		DeltaTime,
 		ConfigPtr->AccelerationInterpSpeed
 	);
@@ -148,7 +148,7 @@ void FFVCharacterAnimInstanceProxy::Update(float DeltaSeconds)
 	// Smooth ground speed
 	SmoothedGroundSpeed = FMath::FInterpTo(
 		SmoothedGroundSpeed,
-		CharacterData.Velocity.Size2D(),
+		CharacterRuntimeState.Velocity.Size2D(),
 		DeltaTime,
 		ConfigPtr->VelocityInterpSpeed
 	);
@@ -161,10 +161,10 @@ void FFVCharacterAnimInstanceProxy::Update(float DeltaSeconds)
 	bIsMoving = SmoothedGroundSpeed > ConfigPtr->MovingSpeedThreshold;
 
 	// Has acceleration?
-	bHasAcceleration = !CharacterData.InputAcceleration.IsNearlyZero(1.0f);
+	bHasAcceleration = !CharacterRuntimeState.InputAcceleration.IsNearlyZero(1.0f);
 
 	// Has velocity?
-	bHasVelocity = !CharacterData.Velocity.IsNearlyZero(1.0f);
+	bHasVelocity = !CharacterRuntimeState.Velocity.IsNearlyZero(1.0f);
 
 	//~=============================================================================
 	// Movement Direction (relative to character rotation)
@@ -173,8 +173,8 @@ void FFVCharacterAnimInstanceProxy::Update(float DeltaSeconds)
 	if (bHasVelocity && bIsMoving)
 	{
 		// Calculate angle between velocity and forward vector
-		FVector Velocity2D = CharacterData.Velocity.GetSafeNormal2D();
-		FVector Forward2D = CharacterData.ActorTransform.GetRotation().GetForwardVector().GetSafeNormal2D();
+		FVector Velocity2D = CharacterRuntimeState.Velocity.GetSafeNormal2D();
+		FVector Forward2D = CharacterRuntimeState.ActorTransform.GetRotation().GetForwardVector().GetSafeNormal2D();
 
 		// Get angle (-180 to 180)
 		float Angle = FMath::RadiansToDegrees(FMath::Atan2(
@@ -196,7 +196,7 @@ void FFVCharacterAnimInstanceProxy::Update(float DeltaSeconds)
 
 	if (DeltaTime > SMALL_NUMBER)
 	{
-		FRotator CurrentRotation = CharacterData.ActorTransform.GetRotation().Rotator();
+		FRotator CurrentRotation = CharacterRuntimeState.ActorTransform.GetRotation().Rotator();
 		FRotator PreviousRotation = PreviousTransform.GetRotation().Rotator();
 
 		YawDelta = FMath::FindDeltaAngleDegrees(PreviousRotation.Yaw, CurrentRotation.Yaw);
@@ -273,33 +273,7 @@ void UFVCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		return;
 	}
-
-	// Detect tag changes (for reactive Blueprint logic)
-	const FGameplayTagContainer& CurrentTags = Proxy.CharacterData.CharacterTags;
 	
-	// Find added tags
-	for (const FGameplayTag& Tag : CurrentTags)
-	{
-		if (!PreviousFrameTags.HasTag(Tag))
-		{
-			// Tag added
-			OnTagChanged(Tag, true);
-		}
-	}
-
-	// Find removed tags
-	for (const FGameplayTag& Tag : PreviousFrameTags)
-	{
-		if (!CurrentTags.HasTag(Tag))
-		{
-			// Tag removed
-			OnTagChanged(Tag, false);
-		}
-	}
-
-	// Update previous frame cache
-	PreviousFrameTags = CurrentTags;
-
 	// Call Blueprint event
 	OnCharacterDataUpdated();
 }

@@ -1,16 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Items/FVItemPickupActor.h"
+#include "Items/FVItemPickup.h"
 #include "Inventory/FVInventoryComponent.h"
 #include "FVInteractionActionData.h"
-#include "FVItemsTags.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FVItemPickupActor)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVItemPickup)
 
-AFVItemPickupActor::AFVItemPickupActor(const FObjectInitializer& ObjectInitializer)
+AFVItemPickup::AFVItemPickup(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, Quantity(1)
 	, HighlightColor(FLinearColor::Yellow)
@@ -38,13 +37,9 @@ AFVItemPickupActor::AFVItemPickupActor(const FObjectInitializer& ObjectInitializ
 	InfoWidgetComponent->SetupAttachment(CollisionBox);
 	InfoWidgetComponent->SetVisibility(false);
 	InfoWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
-
-	// Setup default interaction tags
-	CachedInteractionTags.AddTag(FVItemsTags::Interactable_Item);
-	CachedInteractionTags.AddTag(FVItemsTags::Interactable_Item_Pickup);
 }
 
-void AFVItemPickupActor::BeginPlay()
+void AFVItemPickup::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -63,7 +58,7 @@ void AFVItemPickupActor::BeginPlay()
 	}
 }
 
-void AFVItemPickupActor::Tick(float DeltaTime)
+void AFVItemPickup::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
@@ -72,17 +67,17 @@ void AFVItemPickupActor::Tick(float DeltaTime)
 // Item Pickup API
 // ============================================================================
 
-FGameplayTag AFVItemPickupActor::GetInteractableTag() const
+FGameplayTag AFVItemPickup::GetInteractableTag() const
 {
 	return FGameplayTag();
 }
 
-FGameplayTagContainer AFVItemPickupActor::GetAvailableActions_Implementation() const
+FGameplayTagContainer AFVItemPickup::GetAvailableActions_Implementation() const
 {
 	return FGameplayTagContainer();
 }
 
-bool AFVItemPickupActor::ExecutePickup(UFVInventoryComponent* TargetInventory)
+bool AFVItemPickup::ExecutePickup(UFVInventoryComponent* TargetInventory)
 {
 	if (!TargetInventory || !ItemData)
 	{
@@ -117,7 +112,7 @@ bool AFVItemPickupActor::ExecutePickup(UFVInventoryComponent* TargetInventory)
 // Private Methods
 // ============================================================================
 
-void AFVItemPickupActor::SetupVisualFeedback(bool bEnabled)
+void AFVItemPickup::SetupVisualFeedback(bool bEnabled)
 {
 	if (!MeshComponent)
 	{

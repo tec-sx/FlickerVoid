@@ -1,7 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Character/FVCharacter.h"
-#include "Animation/FVAnimationTypes.h"
 #include "Movement/FVCharacterMovementComponent.h"
 #include "Modules/ModuleManager.h"
 #include "RigVMCore/RigVMRegistry.h"
@@ -19,7 +18,7 @@ public:
     virtual void StartupModule() override
     {
         TArray<UScriptStruct*> AllowedStructTypes = {
-            FFVCharacterAnimationData::StaticStruct(),
+            FFVCharacterRuntimeState::StaticStruct(),
         };
 			
         static TPair<UClass*, FRigVMRegistry::ERegisterObjectOperation> const AllowedObjectTypes[] =

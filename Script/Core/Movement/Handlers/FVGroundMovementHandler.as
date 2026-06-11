@@ -36,11 +36,9 @@ class UFVGroundMovementHandler : UFVMovementHandlerBase
 	UFUNCTION(BlueprintOverride)
 	void GenerateMovement(float DeltaTime)
 	{
-        FFVCharacterIntent CharacterIntent = Character.GetIntent();
-
         // Update Rotation Data
         {
-            if (CharacterIntent.bWantsToAim || CharacterIntent.Direction.Y != 0.f)
+            if (Character.IsAiming() || Character.GetMovementDirection().Y != 0.f)
             {
                 MovementComponent.bUseControllerDesiredRotation = true;
                 MovementComponent.bOrientRotationToMovement = false;
@@ -56,20 +54,20 @@ class UFVGroundMovementHandler : UFVMovementHandlerBase
         {
             FFVGaitConfig GaitConfig = GetGaitConfig();
 
-            MovementComponent.MaxAcceleration = CalculateMaxAcceleration(GaitConfig, CharacterIntent);
+            MovementComponent.MaxAcceleration = CalculateMaxAcceleration(GaitConfig);
             MovementComponent.BrakingDecelerationWalking = CalculateBrakingDeceleration();
-            MovementComponent.GroundFriction = CalculateGroundFriction(GaitConfig, CharacterIntent);
+            MovementComponent.GroundFriction = CalculateGroundFriction(GaitConfig);
             MovementComponent.MaxWalkSpeed = CalculateDirectionalSpeed(GaitConfig.Speeds);
             MovementComponent.MaxWalkSpeedCrouched = CalculateDirectionalSpeed(GroundConfig.CrouchSpeeds);
         }
 
         // Perform Movement if there is movement input
-        if (CharacterIntent.Direction.Size() > 0)
+        if (Character.GetMovementDirection().Size() > 0)
         {
             FRotator ControlYaw = FRotator(0.f, Character.ControlRotation.Yaw, 0.f);
 
-            Character.AddMovementInput(ControlYaw.ForwardVector, CharacterIntent.Direction.X);
-            Character.AddMovementInput(ControlYaw.RightVector, CharacterIntent.Direction.Y);
+            Character.AddMovementInput(ControlYaw.ForwardVector, Character.GetMovementDirection().X);
+            Character.AddMovementInput(ControlYaw.RightVector, Character.GetMovementDirection().Y);
         }
 	}
     
@@ -83,9 +81,9 @@ class UFVGroundMovementHandler : UFVMovementHandlerBase
     }
     
 
-    float CalculateMaxAcceleration(FFVGaitConfig GaitConfig, FFVCharacterIntent CharacterIntent)
+    float CalculateMaxAcceleration(FFVGaitConfig GaitConfig)
     {
-        if (CharacterIntent.bWantsToSprint)
+        if (Character.IsSprinting())
         {
             return Math::GetMappedRangeValueClamped(
                         GaitConfig.SpeedRangeForAcceleration,
@@ -103,9 +101,9 @@ class UFVGroundMovementHandler : UFVMovementHandlerBase
         return HasMovementInput() ? GroundConfig.BrakingWithInput : GroundConfig.BrakingWithoutInput;
     }
 
-    float CalculateGroundFriction(FFVGaitConfig GaitConfig, FFVCharacterIntent CharacterIntent)
+    float CalculateGroundFriction(FFVGaitConfig GaitConfig)
     { 
-        if (CharacterIntent.bWantsToSprint)
+        if (Character.IsSprinting())
         {
             return Math::GetMappedRangeValueClamped(
                         GaitConfig.SpeedRangeForFriction,

@@ -1,5 +1,5 @@
 #include "Interaction/FVInteractableComponent.h"
-#include "Interaction/FVInteractionRequirement.h"
+#include "Interaction/FVInteractionAction.h"
 #include "Components/StateTreeComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
@@ -34,14 +34,12 @@ void UFVInteractableComponent::CreateStateTreeComponent()
 		return;
 	}
 
-	InteractionStateTreeComp = NewObject<UStateTreeComponent>(
-		Owner, UStateTreeComponent::StaticClass(), TEXT("InteractionStateTree"));
-	InteractionStateTreeComp->bStartLogicAutomatically = false;
+	InteractionStateTreeComp = NewObject<UStateTreeComponent>(Owner, UStateTreeComponent::StaticClass(), TEXT("InteractionStateTree"));
+	InteractionStateTreeComp->SetStartLogicAutomatically(false);
 	Owner->AddOwnedComponent(InteractionStateTreeComp);
 	InteractionStateTreeComp->RegisterComponent();
 
-	InteractionStateTreeComp->OnStateTreeStopped.AddDynamic(
-		this, &UFVInteractableComponent::OnStateTreeStopped);
+	InteractionStateTreeComp->OnStateTreeRunStatusChanged.AddDynamic(this, &UFVInteractableComponent::OnStateTreeStatusChanged);
 }
 
 //~=============================================================================
@@ -80,8 +78,7 @@ TArray<FFVInteractionActionDisplay> UFVInteractableComponent::GetActionDisplayDa
 // Execution
 //~=============================================================================
 
-EFVInteractionResult UFVInteractableComponent::TryExecuteAction(
-	const FGameplayTag& InputTag, AActor* Instigator)
+EFVInteractionResult UFVInteractableComponent::TryExecuteAction(const FGameplayTag& InputTag, AActor* Instigator)
 {
 	if (IsBeingInteracted())
 	{
@@ -152,8 +149,7 @@ void UFVInteractableComponent::SetFocused(bool bFocused)
 // State Tree completion
 //~=============================================================================
 
-void UFVInteractableComponent::OnStateTreeStopped(
-	UStateTreeComponent* Comp, EStateTreeRunStatus RunStatus)
+void UFVInteractableComponent::OnStateTreeStatusChanged(EStateTreeRunStatus RunStatus)
 {
 	const bool bSuccess = (RunStatus == EStateTreeRunStatus::Succeeded);
 

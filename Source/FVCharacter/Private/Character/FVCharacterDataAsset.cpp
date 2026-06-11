@@ -6,7 +6,6 @@
 
 UFVCharacterDataAsset::UFVCharacterDataAsset()
 {
-	CharacterArchetypeId = NAME_None;
 	AttributeInitializationEffect = nullptr;
 }
 

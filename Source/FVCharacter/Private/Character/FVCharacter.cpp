@@ -50,9 +50,9 @@ float AFVCharacter::GetGroundSpeed() const
 FRotator AFVCharacter::GetAimRotation() const
 {
 	FRotator AimRotation = GetControlRotation();
-	if (TargetedActor != nullptr)
+	if (TargetedPosition != FVector::ZeroVector)
 	{
-		FVector DirectionToTarget = TargetedActor->GetActorLocation() - GetActorLocation();
+		const FVector DirectionToTarget = TargetedPosition - GetActorLocation();
 		
 		AimRotation = DirectionToTarget.ToOrientationRotator();
 		AimRotation.Roll = AimRotation.Pitch = 0;
@@ -66,51 +66,25 @@ UFVCharacterMovementComponent* AFVCharacter::GetFVCharacterMovement() const
 	return GetCharacterMovement<UFVCharacterMovementComponent>(); 
 }
 
-FFVCharacterAnimationData AFVCharacter::GetAnimationData() const
-{
-	FFVCharacterAnimationData AnimData;
-
-	AnimData.ActorTransform = GetActorTransform();
-	AnimData.Velocity = GetCharacterMovement()->Velocity;
-	AnimData.GroundSpeed = GetGroundSpeed();
-	AnimData.InputAcceleration = GetCharacterMovement()->GetCurrentAcceleration();
-	AnimData.CurrentMaxAcceleration = GetCharacterMovement()->GetMaxAcceleration();
-	AnimData.CurrentMaxDeceleration = GetCharacterMovement()->GetMaxBrakingDeceleration();
-	AnimData.OrientationIntent = GetActorRotation();
-	AnimData.AimingDirection = GetAimRotation();
-	AnimData.LandingVelocity = LandingVelocity;
-	AnimData.GroundNormal = GetCharacterMovement()->CurrentFloor.HitResult.ImpactNormal;
-	
-	return AnimData;
-}
-
-FFVCharacterIntent AFVCharacter::GetIntent() const
-{
-	FFVCharacterIntent Intent;
-
-	Intent.Direction       = MovementDirection;
-	Intent.bWantsToWalk    = bIsWalking;
-	Intent.bWantsToSprint  = bIsSprinting;
-	Intent.bWantsToCrouch  = IsCrouched();
-	Intent.bWantsToAim     = bWantsToAim;
-	Intent.bWantsToInteract = bWantsToInteract;
-	Intent.bWantsToTraverse = bWantsToTraverse;
-	Intent.bWantsToJump    = bWantsToJump;
-
-	return Intent;
-}
-
 FFVCharacterRuntimeState AFVCharacter::GetRuntimeState() const
 {	
 	FFVCharacterRuntimeState RuntimeState;
 	
+	RuntimeState.ActorTransform = GetActorTransform();
+	RuntimeState.GroundSpeed = GetGroundSpeed();
 	RuntimeState.Velocity = GetCharacterMovement()->Velocity;
-	RuntimeState.Acceleration = GetCharacterMovement()->GetCurrentAcceleration();
-	// RuntimeState.bIsWalking = IsWalking();
-
-	RuntimeState.bIsFalling = GetCharacterMovement()->IsFalling();
-	RuntimeState.bIsCrouching = GetFVCharacterMovement()->IsCrouching();
-
+	RuntimeState.InputAcceleration = GetCharacterMovement()->GetCurrentAcceleration();
+	RuntimeState.CurrentMaxAcceleration = GetCharacterMovement()->GetMaxAcceleration();
+	RuntimeState.CurrentMaxDeceleration = GetCharacterMovement()->GetMaxBrakingDeceleration();
+	RuntimeState.Gait = GetGait();
+	RuntimeState.Stance = GetStance();
+	RuntimeState.MovementMode = GetMovementMode();
+	RuntimeState.OrientationIntent = GetActorRotation();
+	RuntimeState.AimingDirection = GetAimRotation();
+	RuntimeState.LandingVelocity = LandingVelocity;
+	RuntimeState.bJustLanded = bJustLanded;
+	RuntimeState.GroundNormal = GetCharacterMovement()->CurrentFloor.HitResult.ImpactNormal;
+	
 	return RuntimeState;
 }
 
@@ -150,4 +124,43 @@ void AFVCharacter::RequestSprint(const bool bValue)
 void AFVCharacter::RequestJump()
 {
 	IsCrouched() ? UnCrouch() : Jump();
+}
+
+EFVGait AFVCharacter::GetGait() const
+{
+	if (IsSprinting())
+	{
+		return EFVGait::Sprinting;
+	}
+	else if (IsWalking())
+	{
+		return EFVGait::Walking;
+	}
+	else
+	{
+		return EFVGait::Running;
+	}
+}
+
+EFVStance AFVCharacter::GetStance() const
+{
+	return IsCrouched() ? EFVStance::Crouch : EFVStance::Stand;
+}
+
+EFVMovementMode AFVCharacter::GetMovementMode() const
+{
+	switch (GetCharacterMovement()->MovementMode)
+	{
+	case MOVE_Walking:
+	case MOVE_NavWalking:
+		return EFVMovementMode::OnGround;
+	case MOVE_Falling:
+		return EFVMovementMode::InAir;
+	case MOVE_Flying:
+		return EFVMovementMode::Traversing;
+	case MOVE_Swimming:
+		return EFVMovementMode::Swimming;
+	default:
+		return EFVMovementMode::None;
+	}
 }

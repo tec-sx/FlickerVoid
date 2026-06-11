@@ -3,12 +3,7 @@
 #pragma once
 
 #include "GameFramework/Character.h"
-#include "CharacterTrajectoryComponent.h"
-#include "GameplayTagContainer.h"
-#include "Animation/FVAnimationTypes.h"
-#include "Movement/FVCharacterMovementTypes.h"
 #include "FVCharacterTypes.h"
-
 #include "FVCharacter.generated.h"
 
 class UNavMoverComponent;
@@ -46,9 +41,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Character|Movement")
 	UFVCharacterMovementComponent* GetFVCharacterMovement() const;
-
-	UFUNCTION(BlueprintPure)
-	FFVCharacterAnimationData GetAnimationData() const;
 	
 	UFUNCTION(BlueprintCallable)
 	void SetSprinting(const bool bValue) { bIsSprinting = bValue; }
@@ -62,14 +54,14 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsWalking() const { return bIsWalking; }
 	
+	UFUNCTION(BlueprintPure)
+	bool IsAiming() const { return bIsAiming; }
+	
 	UFUNCTION(BlueprintCallable)
 	void SetTraversing(const bool bValue) { bIsTraversing = bValue; }
 	
 	UFUNCTION(BlueprintPure)
 	bool IsTraversing() const { return bIsTraversing; }
-	
-	UFUNCTION(BlueprintPure)
-	FFVCharacterIntent GetIntent() const;
 	
 	UFUNCTION(BlueprintPure)
 	FFVCharacterRuntimeState GetRuntimeState() const;
@@ -85,8 +77,7 @@ public:
 	void RequestCrouch();
 	void RequestSprint(const bool bValue);
 	void RequestJump();
-	void RequestAim(const bool bValue) { bWantsToAim = bValue; }
-	void RequestInteract(const bool bValue) { bWantsToInteract = bValue; }
+	void RequestAim(const bool bValue) { bIsAiming = bValue; }
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	bool RequestTraverse();
@@ -96,10 +87,6 @@ private:
 	FVector MovementDirection = FVector::ZeroVector;
 	EFVGait DesiredGait = EFVGait::Walking;
 	EFVStance DesiredStance = EFVStance::Stand;
-	bool bWantsToTraverse = false;
-	bool bWantsToJump = false;
-	bool bWantsToAim = false;
-	bool bWantsToInteract = false;
 	
 	// Runtime State Data
 	FVector Velocity;
@@ -107,11 +94,16 @@ private:
 	bool bIsWalking;
 	bool bIsSprinting;
 	bool bIsTraversing;
+	bool bIsAiming = false;
 	bool bLockedOnTarget = false;
-	TObjectPtr<AActor> TargetedActor = nullptr;
-	
-	FTimerHandle JustLandedTimerHandle;
+	FVector TargetedPosition = FVector::ZeroVector;
 	FVector LandingVelocity = FVector::ZeroVector;
 	bool bJustLanded = false;
+	
+	FTimerHandle JustLandedTimerHandle;
+	
+	EFVGait GetGait() const;
+	EFVStance GetStance() const;
+	EFVMovementMode GetMovementMode() const;
 };
 

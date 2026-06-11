@@ -107,20 +107,6 @@ TArray<UFVQuestInstance*> UFVQuestSubsystem::GetActiveQuests() const
 	return Result;
 }
 
-TArray<UFVQuestInstance*> UFVQuestSubsystem::GetQuestsByType(FGameplayTag QuestType) const
-{
-	TArray<UFVQuestInstance*> Result;
-	for (const auto& Pair : ActiveQuests)
-	{
-		if (Pair.Value && Pair.Value->QuestDefinition &&
-			Pair.Value->QuestDefinition->QuestType.MatchesTagExact(QuestType))
-		{
-			Result.Add(Pair.Value);
-		}
-	}
-	return Result;
-}
-
 UFVQuestInstance* UFVQuestSubsystem::GetTrackedQuest() const
 {
 	return TrackedQuest.Get();

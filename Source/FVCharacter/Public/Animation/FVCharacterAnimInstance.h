@@ -5,8 +5,7 @@
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimInstanceProxy.h"
-#include "FVAnimationTypes.h"
-#include "GameplayTagContainer.h"
+#include "FVCharacterTypes.h"
 #include "FVCharacterAnimInstance.generated.h"
 
 class AFVCharacter;
@@ -29,7 +28,7 @@ protected:
 	virtual void Initialize(UAnimInstance* InAnimInstance) override;
 
 public:
-	FFVCharacterAnimationData CharacterData;
+	FFVCharacterRuntimeState CharacterRuntimeState;
 	TWeakObjectPtr<const UFVAnimationConfigData> Config;
 	float DeltaTime;
 
@@ -74,37 +73,24 @@ public:
 	/** Animation configuration data asset (assign per archetype) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Configuration")
 	TObjectPtr<UFVAnimationConfigData> AnimationConfig;
-
-	//~=============================================================================
-	// Character State Accessors (Tag-Based Queries)
-	//~=============================================================================
-
+	
 	UFUNCTION(BlueprintPure, Category = "Animation|State")
-	const FFVCharacterAnimationData& GetCharacterData() const { return Proxy.CharacterData; }
-
-	UFUNCTION(BlueprintPure, Category = "Animation|State|Tags")
-	bool HasTag(const FGameplayTag& Tag) const { return Proxy.CharacterData.CharacterTags.HasTag(Tag); }
-
-	UFUNCTION(BlueprintPure, Category = "Animation|State|Tags")
-	bool HasAllTags(const FGameplayTagContainer& Tags) const { return Proxy.CharacterData.CharacterTags.HasAll(Tags); }
-
-	UFUNCTION(BlueprintPure, Category = "Animation|State|Tags")
-	bool HasAnyTags(const FGameplayTagContainer& Tags) const { return Proxy.CharacterData.CharacterTags.HasAny(Tags); }
+	const FFVCharacterRuntimeState& GetCharacterRuntimeState() const { return Proxy.CharacterRuntimeState; }
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Movement")
 	bool IsMoving() const { return Proxy.bIsMoving; }
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Movement")
-	bool IsSprinting() const { return Proxy.CharacterData.IsSprinting(); }
+	EFVGait GetGait() const { return Proxy.CharacterRuntimeState.Gait; }
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Movement")
-	bool IsInAir() const { return Proxy.CharacterData.IsInAir(); }
-
+	EFVStance GetStance() const { return Proxy.CharacterRuntimeState.Stance; }
+	
 	UFUNCTION(BlueprintPure, Category = "Animation|Movement")
-	bool IsCrouching() const { return Proxy.CharacterData.IsCrouching(); }
-
+	EFVMovementMode GetMovementMode() const { return Proxy.CharacterRuntimeState.MovementMode; }
+	
 	UFUNCTION(BlueprintPure, Category = "Animation|Movement")
-	bool JustLanded() const { return Proxy.CharacterData.JustLanded(); }
+	bool JustLanded() const { return Proxy.CharacterRuntimeState.bJustLanded; }
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Movement")
 	float GetGroundSpeed() const { return Proxy.SmoothedGroundSpeed; }
@@ -114,16 +100,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Movement")
 	FVector GetVelocity() const { return Proxy.SmoothedVelocity; }
-
-	//~=============================================================================
-	// Blueprint Extensibility (Override in BP for custom logic)
-	//~=============================================================================
-
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Animation|Events")
 	void OnCharacterDataUpdated();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Animation|Events")
-	void OnTagChanged(FGameplayTag Tag, bool bAdded);
 
 protected:
 	//~=============================================================================
@@ -138,8 +117,6 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<AFVCharacter> CachedCharacter;
-
-	FGameplayTagContainer PreviousFrameTags;
-
+	
 	friend struct FFVCharacterAnimInstanceProxy;
 };

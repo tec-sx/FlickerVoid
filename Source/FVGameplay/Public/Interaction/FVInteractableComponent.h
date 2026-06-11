@@ -13,10 +13,6 @@ class UStateTreeComponent;
 
 //~=============================================================================
 // Placed on any world actor (item, door, machine, NPC) to make it interactable.
-//
-// Holds up to 4 actions. Each action maps to one of four input slots and
-// references a State Tree asset that defines the execution flow.
-//
 // The component manages one UStateTreeComponent on the owner actor. When an
 // action is triggered the relevant State Tree runs; UFVInteractionStateTreeTaskBase
 // subclass tasks access context (instigator, action tag, etc.) via the helpers
@@ -30,21 +26,19 @@ class FLICKERVOIDGAMEPLAY_API UFVInteractableComponent : public UActorComponent
 
 public:
 	UFVInteractableComponent();
-
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
 	//~=========================================================================
 	// Configuration (set per-actor in the editor)
 	//~=========================================================================
-
-	// Up to 4 actions. Order determines fallback priority when two actions share an InputTag.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction",
-		meta = (TitleProperty = "DisplayName"))
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction", meta = (TitleProperty = "DisplayName"))
 	TArray<FFVInteractionAction> Actions;
-
-	// Detection range at which focus begins (outer ring). Trace only checks within this.
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
 	float FocusRadius = 300.f;
-
-	// Within this radius actions can actually be triggered.
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
 	float InteractionRadius = 200.f;
 
@@ -90,16 +84,10 @@ public:
 	//~=========================================================================
 	// Called by UFVInteractionComponent
 	//~=========================================================================
-
-	// Build display data for the UI — includes availability per action.
+	
 	TArray<FFVInteractionActionDisplay> GetActionDisplayData(AActor* Instigator) const;
-
-	// Attempt to execute the action bound to InputTag. Returns result.
 	EFVInteractionResult TryExecuteAction(const FGameplayTag& InputTag, AActor* Instigator);
-
-	// Cancel the currently running State Tree (if any).
 	void CancelActiveInteraction();
-
 	void SetFocused(bool bFocused);
 
 	//~=========================================================================
@@ -113,18 +101,11 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
 	FOnFocusChanged OnFocusChanged;
 
-	//~=========================================================================
-	// UActorComponent Interface
-	//~=========================================================================
-
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
 private:
 	void CreateStateTreeComponent();
 
 	UFUNCTION()
-	void OnStateTreeStopped(UStateTreeComponent* Comp, EStateTreeRunStatus RunStatus);
+	void OnStateTreeStatusChanged(EStateTreeRunStatus RunStatus);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UStateTreeComponent> InteractionStateTreeComp;

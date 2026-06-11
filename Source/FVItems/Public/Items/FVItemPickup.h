@@ -4,7 +4,7 @@
 
 #include "GameFramework/Actor.h"
 #include "Interfaces/FVInteractableInterface.h"
-#include "FVItemPickupActor.generated.h"
+#include "FVItemPickup.generated.h"
 
 #define UE_API FLICKERVOIDITEMS_API
 
@@ -18,12 +18,12 @@ class UFVInteractionActionData;
  * Implements IFVInteractableInterface for GAS-based interaction system.
  */
 UCLASS(MinimalAPI)
-class AFVItemPickupActor : public AActor, public IFVInteractableInterface
+class AFVItemPickup : public AActor, public IFVInteractableInterface
 {
 	GENERATED_BODY()
 
 public:
-	AFVItemPickupActor(const FObjectInitializer& ObjectInitializer);
+	AFVItemPickup(const FObjectInitializer& ObjectInitializer);
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;

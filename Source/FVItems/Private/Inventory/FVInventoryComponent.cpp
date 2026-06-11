@@ -2,7 +2,7 @@
 
 #include "Inventory/FVInventoryComponent.h"
 #include "Items/FVItemDataAsset.h"
-#include "Items/FVItemPickupActor.h"
+#include "Items/FVItemPickup.h"
 #include "Misc/Guid.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInventoryComponent)
