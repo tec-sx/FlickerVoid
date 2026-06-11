@@ -6,18 +6,7 @@
 #include "FVInteractionAction.generated.h"
 
 class UFVInteractionRequirement;
-class UFVInteractionActionHandler;
-class UFVInteractionHandlerConfig;
-
-//~=============================================================================
-// Handler Config Base — subclass per handler to define designer-editable params
-//~=============================================================================
-
-UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, CollapseCategories)
-class FLICKERVOIDGAMEPLAY_API UFVInteractionHandlerConfig : public UObject
-{
-	GENERATED_BODY()
-};
+class UStateTree;
 
 //~=============================================================================
 // Action Entry — one slot on an interactable (max 4 per component)
@@ -51,14 +40,11 @@ struct FLICKERVOIDGAMEPLAY_API FFVInteractionAction
 	// Execution
 	//~=========================================================================
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action|Handler",
-		meta = (MustImplement = "/Script/FlickerVoidGameplay.FVInteractionActionHandler"))
-	TSubclassOf<UFVInteractionActionHandler> HandlerClass;
-
-	// Handler-specific configuration (Instanced — each action gets its own instance)
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category = "Action|Handler",
-		meta = (EditInline))
-	TObjectPtr<UFVInteractionHandlerConfig> HandlerConfig;
+	// State Tree asset to run when this action fires. Must be configured with
+	// UStateTreeComponentSchema. Add UFVInteractionStateTreeTaskBase subclass tasks
+	// to define the execution flow (pickup, dialogue, mini-game, etc.).
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action|Execution")
+	TObjectPtr<UStateTree> ActionStateTree;
 
 	//~=========================================================================
 	// Requirements — all must pass for the action to be available

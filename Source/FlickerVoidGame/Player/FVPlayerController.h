@@ -9,7 +9,6 @@ class UAbilitySystemComponent;
 class AFVPlayerState;
 class AFVCharacter;
 class UFVInputConfig;
-class UFVInteractionComponent;
 class UInputMappingContext;
 struct FInputActionValue;
 
@@ -80,7 +79,6 @@ protected:
 
 private:
     TObjectPtr<AFVCharacter> CachedCharacter;
-    TObjectPtr<UFVInteractionComponent> CachedInteractionComponent;
 
     TArray<uint32> AbilityBindHandles;
     

@@ -48,7 +48,7 @@ Key script directories:
 
 - `Script/Core/Movement/` — movement handlers and config
 - `Script/Core/Player/` — player character and controller
-- `Script/Core/Interaction/Handlers/` — interaction action handlers
+- `Script/Core/Interaction/Tasks/` — interaction State Tree tasks
 - `Script/Animation/` — animation blueprint logic
 - `Script/Environment/` — traversable world actors
 - `Script/UI/Interaction/` — interaction prompt overlay widget
@@ -116,36 +116,54 @@ Items use tag hierarchies for categorization (`Item.Category.*`, `Item.Rarity.*`
 
 ## Interaction System
 
-All interaction code lives in `Source/FVGameplay/Public/Interaction/` and `Private/Interaction/`. Concrete handlers are in `Script/Core/Interaction/Handlers/`.
+All interaction code lives in `Source/FVGameplay/Public/Interaction/` and `Private/Interaction/`. Concrete tasks are in `Script/Core/Interaction/Tasks/`.
 
 ### Data flow
 
 ```
 Physical Key → InputConfig data asset → InputTag (Input.Interact.Primary etc.)
-    → AFVPlayerController::Input_Interact*Started()
+    → GAS ability (GA_Interact* Blueprint) activates via Input_AbilityInputTagPressed
     → UFVInteractionComponent::RequestInteraction(InputTag)
     → UFVInteractableComponent::TryExecuteAction(InputTag, Instigator)
-        → CheckRequirements() → UFVInteractionActionHandler::Execute(Context)
-            → sync: CompleteExecution(true/false)
-            → async (mini-game): widget shown, player plays, ReportAttemptResult()
-    → OnCompleted delegate → GrantedTagsOnSuccess applied to ASC
+        → CheckRequirements()
+        → UStateTreeComponent::SetStateTree(Action.ActionStateTree) + StartLogic()
+            → UFVInteractionStateTreeTaskBase::ReceiveEnterState(OwnerActor, ...)
+            → async tasks: widget/dialogue runs → CompleteTask(OwnerActor, bool) called
+            → UFVInteractionStateTreeTaskBase::ReceiveTick polls IsActiveTaskDone()
+        → UStateTreeComponent::OnStateTreeStopped → GrantedTagsOnSuccess applied to ASC
     → UFVInteractionComponent::BroadcastFocusState() → UI updated
 ```
 
 ### Adding a new action type
 
-1. Create `UFVMyHandlerConfig : UFVInteractionHandlerConfig` (your config params)
-2. Create `UFVMyHandler : UFVInteractionActionHandler` (implement `OnInitialize`, `OnExecute`, `OnCancel`)
-3. For sync actions: call `CompleteExecution(true)` inside `OnExecute`
-4. For async actions: open a widget via gameplay event, call `CompleteExecution()` in the callback
-5. Assign `UFVMyHandler` as `HandlerClass` and `UFVMyHandlerConfig` as instanced `HandlerConfig` on any `FFVInteractionAction` slot in a `UFVInteractableComponent`
+1. Create `UFVMyTask : UFVInteractionStateTreeTaskBase` in AngelScript (or C++)
+2. Add UPROPERTY fields for configuration — the State Tree editor exposes them per-node
+3. Override `ReceiveEnterState` to start the action; for sync actions call `CompleteTask(OwnerActor, true)` here
+4. For async actions: open a widget via gameplay event, cache `OwnerActor`, call `CompleteTask(CachedOwnerActor, bool)` in the callback
+5. Override `ReceiveExitState` for cleanup on cancel
+6. Create a `UStateTree` asset, set schema to `UStateTreeComponentSchema`, add your task node
+7. Assign the asset to `FFVInteractionAction.ActionStateTree` on the interactable
+
+Tasks that need per-frame work (e.g. advancing a slider) override `ReceiveTick` and call `Super.ReceiveTick(OwnerActor, DeltaTime)` first to preserve the completion check.
+
+### Task context helpers (on `UFVInteractionStateTreeTaskBase`)
+
+All static, take the `OwnerActor` parameter passed by `ReceiveEnterState`/`ReceiveTick`:
+
+```cpp
+GetInstigator(OwnerActor)       // the player who triggered the action
+GetInteractable(OwnerActor)     // UFVInteractableComponent on the actor
+GetActionTag(OwnerActor)        // e.g. Interaction.Action.PickUp
+GetInteractionPoint(OwnerActor) // world position for IK/VFX
+CompleteTask(OwnerActor, bool)  // signal done; State Tree detects on next Tick
+```
 
 ### Requirements
 
-Attach any number of `UFVInteractionRequirement` subclasses (instanced, inline in editor) to an action's `Requirements` array. Built-in types:
+Attach any number of `UFVInteractionRequirement` subclasses (instanced, inline in editor) to an action's `Requirements` array. Checked in C++ before the State Tree starts. Built-in types:
 - `UFVTagRequirement` — player must have a gameplay tag on their ASC
-- `UFVAttributeRequirement` — player must have a GAS attribute ≥ a minimum value (attribute picked directly in editor)
-- `UFVItemRequirement` — abstract, override `IsMet` in Blueprint/AngelScript (needs FVItems inventory access)
+- `UFVAttributeRequirement` — player must have a GAS attribute ≥ a minimum value
+- `UFVItemRequirement` — abstract, override `IsMet` in Blueprint/AngelScript
 
 ### Input slots → tags
 
@@ -162,15 +180,15 @@ Only the `InputConfig` data asset knows physical keys. Everything downstream use
 
 `AFVNPCCharacter` (in `FVCharacter` module) — lightweight character with a `UFVInteractableComponent`. Add `UFVQuestGiverComponent` / `UFVDialogueComponent` (from `FVNarrative`) for narrative functionality. NPC identity and state are tag-driven via `NPCTags`.
 
-### Concrete handlers (AngelScript)
+### Concrete tasks (AngelScript, `Script/Core/Interaction/Tasks/`)
 
-| Handler | Action tag | Type |
+| Task | Action tag | Type |
 |---|---|---|
-| `UFVPickupHandler` | `Interaction.Action.Pickup` | Sync — fires inventory event, hides actor |
-| `UFVExamineHandler` | `Interaction.Action.Examine` | Async — rotate overlay, fires secret tags at angle thresholds |
-| `UFVLockpickHandler` | (extends `UFVMiniGameHandler`) | Async — slider timing mini-game |
-| `UFVMiniGameHandler` | any | Abstract base for timed mini-games |
-| `UFVTalkHandler` | `Interaction.Action.Talk` | Async — starts `UFVDialogueSubsystem` conversation, notifies `UFVQuestSubsystem` |
+| `UFVPickupTask` | `Interaction.Action.Pickup` | Sync — fires inventory event, hides actor |
+| `UFVExamineTask` | `Interaction.Action.Examine` | Async — rotate overlay, fires secret tags at angle thresholds |
+| `UFVLockpickTask` | (extends `UFVMiniGameTask`) | Async — slider ticks in `ReceiveTick`, timing mini-game |
+| `UFVMiniGameTask` | any | Abstract base — attempt counting, success/failure tags |
+| `UFVTalkTask` | `Interaction.Action.Talk` | Async — starts `UFVDialogueSubsystem` conversation, notifies `UFVQuestSubsystem` |
 
 ## HUD / UI System
 
@@ -228,7 +246,7 @@ QuestSub.NotifyLocationEntered(LocationId);
 QuestSub.NotifyThresholdReached(ThresholdTag, TargetId, Value);
 ```
 
-The `UFVTalkHandler` calls `NotifyTalkedToNPC` automatically after each conversation ends.
+The `UFVTalkTask` calls `NotifyTalkedToNPC` automatically after each conversation ends.
 
 ### Memory Fragments — `UFVMemoryFragment`
 

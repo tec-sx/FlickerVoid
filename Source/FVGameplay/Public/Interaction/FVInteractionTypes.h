@@ -5,7 +5,6 @@
 #include "FVInteractionTypes.generated.h"
 
 class UFVInteractableComponent;
-class UFVInteractionActionHandler;
 
 // Result of a single interaction attempt
 UENUM(BlueprintType)

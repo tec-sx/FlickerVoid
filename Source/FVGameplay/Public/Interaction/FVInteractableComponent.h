@@ -3,19 +3,24 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
+#include "StateTreeTypes.h"
 #include "Interaction/FVInteractionTypes.h"
 #include "Interaction/FVInteractionAction.h"
 
 #include "FVInteractableComponent.generated.h"
 
-class UFVInteractionActionHandler;
+class UStateTreeComponent;
 
 //~=============================================================================
 // Placed on any world actor (item, door, machine, NPC) to make it interactable.
 //
-// Holds up to 4 actions. Each action maps to one of four input slots.
-// The component instantiates handlers at BeginPlay and keeps them alive for
-// the actor's lifetime, so handlers can be stateful.
+// Holds up to 4 actions. Each action maps to one of four input slots and
+// references a State Tree asset that defines the execution flow.
+//
+// The component manages one UStateTreeComponent on the owner actor. When an
+// action is triggered the relevant State Tree runs; UFVInteractionStateTreeTaskBase
+// subclass tasks access context (instigator, action tag, etc.) via the helpers
+// on this component.
 //~=============================================================================
 
 UCLASS(Blueprintable, ClassGroup = (Interaction), meta = (BlueprintSpawnableComponent))
@@ -58,6 +63,31 @@ public:
 	bool IsBeingInteracted() const;
 
 	//~=========================================================================
+	// Active context — read by UFVInteractionStateTreeTaskBase helpers
+	//~=========================================================================
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|ActiveContext")
+	AActor* GetActiveInstigator() const { return ActiveInstigator.Get(); }
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|ActiveContext")
+	FGameplayTag GetActiveActionTag() const { return ActiveActionTag; }
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|ActiveContext")
+	FVector GetActiveInteractionPoint() const { return ActiveInteractionPoint; }
+
+	// True after CompleteActiveTask() was called — polled by the task base each Tick.
+	UFUNCTION(BlueprintPure, Category = "Interaction|ActiveContext")
+	bool IsActiveTaskDone() const { return bActiveTaskDone; }
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|ActiveContext")
+	bool DidActiveTaskSucceed() const { return bActiveTaskSucceeded; }
+
+	// Called by UFVInteractionStateTreeTaskBase::CompleteTask — do not call directly
+	// from gameplay code; call CompleteTask(OwnerActor, bSuccess) on the task base instead.
+	UFUNCTION(BlueprintCallable, Category = "Interaction|ActiveContext")
+	void CompleteActiveTask(bool bSuccess);
+
+	//~=========================================================================
 	// Called by UFVInteractionComponent
 	//~=========================================================================
 
@@ -67,7 +97,7 @@ public:
 	// Attempt to execute the action bound to InputTag. Returns result.
 	EFVInteractionResult TryExecuteAction(const FGameplayTag& InputTag, AActor* Instigator);
 
-	// Cancel the currently running handler (if any and if cancellable).
+	// Cancel the currently running State Tree (if any).
 	void CancelActiveInteraction();
 
 	void SetFocused(bool bFocused);
@@ -91,17 +121,32 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
-	void InitializeHandlers();
+	void CreateStateTreeComponent();
 
 	UFUNCTION()
-	void HandleActionCompleted(const FFVInteractionContext& Context, EFVInteractionStatus Status, bool bSuccess);
+	void OnStateTreeStopped(UStateTreeComponent* Comp, EStateTreeRunStatus RunStatus);
 
-	// Instantiated handlers — one per action slot, alive for actor lifetime
-	UPROPERTY()
-	TArray<TObjectPtr<UFVInteractionActionHandler>> HandlerInstances;
+	UPROPERTY(Transient)
+	TObjectPtr<UStateTreeComponent> InteractionStateTreeComp;
 
-	UPROPERTY()
-	TObjectPtr<UFVInteractionActionHandler> ActiveHandler;
+	// Context set before each tree run — read by tasks via GetActive* accessors
+	UPROPERTY(Transient)
+	TObjectPtr<AActor> ActiveInstigator;
+
+	UPROPERTY(Transient)
+	FGameplayTag ActiveActionTag;
+
+	UPROPERTY(Transient)
+	FVector ActiveInteractionPoint = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	bool bActiveTaskDone = false;
+
+	UPROPERTY(Transient)
+	bool bActiveTaskSucceeded = false;
+
+	// Cached action tag for the completion callback (ActiveActionTag may be cleared before broadcast)
+	FGameplayTag CompletingActionTag;
 
 	bool bIsInFocus = false;
 };

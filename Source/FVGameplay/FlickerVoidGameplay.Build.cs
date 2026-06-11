@@ -17,7 +17,8 @@ public class FlickerVoidGameplay : ModuleRules
 			"GameplayTasks",
 			"GameplayAbilities",
 			"PhysicsCore",
-			"FlickerVoidCore"
+			"FlickerVoidCore",
+			"StateTreeModule",
 		});
 
         PrivateDependencyModuleNames.AddRange(new string[] {

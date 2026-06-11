@@ -1,8 +1,9 @@
 #include "Interaction/FVInteractableComponent.h"
-#include "Interaction/FVInteractionActionHandler.h"
 #include "Interaction/FVInteractionRequirement.h"
+#include "Components/StateTreeComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "StateTree.h"
 
 UFVInteractableComponent::UFVInteractableComponent()
 {
@@ -12,7 +13,7 @@ UFVInteractableComponent::UFVInteractableComponent()
 void UFVInteractableComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	InitializeHandlers();
+	CreateStateTreeComponent();
 }
 
 void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -25,27 +26,22 @@ void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 // Initialization
 //~=============================================================================
 
-void UFVInteractableComponent::InitializeHandlers()
+void UFVInteractableComponent::CreateStateTreeComponent()
 {
-	HandlerInstances.Empty();
-
-	for (const FFVInteractionAction& Action : Actions)
+	AActor* Owner = GetOwner();
+	if (!ensure(Owner))
 	{
-		if (!Action.HandlerClass)
-		{
-			HandlerInstances.Add(nullptr);
-			continue;
-		}
-
-		UFVInteractionActionHandler* Handler = NewObject<UFVInteractionActionHandler>(this, Action.HandlerClass);
-		if (Handler)
-		{
-			Handler->Initialize(Action.HandlerConfig);
-			Handler->OnCompleted.AddDynamic(this, &UFVInteractableComponent::HandleActionCompleted);
-		}
-
-		HandlerInstances.Add(Handler);
+		return;
 	}
+
+	InteractionStateTreeComp = NewObject<UStateTreeComponent>(
+		Owner, UStateTreeComponent::StaticClass(), TEXT("InteractionStateTree"));
+	InteractionStateTreeComp->bStartLogicAutomatically = false;
+	Owner->AddOwnedComponent(InteractionStateTreeComp);
+	InteractionStateTreeComp->RegisterComponent();
+
+	InteractionStateTreeComp->OnStateTreeStopped.AddDynamic(
+		this, &UFVInteractableComponent::OnStateTreeStopped);
 }
 
 //~=============================================================================
@@ -54,7 +50,7 @@ void UFVInteractableComponent::InitializeHandlers()
 
 bool UFVInteractableComponent::IsBeingInteracted() const
 {
-	return ActiveHandler != nullptr && ActiveHandler->IsExecuting();
+	return InteractionStateTreeComp && InteractionStateTreeComp->IsRunning();
 }
 
 TArray<FFVInteractionActionDisplay> UFVInteractableComponent::GetActionDisplayData(AActor* Instigator) const
@@ -71,7 +67,7 @@ TArray<FFVInteractionActionDisplay> UFVInteractableComponent::GetActionDisplayDa
 		Entry.Icon        = Action.Icon;
 
 		FText UnmetReason;
-		Entry.bAvailable      = Action.CheckRequirements(Instigator, UnmetReason);
+		Entry.bAvailable        = Action.CheckRequirements(Instigator, UnmetReason);
 		Entry.UnavailableReason = UnmetReason;
 
 		DisplayData.Add(Entry);
@@ -84,23 +80,22 @@ TArray<FFVInteractionActionDisplay> UFVInteractableComponent::GetActionDisplayDa
 // Execution
 //~=============================================================================
 
-EFVInteractionResult UFVInteractableComponent::TryExecuteAction(const FGameplayTag& InputTag, AActor* Instigator)
+EFVInteractionResult UFVInteractableComponent::TryExecuteAction(
+	const FGameplayTag& InputTag, AActor* Instigator)
 {
 	if (IsBeingInteracted())
 	{
 		return EFVInteractionResult::Blocked;
 	}
 
-	for (int32 i = 0; i < Actions.Num(); ++i)
+	for (const FFVInteractionAction& Action : Actions)
 	{
-		const FFVInteractionAction& Action = Actions[i];
 		if (!Action.InputTag.MatchesTagExact(InputTag))
 		{
 			continue;
 		}
 
-		UFVInteractionActionHandler* Handler = HandlerInstances.IsValidIndex(i) ? HandlerInstances[i] : nullptr;
-		if (!Handler)
+		if (!Action.ActionStateTree)
 		{
 			continue;
 		}
@@ -111,21 +106,18 @@ EFVInteractionResult UFVInteractableComponent::TryExecuteAction(const FGameplayT
 			return EFVInteractionResult::RequirementNotMet;
 		}
 
-		FFVInteractionContext Context;
-		Context.Instigator       = Instigator;
-		Context.TargetActor      = GetOwner();
-		Context.TargetComponent  = this;
-		Context.ActionTag        = Action.ActionTag;
-		Context.InteractionPoint = GetOwner()->GetActorLocation();
+		// Store context so tasks can read it via GetActive* accessors
+		ActiveInstigator      = Instigator;
+		ActiveActionTag       = Action.ActionTag;
+		ActiveInteractionPoint = GetOwner()->GetActorLocation();
+		bActiveTaskDone       = false;
+		bActiveTaskSucceeded  = false;
+		CompletingActionTag   = Action.ActionTag;
 
-		EFVInteractionResult Result = Handler->Execute(Context);
+		InteractionStateTreeComp->SetStateTree(Action.ActionStateTree);
+		InteractionStateTreeComp->StartLogic();
 
-		if (Result == EFVInteractionResult::Success)
-		{
-			ActiveHandler = Handler;
-		}
-
-		return Result;
+		return EFVInteractionResult::Success;
 	}
 
 	return EFVInteractionResult::ActionNotFound;
@@ -133,13 +125,16 @@ EFVInteractionResult UFVInteractableComponent::TryExecuteAction(const FGameplayT
 
 void UFVInteractableComponent::CancelActiveInteraction()
 {
-	if (ActiveHandler && ActiveHandler->IsExecuting())
+	if (InteractionStateTreeComp && InteractionStateTreeComp->IsRunning())
 	{
-		const FFVInteractionContext& Ctx = ActiveHandler->GetActiveContext();
-		ActiveHandler->Cancel(Ctx);
+		InteractionStateTreeComp->StopLogic(TEXT("Cancelled"));
 	}
+}
 
-	ActiveHandler = nullptr;
+void UFVInteractableComponent::CompleteActiveTask(bool bSuccess)
+{
+	bActiveTaskDone      = true;
+	bActiveTaskSucceeded = bSuccess;
 }
 
 void UFVInteractableComponent::SetFocused(bool bFocused)
@@ -154,23 +149,24 @@ void UFVInteractableComponent::SetFocused(bool bFocused)
 }
 
 //~=============================================================================
-// Completion callback
+// State Tree completion
 //~=============================================================================
 
-void UFVInteractableComponent::HandleActionCompleted(const FFVInteractionContext& Context,
-	EFVInteractionStatus Status, bool bSuccess)
+void UFVInteractableComponent::OnStateTreeStopped(
+	UStateTreeComponent* Comp, EStateTreeRunStatus RunStatus)
 {
-	// Find the action and apply granted tags on success
+	const bool bSuccess = (RunStatus == EStateTreeRunStatus::Succeeded);
+
 	if (bSuccess)
 	{
 		for (const FFVInteractionAction& Action : Actions)
 		{
-			if (Action.ActionTag.MatchesTagExact(Context.ActionTag))
+			if (Action.ActionTag.MatchesTagExact(CompletingActionTag))
 			{
 				if (!Action.GrantedTagsOnSuccess.IsEmpty())
 				{
 					if (UAbilitySystemComponent* ASC =
-						UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Context.Instigator))
+						UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(ActiveInstigator.Get()))
 					{
 						ASC->AddLooseGameplayTags(Action.GrantedTagsOnSuccess);
 					}
@@ -180,6 +176,26 @@ void UFVInteractableComponent::HandleActionCompleted(const FFVInteractionContext
 		}
 	}
 
-	ActiveHandler = nullptr;
+	FFVInteractionContext Context;
+	Context.Instigator       = ActiveInstigator.Get();
+	Context.TargetActor      = GetOwner();
+	Context.TargetComponent  = this;
+	Context.ActionTag        = CompletingActionTag;
+	Context.InteractionPoint = ActiveInteractionPoint;
+
+	EFVInteractionStatus Status;
+	switch (RunStatus)
+	{
+		case EStateTreeRunStatus::Succeeded: Status = EFVInteractionStatus::Completed;  break;
+		case EStateTreeRunStatus::Failed:    Status = EFVInteractionStatus::Failed;     break;
+		default:                             Status = EFVInteractionStatus::Cancelled;  break;
+	}
+
+	// Clear active context before broadcast so re-entrant calls see a clean state
+	ActiveInstigator    = nullptr;
+	ActiveActionTag     = FGameplayTag::EmptyTag;
+	bActiveTaskDone     = false;
+	bActiveTaskSucceeded = false;
+
 	OnAnyActionCompleted.Broadcast(Context, Status, bSuccess);
 }

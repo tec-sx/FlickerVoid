@@ -9,7 +9,6 @@
 #include "Character/FVCharacterTags.h"
 #include "InputMappingContext.h"
 #include "Movement/FVCharacterMovementComponent.h"
-#include "Interaction/FVInteractionComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
 
@@ -35,7 +34,6 @@ void AFVPlayerController::OnPossess(APawn* InPawn)
 
     if (CachedCharacter)
     {
-        CachedInteractionComponent = CachedCharacter->FindComponentByClass<UFVInteractionComponent>();
         InitializeInput();
 	}
     else
@@ -56,7 +54,6 @@ void AFVPlayerController::OnUnPossess()
     }
 
     CachedCharacter = nullptr;
-    CachedInteractionComponent = nullptr;
 
     Super::OnUnPossess();
 }
