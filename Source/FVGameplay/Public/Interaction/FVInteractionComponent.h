@@ -23,6 +23,11 @@ class FLICKERVOIDGAMEPLAY_API UFVInteractionComponent : public UActorComponent
 
 public:
 	UFVInteractionComponent();
+	virtual void BeginPlay() override;
+	virtual void TickComponent(
+		float DeltaTime, 
+		ELevelTick TickType, 
+		FActorComponentTickFunction* ThisTickFunction) override;
 
 	//~=========================================================================
 	// Configuration
@@ -36,7 +41,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection", meta = (ClampMin = "-1", ClampMax = "1"))
 	float FocusConeCosine = 0.5f;
 
-	// How often focus is re-evaluated (seconds). 0 = every tick.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection", meta = (ClampMin = "0"))
 	float FocusUpdateInterval = 0.05f;
 	
@@ -75,14 +79,6 @@ public:
 	// Actions array is empty when focus is lost.
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|UI")
 	FOnInteractableFocusChanged OnFocusChanged;
-
-	//~=========================================================================
-	// UActorComponent Interface
-	//~=========================================================================
-
-	virtual void BeginPlay() override;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-		FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
 	void UpdateFocus();

@@ -104,45 +104,24 @@ public:
 	// CONVERSATION SYSTEM
 	// ========================================================================
 
-	/**
-	 * Start a structured conversation
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Dialogue|Conversation")
 	bool StartConversation(FName ConversationId, FName InitialSignal, const FFVDialogueContext& Context);
 
-	/**
-	 * Select a response in the current conversation
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Dialogue|Conversation")
 	void SelectResponse(int32 ResponseIndex);
 
-	/**
-	 * Select a response by ID
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Dialogue|Conversation")
 	void SelectResponseById(FName ResponseId);
 
-	/**
-	 * Skip the current dialogue line
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Dialogue|Conversation")
 	void SkipCurrentLine();
 
-	/**
-	 * End the current conversation
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Dialogue|Conversation")
 	void EndConversation();
 
-	/**
-	 * Check if a conversation is active
-	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Dialogue|Conversation")
 	bool IsInConversation() const;
 
-	/**
-	 * Get the current conversation state
-	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Dialogue|Conversation")
 	const FFVActiveConversation& GetActiveConversation() const { return ActiveConversation; }
 
@@ -150,15 +129,12 @@ public:
 	// USAGE TRACKING
 	// ========================================================================
 
-	/** Check if a line is on cooldown */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Dialogue")
 	bool IsLineOnCooldown(FName LineId) const;
 
-	/** Get the use count for a line */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Dialogue")
 	int32 GetLineUseCount(FName LineId) const;
 
-	/** Reset all cooldowns and use counts */
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	void ResetUsageTracking();
 
@@ -166,7 +142,6 @@ public:
 	// SPEAKER INFO
 	// ========================================================================
 
-	/** Get speaker info by ID */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Dialogue")
 	bool GetSpeakerInfo(FName SpeakerId, FFVSpeakerInfo& OutInfo) const;
 

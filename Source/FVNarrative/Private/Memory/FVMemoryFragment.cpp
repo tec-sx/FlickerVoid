@@ -9,7 +9,6 @@ UFVMemoryFragment::UFVMemoryFragment()
 	MemoryId = NAME_None;
 	IdentityContribution = 0.05f;
 	SanityImpact = 0.0f;
-	MinimumSanityForClarity = 0.0f;
 }
 
 FPrimaryAssetId UFVMemoryFragment::GetPrimaryAssetId() const

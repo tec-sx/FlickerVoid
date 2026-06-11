@@ -42,19 +42,15 @@ public:
 	// NARRATIVE EFFECTS
 	// ========================================================================
 
-	/** Gameplay effect for sanity damage */
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative Effects")
 	TSoftClassPtr<UGameplayEffect> SanityDamageEffect;
 
-	/** Gameplay effect for sanity recovery */
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative Effects")
 	TSoftClassPtr<UGameplayEffect> SanityRecoveryEffect;
 
-	/** Gameplay effect applied during withdrawal */
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative Effects")
 	TSoftClassPtr<UGameplayEffect> WithdrawalEffect;
 
-	/** Gameplay effect for substance consumption */
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative Effects")
 	TMap<FGameplayTag, TSoftClassPtr<UGameplayEffect>> SubstanceEffects;
 
@@ -62,23 +58,18 @@ public:
 	// NARRATIVE THRESHOLDS
 	// ========================================================================
 
-	/** Sanity threshold to enter "Disturbed" state */
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative Thresholds", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float SanityDisturbedThreshold = 0.6f;
 
-	/** Sanity threshold to enter "Unstable" state */
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative Thresholds", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float SanityUnstableThreshold = 0.3f;
 
-	/** Sanity threshold below which progression is blocked */
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative Thresholds", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float SanityProgressionBlockThreshold = 0.2f;
 
-	/** Addiction level that triggers dependency state */
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative Thresholds", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float AddictionDependencyThreshold = 0.5f;
 
-	/** Days clean required to exit "Recovering" state */
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative Thresholds")
 	float DaysCleanForRecovery = 7.0f;
 
