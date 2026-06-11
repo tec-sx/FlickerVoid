@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FVCharacterMovementTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayTagContainer.h"
 #include "Movement/FVMovementHandlerData.h"
@@ -29,92 +30,43 @@ public:
 	//~=============================================================================
 	// Configuration
 	//~=============================================================================
-
-	/** Movement handler configuration data asset */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Configuration")
 	TObjectPtr<UFVMovementHandlerData> MovementConfig;
 
-	/** Maximum angle (degrees) from forward direction to allow sprinting */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Configuration")
 	float SprintAngleThreshold = 50.f;
 
 	//~=============================================================================
-	// Movement Handler Control (Tag-Based)
+	// Movement Handler Control
 	//~=============================================================================
 
-	/**
-	 * Try to activate handler with specific activation tags
-	 * @param ActivationTags Tags required to activate handler
-	 * @param bForce Force activation regardless of rules
-	 * @return True if handler was activated
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Movement")
-	bool TryActivateHandlerByTags(const FGameplayTagContainer& ActivationTags);
-
-	/**
-	 * Find and activate the best handler for current character state
-	 * Checks all handlers and activates highest priority one that can activate
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Movement")
-	void UpdateActiveHandler();
-
-	/** Get the current active movement handler */
 	UFUNCTION(BlueprintPure, Category = "Movement")
-	UFVMovementHandlerBase* GetCurrentMovementHandler() const { return CurrentMovementHandler; }
+	UFVMovementHandlerBase* GetCurrentMovementHandler() const { return CurrentHandler; }
 
-	/** Get a handler by its activation tags */
-	UFUNCTION(BlueprintPure, Category = "Movement")
-	UFVMovementHandlerBase* GetHandlerByTags(const FGameplayTagContainer& ActivationTags) const;
-
-	/** Check if a handler with specific tags can activate */
-	UFUNCTION(BlueprintPure, Category = "Movement")
-	bool CanActivateHandlerByTags(const FGameplayTagContainer& ActivationTags) const;
-
-	/** Get all registered handlers */
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	TArray<UFVMovementHandlerBase*> GetAllHandlers() const;
 
-	//~=============================================================================
-	// Handler Registration (For Runtime Extension)
-	//~=============================================================================
-
-	/**
-	 * Register a new handler at runtime
-	 * Allows dynamic addition of movement behaviors via Blueprint/Script
-	 * @param HandlerInfo Configuration for the handler
-	 * @return True if handler was registered successfully
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Movement|Extension")
 	bool RegisterHandler(const FFVMovementHandlerInfo& HandlerInfo);
-
-	/**
-	 * Unregister a handler by its activation tags
-	 * @param ActivationTags Tags identifying the handler to remove
-	 * @return True if handler was found and removed
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Movement|Extension")
-	bool UnregisterHandlerByTags(const FGameplayTagContainer& ActivationTags);
-
+	
 	//~=============================================================================
 	// Helper Functions
 	//~=============================================================================
 
-	/** Get the FVCharacter owner */
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	AFVCharacter* GetFVCharacter() const;
 
-	/** Reload configuration from the data asset */
 	UFUNCTION(BlueprintCallable, Category = "Movement|Configuration")
 	void ReloadConfiguration();
 
-protected:
 	//~=============================================================================
 	// UActorComponent Interface
 	//~=============================================================================
 
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+protected:
 	//~=============================================================================
 	// UCharacterMovementComponent Interface
 	//~=============================================================================
@@ -122,28 +74,16 @@ protected:
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 
 	void InitializeHandlers();
-	bool CanTransition() const;
 	void TransitionToHandler(UFVMovementHandlerBase* NewHandler);
 
-	UFVMovementHandlerBase* FindBestHandler() const;
-
-protected:
-	/**
-	 * All registered movement handlers
-	 * Stored as array for iteration, handlers matched by activation tags
-	 */
+	UFVMovementHandlerBase* SelectHandler() const;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<UFVMovementHandlerBase>> RegisteredHandlers;
 
-	/** Current active movement handler */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UFVMovementHandlerBase> CurrentMovementHandler;
+	TObjectPtr<UFVMovementHandlerBase> CurrentHandler;
 
-
-	/** Time of last transition */
-	float LastTransitionTime;
-
-	/** Has the component been initialized? */
 	bool bIsInitialized;
 
 public:

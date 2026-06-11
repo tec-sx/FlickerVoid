@@ -8,6 +8,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "Character/FVCharacterTags.h"
 #include "InputMappingContext.h"
+#include "Movement/FVCharacterMovementComponent.h"
+#include "Interaction/FVInteractionComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
 
@@ -33,6 +35,7 @@ void AFVPlayerController::OnPossess(APawn* InPawn)
 
     if (CachedCharacter)
     {
+        CachedInteractionComponent = CachedCharacter->FindComponentByClass<UFVInteractionComponent>();
         InitializeInput();
 	}
     else
@@ -53,6 +56,7 @@ void AFVPlayerController::OnUnPossess()
     }
 
     CachedCharacter = nullptr;
+    CachedInteractionComponent = nullptr;
 
     Super::OnUnPossess();
 }
@@ -93,8 +97,6 @@ void AFVPlayerController::InitializeInput()
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Jump, ETriggerEvent::Triggered, this, &ThisClass::Input_JumpTriggered, false);
 	FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Aim, ETriggerEvent::Started, this, &ThisClass::Input_AimStarted, false);
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Aim, ETriggerEvent::Completed, this, &ThisClass::Input_AimCompleted, false);
-	FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Interact, ETriggerEvent::Started, this, &ThisClass::Input_InteractStarted, false);
-    FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Interact, ETriggerEvent::Completed, this, &ThisClass::Input_InteractCompleted, false);
 }
 
 void AFVPlayerController::AddInputMappingContexts()
@@ -182,14 +184,29 @@ void AFVPlayerController::Input_SprintCompleted(const FInputActionValue& Value)
 
 void AFVPlayerController::Input_JumpStarted(const FInputActionValue& Value)
 {
-     CachedCharacter->RequestTraverse();
-    CachedCharacter->RequestJump();
+    if (CachedCharacter->GetFVCharacterMovement()->IsMovingOnGround())
+    {
+        if (CachedCharacter->RequestTraverse())
+        {
+            return;
+        }
+        
+        CachedCharacter->RequestJump();
+    }
 }
 
 void AFVPlayerController::Input_JumpTriggered(const FInputActionValue& Value)
 {
-    // Continuous check for traversal opportunities while jump button held (e.g., in air)
-    CachedCharacter->RequestTraverse();
+    if (CachedCharacter->GetFVCharacterMovement()->IsFalling())
+    {
+        // Continuous check for traversal opportunities while jump button held (e.g., in air)
+        if (CachedCharacter->IsTraversing())
+        {
+            return;
+        }
+        
+        CachedCharacter->RequestTraverse();
+    }
 }
 
 
@@ -202,17 +219,6 @@ void AFVPlayerController::Input_AimCompleted(const FInputActionValue& Value)
 {
     CachedCharacter->RequestAim(false);
 }
-
-void AFVPlayerController::Input_InteractStarted(const FInputActionValue& Value)
-{
-	CachedCharacter->RequestInteract(true);
-}
-
-void AFVPlayerController::Input_InteractCompleted(const FInputActionValue& Value)
-{
-    CachedCharacter->RequestInteract(false);
-}
-
 
 void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
 {

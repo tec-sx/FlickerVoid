@@ -26,7 +26,12 @@ namespace FVCoreTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Sprint);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Jump);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Aim);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interact);
+
+	// Four interaction input slots — physical key binding lives only in the InputConfig data asset
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interact_Primary);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interact_PrimaryHold);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interact_Secondary);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interact_SecondaryHold);
 
 	// ============================================================================
 	// INITIALIZATION STATE TAGS
@@ -46,6 +51,11 @@ namespace FVCoreTags
 	// ============================================================================
 	// INTERACTION ACTION TAGS
 	// ============================================================================
+	// Runtime events fired by handlers — UI/Blueprint listens for these
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_ExamineStarted);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_LockpickStarted);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_LockpickEnded);
+
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Pickup);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Use);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Open);

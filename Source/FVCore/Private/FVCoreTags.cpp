@@ -17,7 +17,10 @@ namespace FVCoreTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Sprint, "InputTag.Sprint", "Sprint input.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Jump, "InputTag.Jump", "Jump input.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Aim, "InputTag.Aim", "Aim input.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interact, "InputTag.Interact", "Interact input.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interact_Primary,       "InputTag.Interact.Primary",       "Interaction slot 1 — e.g. E press.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interact_PrimaryHold,   "InputTag.Interact.PrimaryHold",   "Interaction slot 2 — e.g. E hold.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interact_Secondary,     "InputTag.Interact.Secondary",     "Interaction slot 3 — e.g. F press.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interact_SecondaryHold, "InputTag.Interact.SecondaryHold", "Interaction slot 4 — e.g. F hold.");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InitState_Spawned, "InitState.Spawned", "1: Actor/component has initially spawned and can be extended");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InitState_DataAvailable, "InitState.DataAvailable", "2: All required data has been loaded and is ready for initialization");
@@ -34,6 +37,10 @@ namespace FVCoreTags
 	// ============================================================================
 	// INTERACTION ACTION TAGS
 	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Event_ExamineStarted,  "Interaction.Event.ExamineStarted",  "Fired when an examine overlay should open.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Event_LockpickStarted, "Interaction.Event.LockpickStarted", "Fired when a lockpick mini-game should open.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Event_LockpickEnded,   "Interaction.Event.LockpickEnded",   "Fired when the lockpick mini-game closes.");
+
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Action_Pickup, "Interaction.Action.Pickup", "Pick up an item from the world.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Action_Use, "Interaction.Action.Use", "Use/activate an interactable.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Action_Open, "Interaction.Action.Open", "Open a door/container.");

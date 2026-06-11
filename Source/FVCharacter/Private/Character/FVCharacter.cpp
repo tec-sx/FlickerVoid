@@ -1,14 +1,13 @@
 #include "Character/FVCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Movement/FVCharacterMovementComponent.h"
-#include "Character/FVCharacterTags.h"
 #include "Character/FVCharacterStateManager.h"
 #include "Character/FVCharacterArchetypeData.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVCharacter)
 
 AFVCharacter::AFVCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UFVCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UFVCharacterMovementComponent>(CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
@@ -33,19 +32,12 @@ void AFVCharacter::PostInitializeComponents()
 void AFVCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	// Apply archetype if configured
-	if (ArchetypeData)
-	{
-		ApplyArchetype(ArchetypeData);
-	}
 }
 
 void AFVCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	// Update state manager (automatic tag sync)
 	if (StateManager)
 	{
 		StateManager->UpdateState(DeltaTime);
@@ -101,8 +93,8 @@ UFVCharacterMovementComponent* AFVCharacter::GetFVCharacterMovement() const
 
 FFVCharacterAnimationData AFVCharacter::GetAnimationData() const
 {
-	static FFVCharacterAnimationData AnimData;
-	
+	FFVCharacterAnimationData AnimData;
+
 	AnimData.ActorTransform = GetActorTransform();
 	AnimData.Velocity = GetCharacterMovement()->Velocity;
 	AnimData.GroundSpeed = GetGroundSpeed();
@@ -117,48 +109,70 @@ FFVCharacterAnimationData AFVCharacter::GetAnimationData() const
 	return AnimData;
 }
 
-//~=============================================================================
-// Archetype Configuration
-//~=============================================================================
-
-void AFVCharacter::ApplyArchetype(UFVCharacterArchetypeData* NewArchetype)
+FFVCharacterIntent AFVCharacter::GetIntent() const
 {
-	if (!NewArchetype || !StateManager)
+	FFVCharacterIntent Intent;
+
+	Intent.Direction       = MovementDirection;
+	Intent.bWantsToWalk    = bIsWalking;
+	Intent.bWantsToSprint  = bIsSprinting;
+	Intent.bWantsToCrouch  = IsCrouched();
+	Intent.bWantsToAim     = bWantsToAim;
+	Intent.bWantsToInteract = bWantsToInteract;
+	Intent.bWantsToTraverse = bWantsToTraverse;
+	Intent.bWantsToJump    = bWantsToJump;
+
+	return Intent;
+}
+
+FFVCharacterRuntimeState AFVCharacter::GetRuntimeState() const
+{	
+	FFVCharacterRuntimeState RuntimeState;
+	
+	RuntimeState.Velocity = GetCharacterMovement()->Velocity;
+	RuntimeState.Acceleration = GetCharacterMovement()->GetCurrentAcceleration();
+	// RuntimeState.bIsWalking = IsWalking();
+
+	RuntimeState.bIsFalling = GetCharacterMovement()->IsFalling();
+	RuntimeState.bIsCrouching = GetFVCharacterMovement()->IsCrouching();
+
+	return RuntimeState;
+}
+
+bool AFVCharacter::CanSprint() const
+{
+	return true;
+}
+
+void AFVCharacter::RequestWalk()
+{
+	if (IsSprinting())
 	{
 		return;
 	}
-
-	ArchetypeData = NewArchetype;
-
-	// Apply all initial tags from archetype
-	FGameplayTagContainer InitialTags = NewArchetype->GetAllInitialTags();
-	StateManager->AddTags(InitialTags);
-
-	// Apply ability restriction tags
-	FGameplayTagContainer RestrictionTags = NewArchetype->GetAbilityRestrictionTags();
-	StateManager->AddTags(RestrictionTags);
-
-	// Apply movement config
-	if (NewArchetype->MovementConfig)
-	{
-		UFVCharacterMovementComponent* FVMovement = GetFVCharacterMovement();
-		if (FVMovement)
-		{
-			FVMovement->MovementConfig = NewArchetype->MovementConfig;
-		}
-	}
-
-	// Apply movement modifiers
-	if (UCharacterMovementComponent* MovementComp = GetCharacterMovement())
-	{
-		MovementComp->MaxWalkSpeed *= NewArchetype->MovementSpeedModifier;
-		MovementComp->JumpZVelocity *= NewArchetype->JumpHeightModifier;
-		MovementComp->MaxAcceleration *= NewArchetype->AccelerationModifier;
-	}
-
-	// Note: Visual properties (mesh, materials) should be applied by CharacterAppearanceComponent
-	// Note: Health/Stamina should be set by AbilitySystemComponent if present
+	
+	IsWalking() ? SetWalking(false) : SetWalking(true);
 }
 
+void AFVCharacter::RequestCrouch()
+{
+	IsCrouched() ? UnCrouch() : Crouch();
+}
 
+void AFVCharacter::RequestSprint(const bool bValue)
+{
+	if (bValue && IsCrouched())
+	{
+		UnCrouch();
+	}
+	
+	if (CanSprint())
+	{
+		SetSprinting(bValue);
+	}
+}
 
+void AFVCharacter::RequestJump()
+{
+	IsCrouched() ? UnCrouch() : Jump();
+}

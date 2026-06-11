@@ -3,14 +3,43 @@ class AFVPlayerCharacter : AFVCharacter
     UPROPERTY(DefaultComponent, Category = "Movement")
     UMotionWarpingComponent MotionWarpingComponent;
 
-    bool bJustanded = false;
+    // Manages focus detection and routes input tags to UFVInteractableComponent actions
+    UPROPERTY(DefaultComponent, Category = "Interaction")
+    UFVInteractionComponent InteractionComponent;
+
+    UPROPERTY(DefaultComponent, Category = "Animation")
+    UContextualAnimSceneActorComponent ContextualAnimation;
+
+    UPROPERTY()
+    UFVTraversalComponent Traversal;
+
+    bool bJustLanded = false;
     bool bIsRagdolling = false;
-    
-    FFVAnimaData AnimData;
 
     UFUNCTION(BlueprintOverride)
-    void OnLaunched(FVector LaunchVelocity, bool bXYOverride, bool bZOverride)
+    bool RequestTraverse()
     {
+        FFVTraversalCharacterData CharacterData;
+        CharacterData.CapsuleRadius = CapsuleComponent.CapsuleRadius;
+        CharacterData.CapsuleHalfHeight = CapsuleComponent.CapsuleHalfHeight;
+        CharacterData.ForwardDirection = GetActorForwardVector();
+        CharacterData.Location = GetActorLocation();
+        CharacterData.Rotation = GetActorRotation();
+        CharacterData.Velocity = Velocity;
+        CharacterData.Speed = Velocity.Size2D();
+        CharacterData.MovementMode = CharacterMovement.MovementMode;
+        CharacterData.Mesh = Mesh;
+        CharacterData.MotionWarping = MotionWarpingComponent;
+        
+        EDrawDebugTrace DrawDebugType = CharacterMovement.IsMovingOnGround() 
+            ? EDrawDebugTrace::ForOneFrame 
+            : EDrawDebugTrace::ForDuration;
+
+        bool bIsTraversing = Traversal.TryTraversalAction(CharacterData, DrawDebugType);
+
+        SetTraversing(bIsTraversing);
+
+        return bIsTraversing;
     }
 
     AFVPlayerCharacter()
@@ -23,14 +52,11 @@ class AFVPlayerCharacter : AFVCharacter
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
+        Traversal = UFVTraversalComponent::Get(this);
+
         // Configure initial movement settings
         CharacterMovement.bOrientRotationToMovement = false;
         CharacterMovement.bUseControllerDesiredRotation = true;
-    }
-
-    UFUNCTION(BlueprintOverride)
-    void OnJumped()
-    {
     }
 
     UFUNCTION(BlueprintOverride)
@@ -49,26 +75,9 @@ class AFVPlayerCharacter : AFVCharacter
         FFVPlayerCameraSettings Settings;
         Settings.CameraMode = EFVCameraMode::Free;
         Settings.CameraStyle = EFVCameraStyle::Medium;
-        Settings.PlayerGait = EFVGait::Walk;
+        Settings.PlayerGait = EFVGait::Walking;
         Settings.PlayerStance = EFVStance::Stand;
 
         return Settings;
-    }
-
-    UFUNCTION()
-    FFVTraversalCharacterData CreateTraversalData()
-    {
-        FFVTraversalCharacterData CharacterData;
-        CharacterData.CapsuleRadius = CapsuleComponent.CapsuleRadius;
-        CharacterData.CapsuleHalfHeight = CapsuleComponent.CapsuleHalfHeight;
-        CharacterData.ForwardDirection = GetActorForwardVector();
-        CharacterData.Location = GetActorLocation();
-        CharacterData.Rotation = GetActorRotation();
-        CharacterData.Velocity = Velocity;
-        CharacterData.Speed = Velocity.Size2D();
-        CharacterData.MovementMode = CharacterMovement.MovementMode;
-        CharacterData.Mesh = Mesh;
-        CharacterData.MotionWarping = MotionWarpingComponent;
-        return CharacterData;
     }
 }

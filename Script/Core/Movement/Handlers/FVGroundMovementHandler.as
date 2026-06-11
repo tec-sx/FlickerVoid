@@ -4,6 +4,12 @@ class UFVGroundMovementHandler : UFVMovementHandlerBase
     UFVGroundMovementConfig GroundConfig;
 
     UFUNCTION(BlueprintOverride)
+    bool Resolve() const
+    {
+        return MovementComponent.MovementMode == EMovementMode::MOVE_Walking;
+    }
+
+    UFUNCTION(BlueprintOverride)
     void OnInitialize(AFVCharacter InCharacter,
 					  UFVCharacterMovementComponent InMovementComponent,
                       FFVMovementHandlerInfo InConfig)
@@ -22,20 +28,22 @@ class UFVGroundMovementHandler : UFVMovementHandlerBase
     }
 
     UFUNCTION(BlueprintOverride)
-    bool CanEnter()
+    void OnEnter()
     {
-
+        Print("Entered Ground State");
     }
 
 	UFUNCTION(BlueprintOverride)
 	void GenerateMovement(float DeltaTime)
 	{
+        FFVCharacterIntent CharacterIntent = Character.GetIntent();
+
         // Update Rotation Data
         {
-            if (Character.HasTag(GameplayTags::Character_Action_Aim) || Character.MovementDirection.Y != 0.f)
+            if (CharacterIntent.bWantsToAim || CharacterIntent.Direction.Y != 0.f)
             {
-                // MovementComponent.bUseControllerDesiredRotation = true;
-                // MovementComponent.bOrientRotationToMovement = false;
+                MovementComponent.bUseControllerDesiredRotation = true;
+                MovementComponent.bOrientRotationToMovement = false;
             }
             else
             {
@@ -47,56 +55,47 @@ class UFVGroundMovementHandler : UFVMovementHandlerBase
         // Update Movement Data
         {
             FFVGaitConfig GaitConfig = GetGaitConfig();
-            
-            MovementComponent.MaxAcceleration = CalculateMaxAcceleration(GaitConfig);
-            MovementComponent.BrakingDecelerationWalking = CalculateBrakingDeceleration();
-            MovementComponent.GroundFriction = CalculateGroundFriction(GaitConfig);
 
+            MovementComponent.MaxAcceleration = CalculateMaxAcceleration(GaitConfig, CharacterIntent);
+            MovementComponent.BrakingDecelerationWalking = CalculateBrakingDeceleration();
+            MovementComponent.GroundFriction = CalculateGroundFriction(GaitConfig, CharacterIntent);
             MovementComponent.MaxWalkSpeed = CalculateDirectionalSpeed(GaitConfig.Speeds);
             MovementComponent.MaxWalkSpeedCrouched = CalculateDirectionalSpeed(GroundConfig.CrouchSpeeds);
         }
- 
+
         // Perform Movement if there is movement input
-        if (Character.MovementDirection.Size() > 0)
+        if (CharacterIntent.Direction.Size() > 0)
         {
             FRotator ControlYaw = FRotator(0.f, Character.ControlRotation.Yaw, 0.f);
 
-            Character.AddMovementInput(ControlYaw.ForwardVector, Character.MovementDirection.X);
-            Character.AddMovementInput(ControlYaw.RightVector, Character.MovementDirection.Y);
-        }
-
-        if (Character.HasTag(GameplayTags::Movement_Action_Jump))
-        {
-            Character.Jump();
-            Character.RemoveTag(GameplayTags::Movement_Action_Jump);
+            Character.AddMovementInput(ControlYaw.ForwardVector, CharacterIntent.Direction.X);
+            Character.AddMovementInput(ControlYaw.RightVector, CharacterIntent.Direction.Y);
         }
 	}
     
-     FFVGaitConfig GetGaitConfig()
+    FFVGaitConfig GetGaitConfig()
     {
-        if (Character.HasTag(GameplayTags::Movement_Gait_Walking))
-            return GroundConfig.WalkConfig;
-        else if (Character.HasTag(GameplayTags::Movement_Gait_Jogging))
-            return GroundConfig.JogConfig;
-        else if (Character.HasTag(GameplayTags::Movement_Gait_Sprinting))
+        if (Character.IsSprinting())
             return GroundConfig.SprintConfig;
-        else
+        if (Character.IsWalking())
             return GroundConfig.WalkConfig;
+        return GroundConfig.JogConfig;
     }
     
 
-    float CalculateMaxAcceleration(FFVGaitConfig GaitConfig)
+    float CalculateMaxAcceleration(FFVGaitConfig GaitConfig, FFVCharacterIntent CharacterIntent)
     {
-        if (Character.HasTag(GameplayTags::Movement_Gait_Walking) ||
-			Character.HasTag(GameplayTags::Movement_Gait_Jogging))
-             return GaitConfig.Acceleration;
-        else if (Character.HasTag(GameplayTags::Movement_Gait_Sprinting))
+        if (CharacterIntent.bWantsToSprint)
+        {
             return Math::GetMappedRangeValueClamped(
                         GaitConfig.SpeedRangeForAcceleration,
                         GaitConfig.AccelerationRange,
                         MovementComponent.Velocity.Size2D());
+        }
         else
-            return 300.f;
+        {
+            return GaitConfig.Acceleration;
+        }
     }
 
     float CalculateBrakingDeceleration()
@@ -104,18 +103,19 @@ class UFVGroundMovementHandler : UFVMovementHandlerBase
         return HasMovementInput() ? GroundConfig.BrakingWithInput : GroundConfig.BrakingWithoutInput;
     }
 
-    float CalculateGroundFriction(FFVGaitConfig GaitConfig)
+    float CalculateGroundFriction(FFVGaitConfig GaitConfig, FFVCharacterIntent CharacterIntent)
     { 
-        if (Character.HasTag(GameplayTags::Movement_Gait_Walking) ||
-			Character.HasTag(GameplayTags::Movement_Gait_Jogging))
-                return GaitConfig.Friction;
-        else if (Character.HasTag(GameplayTags::Movement_Gait_Sprinting))
+        if (CharacterIntent.bWantsToSprint)
+        {
             return Math::GetMappedRangeValueClamped(
                         GaitConfig.SpeedRangeForFriction,
                         GaitConfig.FrictionRange,
                         MovementComponent.Velocity.Size2D());
+        }
         else
-            return 8.f;
+        {
+            return GaitConfig.Friction;
+        }
     }
 
     float CalculateDirectionalSpeed(FVector SpeedRange)
@@ -152,7 +152,6 @@ class UFVGroundMovementHandler : UFVMovementHandlerBase
         {
             if (GroundConfig.StrafeSpeedMapCurve == nullptr)
             {
-                // Warning already logged in GenerateMovement, just return default
                 return 0.f;
             }
 

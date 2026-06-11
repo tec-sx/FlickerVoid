@@ -37,8 +37,6 @@ void UFVMovementHandlerBase::Initialize(AFVCharacter* InCharacter, UFVCharacterM
 	OnInitialize(InCharacter, InMovementComponent, InConfig);
 }
 
-void UFVMovementHandlerBase::OnInitialize_Implementation(AFVCharacter* InCharacter, UFVCharacterMovementComponent* InMovementComponent, const FFVMovementHandlerInfo& InConfig) { }
-
 void UFVMovementHandlerBase::Enter()
 {
 	if (!bIsInitialized)
@@ -72,11 +70,6 @@ void UFVMovementHandlerBase::Exit()
 	bIsActive = false;
 
 	OnExit();
-}
-
-void UFVMovementHandlerBase::NotifyActivationBlocked(const FGameplayTagContainer& CurrentTags, const FString& Reason)
-{
-	OnActivationBlocked(CurrentTags, Reason);
 }
 
 bool UFVMovementHandlerBase::GrantsTag(const FGameplayTag& Tag) const

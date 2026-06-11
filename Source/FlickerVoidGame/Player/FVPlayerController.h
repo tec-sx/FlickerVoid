@@ -9,6 +9,7 @@ class UAbilitySystemComponent;
 class AFVPlayerState;
 class AFVCharacter;
 class UFVInputConfig;
+class UFVInteractionComponent;
 class UInputMappingContext;
 struct FInputActionValue;
 
@@ -69,8 +70,6 @@ protected:
     void Input_JumpTriggered(const FInputActionValue& Value);
 	void Input_AimStarted(const FInputActionValue& Value);
     void Input_AimCompleted(const FInputActionValue& Value);
-	void Input_InteractStarted(const FInputActionValue& Value);
-	void Input_InteractCompleted(const FInputActionValue& Value);
 
     // ========================================================================
     // INPUT CALLBACKS - Abilities
@@ -81,6 +80,7 @@ protected:
 
 private:
     TObjectPtr<AFVCharacter> CachedCharacter;
+    TObjectPtr<UFVInteractionComponent> CachedInteractionComponent;
 
     TArray<uint32> AbilityBindHandles;
     

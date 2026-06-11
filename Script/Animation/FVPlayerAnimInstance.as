@@ -47,11 +47,6 @@ class UFVPlayerAnimInstance : UFVCharacterAnimInstance
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite) FVector TrajectoryFutureVelocity;
 
-    UFUNCTION(BlueprintOverride)
-    void BlueprintThreadSafeUpdateAnimation(float DeltaTime)
-    {
-    }
-
     UFUNCTION()
     void SetInteractionTransform(FTransform InTransform)
     {
@@ -63,10 +58,4 @@ class UFVPlayerAnimInstance : UFVCharacterAnimInstance
     {
         return FPoseHistoryReference();
     }
-
-    // UFUNCTION()
-    // FTransform GetInteractionTransform()
-    // {
-    //     return InteractionTransform;
-    // }
 };

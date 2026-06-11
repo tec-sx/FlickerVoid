@@ -16,7 +16,7 @@ struct FFVTraceParameters
     float TraceRadius;
 };
 
-class UFV_ACTraversal : UActorComponent
+class UFVTraversalComponent : UActorComponent
 {
     UPROPERTY()
     bool bIsTraversing;
@@ -110,7 +110,7 @@ class UFV_ACTraversal : UActorComponent
 
         FFVTraversalChooserOutput ChooserOutput = EvaluateChooserTable(ChooserInput, PlayerAnimInstance);
 
-        return false;
+        return true;
 	}
 
     // Implement this in Blueprints.
@@ -243,7 +243,7 @@ class UFV_ACTraversal : UActorComponent
 				End,
 				CharacterData.CapsuleRadius,
 				CharacterData.CapsuleHalfHeight,
-				ETraceTypeQuery::Visibility, // Custom trace channel for traversal
+				ETraceTypeQuery::Visibility,
 				false,
 				TArray<AActor>(),
 				DrawDebugLevel >= 3 ? DrawDebugType : EDrawDebugTrace::None,

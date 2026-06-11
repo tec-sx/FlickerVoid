@@ -46,55 +46,6 @@ struct FAttackParams
 };
 
 // ============================================================================
-// INTERACTION CONTEXT
-// ============================================================================
-
-/**
- * Context information about an NPC-to-character interaction
- */
-USTRUCT(BlueprintType)
-struct FFVInteractionContext
-{
-	GENERATED_BODY()
-
-	/** The target of the interaction */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Context")
-	TObjectPtr<AActor> Target = nullptr;
-
-	/** Did the NPC recognize the target? */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Context")
-	bool bRecognized = false;
-
-	/** Relationship score (-1 to 1) */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Context")
-	float RelationshipScore = 0.0f;
-
-	/** Perceived threat level (0 to 1) */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Context")
-	float ThreatLevel = 0.0f;
-
-	/** NPC's intelligence level */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Context")
-	float NPCIntelligence = 0.5f;
-
-	/** Social reaction modifier based on charisma/reputation */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Context")
-	float SocialReaction = 0.0f;
-
-	/** Contextual factors affecting the interaction */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Context")
-	TMap<FString, float> ContextualFactors;
-
-	/** Current NPC state tag (e.g., Character_State_Idle) */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Context", meta = (Categories = "Character.State"))
-	FGameplayTag NPCStateTag;
-
-	/** Current NPC mood tags */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Context", meta = (Categories = "Character.Mood"))
-	FGameplayTagContainer NPCMoodTags;
-};
-
-// ============================================================================
 // PLAYER RESPONSE SYSTEM
 // ============================================================================
 

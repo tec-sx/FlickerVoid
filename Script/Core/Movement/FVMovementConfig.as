@@ -36,7 +36,7 @@ class UFVGroundMovementConfig : UFVMovementHandlerConfigBase
 
     UPROPERTY()
     FFVGaitConfig JogConfig;
-    default JogConfig.Speeds = FVector(500.f, 350.f, 300.f);
+    default JogConfig.Speeds = FVector(310.f, 250.f, 250.f);
     default JogConfig.Acceleration = 800.f;
     default JogConfig.Friction = 5.f;
 

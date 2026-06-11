@@ -23,12 +23,8 @@ public:
 	// Core Lifecycle Events (Implement in Blueprint/Script)
 	//~=============================================================================
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Movement Handler")
-	void OnInitialize(AFVCharacter* InCharacter, UFVCharacterMovementComponent* InMovementComponent, const FFVMovementHandlerInfo& InConfig);
-	virtual void OnInitialize_Implementation(AFVCharacter* InCharacter, UFVCharacterMovementComponent* InMovementComponent, const FFVMovementHandlerInfo& InConfig);
-
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement Handler")
-	bool CanEnter() const;
+	void OnInitialize(AFVCharacter* InCharacter, UFVCharacterMovementComponent* InMovementComponent, const FFVMovementHandlerInfo& InConfig);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement Handler")
 	void OnEnter();
@@ -39,11 +35,13 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement Handler")
 	void OnExit();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Movement Handler")
+	bool Resolve() const;
+
 	void Initialize(AFVCharacter* InCharacter, UFVCharacterMovementComponent* InMovementComponent, const FFVMovementHandlerInfo& InConfig);
 	void Enter();
 	void TickMovement(float DeltaTime);
 	void Exit();
-	void NotifyActivationBlocked(const FGameplayTagContainer& CurrentTags, const FString& Reason);
 
 	//~=============================================================================
 	// State Access
