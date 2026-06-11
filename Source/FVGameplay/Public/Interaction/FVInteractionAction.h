@@ -61,8 +61,7 @@ struct FLICKERVOIDGAMEPLAY_API FFVInteractionAction
 	// Requirements — all must pass for the action to be available
 	//~=========================================================================
 
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category = "Action|Requirements",
-		meta = (EditInline))
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category = "Action|Requirements", meta = (EditInline))
 	TArray<TObjectPtr<UFVInteractionRequirement>> Requirements;
 
 	//~=========================================================================
