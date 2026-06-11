@@ -40,19 +40,15 @@ public:
 	// Context helpers — pass OwnerActor from ReceiveEnterState / ReceiveTick
 	//~=========================================================================
 
-	// The interactable component on the actor running this State Tree.
 	UFUNCTION(BlueprintPure, Category = "Interaction|Task")
 	static UFVInteractableComponent* GetInteractable(AActor* OwnerActor);
 
-	// The actor (player) that triggered this interaction.
 	UFUNCTION(BlueprintPure, Category = "Interaction|Task")
 	static AActor* GetInstigator(AActor* OwnerActor);
-
-	// The action tag that was triggered (e.g. Interaction.Action.PickUp).
+	
 	UFUNCTION(BlueprintPure, Category = "Interaction|Task")
 	static FGameplayTag GetActionTag(AActor* OwnerActor);
 
-	// World position of the interaction point (for IK warping, VFX, etc.).
 	UFUNCTION(BlueprintPure, Category = "Interaction|Task")
 	static FVector GetInteractionPoint(AActor* OwnerActor);
 
@@ -69,6 +65,5 @@ public:
 protected:
 	// Default ReceiveTick polls UFVInteractableComponent::IsActiveTaskDone().
 	// Override for per-frame logic, but call Super first to preserve this check.
-	virtual EStateTreeRunStatus ReceiveTick_Implementation(
-		AActor* OwnerActor, float DeltaTime) override;
+	virtual EStateTreeRunStatus ReceiveTick_Implementation(AActor* OwnerActor, float DeltaTime) override;
 };

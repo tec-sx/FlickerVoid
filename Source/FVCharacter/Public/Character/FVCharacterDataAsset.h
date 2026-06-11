@@ -10,12 +10,6 @@
 
 class UGameplayEffect;
 
-/**
- * FFVAttributeInitializer
- * 
- * Struct to define initial attribute values in data assets.
- * Game designers can set these in the editor.
- */
 USTRUCT(BlueprintType)
 struct FFVAttributeInitializer
 {
@@ -28,11 +22,7 @@ struct FFVAttributeInitializer
 	float Value = 0.5f;
 };
 
-/**
- * FFVSkillDefinition
- * 
- * Defines a skill and its initial level.
- */
+
 USTRUCT(BlueprintType)
 struct FFVSkillDefinition
 {

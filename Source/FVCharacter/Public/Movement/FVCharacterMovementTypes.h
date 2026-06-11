@@ -7,6 +7,7 @@ enum class EFVGait: uint8
 {
 	Walking,
 	Running,
+	Sprinting
 };
 
 UENUM(BlueprintType)

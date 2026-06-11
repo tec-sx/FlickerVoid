@@ -43,11 +43,9 @@ struct FLICKERVOIDGAMEPLAY_API FFVInteractionContext
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	TObjectPtr<UFVInteractableComponent> TargetComponent;
 
-	// Which action was triggered (e.g. Interaction.Action.PickUp)
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	FGameplayTag ActionTag;
 
-	// Approximate world point of the interaction (for warping, VFX, etc.)
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	FVector InteractionPoint = FVector::ZeroVector;
 };
@@ -58,11 +56,9 @@ struct FLICKERVOIDGAMEPLAY_API FFVInteractionActionDisplay
 {
 	GENERATED_BODY()
 
-	// Identity (e.g. Interaction.Action.PickUp)
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction|Display")
 	FGameplayTag ActionTag;
 
-	// Input binding this action sits on (e.g. Input.Interact.Primary)
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction|Display")
 	FGameplayTag InputTag;
 
@@ -72,22 +68,22 @@ struct FLICKERVOIDGAMEPLAY_API FFVInteractionActionDisplay
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction|Display")
 	TSoftObjectPtr<UTexture2D> Icon;
 
-	// False when the player doesn't meet requirements — UI dims the slot
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction|Display")
 	bool bAvailable = true;
 
-	// Shown when bAvailable == false ("Requires Lockpick Skill 2", etc.)
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction|Display")
 	FText UnavailableReason;
 };
 
 // Broadcast delegate used to push display data to the UI
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractableFocusChanged,
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FOnInteractableFocusChanged,
 	UFVInteractableComponent*, Interactable,
 	const TArray<FFVInteractionActionDisplay>&, Actions);
 
 // Fired by a handler when its execution is done (sync or async)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnInteractionCompleted,
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(
+	FOnInteractionCompleted,
 	const FFVInteractionContext&, Context,
 	EFVInteractionStatus, Status,
 	bool, bSuccess);

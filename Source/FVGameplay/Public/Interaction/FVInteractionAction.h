@@ -8,9 +8,20 @@
 class UFVInteractionRequirement;
 class UStateTree;
 
-//~=============================================================================
-// Action Entry — one slot on an interactable (max 4 per component)
-//~=============================================================================
+UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, CollapseCategories)
+class FLICKERVOIDGAMEPLAY_API UFVInteractionRequirement : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	UFUNCTION(BlueprintNativeEvent, Category = "Interaction|Requirement")
+	bool IsMet(AActor* Instigator) const;
+	virtual bool IsMet_Implementation(AActor* Instigator) const { return true; }
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Interaction|Requirement")
+	FText GetUnmetReason(AActor* Instigator) const;
+	virtual FText GetUnmetReason_Implementation(AActor* Instigator) const { return FText::GetEmpty(); }
+};
 
 USTRUCT(BlueprintType)
 struct FLICKERVOIDGAMEPLAY_API FFVInteractionAction
