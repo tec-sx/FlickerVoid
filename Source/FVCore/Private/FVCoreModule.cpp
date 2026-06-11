@@ -3,7 +3,6 @@
 #include "Modules/ModuleManager.h"
 #include "Logging/FVLogSystem.h"
 #include "Logging/FVLogCategories.h"
-#include "Movement/FVMovementTags.h"
 
 /**
  * FVCore Module Implementation
@@ -16,9 +15,6 @@ public:
     {
         // Initialize the global logging system
         FFVLogSystem::Initialize();
-
-        // Initialize movement tags
-        FFVMovementTags::InitializeNativeTags();
 
         UE_LOG(LogFVCore, Log, TEXT("FlickerVoid Core Module Started"));
     }

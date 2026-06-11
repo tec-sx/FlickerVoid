@@ -1,8 +1,6 @@
 #include "Character/FVCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Movement/FVCharacterMovementComponent.h"
-#include "Character/FVCharacterStateManager.h"
-#include "Character/FVCharacterArchetypeData.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVCharacter)
 
@@ -13,35 +11,12 @@ AFVCharacter::AFVCharacter(const FObjectInitializer& ObjectInitializer)
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
 	SetReplicatingMovement(false);
-
-	// Create state manager
-	StateManager = CreateDefaultSubobject<UFVCharacterStateManager>(TEXT("StateManager"));
 }
 
-void AFVCharacter::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-
-	// Initialize state manager
-	if (StateManager)
-	{
-		StateManager->Initialize(this);
-	}
-}
 
 void AFVCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-}
-
-void AFVCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	
-	if (StateManager)
-	{
-		StateManager->UpdateState(DeltaTime);
-	}
 }
 
 void AFVCharacter::Landed(const FHitResult& Hit)

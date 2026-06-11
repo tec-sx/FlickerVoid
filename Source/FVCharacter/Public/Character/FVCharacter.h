@@ -18,8 +18,6 @@ class UFVCharacterMovementComponent;
 struct FInputActionValue;
 class UFVAbilitySystemComponent;
 class USpringArmComponent;
-class UFVCharacterStateManager;
-class UFVCharacterArchetypeData;
 class UFVInteractionComponent;
 
 UCLASS(Config = Game)
@@ -30,15 +28,8 @@ class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter
 public:
 	AFVCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	//~APawn interface
-	virtual void Tick(float DeltaTime) override;
 	virtual void BeginPlay() override;
-	virtual void PostInitializeComponents() override;
-	//~End of APawn interface
-	
-	//~ACharacter overrides
 	virtual void Landed(const FHitResult& Hit) override;
-	//~End of ACharacter overrides
 
 	//~=============================================================================
 	// Character Properties
@@ -99,10 +90,6 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	bool RequestTraverse();
-
-protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character|State")
-	TObjectPtr<UFVCharacterStateManager> StateManager;
 
 private:
 	// Intent Data

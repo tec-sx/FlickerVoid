@@ -16,10 +16,8 @@ FVCharacter/
 │   │
 │   ├── Character/          [All core character-related classes]
 │   │   ├── FVCharacter.h                    (Main character class)
-│   │   ├── FVCharacterArchetypeData.h       (Data asset - character archetypes)
 │   │   ├── FVCharacterAttributeComponent.h  (Character attributes component)
 │   │   ├── FVCharacterDataAsset.h           (Character data asset base)
-│   │   ├── FVCharacterStateManager.h        (Tag-based state management)
 │   │   └── FVCharacterTags.h                (Character tag definitions)
 │   │
 │   ├── Movement/           [All movement-related classes]
@@ -68,10 +66,8 @@ FVCharacter/
 ### Character Context
 ```cpp
 #include "Character/FVCharacter.h"
-#include "Character/FVCharacterArchetypeData.h"
 #include "Character/FVCharacterAttributeComponent.h"
 #include "Character/FVCharacterDataAsset.h"
-#include "Character/FVCharacterStateManager.h"
 #include "Character/FVCharacterTags.h"
 ```
 
@@ -96,9 +92,6 @@ FVCharacter/
 
 ### 1. Intuitive Navigation
 ```
-❓ "Where is the character state manager?"
-✅ Character/FVCharacterStateManager.h
-
 ❓ "Where is the movement data asset?"
 ✅ Movement/FVMovementHandlerData.h
 
@@ -133,7 +126,6 @@ Components/
   - FVCharacterAttributeComponent.h     (character)
 
 Data/
-  - FVCharacterArchetypeData.h          (character)
   - FVMovementHandlerData.h             (movement)
 
 Problem: Related code scattered across multiple folders
@@ -143,7 +135,6 @@ Problem: Related code scattered across multiple folders
 ```
 Character/
   - FVCharacter.h
-  - FVCharacterArchetypeData.h
   - FVCharacterAttributeComponent.h
   - (all character-related code together)
 
