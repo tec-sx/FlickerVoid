@@ -1,6 +1,6 @@
 #pragma once
 #include "GameplayTagContainer.h"
-#include "Character/FVCharacterTags.h"
+#include "FVCharacterTags.h"
 #include "FVAnimationTypes.generated.h"
 
 USTRUCT(BlueprintType)

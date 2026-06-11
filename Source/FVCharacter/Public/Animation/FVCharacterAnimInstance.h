@@ -23,28 +23,19 @@ struct FLICKERVOIDCHARACTER_API FFVCharacterAnimInstanceProxy : public FAnimInst
 	FFVCharacterAnimInstanceProxy();
 	FFVCharacterAnimInstanceProxy(UAnimInstance* InAnimInstance);
 
-	//~=============================================================================
-	// FAnimInstanceProxy Interface (Thread-Safe Lifecycle)
-	//~=============================================================================
-
 protected:
 	virtual void PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds) override;
 	virtual void Update(float DeltaSeconds) override;
 	virtual void Initialize(UAnimInstance* InAnimInstance) override;
 
 public:
-	//~=============================================================================
-	// Cached Character Data (Updated PreUpdate, Read-Only in Update)
-	//~=============================================================================
-
 	FFVCharacterAnimationData CharacterData;
 	TWeakObjectPtr<const UFVAnimationConfigData> Config;
 	float DeltaTime;
 
 	//~=============================================================================
-	// Computed Animation State (Calculated in Update, thread-safe)
+	// Computed Animation State
 	//~=============================================================================
-
 	float SmoothedGroundSpeed;
 	FVector SmoothedVelocity;
 	FVector SmoothedAcceleration;
@@ -99,10 +90,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Animation|State|Tags")
 	bool HasAnyTags(const FGameplayTagContainer& Tags) const { return Proxy.CharacterData.CharacterTags.HasAny(Tags); }
-
-	//~=============================================================================
-	// Common Animation Queries (Convenience Methods)
-	//~=============================================================================
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Movement")
 	bool IsMoving() const { return Proxy.bIsMoving; }

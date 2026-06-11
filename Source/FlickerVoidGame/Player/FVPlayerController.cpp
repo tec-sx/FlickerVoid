@@ -6,7 +6,7 @@
 #include "FVCoreTags.h"
 #include "FVAbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Character/FVCharacterTags.h"
+#include "FVCharacterTags.h"
 #include "InputMappingContext.h"
 #include "Movement/FVCharacterMovementComponent.h"
 

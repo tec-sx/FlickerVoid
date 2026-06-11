@@ -25,29 +25,6 @@ namespace FVItemsTags
 	// ============================================================================
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(ItemEffect_Clarity_Down);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(ItemEffect_Clarity_Up);
-
-	// ============================================================================
-	// INTERACTION ACTION TAGS
-	// ============================================================================
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Pickup);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Use);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Open);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Close);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Talk);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Examine);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Read);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Activate);
-
-	// ============================================================================
-	// INTERACTABLE TYPE TAGS
-	// ============================================================================
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Item);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Item_Pickup);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Door);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Container);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_NPC);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Device);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Document);
 }
 
 #undef UE_API

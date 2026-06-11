@@ -63,15 +63,9 @@ public:
 	// IDENTIFICATION
 	// ========================================================================
 	
-	/** Unique identifier for this character archetype */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity")
-	FName CharacterArchetypeId;
-
-	/** Display name for the editor */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity")
 	FText DisplayName;
 
-	/** Tags that describe this character (e.g., "Character.Type.Guard", "Character.Faction.Noble") */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity")
 	FGameplayTagContainer CharacterTags;
 
@@ -79,11 +73,9 @@ public:
 	// ATTRIBUTE INITIALIZATION
 	// ========================================================================
 
-	/** Initial attribute values - these override the AttributeSet defaults */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes", meta = (TitleProperty = "Attribute"))
 	TArray<FFVAttributeInitializer> InitialAttributes;
 
-	/** Skills this character possesses */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Skills", meta = (TitleProperty = "SkillTag"))
 	TArray<FFVSkillDefinition> Skills;
 

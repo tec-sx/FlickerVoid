@@ -279,7 +279,6 @@ bool UFVGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemC
 		{
 			if (OptionalRelevantTags && AbilitySystemComponentTags.HasTag(FVCoreTags::Status_Death))
 			{
-				// If player is dead and was rejected due to blocking tags, give that feedback
 				OptionalRelevantTags->AddTag(FVGameplayTags::Ability_ActivateFail_IsDead);
 			}
 

@@ -2,7 +2,7 @@
 
 #include "Character/FVCharacterStateManager.h"
 #include "Character/FVCharacter.h"
-#include "Character/FVCharacterTags.h"
+#include "FVCharacterTags.h"
 #include "Movement/FVMovementTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
