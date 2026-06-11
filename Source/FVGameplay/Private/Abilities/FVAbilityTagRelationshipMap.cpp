@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "FVAbilityTagRelationshipMap.h"
+#include "Abilities/AFVAbilityTagRelationshipMap.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVAbilityTagRelationshipMap)
 

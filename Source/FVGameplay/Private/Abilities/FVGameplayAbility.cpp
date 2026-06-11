@@ -1,6 +1,6 @@
 #include "Abilities/FVGameplayAbility.h"
 
-#include "FVAbilitySystemComponent.h"
+#include "Abilities/AFVAbilitySystemComponent.h"
 #include "Abilities/FVAbilityFailureMessage.h"
 #include "AbilitySystemGlobals.h"
 #include "Abilities/FVAbilityCost.h"

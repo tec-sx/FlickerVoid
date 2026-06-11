@@ -4,7 +4,7 @@
 #include "Input/FVInputConfig.h"
 #include "Input/FVInputComponent.h"
 #include "FVCoreTags.h"
-#include "FVAbilitySystemComponent.h"
+#include "Abilities/FVAbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "FVCharacterTags.h"
 #include "InputMappingContext.h"

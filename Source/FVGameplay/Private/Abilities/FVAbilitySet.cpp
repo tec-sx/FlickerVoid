@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "FVAbilitySet.h"
+#include "Abilities/FVAbilitySet.h"
 #include "Abilities/FVGameplayAbility.h"
-#include "FVAbilitySystemComponent.h"
+#include "Abilities/FVAbilitySystemComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVAbilitySet)
 
