@@ -1,16 +1,4 @@
-// AngelScript implementation of the interaction prompt overlay.
-//
-// Setup in the UMG designer:
-//   1. Create a Widget Blueprint that inherits this class (or UFVInteractionPromptWidget).
-//   2. Add 4 child UFVInteractionSlotWidget children named Slot0..Slot3.
-//   3. Fill InputTagHints with the display text for each of the 4 input tags
-//      (e.g. InputTag.Interact.Primary → "E", InputTag.Interact.PrimaryHold → "Hold E").
-//   4. Assign this widget class to AFVHUD::InteractionPromptWidgetClass in the HUD blueprint.
-//
-// Visibility: the widget is always on the viewport but Hidden when no interactable is focused.
-// Individual slots beyond the action count are also Hidden.
-
-class UFVActionsPromptWidget : UFVInteractionPromptWidget
+class UFVInteractionPromptWidget : UUserWidget
 {
     // Designer-configured: maps input slot tag → short key hint string shown in the slot
     // Example entries:
@@ -35,37 +23,107 @@ class UFVActionsPromptWidget : UFVInteractionPromptWidget
     UPROPERTY(BindWidget)
     UFVInteractionSlotWidget Slot3;
 
+    UPROPERTY()
+    UFVInteractionSubsystem InteractionSubsystem;
+
     UFUNCTION(BlueprintOverride)
     void Construct()
     {
+        AFVPlayerController PC = Cast<AFVPlayerCharacterController>(GetOwningPlayer());
+
+        if (IsValid(PC))
+        {
+            InteractionSubsystem = PC.GetInteractionSubsystem();
+            PC.OnPossessedPawnChanged.AddUFunction(this, n"OnPawnChanged");
+            
+            if(IsValid(InteractionSubsystem))
+            {
+                OnPawnChanged(nullptr, PC.GetControlledPawn());
+            }
+
+        }
+
         SetVisibility(ESlateVisibility::Hidden);
     }
 
-    // Called by the C++ base whenever focus changes.
     UFUNCTION(BlueprintOverride)
-    void OnFocusChanged(
-		UFVInteractableComponent FocusedInteractable,
-		const TArray<FFVInteractionActionDisplay>& Actions)
+    void Destruct()
     {
-        if (FocusedInteractable == nullptr || Actions.Num() == 0)
+        UnbindFromInstigator();
+        
+        AFVPlayerController PC = Cast<AFVPlayerCharacterController>(GetOwningPlayer());
+
+        if (IsValid(PC))
+        {
+            PC.OnPossessedPawnChanged.Unbind(this, n"OnPawnChanged");
+        }
+        
+        InteractionSubsystem = nullptr;
+    }
+
+    
+    UFUNCTION()
+    private void OnPawnChanged(APawn OldPawn, APawn NewPawn)
+    {
+        UnbindFromInstigator();
+
+        if (IsValid(NewPawn))
+        {
+            BindToInstigator();
+        }
+        else
+        {
+            OnFocusChanged(nullptr);
+        }
+    }
+
+    UFUNCTION()
+    void OnFocusChanged(UFVInteractionTargetComponent Target)
+    {
+        TArray<FFVInteractionActionInfo> Actions = InteractionSubsystem.GetAvailableActionsUIInfo();
+
+        if (IsValid(Target) && Actions.Num() > 0)
+        {
+            SetVisibility(ESlateVisibility::HitTestInvisible);
+
+                UpdateActionSlot(Slot0, Actions, 0);
+                UpdateActionSlot(Slot1, Actions, 1);
+                UpdateActionSlot(Slot2, Actions, 2);
+                UpdateActionSlot(Slot3, Actions, 3);
+        }
+        else
         {
             SetVisibility(ESlateVisibility::Hidden);
             return;
         }
-
-        SetVisibility(ESlateVisibility::HitTestInvisible);
-        UpdateSlot(Slot0, Actions, 0);
-        UpdateSlot(Slot1, Actions, 1);
-        UpdateSlot(Slot2, Actions, 2);
-        UpdateSlot(Slot3, Actions, 3);
     }
 
-    private void UpdateSlot(
-		UFVInteractionSlotWidget Slot,
-		const TArray<FFVInteractionActionDisplay>& Actions,
+    private void BindToInstigator()
+    {
+        InteractionSubsystem.OnFocusChanged.AddUFunction(this, n"OnFocusChanged");
+
+        UFVInteractionTargetComponent Target = InteractionSubsystem.GetFocusedTarget();
+        
+        if (IsValid(Target))
+        {
+            OnFocusChanged(Target);
+        }
+    }
+
+    private void UnbindFromInstigator()
+    {
+        if (IsValid(InteractionSubsystem))
+        {
+            InteractionSubsystem.OnFocusChanged.Unbind(this, n"OnFocusChanged");
+        }
+    }
+
+    private void UpdateActionSlot(
+		UFVInteractionSlotWidget ActionSlot,
+		const TArray<FFVInteractionActionInfo>& Actions,
 		int32 Index)
     {
-        if (Slot == nullptr)
+        if (ActionSlot == nullptr)
         {
             return;
         }
@@ -73,12 +131,12 @@ class UFVActionsPromptWidget : UFVInteractionPromptWidget
         if (Index < Actions.Num())
         {
             FText Hint = GetHintForTag(Actions[Index].InputTag);
-            Slot.SetSlotData(Actions[Index], Hint);
-            Slot.SetVisibility(ESlateVisibility::HitTestInvisible);
+            ActionSlot.SetSlotData(Actions[Index], Hint);
+            ActionSlot.SetVisibility(ESlateVisibility::HitTestInvisible);
         }
         else
         {
-            Slot.SetVisibility(ESlateVisibility::Hidden);
+            ActionSlot.SetVisibility(ESlateVisibility::Hidden);
         }
     }
 

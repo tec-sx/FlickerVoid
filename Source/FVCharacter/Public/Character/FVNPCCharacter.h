@@ -5,7 +5,7 @@
 #include "GameplayTagContainer.h"
 #include "FVNPCCharacter.generated.h"
 
-class UFVInteractableComponent;
+class UFVInteractionTargetComponent;
 class UAbilitySystemComponent;
 
 //~=============================================================================
@@ -39,8 +39,8 @@ public:
 	// Components
 	//~=========================================================================
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NPC")
-	TObjectPtr<UFVInteractableComponent> InteractableComponent;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "NPC")
+	TObjectPtr<UFVInteractionTargetComponent> InteractableComponent;
 
 	//~=========================================================================
 	// ACharacter Interface

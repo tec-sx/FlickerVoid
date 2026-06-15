@@ -5,6 +5,7 @@
 #include "GameplayTagContainer.h"
 #include "FVPlayerController.generated.h"
 
+class UFVInteractionSubsystem;
 class UAbilitySystemComponent;
 class AFVPlayerState;
 class AFVCharacter;
@@ -42,6 +43,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerController")
 	AFVCharacter* GetControlledCharacter() const { return CachedCharacter; }
+	
+	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerController")
+	UFVInteractionSubsystem* GetInteractionSubsystem() const;
 
 protected:
     // ========================================================================
@@ -78,7 +82,10 @@ protected:
     void Input_AbilityInputTagReleased(FGameplayTag InputTag);
 
 private:
+	UPROPERTY(Transient)
     TObjectPtr<AFVCharacter> CachedCharacter;
+	
+	mutable TWeakObjectPtr<UFVInteractionSubsystem> InteractionSubsystem;
 
     TArray<uint32> AbilityBindHandles;
     

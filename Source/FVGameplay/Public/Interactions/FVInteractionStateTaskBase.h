@@ -7,7 +7,7 @@
 #include "Blueprint//StateTreeTaskBlueprintBase.h"
 #include "FVInteractionStateTaskBase.generated.h"
 
-class UFVInteractableComponent;
+class UFVInteractionTargetComponent;
 
 //~=============================================================================
 // Base class for all interaction State Tree tasks.
@@ -38,8 +38,10 @@ class FLICKERVOIDGAMEPLAY_API UFVInteractionStateTaskBase : public UStateTreeTas
 	GENERATED_BODY()
 
 public:
+	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
+	
 	UFUNCTION(BlueprintPure, Category = "Interaction|Task")
-	static UFVInteractableComponent* GetInteractable(AActor* OwnerActor);
+	static UFVInteractionTargetComponent* GetInteractable(AActor* OwnerActor);
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Task")
 	static AActor* GetInstigator(AActor* OwnerActor);
@@ -59,4 +61,5 @@ public:
 	// Async tasks: call from your dialogue-ended / mini-game-finished callback.
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Task")
 	static void CompleteTask(AActor* OwnerActor, bool bSuccess);
+	
 };

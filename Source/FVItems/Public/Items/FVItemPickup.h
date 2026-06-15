@@ -8,6 +8,7 @@
 
 #define UE_API FLICKERVOIDITEMS_API
 
+class UFVInteractionAction;
 class UBoxComponent;
 class UFVInventoryItemBase;
 class UFVInventoryComponent;
@@ -70,10 +71,10 @@ protected:
 
 	/** Interaction action data assets - configure in Blueprint or defaults */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FlickerVoid|Item|Interaction")
-	TObjectPtr<UFVInteractionActionData> PickupAction;
+	TObjectPtr<UFVInteractionAction> PickupAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FlickerVoid|Item|Interaction")
-	TObjectPtr<UFVInteractionActionData> ExamineAction;
+	TObjectPtr<UFVInteractionAction> ExamineAction;
 
 	/** Blueprint event when focused */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlickerVoid|Item")

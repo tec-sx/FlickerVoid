@@ -2,7 +2,6 @@
 
 #include "Items/FVItemPickup.h"
 #include "Inventory/FVInventoryComponent.h"
-#include "FVInteractionActionData.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"

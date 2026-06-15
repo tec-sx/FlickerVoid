@@ -11,7 +11,6 @@
 #include "Player/FVPlayerController.h"
 #include "Player/FVPlayerState.h"
 #include "Character/FVCharacter.h"
-#include "FVHUD.h"
 //#include "Character/LyraPawnExtensionComponent.h"
 #include "Character/FVPawnData.h"
 //#include "GameModes/LyraWorldSettings.h"
@@ -31,7 +30,6 @@ AFVExploreGameMode::AFVExploreGameMode()
 	PlayerControllerClass = AFVPlayerController::StaticClass();
 	PlayerStateClass = AFVPlayerState::StaticClass();
 	DefaultPawnClass = AFVCharacter::StaticClass();
-	HUDClass = AFVHUD::StaticClass();
 }
 
 const UFVPawnData* AFVExploreGameMode::GetPawnDataForController(const AController* InController) const

@@ -5,7 +5,7 @@ class AFVPlayerCharacter : AFVCharacter
 
     // Manages focus detection and routes input tags to UFVInteractableComponent actions
     UPROPERTY(DefaultComponent, Category = "Interaction")
-    UFVInteractionComponent InteractionComponent;
+    UFVInteractionInstigatorComponent InteractionComponent;
 
     UPROPERTY(DefaultComponent, Category = "Animation")
     UContextualAnimSceneActorComponent ContextualAnimation;
@@ -15,6 +15,23 @@ class AFVPlayerCharacter : AFVCharacter
 
     bool bJustLanded = false;
     bool bIsRagdolling = false;
+
+    AFVPlayerCharacter()
+    {
+        bUseControllerRotationPitch = false;
+        bUseControllerRotationYaw = false; 
+        bUseControllerRotationRoll = false;
+    }
+
+    UFUNCTION(BlueprintOverride)
+    void BeginPlay()
+    {
+        Traversal = UFVTraversalComponent::Get(this);
+
+        // Configure initial movement settings
+        CharacterMovement.bOrientRotationToMovement = false;
+        CharacterMovement.bUseControllerDesiredRotation = true;
+    }
 
     UFUNCTION(BlueprintOverride)
     bool RequestTraverse()
@@ -40,23 +57,6 @@ class AFVPlayerCharacter : AFVCharacter
         SetTraversing(bIsTraversing);
 
         return bIsTraversing;
-    }
-
-    AFVPlayerCharacter()
-    {
-        bUseControllerRotationPitch = false;
-        bUseControllerRotationYaw = false; 
-        bUseControllerRotationRoll = false;
-    }
-
-    UFUNCTION(BlueprintOverride)
-    void BeginPlay()
-    {
-        Traversal = UFVTraversalComponent::Get(this);
-
-        // Configure initial movement settings
-        CharacterMovement.bOrientRotationToMovement = false;
-        CharacterMovement.bUseControllerDesiredRotation = true;
     }
 
     UFUNCTION(BlueprintOverride)

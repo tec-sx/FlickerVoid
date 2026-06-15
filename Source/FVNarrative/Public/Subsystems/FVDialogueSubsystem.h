@@ -84,7 +84,7 @@ public:
 	void AddDialogueTable(UDataTable* AdditionalTable);
 
 	// ========================================================================
-	// SIGNAL SYSTEM (Like DRS)
+	// SIGNAL SYSTEM
 	// ========================================================================
 
 	/**

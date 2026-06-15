@@ -4,7 +4,7 @@
 #include "FVMaterialTypes.generated.h"
 
 USTRUCT(BlueprintType)
-struct FFVMaterialOverride
+struct FLICKERVOIDCORE_API FFVMaterialOverride
 {
 	GENERATED_BODY()
 

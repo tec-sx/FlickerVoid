@@ -17,19 +17,12 @@ class USoundBase;
 UENUM(BlueprintType)
 enum class EFVDialogueLineType : uint8
 {
-	/** Standard NPC speech */
 	Speech,
-	/** Internal thought/narration */
 	Thought,
-	/** Whisper or quiet speech */
 	Whisper,
-	/** Shouting or loud speech */
 	Shout,
-	/** Radio/phone communication */
 	Communication,
-	/** Environmental/ambient dialogue */
 	Ambient,
-	/** Bark (short contextual line) */
 	Bark
 };
 
@@ -201,48 +194,34 @@ struct FLICKERVOIDNARRATIVE_API FFVDialogueLine : public FTableRowBase
 	// ========================================================================
 	// IDENTIFICATION
 	// ========================================================================
-
-	/** Unique line ID (used for references and localization) */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
 	FName LineId;
 
 	/** Signal/context that triggers this line (e.g., "Greeting", "Quest_Accept", "Bark_Suspicious") */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
 	FName SignalName;
-
-	/** Speaker ID (NPC identifier or "Player" for protagonist thoughts) */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
 	FName SpeakerId;
-
-	/** Group ID for organizing related lines */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
-	FName GroupId;
 
 	// ========================================================================
 	// CONTENT
 	// ========================================================================
-
-	/** The dialogue text */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Content")
 	FText Text;
-
-	/** Alternative text when condition partially met (e.g., low sanity version) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Content")
-	FText AlternativeText;
-
-	/** Type of line (affects UI presentation) */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Content")
 	EFVDialogueLineType LineType = EFVDialogueLineType::Speech;
 
 	// ========================================================================
 	// AUDIO
 	// ========================================================================
-
-	/** Voice audio for this line */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
 	TSoftObjectPtr<USoundBase> VoiceAudio;
 
-	/** Subtitle duration override (0 = calculate from audio/text) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
 	float DurationOverride = 0.0f;
 
@@ -331,7 +310,6 @@ struct FLICKERVOIDNARRATIVE_API FFVDialogueLine : public FTableRowBase
 		: LineId(NAME_None)
 		, SignalName(NAME_None)
 		, SpeakerId(NAME_None)
-		, GroupId(NAME_None)
 		, LineType(EFVDialogueLineType::Speech)
 		, DurationOverride(0.0f)
 		, ConditionOperator(EFVConditionOperator::And)

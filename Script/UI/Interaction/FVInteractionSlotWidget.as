@@ -15,10 +15,8 @@ class UFVInteractionSlotWidget : UUserWidget
     UPROPERTY(BindWidgetOptional)
     UImage IconImage;
 
-    // Populate the slot from display data + caller-supplied key hint text.
-    // Unavailable actions are dimmed (40% opacity) but remain visible so
-    // the player knows an action exists.
-    void SetSlotData(FFVInteractionActionDisplay Data, FText KeyHint)
+    // TODO: Update to use angelscript struct for easier iterations
+    void SetSlotData(FFVInteractionActionInfo Data, FText KeyHint)
     {
         ActionNameText.SetText(Data.DisplayName);
         KeyHintText.SetText(KeyHint);

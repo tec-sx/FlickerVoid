@@ -1,12 +1,12 @@
 #include "Character/FVNPCCharacter.h"
-#include "Interaction/FVInteractableComponent.h"
+#include "Interactions/FVInteractionTargetComponent.h"
 
 AFVNPCCharacter::AFVNPCCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	InteractableComponent = CreateDefaultSubobject<UFVInteractableComponent>(TEXT("InteractableComponent"));
+	InteractableComponent = CreateDefaultSubobject<UFVInteractionTargetComponent>(TEXT("InteractableComponent"));
 
 	// NPCs don't replicate movement — single-player only
 	SetReplicatingMovement(false);

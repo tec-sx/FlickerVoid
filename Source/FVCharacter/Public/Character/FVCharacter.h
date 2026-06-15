@@ -4,6 +4,7 @@
 
 #include "GameFramework/Character.h"
 #include "FVCharacterTypes.h"
+#include "GameplayTagContainer.h"
 #include "FVCharacter.generated.h"
 
 class UNavMoverComponent;
@@ -13,7 +14,7 @@ class UFVCharacterMovementComponent;
 struct FInputActionValue;
 class UFVAbilitySystemComponent;
 class USpringArmComponent;
-class UFVInteractionComponent;
+class UFVInteractionInstigatorComponent;
 
 UCLASS(Config = Game)
 class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter
@@ -81,8 +82,14 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	bool RequestTraverse();
-
+	
+	UFUNCTION(BlueprintCallable)
+	FGameplayTagContainer& GetAllTags() { return  CharacterTags; }
+	
 private:
+	UPROPERTY(EditAnywhere)
+	FGameplayTagContainer CharacterTags;
+	
 	// Intent Data
 	FVector MovementDirection = FVector::ZeroVector;
 	EFVGait DesiredGait = EFVGait::Walking;

@@ -1,4 +1,6 @@
 #include "Character/FVCharacter.h"
+
+#include "FVCharacterTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Movement/FVCharacterMovementComponent.h"
 

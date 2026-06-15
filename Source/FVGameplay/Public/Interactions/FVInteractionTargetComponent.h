@@ -1,14 +1,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FVInteractionTargetConfig.h"
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
 #include "StateTreeTypes.h"
-#include "Interaction/FVInteractionTypes.h"
-#include "Interaction/FVInteractionAction.h"
+#include "Interactions/FVInteractionTypes.h"
 
-#include "FVInteractableComponent.generated.h"
+#include "FVInteractionTargetComponent.generated.h"
 
+class UFVInteractionTargetConfig;
 class UStateTreeComponent;
 
 //~=============================================================================
@@ -20,31 +21,21 @@ class UStateTreeComponent;
 //~=============================================================================
 
 UCLASS(Blueprintable, ClassGroup = (Interaction), meta = (BlueprintSpawnableComponent))
-class FLICKERVOIDGAMEPLAY_API UFVInteractableComponent : public UActorComponent
+class FLICKERVOIDGAMEPLAY_API UFVInteractionTargetComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UFVInteractableComponent();
+	UFVInteractionTargetComponent();
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 	//~=========================================================================
-	// Configuration (set per-actor in the editor)
+	// Configuration
 	//~=========================================================================
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction", meta = (TitleProperty = "DisplayName"))
-	TArray<FFVInteractionAction> Actions;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
-	float FocusRadius = 300.f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
-	float InteractionRadius = 200.f;
-
-	// Tags on this interactable that describe it (Interactable.Door.Locked, etc.)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
-	FGameplayTagContainer InteractableTags;
+	UPROPERTY(EditDefaultsOnly, Category = "Config")
+	TObjectPtr<UFVInteractionTargetConfig> Config;
 
 	//~=========================================================================
 	// Runtime State
@@ -54,7 +45,7 @@ public:
 	bool IsInFocus() const { return bIsInFocus; }
 
 	UFUNCTION(BlueprintPure, Category = "Interaction")
-	bool IsBeingInteracted() const;
+	bool IsInteractionInProgress() const;
 
 	//~=========================================================================
 	// Active context — read by UFVInteractionStateTreeTaskBase helpers
@@ -85,10 +76,14 @@ public:
 	// Called by UFVInteractionComponent
 	//~=========================================================================
 	
-	TArray<FFVInteractionActionDisplay> GetActionDisplayData(AActor* Instigator) const;
-	EFVInteractionResult TryExecuteAction(const FGameplayTag& InputTag, AActor* Instigator);
+	EFVInteractionResult TryExecuteAction(
+		const FGameplayTag& InputTag, 
+		AActor* Instigator,
+		FGameplayTagContainer& InstigatorTags);
 	void CancelActiveInteraction();
 	void SetFocused(bool bFocused);
+	float GetFocusRadius() const { return Config->FocusRadius; }
+	TArray<UFVInteractionAction*> GetAvailableActions() const { return Config->AvailableActions; }
 
 	//~=========================================================================
 	// Events — bind in Blueprint/AngelScript for visual feedback
@@ -100,15 +95,22 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusChanged, bool, bFocused);
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
 	FOnFocusChanged OnFocusChanged;
-
+	
+	UFUNCTION()
+	FGameplayTagContainer& GetTags() { return TargetTags; }
+	
+	UFUNCTION()
+	void AddTag(const FGameplayTag& Tag) { TargetTags.AddTagFast(Tag); }
+	
+	UFUNCTION()
+	void  RemoveTag(const FGameplayTag& Tag) { TargetTags.RemoveTag(Tag); }
+	
 private:
-	void CreateStateTreeComponent();
-
 	UFUNCTION()
 	void OnStateTreeStatusChanged(EStateTreeRunStatus RunStatus);
 
 	UPROPERTY(Transient)
-	TObjectPtr<UStateTreeComponent> InteractionStateTreeComp;
+	TObjectPtr<UStateTreeComponent> StateTreeComponent;
 
 	// Context set before each tree run — read by tasks via GetActive* accessors
 	UPROPERTY(Transient)
@@ -116,7 +118,10 @@ private:
 
 	UPROPERTY(Transient)
 	FGameplayTag ActiveActionTag;
-
+	
+	UPROPERTY(Transient)
+	FGameplayTagContainer TargetTags;
+	
 	UPROPERTY(Transient)
 	FVector ActiveInteractionPoint = FVector::ZeroVector;
 
@@ -129,5 +134,6 @@ private:
 	// Cached action tag for the completion callback (ActiveActionTag may be cleared before broadcast)
 	FGameplayTag CompletingActionTag;
 
+	bool bIsSimple = false;
 	bool bIsInFocus = false;
 };

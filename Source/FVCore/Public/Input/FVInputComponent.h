@@ -46,7 +46,7 @@ public:
 };
 
 template<class UserClass, typename FuncType>
-inline void UFVInputComponent::BindNativeAction(const UFVInputConfig* InputConfig, const FGameplayTag& InputTag, ETriggerEvent TriggerEvent, UserClass* Object, FuncType Func, bool bLogIfNotFound)
+void UFVInputComponent::BindNativeAction(const UFVInputConfig* InputConfig, const FGameplayTag& InputTag, ETriggerEvent TriggerEvent, UserClass* Object, FuncType Func, bool bLogIfNotFound)
 {
 	check(InputConfig);
 	if (const UInputAction* IA = InputConfig->FindNativeInputActionForTag(InputTag, bLogIfNotFound))
@@ -56,7 +56,7 @@ inline void UFVInputComponent::BindNativeAction(const UFVInputConfig* InputConfi
 }
 
 template<class UserClass, typename PressedFuncType, typename ReleasedFuncType>
-inline void UFVInputComponent::BindAbilityActions(const UFVInputConfig* InputConfig, UserClass* Object, PressedFuncType PressedFunc, ReleasedFuncType ReleasedFunc, TArray<uint32>& BindHandles)
+void UFVInputComponent::BindAbilityActions(const UFVInputConfig* InputConfig, UserClass* Object, PressedFuncType PressedFunc, ReleasedFuncType ReleasedFunc, TArray<uint32>& BindHandles)
 {
 	check(InputConfig);
 
