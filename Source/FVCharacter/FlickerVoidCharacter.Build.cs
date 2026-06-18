@@ -14,7 +14,6 @@ public class FlickerVoidCharacter : ModuleRules
             "Engine",
             "GameplayAbilities",
             "GameplayTags",
-            "PoseSearch",
             "MotionTrajectory",
             "FlickerVoidCore",
         });
@@ -22,10 +21,7 @@ public class FlickerVoidCharacter : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "ControlRig",
-            "RigVM",
-            "UAF",
-            "UAFAnimGraph",
-            "StructUtils"
+            "RigVM"
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));

@@ -37,8 +37,6 @@ public class FlickerVoid : ModuleRules
 			"RHI",
             "DeveloperSettings",
             "EngineSettings",
-            "UAF",
-            "UAFAnimGraph",      // UAF Animation Graph - provides trait interfaces
             "RigVM",
         });
 
@@ -48,7 +46,6 @@ public class FlickerVoid : ModuleRules
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.AddRange(new string[] {
-				"UAFAnimGraphUncookedOnly" // Editor only module for UAF graph node templates
 			});
 		}
 

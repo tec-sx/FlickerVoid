@@ -12,7 +12,6 @@ public class FlickerVoidAI : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
-            "Mover",
             "GameplayAbilities",
             "GameplayTags",
             "AIModule",
