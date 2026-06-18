@@ -24,9 +24,15 @@ public class FlickerVoidGameplay : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[] {
             "UMG",
-            "GameplayMessageRuntime",
-            "StateTreeEditorModule"
+            "GameplayMessageRuntime"
         });
+
+		if (Target.bBuildEditor)
+		{
+            PrivateDependencyModuleNames.AddRange(new string[] {
+				"StateTreeEditorModule"
+			});
+        }
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));

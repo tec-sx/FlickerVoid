@@ -29,11 +29,10 @@ public:
 	//~=========================================================================
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC|Identity")
-	FText NPCName;
+	FText Name;
 
-	// Traits and current state tags (e.g., NPC.Trait.Hostile, NPC.State.Sleeping)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC|Identity")
-	FGameplayTagContainer NPCTags;
+	FGameplayTagContainer CharacterTags;
 
 	//~=========================================================================
 	// Components
@@ -53,11 +52,11 @@ public:
 	//~=========================================================================
 
 	UFUNCTION(BlueprintPure, Category = "NPC")
-	bool HasNPCTag(const FGameplayTag& Tag) const { return NPCTags.HasTag(Tag); }
+	bool HasNPCTag(const FGameplayTag& Tag) const { return CharacterTags.HasTag(Tag); }
 
 	UFUNCTION(BlueprintCallable, Category = "NPC")
-	void AddNPCTag(const FGameplayTag& Tag) { NPCTags.AddTag(Tag); }
+	void AddNPCTag(const FGameplayTag& Tag) { CharacterTags.AddTag(Tag); }
 
 	UFUNCTION(BlueprintCallable, Category = "NPC")
-	void RemoveNPCTag(const FGameplayTag& Tag) { NPCTags.RemoveTag(Tag); }
+	void RemoveNPCTag(const FGameplayTag& Tag) { CharacterTags.RemoveTag(Tag); }
 };

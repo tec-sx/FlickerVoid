@@ -5,6 +5,8 @@ public class FlickerVoidCharacter : ModuleRules
 {
     public FlickerVoidCharacter(ReadOnlyTargetRules Target) : base(Target)
     {
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
         PublicDependencyModuleNames.AddRange(new string[] 
         {
             "Core",
@@ -15,7 +17,6 @@ public class FlickerVoidCharacter : ModuleRules
             "PoseSearch",
             "MotionTrajectory",
             "FlickerVoidCore",
-            "FlickerVoidGameplay"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[]

@@ -5,6 +5,8 @@ public class FlickerVoidItems : ModuleRules
 {
     public FlickerVoidItems(ReadOnlyTargetRules Target) : base(Target)
     {
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
         PublicDependencyModuleNames.AddRange(new string[] 
         { 
             "Core",
