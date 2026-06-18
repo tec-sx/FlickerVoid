@@ -289,10 +289,6 @@
 			"Enabled": true
 		},
 		{
-			"Name": "InteractionInterface",
-			"Enabled": true
-		},
-		{
 			"Name": "GameplayInteractions",
 			"Enabled": true
 		},

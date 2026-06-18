@@ -10,6 +10,9 @@ namespace FVCoreTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Sprint, "InputTag.Sprint", "Sprint input.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Jump, "InputTag.Jump", "Jump input.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Aim, "InputTag.Aim", "Aim input.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Primary, "InputTag.Action.Primary", "Primary Action.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Secondary, "InputTag.Action.Secondary", "Secondary Action.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Ternary, "InputTag.Action.Ternary", "Ternary Action.");
 
 	FGameplayTag FindTagByString(const FString& TagString, bool bMatchPartialString)
 	{

@@ -71,18 +71,15 @@ public:
 	// from gameplay code; call CompleteTask(OwnerActor, bSuccess) on the task base instead.
 	UFUNCTION(BlueprintCallable, Category = "Interaction|ActiveContext")
 	void CompleteActiveTask(bool bSuccess);
-
-	//~=========================================================================
-	// Called by UFVInteractionComponent
-	//~=========================================================================
 	
-	EFVInteractionResult TryExecuteAction(
-		const FGameplayTag& InputTag, 
-		AActor* Instigator,
-		FGameplayTagContainer& InstigatorTags);
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Actions")
+	EFVInteractionResult TryExecuteAction(const FGameplayTag& ActionTag, AActor* InstigatorActor);
+	
 	void CancelActiveInteraction();
 	void SetFocused(bool bFocused);
 	float GetFocusRadius() const { return Config->FocusRadius; }
+	
+	UFUNCTION(BlueprintPure, Category = "Interaction|Actions")
 	TArray<UFVInteractionAction*> GetAvailableActions() const { return Config->AvailableActions; }
 
 	//~=========================================================================
@@ -95,15 +92,6 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusChanged, bool, bFocused);
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
 	FOnFocusChanged OnFocusChanged;
-	
-	UFUNCTION()
-	FGameplayTagContainer& GetTags() { return TargetTags; }
-	
-	UFUNCTION()
-	void AddTag(const FGameplayTag& Tag) { TargetTags.AddTagFast(Tag); }
-	
-	UFUNCTION()
-	void  RemoveTag(const FGameplayTag& Tag) { TargetTags.RemoveTag(Tag); }
 	
 private:
 	UFUNCTION()
@@ -120,9 +108,6 @@ private:
 	FGameplayTag ActiveActionTag;
 	
 	UPROPERTY(Transient)
-	FGameplayTagContainer TargetTags;
-	
-	UPROPERTY(Transient)
 	FVector ActiveInteractionPoint = FVector::ZeroVector;
 
 	UPROPERTY(Transient)
@@ -130,10 +115,13 @@ private:
 
 	UPROPERTY(Transient)
 	bool bActiveTaskSucceeded = false;
-
+	
+	UPROPERTY(Transient)
+	bool bActiveActionIsSimple = false;
+	
 	// Cached action tag for the completion callback (ActiveActionTag may be cleared before broadcast)
 	FGameplayTag CompletingActionTag;
 
-	bool bIsSimple = false;
+	bool bIsInitialized = false;
 	bool bIsInFocus = false;
 };

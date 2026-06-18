@@ -20,9 +20,6 @@ class UFVInteractionPromptWidget : UUserWidget
     UPROPERTY(BindWidget)
     UFVInteractionSlotWidget Slot2;
 
-    UPROPERTY(BindWidget)
-    UFVInteractionSlotWidget Slot3;
-
     UPROPERTY()
     UFVInteractionSubsystem InteractionSubsystem;
 
@@ -81,7 +78,6 @@ class UFVInteractionPromptWidget : UUserWidget
     void OnFocusChanged(UFVInteractionTargetComponent Target)
     {
         TArray<FFVInteractionActionInfo> Actions = InteractionSubsystem.GetAvailableActionsUIInfo();
-
         if (IsValid(Target) && Actions.Num() > 0)
         {
             SetVisibility(ESlateVisibility::HitTestInvisible);
@@ -89,7 +85,6 @@ class UFVInteractionPromptWidget : UUserWidget
                 UpdateActionSlot(Slot0, Actions, 0);
                 UpdateActionSlot(Slot1, Actions, 1);
                 UpdateActionSlot(Slot2, Actions, 2);
-                UpdateActionSlot(Slot3, Actions, 3);
         }
         else
         {
@@ -130,7 +125,7 @@ class UFVInteractionPromptWidget : UUserWidget
 
         if (Index < Actions.Num())
         {
-            FText Hint = GetHintForTag(Actions[Index].InputTag);
+            FText Hint = GetHintForTag(Actions[Index].ActionTag);
             ActionSlot.SetSlotData(Actions[Index], Hint);
             ActionSlot.SetVisibility(ESlateVisibility::HitTestInvisible);
         }

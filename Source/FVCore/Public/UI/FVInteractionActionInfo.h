@@ -11,9 +11,6 @@ struct FLICKERVOIDCORE_API FFVInteractionActionInfo
 	FGameplayTag ActionTag;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction|Display")
-	FGameplayTag InputTag;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Interaction|Display")
 	FText DisplayName;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction|Display")

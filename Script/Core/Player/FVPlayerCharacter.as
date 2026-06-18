@@ -3,7 +3,6 @@ class AFVPlayerCharacter : AFVCharacter
     UPROPERTY(DefaultComponent, Category = "Movement")
     UMotionWarpingComponent MotionWarpingComponent;
 
-    // Manages focus detection and routes input tags to UFVInteractableComponent actions
     UPROPERTY(DefaultComponent, Category = "Interaction")
     UFVInteractionInstigatorComponent InteractionComponent;
 
@@ -19,7 +18,7 @@ class AFVPlayerCharacter : AFVCharacter
     AFVPlayerCharacter()
     {
         bUseControllerRotationPitch = false;
-        bUseControllerRotationYaw = false; 
+        bUseControllerRotationYaw = false;
         bUseControllerRotationRoll = false;
     }
 
@@ -47,9 +46,9 @@ class AFVPlayerCharacter : AFVCharacter
         CharacterData.MovementMode = CharacterMovement.MovementMode;
         CharacterData.Mesh = Mesh;
         CharacterData.MotionWarping = MotionWarpingComponent;
-        
-        EDrawDebugTrace DrawDebugType = CharacterMovement.IsMovingOnGround() 
-            ? EDrawDebugTrace::ForOneFrame 
+
+        EDrawDebugTrace DrawDebugType = CharacterMovement.IsMovingOnGround()
+            ? EDrawDebugTrace::ForOneFrame
             : EDrawDebugTrace::ForDuration;
 
         bool bIsTraversing = Traversal.TryTraversalAction(CharacterData, DrawDebugType);

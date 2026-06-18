@@ -46,6 +46,8 @@ class AFoliageActor : AActor
             case EFoliageType::Bush:
                 GenerateBush();
                 break;
+            default:
+                break;
         }
 	}
 
@@ -65,6 +67,8 @@ class AFoliageActor : AActor
                     break;
                 case EFoliageElementType::Crown:
                     CrownMesh.SetStaticMesh(Element.Mesh);
+                    break;
+                default:
                     break;
             }
         }
@@ -89,6 +93,8 @@ class AFoliageActor : AActor
             {
                 case EFoliageElementType::Bush:
                     BushMesh.SetStaticMesh(Element.Mesh);
+                    break;
+                default:
                     break;
             }
         }

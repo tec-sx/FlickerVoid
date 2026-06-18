@@ -6,6 +6,7 @@
 #include "Interactions/FVInteractionInstigatorComponent.h"
 #include "Interactions/FVInteractionTargetComponent.h"
 #include "FVCore/Public/UI/FVInteractionActionInfo.h"
+#include "Interfaces/FVActorWithTags.h"
 
 void UFVInteractionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -14,7 +15,7 @@ void UFVInteractionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UFVInteractionSubsystem::Deinitialize()
 {
-	FocusedTarget.Reset();
+	Target.Reset();
 	
 	Super::Deinitialize();
 }
@@ -32,6 +33,8 @@ void UFVInteractionSubsystem::PlayerControllerChanged(APlayerController* NewPlay
 	{
 		PlayerController = NewPlayerController;
 		PlayerController->OnPossessedPawnChanged.AddDynamic(this, &ThisClass::OnPawnChanged);
+		
+		OnPawnChanged(nullptr, NewPlayerController->GetPawn());
 	}
 }
 
@@ -42,19 +45,69 @@ UFVInteractionInstigatorComponent* UFVInteractionSubsystem::GetInstigator() cons
 
 UFVInteractionTargetComponent* UFVInteractionSubsystem::GetFocusedTarget() const
 {
-	return FocusedTarget.Get();
+	return Target.Get();
 }
 
 TArray<UFVInteractionAction*> UFVInteractionSubsystem::GetAvailableActions() const
 {
 	TArray<UFVInteractionAction*> AvailableActions;
 	
-	if (IsValid(FocusedTarget.Get()))
+	if (IsValid(Target.Get()))
 	{
-		AvailableActions  = FocusedTarget.Get()->GetAvailableActions();
+		AvailableActions  = Target.Get()->GetAvailableActions();
 	}
 	
 	return AvailableActions;
+}
+
+bool UFVInteractionSubsystem::ActionRequirementsAreMet(const FGameplayTag& ActionTag) const
+{
+	if (!Target.Get())
+	{
+		return false;
+	}
+	
+	FGameplayTagContainer ActorTags;
+	
+	if (IFVActorWithTags* InstigatorWithTags = Cast<IFVActorWithTags>(Instigator->GetOwner()))
+	{
+		ActorTags = InstigatorWithTags->GetAllTags();
+	}
+	
+	for (const UFVInteractionAction* Action : Target->GetAvailableActions())
+	{
+		if (Action->ActionTag.MatchesTagExact(ActionTag) && Action->CheckRequirements(ActorTags))
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+EFVInteractionResult UFVInteractionSubsystem::TryExecuteInteraction(const FGameplayTag& ActionTag)
+{
+	if (!Instigator->GetOwner() || !Target.Get())
+	{
+		return EFVInteractionResult::NoInteractable;
+	}
+	
+	const EFVInteractionResult Result = Target->TryExecuteAction(ActionTag, Instigator->GetOwner());
+	
+	if (Result == EFVInteractionResult::Success)
+	{
+		OnFocusChanged.Broadcast(Target.Get());
+	}
+
+	return Result;
+}
+
+void UFVInteractionSubsystem::CancelCurrentInteraction() const
+{
+	if (UFVInteractionTargetComponent* CurrentTarget = GetFocusedTarget())
+	{
+		CurrentTarget->CancelActiveInteraction();
+	}
 }
 
 TArray<FFVInteractionActionInfo> UFVInteractionSubsystem::GetAvailableActionsUIInfo() const
@@ -62,9 +115,14 @@ TArray<FFVInteractionActionInfo> UFVInteractionSubsystem::GetAvailableActionsUII
 	TArray<UFVInteractionAction*> AvailableActions = GetAvailableActions();
 	TArray<FFVInteractionActionInfo> ActionsInfo;
 	
-	for (const UFVInteractionAction* Action : AvailableActions)
+	if (IFVActorWithTags* InstigatorWithTags = Cast<IFVActorWithTags>(Instigator->GetOwner()))
 	{
-		ActionsInfo.Add(Action->CreateActionUIInfo(Instigator->GetTags()));
+		FGameplayTagContainer& ActorTags = InstigatorWithTags->GetAllTags();
+		
+		for (const UFVInteractionAction* Action : AvailableActions)
+		{
+			ActionsInfo.Add(Action->CreateActionUIInfo(ActorTags));
+		}
 	}
 	
 	return ActionsInfo;
@@ -80,17 +138,17 @@ void UFVInteractionSubsystem::OnPawnChanged(APawn* OldPawn, APawn* NewPawn)
 
 void UFVInteractionSubsystem::UpdateFocus(UFVInteractionTargetComponent* NewTarget)
 {
-	if (FocusedTarget.Get() == NewTarget)
+	if (Target.Get() == NewTarget)
 	{
 		return;
 	}
 	
-	if (UFVInteractionTargetComponent* Previous = FocusedTarget.Get())
+	if (UFVInteractionTargetComponent* Previous = Target.Get())
 	{
 		Previous->SetFocused(false);
 	}
 
-	FocusedTarget = NewTarget;
+	Target = NewTarget;
 	
 	if (NewTarget)
 	{

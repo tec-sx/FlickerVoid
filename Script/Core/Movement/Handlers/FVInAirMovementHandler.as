@@ -6,12 +6,6 @@ class UFVInAirMovementHandler : UFVMovementHandlerBase
         return MovementComponent.MovementMode == EMovementMode::MOVE_Falling;
     }
 
-    UFUNCTION(BlueprintOverride)
-    void OnEnter()
-    {
-        Print("Entered InAir State");
-    }
-
 	UFUNCTION(BlueprintOverride)
 	void GenerateMovement(float DeltaTime)
 	{

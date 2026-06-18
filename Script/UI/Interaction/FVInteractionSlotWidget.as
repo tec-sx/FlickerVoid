@@ -6,26 +6,18 @@
 
 class UFVInteractionSlotWidget : UUserWidget
 {
-    UPROPERTY(BindWidget)
-    UTextBlock ActionNameText;
-
-    UPROPERTY(BindWidget)
-    UTextBlock KeyHintText;
-
     UPROPERTY(BindWidgetOptional)
     UImage IconImage;
 
     // TODO: Update to use angelscript struct for easier iterations
     void SetSlotData(FFVInteractionActionInfo Data, FText KeyHint)
     {
-        ActionNameText.SetText(Data.DisplayName);
-        KeyHintText.SetText(KeyHint);
-
         if (IconImage != nullptr)
         {
             if (!Data.Icon.IsNull())
             {
                 UTexture2D Tex = Data.Icon.Get();
+
                 if (Tex != nullptr)
                 {
                     IconImage.SetColorAndOpacity(FLinearColor::White);

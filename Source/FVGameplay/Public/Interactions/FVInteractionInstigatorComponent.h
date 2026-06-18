@@ -32,39 +32,32 @@ public:
 		ELevelTick TickType, 
 		FActorComponentTickFunction* ThisTickFunction) override;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	TObjectPtr<UFVInteractionInstigatorConfig> Config;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Interaction)
+	float DetectionRadius = 350.f;
+
+	// Cosine of the half-angle of the cone in which an interactable can be focused
+	// (0 = 90°, 0.5 = ~60°, 0.707 = 45°). Interactables outside this cone are ignored.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "-1", ClampMax = "1"), Category=Interaction)
+	float DetectionConeAngle = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"), Category=Interaction)
+	float DetectionUpdateInterval = 0.05f;
 	
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	EFVInteractionResult RequestInteraction(const FGameplayTag& InputTag);
-	
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	void CancelCurrentInteraction() const;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Interaction)
+	TArray<TEnumAsByte<EObjectTypeQuery>> DetectionObjectTypes;
 	
 	UFUNCTION()
 	UFVInteractionSubsystem* GetInteractionSubsystem() const;
 	
-	UFUNCTION()
-	FGameplayTagContainer& GetTags() { return InstigatorTags; }
-	
-	UFUNCTION()
-	void AddTag(const FGameplayTag& Tag) { InstigatorTags.AddTagFast(Tag); }
-	
-	UFUNCTION()
-	void  RemoveTag(const FGameplayTag& Tag) { InstigatorTags.RemoveTag(Tag); }
-	
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<AActor> Owner;
-	
-	UPROPERTY(Transient)
-	FGameplayTagContainer InstigatorTags;
 	
 	bool bIsInitialized = false;
 
 	mutable TWeakObjectPtr<UFVInteractionSubsystem> InteractionSubsystem;
 	float TimeSinceLastUpdate = 0.f;
 	
-	void UpdateFocus() const;
+	void DetectInteractables() const;
 	UFVInteractionTargetComponent* FindBestTarget() const;
 };

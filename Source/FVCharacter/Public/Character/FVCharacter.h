@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "FVCharacterTypes.h"
 #include "GameplayTagContainer.h"
+#include "Interfaces/FVActorWithTags.h"
 #include "FVCharacter.generated.h"
 
 class UNavMoverComponent;
@@ -17,7 +18,7 @@ class USpringArmComponent;
 class UFVInteractionInstigatorComponent;
 
 UCLASS(Config = Game)
-class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter
+class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter, public IFVActorWithTags
 {
 	GENERATED_BODY()
 
@@ -83,9 +84,14 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	bool RequestTraverse();
 	
-	UFUNCTION(BlueprintCallable)
-	FGameplayTagContainer& GetAllTags() { return  CharacterTags; }
-	
+	// IFVCharacterWithTags
+	virtual FGameplayTagContainer& GetAllTags() override { return  CharacterTags; }
+	virtual void AddTag(FGameplayTag& InTag) override { CharacterTags.AddTag(InTag); }
+	virtual void RemoveTag(FGameplayTag& InTag) override { CharacterTags.RemoveTag(InTag); }
+	virtual bool HasTag(FGameplayTag& InTag) const override { return CharacterTags.HasTag(InTag); }
+	virtual bool HasAllTagsExact(FGameplayTagContainer& InTags) const override { return CharacterTags.HasAllExact(InTags); }
+	virtual bool HasAnyTagExact(FGameplayTagContainer& InTags) const override { return CharacterTags.HasAnyExact(InTags); }
+	// ~IFVCharacterWithTags
 private:
 	UPROPERTY(EditAnywhere)
 	FGameplayTagContainer CharacterTags;

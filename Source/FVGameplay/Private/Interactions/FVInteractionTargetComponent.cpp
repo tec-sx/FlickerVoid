@@ -4,6 +4,9 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "StateTree.h"
+#include "Interfaces/FVActorWithTags.h"
+
+class IFVActorWithTags;
 
 UFVInteractionTargetComponent::UFVInteractionTargetComponent()
 {
@@ -28,27 +31,26 @@ void UFVInteractionTargetComponent::BeginPlay()
 	
 	StateTreeComponent = Owner->GetComponentByClass<UStateTreeComponent>();
 	
-	if (IsValid(StateTreeComponent))
+	if (StateTreeComponent != nullptr)
 	{
 		StateTreeComponent->SetStartLogicAutomatically(false);
 		StateTreeComponent->OnStateTreeRunStatusChanged
 			.AddDynamic(this, &UFVInteractionTargetComponent::OnStateTreeStatusChanged);
 	}
-	else
-	{
-		bIsSimple = true;
-	}
+	
+	bIsInitialized = true;
 }
 
 void UFVInteractionTargetComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (!bIsInitialized)
+	{
+		return;
+	}
+	
 	CancelActiveInteraction();
 	Super::EndPlay(EndPlayReason);
 }
-
-//~=============================================================================
-// UI Data
-//~=============================================================================
 
 bool UFVInteractionTargetComponent::IsInteractionInProgress() const
 {
@@ -59,44 +61,55 @@ bool UFVInteractionTargetComponent::IsInteractionInProgress() const
 // Execution
 //~=============================================================================
 
-EFVInteractionResult UFVInteractionTargetComponent::TryExecuteAction(
-	const FGameplayTag& InputTag, 
-	AActor* Instigator,
-	FGameplayTagContainer& InstigatorTags)
+EFVInteractionResult UFVInteractionTargetComponent::TryExecuteAction(const FGameplayTag& ActionTag, AActor* InstigatorActor)
 {
+	if (!bIsInitialized)
+	{
+		return EFVInteractionResult::NoInteractable;
+	}
+	
 	if (IsInteractionInProgress())
 	{
 		return EFVInteractionResult::Blocked;
 	}
-
+	FGameplayTagContainer ActorTags;
+	
+	if (IFVActorWithTags* InstigatorWithTags = Cast<IFVActorWithTags>(InstigatorActor))
+	{
+		ActorTags = InstigatorWithTags->GetAllTags();
+	}
+	
 	for (const UFVInteractionAction* Action : Config->AvailableActions)
 	{
-		if (!Action->InputTag.MatchesTagExact(InputTag))
+		if (!Action->ActionTag.MatchesTagExact(ActionTag))
 		{
 			continue;
 		}
 		
-		if (!Action->ActionStateTree)
+		if (!Action->bIsSimple && !Action->ActionStateTree)
 		{
 			continue;
 		}
-
-		FText UnmetReason;
-		if (!Action->CheckRequirements(InstigatorTags))
+		
+		if (!Action->CheckRequirements(ActorTags))
 		{
 			return EFVInteractionResult::RequirementNotMet;
 		}
 
 		// Store context so tasks can read it via GetActive* accessors
-		ActiveInstigator      = Instigator;
+		ActiveInstigator      = InstigatorActor;
 		ActiveActionTag       = Action->ActionTag;
 		ActiveInteractionPoint = GetOwner()->GetActorLocation();
+		bActiveActionIsSimple = StateTreeComponent != nullptr && Action->bIsSimple;
 		bActiveTaskDone       = false;
 		bActiveTaskSucceeded  = false;
 		CompletingActionTag   = Action->ActionTag;
-
-		StateTreeComponent->SetStateTree(Action->ActionStateTree);
-		StateTreeComponent->StartLogic();
+		
+		if (!bActiveActionIsSimple)
+		{
+			StateTreeComponent->SetStateTree(Action->ActionStateTree);
+			StateTreeComponent->StartLogic();
+		}
 
 		return EFVInteractionResult::Success;
 	}
@@ -106,6 +119,11 @@ EFVInteractionResult UFVInteractionTargetComponent::TryExecuteAction(
 
 void UFVInteractionTargetComponent::CancelActiveInteraction()
 {
+	if (!bIsInitialized)
+	{
+		return;
+	}
+	
 	if (StateTreeComponent && StateTreeComponent->IsRunning())
 	{
 		StateTreeComponent->StopLogic(TEXT("Cancelled"));
@@ -114,12 +132,22 @@ void UFVInteractionTargetComponent::CancelActiveInteraction()
 
 void UFVInteractionTargetComponent::CompleteActiveTask(bool bSuccess)
 {
+	if (!bIsInitialized)
+	{
+		return;
+	}
+	
 	bActiveTaskDone      = true;
 	bActiveTaskSucceeded = bSuccess;
 }
 
 void UFVInteractionTargetComponent::SetFocused(bool bFocused)
 {
+	if (!bIsInitialized)
+	{
+		return;
+	}
+	
 	if (bFocused == bIsInFocus)
 	{
 		return;
@@ -135,6 +163,11 @@ void UFVInteractionTargetComponent::SetFocused(bool bFocused)
 
 void UFVInteractionTargetComponent::OnStateTreeStatusChanged(EStateTreeRunStatus RunStatus)
 {
+	if (!bIsInitialized)
+	{
+		return;
+	}
+	
 	const bool bSuccess = (RunStatus == EStateTreeRunStatus::Succeeded);
 
 	if (bSuccess)
@@ -176,6 +209,7 @@ void UFVInteractionTargetComponent::OnStateTreeStatusChanged(EStateTreeRunStatus
 	ActiveActionTag     = FGameplayTag::EmptyTag;
 	bActiveTaskDone     = false;
 	bActiveTaskSucceeded = false;
-
+	
+	CancelActiveInteraction();
 	OnAnyActionCompleted.Broadcast(Context, Status, bSuccess);
 }

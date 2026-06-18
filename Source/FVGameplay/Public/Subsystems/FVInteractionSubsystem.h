@@ -29,12 +29,21 @@ public:
 	
 	UFUNCTION(BlueprintPure, Category = "Interaction")
 	UFVInteractionTargetComponent* GetFocusedTarget() const;
-
+	
 	UFUNCTION(BlueprintPure, Category = "Interaction")
-	bool HasFocus() const { return FocusedTarget.IsValid(); }
+	bool HasFocus() const { return Target.IsValid(); }
 	
 	UFUNCTION(BlueprintPure, Category = "Interaction")
 	TArray<UFVInteractionAction*> GetAvailableActions() const;
+	
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	bool ActionRequirementsAreMet(const FGameplayTag& ActionTag) const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	EFVInteractionResult TryExecuteInteraction(const FGameplayTag& ActionTag);
+	
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	void CancelCurrentInteraction() const;
 	
 	UFUNCTION(BlueprintPure, Category = "UI")
 	TArray<FFVInteractionActionInfo> GetAvailableActionsUIInfo() const;
@@ -49,5 +58,5 @@ public:
 private:
 	TWeakObjectPtr<APlayerController> PlayerController;
 	TWeakObjectPtr<UFVInteractionInstigatorComponent> Instigator;
-	TWeakObjectPtr<UFVInteractionTargetComponent> FocusedTarget;
+	TWeakObjectPtr<UFVInteractionTargetComponent> Target;
 };

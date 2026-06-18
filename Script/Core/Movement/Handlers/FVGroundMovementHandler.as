@@ -27,12 +27,6 @@ class UFVGroundMovementHandler : UFVMovementHandlerBase
         MovementComponent.SprintAngleThreshold = GroundConfig.SprintAngleThreshold;
     }
 
-    UFUNCTION(BlueprintOverride)
-    void OnEnter()
-    {
-        Print("Entered Ground State");
-    }
-
 	UFUNCTION(BlueprintOverride)
 	void GenerateMovement(float DeltaTime)
 	{

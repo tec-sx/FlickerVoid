@@ -19,9 +19,6 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "Interaction.Action"))
 	FGameplayTag ActionTag;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "InputTag.Ability"))
-	FGameplayTag InputTag;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FText DisplayName;
@@ -46,7 +43,7 @@ public:
 	FFVInteractionActionInfo CreateActionUIInfo(FGameplayTagContainer& InstigatorTags) const;
 	
 	UFUNCTION(BlueprintCallable)
-	FGameplayTagContainer& GetGrantedTags() { return GrantedTags; }
+	const FGameplayTagContainer& GetGrantedTags() const { return GrantedTags; }
 	
 private:
 	
@@ -54,11 +51,17 @@ private:
 	// Requirements And Consequences
 	//~=========================================================================
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = Requirements)
 	FGameplayTagContainer RequiredTags;
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = Requirements)
+	bool MatchAnyRequiredTag;
+	
+	UPROPERTY(EditDefaultsOnly, Category = Requirements)
 	FGameplayTagContainer BlockedByTags;
+	
+	UPROPERTY(EditDefaultsOnly, Category = Requirements)
+	bool MatchAnyBlockedByTag;
 	
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer GrantedTags;

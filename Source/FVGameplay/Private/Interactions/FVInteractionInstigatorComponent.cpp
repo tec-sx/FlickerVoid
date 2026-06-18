@@ -5,8 +5,9 @@
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
 #include "Engine/OverlapResult.h"
-#include "Interactions/FVInteractionInstigatorConfig.h"
 #include "Subsystems/FVInteractionSubsystem.h"
+
+static TAutoConsoleVariable CVarInteractionDebug(TEXT("FVCvar.Interaction.Debug"), false, TEXT("Debug the interaction system"));
 
 UFVInteractionInstigatorComponent::UFVInteractionInstigatorComponent()
 {
@@ -24,16 +25,10 @@ void UFVInteractionInstigatorComponent::BeginPlay()
 		return;
 	}
 
-	if (!Config)
+	if (DetectionObjectTypes.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Interaction Instigator Configuration not found. creating default object."));
-		Config = NewObject<UFVInteractionInstigatorConfig>();
-	}
-
-	if (Config->DetectionObjectTypes.IsEmpty())
-	{
-		Config->DetectionObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
-		Config->DetectionObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
+		DetectionObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
+		DetectionObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
 	}
 
 	bIsInitialized = true;
@@ -50,10 +45,10 @@ void UFVInteractionInstigatorComponent::TickComponent(
 	{
 		TimeSinceLastUpdate += DeltaTime;
 
-		if (Config->FocusUpdateInterval <= 0.f || TimeSinceLastUpdate >= Config->FocusUpdateInterval)
+		if (DetectionUpdateInterval <= 0.f || TimeSinceLastUpdate >= DetectionUpdateInterval)
 		{
 			TimeSinceLastUpdate = 0.f;
-			UpdateFocus();
+			DetectInteractables();
 		}
 	}
 }
@@ -62,7 +57,7 @@ void UFVInteractionInstigatorComponent::TickComponent(
 // Focus Detection
 //~=============================================================================
 
-void UFVInteractionInstigatorComponent::UpdateFocus() const
+void UFVInteractionInstigatorComponent::DetectInteractables() const
 {
 	UFVInteractionTargetComponent* NewTarget = FindBestTarget();
 	
@@ -93,8 +88,8 @@ UFVInteractionTargetComponent* UFVInteractionInstigatorComponent::FindBestTarget
 		Overlaps,
 		Owner->GetActorLocation(),
 		FQuat::Identity,
-		FCollisionObjectQueryParams(Config->DetectionObjectTypes),
-		FCollisionShape::MakeSphere(Config->DetectionRadius),
+		FCollisionObjectQueryParams(DetectionObjectTypes),
+		FCollisionShape::MakeSphere(DetectionRadius),
 		Params);
 
 	UFVInteractionTargetComponent* BestTarget = nullptr;
@@ -123,52 +118,37 @@ UFVInteractionTargetComponent* UFVInteractionInstigatorComponent::FindBestTarget
 		}
 
 		const float DotProduct = FVector::DotProduct(ViewForward, TargetLocation.GetSafeNormal());
-		if (DotProduct < Config->FocusConeCosine)
+		if (DotProduct < DetectionConeAngle)
 		{
 			continue;
 		}
 
 		// Score = dot (angle quality) + proximity bonus
-		const float Score = DotProduct + (1.f - Distance / Config->DetectionRadius);
+		const float Score = DotProduct + (1.f - Distance / DetectionRadius);
 		if (Score > BestScore)
 		{
 			BestScore = Score;
 			BestTarget = Target;
 		}
 	}
-
+	
+#if UE_BUILD_DEVELOPMENT
+	if (CVarInteractionDebug.GetValueOnGameThread() == true)
+	{
+		FVector TargetOrigin = FVector::ZeroVector;
+		FVector TargetBoxExtent = FVector::ZeroVector;
+		
+		BestTarget->GetOwner()->GetActorBounds(false, TargetOrigin, TargetBoxExtent);
+		DrawDebugSphere(
+			GetWorld(), 
+			BestTarget->GetOwner()->GetActorLocation(),
+			TargetBoxExtent.GetMax(),
+			8,
+			FColor::Red);
+	}
+#endif
+	
 	return BestTarget;
-}
-
-//~=============================================================================
-// Input Routing
-//~=============================================================================
-
-EFVInteractionResult UFVInteractionInstigatorComponent::RequestInteraction(const FGameplayTag& InputTag)
-{
-	UFVInteractionTargetComponent* Target = InteractionSubsystem->GetFocusedTarget();
-	if (!Target)
-	{
-		return EFVInteractionResult::NoInteractable;
-	}
-
-	const EFVInteractionResult Result = Target->TryExecuteAction(InputTag, GetOwner(), InstigatorTags);
-
-	// Re-broadcast so the UI can reflect updated availability after execution
-	if (Result == EFVInteractionResult::Success)
-	{
-		GetInteractionSubsystem()->OnFocusChanged.Broadcast(Target);
-	}
-
-	return Result;
-}
-
-void UFVInteractionInstigatorComponent::CancelCurrentInteraction() const
-{
-	if (UFVInteractionTargetComponent* Current = InteractionSubsystem->GetFocusedTarget())
-	{
-		Current->CancelActiveInteraction();
-	}
 }
 
 UFVInteractionSubsystem* UFVInteractionInstigatorComponent::GetInteractionSubsystem() const
