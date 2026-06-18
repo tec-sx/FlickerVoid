@@ -5,17 +5,17 @@ public class FlickerVoidAI : ModuleRules
 {
     public FlickerVoidAI(ReadOnlyTargetRules Target) : base(Target)
     {
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
         PublicDependencyModuleNames.AddRange(new string[] 
         { 
             "Core",
             "CoreUObject",
             "Engine",
-            "Mover",
             "GameplayAbilities",
             "GameplayTags",
             "AIModule",
             "FlickerVoidCore",
-            "FlickerVoidWorld",
             "FlickerVoidCharacter"
         });
 

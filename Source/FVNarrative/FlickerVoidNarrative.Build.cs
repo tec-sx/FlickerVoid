@@ -5,6 +5,8 @@ public class FlickerVoidNarrative : ModuleRules
 {
     public FlickerVoidNarrative(ReadOnlyTargetRules Target) : base(Target)
     {
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
         PublicDependencyModuleNames.AddRange(new string[] 
         {
             "Core",

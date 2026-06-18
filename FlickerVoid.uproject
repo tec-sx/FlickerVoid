@@ -73,11 +73,11 @@
 		},
 		{
 			"Name": "Mutable",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "MutableClothing",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "MetaHumanCharacterUAF",
@@ -167,7 +167,7 @@
 		},
 		{
 			"Name": "CelestialVault",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "ChaosFlesh",
@@ -178,51 +178,36 @@
 			"Enabled": true
 		},
 		{
-			"Name": "FSR",
-			"Enabled": false,
-			"SupportedTargetPlatforms": [
-				"Win64"
-			]
-		},
-		{
-			"Name": "CMAA2Plugin",
-			"Enabled": false
-		},
-		{
-			"Name": "CMAA2",
-			"Enabled": false
-		},
-		{
 			"Name": "UAF",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "UAFWarping",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "UAFStateTree",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "UAFPoseSearch",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "UAFMirroring",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "UAFControlRig",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "UAFChooser",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "UAFAnimGraph",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "MoverAnimNext",
@@ -274,7 +259,7 @@
 		},
 		{
 			"Name": "HairStrandsMutable",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "AIAssistant",
@@ -287,6 +272,10 @@
 		{
 			"Name": "GameplayMessageRouter",
 			"Enabled": true
+		},
+		{
+			"Name": "InteractionInterface",
+			"Enabled": false
 		},
 		{
 			"Name": "GameplayInteractions",
@@ -534,18 +523,15 @@
 			"Enabled": true
 		},
 		{
-			"Name": "CascLiveLink",
-			"Enabled": true,
-			"SupportedTargetPlatforms": [
-				"Win64"
-			]
-		},
-		{
 			"Name": "VisualStudioCodeSourceCodeAccess",
 			"Enabled": false
 		},
 		{
 			"Name": "AnimationLocomotionLibrary",
+			"Enabled": true
+		},
+		{
+			"Name": "ModularGameplay",
 			"Enabled": true
 		}
 	]
