@@ -9,7 +9,7 @@
 
 #include "FVCharacterAttributeComponent.generated.h"
 
-#define UE_API FLICKERVOIDCHARACTER_API
+#define UE_API FLICKERVOIDGAMEPLAY_API
 
 class UFVCharacterAttributeSet;
 class UFVCharacterDataAsset;

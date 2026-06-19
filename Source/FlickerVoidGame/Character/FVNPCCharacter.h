@@ -17,7 +17,7 @@ class UAbilitySystemComponent;
 //~=============================================================================
 
 UCLASS(Config = Game, Blueprintable)
-class FLICKERVOIDCHARACTER_API AFVNPCCharacter : public ACharacter
+class FLICKERVOID_API AFVNPCCharacter : public ACharacter
 {
 	GENERATED_BODY()
 

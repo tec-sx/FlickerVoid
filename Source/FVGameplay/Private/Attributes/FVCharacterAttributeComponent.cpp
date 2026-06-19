@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Character/FVCharacterAttributeComponent.h"
+#include "Attributes/FVCharacterAttributeComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Attributes/FVCharacterAttributeSet.h"

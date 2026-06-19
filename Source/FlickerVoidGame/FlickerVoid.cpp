@@ -2,7 +2,6 @@
 
 #include "FlickerVoid.h"
 
-#include "MoverDataModelTypes.h"
 #include "Modules/ModuleManager.h"
 #include "Character/FVCharacter.h"
 #include "RigVMCore/RigVMRegistry.h"

@@ -2,7 +2,7 @@
 
 
 #include "NPCPersonalityProfile.h"
-#include "Character/FVCharacterAttributeComponent.h"
+#include "Attributes/FVCharacterAttributeComponent.h"
 #include "Attributes/FVCharacterAttributeSet.h"
 #include "FVAITags.h"
 
