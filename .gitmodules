@@ -1,0 +1,12 @@
+[submodule "Plugins/Flow"]
+	path = Plugins/Flow
+	url = https://github.com/MothCocoon/FlowGraph.git
+	branch = 5.x
+[submodule "Plugins/ToneMapFX"]
+	path = Plugins/ToneMapFX
+	url = https://github.com/przemek-em/UE5-ToneMapFX
+	branch = main
+[submodule "Plugins/SUDS"]
+	path = Plugins/SUDS
+	url = https://github.com/sinbad/SUDS.git
+	branch = master

@@ -174,11 +174,7 @@ void UFVSTE_Perception::HandleEnterInteractionZone(AActor* Actor)
 void UFVSTE_Perception::HandleExitInteractionZone(AActor* Actor)
 {
 	UE_LOG(LogTemp, Log, TEXT("UFVSTE_Perception: Exited interaction zone for actor: %s"), *GetNameSafe(Actor));
-	AcquiredTarget = nullptr;
-	if (AIController.IsValid())
-	{
-		AIController->AcquiredTarget = nullptr;
-	}
+	// Keep the Acquired target since we transition to Notice and it should be the same as the sensed one
 	AIController->CurrentStateTreeState = LastEvent;
 	OnExitInteractionRange(Actor);
 }

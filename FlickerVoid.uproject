@@ -303,10 +303,6 @@
 			"Enabled": true
 		},
 		{
-			"Name": "CommonConversation",
-			"Enabled": true
-		},
-		{
 			"Name": "RuntimeSvgSystem",
 			"Enabled": false
 		},
@@ -532,6 +528,10 @@
 		},
 		{
 			"Name": "ModularGameplay",
+			"Enabled": true
+		},
+		{
+			"Name": "Flow",
 			"Enabled": true
 		}
 	]
