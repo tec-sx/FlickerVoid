@@ -9,6 +9,7 @@
 
 #include "FVInteractionTargetComponent.generated.h"
 
+class UFVInteractionInstigatorComponent;
 class UFVInteractionTargetConfig;
 class UStateTreeComponent;
 
@@ -50,30 +51,29 @@ public:
 	//~=========================================================================
 	// Active context — read by UFVInteractionStateTreeTaskBase helpers
 	//~=========================================================================
-
-	UFUNCTION(BlueprintPure, Category = "Interaction|ActiveContext")
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Context")
+	void RunAction(AActor* Instigator, UFVInteractionAction* Action);
+	
+	UFUNCTION(BlueprintPure, Category = "Interaction|Context")
 	AActor* GetActiveInstigator() const { return ActiveInstigator.Get(); }
 
-	UFUNCTION(BlueprintPure, Category = "Interaction|ActiveContext")
+	UFUNCTION(BlueprintPure, Category = "Interaction|Context")
 	FGameplayTag GetActiveActionTag() const { return ActiveActionTag; }
 
-	UFUNCTION(BlueprintPure, Category = "Interaction|ActiveContext")
+	UFUNCTION(BlueprintPure, Category = "Interaction|Context")
 	FVector GetActiveInteractionPoint() const { return ActiveInteractionPoint; }
 
 	// True after CompleteActiveTask() was called — polled by the task base each Tick.
-	UFUNCTION(BlueprintPure, Category = "Interaction|ActiveContext")
+	UFUNCTION(BlueprintPure, Category = "Interaction|Context")
 	bool IsActiveTaskDone() const { return bActiveTaskDone; }
 
-	UFUNCTION(BlueprintPure, Category = "Interaction|ActiveContext")
+	UFUNCTION(BlueprintPure, Category = "Interaction|Context")
 	bool DidActiveTaskSucceed() const { return bActiveTaskSucceeded; }
 
 	// Called by UFVInteractionStateTreeTaskBase::CompleteTask — do not call directly
 	// from gameplay code; call CompleteTask(OwnerActor, bSuccess) on the task base instead.
-	UFUNCTION(BlueprintCallable, Category = "Interaction|ActiveContext")
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Context")
 	void CompleteActiveTask(bool bSuccess);
-	
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Actions")
-	EFVInteractionResult TryExecuteAction(const FGameplayTag& ActionTag, AActor* InstigatorActor);
 	
 	void CancelActiveInteraction();
 	void SetFocused(bool bFocused);
@@ -88,10 +88,6 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
 	FOnInteractionCompleted OnAnyActionCompleted;
-
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusChanged, bool, bFocused);
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FOnFocusChanged OnFocusChanged;
 	
 private:
 	UFUNCTION()
@@ -116,12 +112,11 @@ private:
 	UPROPERTY(Transient)
 	bool bActiveTaskSucceeded = false;
 	
-	UPROPERTY(Transient)
-	bool bActiveActionIsSimple = false;
 	
 	// Cached action tag for the completion callback (ActiveActionTag may be cleared before broadcast)
 	FGameplayTag CompletingActionTag;
 
 	bool bIsInitialized = false;
+	bool bOwnerHasStateTreeComponent = false;
 	bool bIsInFocus = false;
 };

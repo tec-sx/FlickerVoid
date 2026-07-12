@@ -25,16 +25,7 @@ namespace FVCharacterTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Mood_Stressed);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Mood_Horny);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Mood_Exhausted);
-
-	// ============================================================================
-	// CHARACTER STATE TAGS
-	// ============================================================================
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Idle);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Alert);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Suspicious);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Hostile);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Fleeing);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Incapacitated);
+	
 }
 
 #undef UE_API

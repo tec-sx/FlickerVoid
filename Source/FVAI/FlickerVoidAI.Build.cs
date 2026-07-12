@@ -15,8 +15,16 @@ public class FlickerVoidAI : ModuleRules
             "GameplayAbilities",
             "GameplayTags",
             "AIModule",
+            "NavigationSystem",
             "FlickerVoidCore",
-            "FlickerVoidCharacter"
+            "FlickerVoidCharacter",
+            "StateTreeModule",
+            "GameplayStateTreeModule",
+        });
+        
+        PrivateDependencyModuleNames.AddRange(new string[]
+        {
+            "StateTreeEditorModule",
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));

@@ -45,15 +45,39 @@ const UFVPawnData* AFVExploreGameMode::GetPawnDataForController(const AControlle
 			}
 		}
 	}
-
-	// TODO: In Lyra, we check experience for Pawn data, but since we don't use experiences yet, we'll skip that for now.
-
+	
 	return UFVAssetManager::Get().GetDefaultPawnData();
 }
 
 void AFVExploreGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
+	
+	// 		
+	// UGameInstance* GI = nullptr;
+	// if (UWorld* World = GEngine ? GEngine->GetCurrentPlayWorld() : nullptr)
+	// {
+	// 	GI = World->GetGameInstance();
+	// }
+ //
+	// if (!GI)
+	// {
+	// 	UE_LOG(LogTemp, Warning,
+	// 		TEXT("UFVAssetManager::PushDialogueConfigToSubsystem — GameInstance not yet "
+	// 			 "available. UFVDialogueSubsystem will self-initialize on first signal."));
+	// 	return;
+	// }
+ //
+	// UFVDialogueSubsystem* DS = GI->GetSubsystem<UFVDialogueSubsystem>();
+	// if (!DS)
+	// {
+	// 	UE_LOG(LogTemp, Warning,
+	// 		TEXT("UFVAssetManager::PushDialogueConfigToSubsystem — UDialogueSubsystem "
+	// 			 "not found on GameInstance."));
+	// 	return;
+	// }
+ //
+	// DS->InitializeConfig(DialogueConfig);
 }
 
 UClass* AFVExploreGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)

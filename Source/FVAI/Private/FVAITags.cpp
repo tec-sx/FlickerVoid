@@ -49,4 +49,11 @@ namespace FVAITags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Response_Submit, "Response.Submit", "Player submits.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Response_Threaten, "Response.Threaten", "Player threatens target.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Response_Mock, "Response.Mock", "Player mocks target.");
+	
+	UE_DEFINE_GAMEPLAY_TAG(AI_Event_Idle, "AI.Event.Idle");
+	UE_DEFINE_GAMEPLAY_TAG(AI_Event_Patrol, "AI.Event.Patrol");
+	UE_DEFINE_GAMEPLAY_TAG(AI_Event_Notice, "AI.Event.Notice");
+	UE_DEFINE_GAMEPLAY_TAG(AI_Event_Focus, "AI.Event.Focus");
+	UE_DEFINE_GAMEPLAY_TAG(AI_Event_Act, "AI.Event.Act");
+
 }

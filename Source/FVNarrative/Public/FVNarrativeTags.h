@@ -7,6 +7,36 @@
 namespace FVNarrativeTags
 {
 	// ============================================================================
+	// DIALOGUE TAGS
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Speaker_Player);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Speaker_GenericNPC);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Speaker_Dealer);
+	
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Signal_Greeting);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Signal_Farewell);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Signal_Trade);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Signal_Flirt);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Signal_Interact);
+	
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Icon_Trade_Item);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Icon_Trade_Info);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Icon_Trade_Service);
+	
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Icon_Question);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Icon_Flirt);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Icon_Threaten);
+	
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_Agree);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_Offer);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_Refuse);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_Flirt);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestAccepted);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestCompleted);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestFailed);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestFailed);
+	
+	// ============================================================================
 	// QUEST STATE TAGS
 	// ============================================================================
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Unavailable);

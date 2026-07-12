@@ -4,9 +4,8 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "StateTree.h"
-#include "Interfaces/FVActorWithTags.h"
-
-class IFVActorWithTags;
+#include "Interactions/FVInteractionInstigatorComponent.h"
+#include "Logging/FVLogCategories.h"
 
 UFVInteractionTargetComponent::UFVInteractionTargetComponent()
 {
@@ -33,6 +32,7 @@ void UFVInteractionTargetComponent::BeginPlay()
 	
 	if (StateTreeComponent != nullptr)
 	{
+		bOwnerHasStateTreeComponent = true;
 		StateTreeComponent->SetStartLogicAutomatically(false);
 		StateTreeComponent->OnStateTreeRunStatusChanged
 			.AddDynamic(this, &UFVInteractionTargetComponent::OnStateTreeStatusChanged);
@@ -57,69 +57,35 @@ bool UFVInteractionTargetComponent::IsInteractionInProgress() const
 	return StateTreeComponent && StateTreeComponent->IsRunning();
 }
 
-//~=============================================================================
-// Execution
-//~=============================================================================
-
-EFVInteractionResult UFVInteractionTargetComponent::TryExecuteAction(const FGameplayTag& ActionTag, AActor* InstigatorActor)
+void UFVInteractionTargetComponent::RunAction(AActor* Instigator, UFVInteractionAction* Action)
 {
-	if (!bIsInitialized)
-	{
-		return EFVInteractionResult::NoInteractable;
-	}
+	ActiveInstigator      = Instigator;
+	ActiveActionTag       = Action->ActionTag;
+	ActiveInteractionPoint = GetOwner()->GetActorLocation();
+	bActiveTaskDone       = false;
+	bActiveTaskSucceeded  = false;
+	CompletingActionTag   = Action->ActionTag;
 	
-	if (IsInteractionInProgress())
+#if UE_BUILD_DEVELOPMENT
+	if (!bOwnerHasStateTreeComponent)
 	{
-		return EFVInteractionResult::Blocked;
+		UE_LOG(
+			LogFVGameplay, 
+			Warning, 
+			TEXT("INTERACTION: Complex action was executed, but %s does not have StateTreeComponent"), *GetOwner()->GetName());
 	}
-	FGameplayTagContainer ActorTags;
+#endif
 	
-	if (IFVActorWithTags* InstigatorWithTags = Cast<IFVActorWithTags>(InstigatorActor))
+	if (bOwnerHasStateTreeComponent && !Action->bIsSimple)
 	{
-		ActorTags = InstigatorWithTags->GetAllTags();
+		StateTreeComponent->SetStateTree(Action->ActionStateTree);
+		StateTreeComponent->StartLogic();
 	}
-	
-	for (const UFVInteractionAction* Action : Config->AvailableActions)
-	{
-		if (!Action->ActionTag.MatchesTagExact(ActionTag))
-		{
-			continue;
-		}
-		
-		if (!Action->bIsSimple && !Action->ActionStateTree)
-		{
-			continue;
-		}
-		
-		if (!Action->CheckRequirements(ActorTags))
-		{
-			return EFVInteractionResult::RequirementNotMet;
-		}
-
-		// Store context so tasks can read it via GetActive* accessors
-		ActiveInstigator      = InstigatorActor;
-		ActiveActionTag       = Action->ActionTag;
-		ActiveInteractionPoint = GetOwner()->GetActorLocation();
-		bActiveActionIsSimple = StateTreeComponent != nullptr && Action->bIsSimple;
-		bActiveTaskDone       = false;
-		bActiveTaskSucceeded  = false;
-		CompletingActionTag   = Action->ActionTag;
-		
-		if (!bActiveActionIsSimple)
-		{
-			StateTreeComponent->SetStateTree(Action->ActionStateTree);
-			StateTreeComponent->StartLogic();
-		}
-
-		return EFVInteractionResult::Success;
-	}
-
-	return EFVInteractionResult::ActionNotFound;
 }
 
 void UFVInteractionTargetComponent::CancelActiveInteraction()
 {
-	if (!bIsInitialized)
+	if (!bIsInitialized || !bOwnerHasStateTreeComponent)
 	{
 		return;
 	}
@@ -154,7 +120,6 @@ void UFVInteractionTargetComponent::SetFocused(bool bFocused)
 	}
 
 	bIsInFocus = bFocused;
-	OnFocusChanged.Broadcast(bFocused);
 }
 
 //~=============================================================================

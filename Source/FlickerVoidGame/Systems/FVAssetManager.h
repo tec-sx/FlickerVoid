@@ -14,6 +14,12 @@ class UPrimaryDataAsset;
 class UFVGameData;
 class UFVPawnData;
 
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnSoundAssetLoaded, USoundBase*, Asset, UObject*, Payload);
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnSkeletalMeshAssetLoaded, USkeletalMesh*, Asset,UObject*, Payload);
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnDataTableAssetLoaded, UDataTable*, Asset, UObject*, Payload);
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnBlueprintClassLoaded, UClass*,  LoadedClass, UObject*, Payload);
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnObjectAssetLoaded, UObject*, Asset, UObject*, Payload);
+
 struct FFVBundles
 {
 	static const FName Equipped;
@@ -49,6 +55,41 @@ public:
 
 	UE_API const UFVGameData& GetGameData();
 	UE_API const UFVPawnData* GetDefaultPawnData() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "FV|AssetManager", meta = (WorldContext = "WorldContext"))
+	UE_API void AsyncLoadSound(
+         UObject* WorldContext,
+         TSoftObjectPtr<USoundBase> SoftAsset,
+         UObject* Payload,
+         FOnSoundAssetLoaded OnLoaded);
+
+     UFUNCTION(BlueprintCallable, Category = "FV|AssetManager", meta = (WorldContext = "WorldContext"))
+     UE_API void AsyncLoadSkeletalMesh(
+         UObject* WorldContext,
+         TSoftObjectPtr<USkeletalMesh> SoftAsset,
+         UObject* Payload,
+         FOnSkeletalMeshAssetLoaded OnLoaded);
+
+     UFUNCTION(BlueprintCallable, Category = "FV|AssetManager", meta = (WorldContext = "WorldContext"))
+     UE_API void AsyncLoadDataTable(
+         UObject* WorldContext,
+         TSoftObjectPtr<UDataTable> SoftAsset,
+         UObject* Payload,
+         FOnDataTableAssetLoaded OnLoaded);
+
+     UFUNCTION(BlueprintCallable, Category = "FV|AssetManager", meta = (WorldContext = "WorldContext"))
+     UE_API void AsyncLoadBlueprintClass(
+         UObject* WorldContext,
+         TSoftClassPtr<UObject> SoftClass,
+         UObject* Payload,
+         FOnBlueprintClassLoaded OnLoaded);
+
+     UFUNCTION(BlueprintCallable, Category = "FV|AssetManager", meta = (WorldContext = "WorldContext"))
+     UE_API void AsyncLoadObject(
+         UObject* WorldContext,
+         TSoftObjectPtr<UObject> SoftAsset,
+         UObject* Payload,
+         FOnObjectAssetLoaded OnLoaded);
 
 protected:
 	template <typename GameDataClass>
@@ -78,6 +119,12 @@ protected:
 	//~End of UAssetManager interface
 
 	UE_API UPrimaryDataAsset* LoadGameDataOfClass(TSubclassOf<UPrimaryDataAsset> DataClass, const TSoftObjectPtr<UPrimaryDataAsset>& DataClassPath, FPrimaryAssetType PrimaryAssetType);
+	
+	static UE_API void AsyncLoadSoftPath(
+	    UObject* WorldContext,
+	    FSoftObjectPath Path,
+	    UObject* Payload,
+	    TFunction<void(UObject*, UObject*)> OnComplete);
 
 protected:
 
@@ -146,9 +193,7 @@ inline TSubclassOf<AssetType> UFVAssetManager::GetSubclass(const TSoftClassPtr<A
 {
 	TSubclassOf<AssetType> LoadedSubclass;
 
-	const FSoftObjectPath& AssetPath = AssetPointer.ToSoftObjectPath();
-
-	if (AssetPath.IsValid())
+	if (const FSoftObjectPath& AssetPath = AssetPointer.ToSoftObjectPath(); AssetPath.IsValid())
 	{
 		LoadedSubclass = AssetPointer.Get();
 		if (!LoadedSubclass)

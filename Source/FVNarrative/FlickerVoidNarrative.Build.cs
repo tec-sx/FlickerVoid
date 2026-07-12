@@ -17,9 +17,18 @@ public class FlickerVoidNarrative : ModuleRules
             "FlickerVoidCore",
             "FlickerVoidWorld",
             "FlickerVoidGameplay",
-            "StateTreeModule"
+            "StateTreeModule",
+            "GameplayStateTreeModule",
         });
 
+        if (Target.bBuildEditor)
+        {
+            PrivateDependencyModuleNames.AddRange(new string[] {
+                "StateTreeEditorModule",
+                "DeveloperSettings",
+            });
+        }
+        
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
     }

@@ -43,9 +43,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerController")
 	AFVCharacter* GetControlledCharacter() const { return CachedCharacter; }
-	
-	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerController")
-	UFVInteractionSubsystem* GetInteractionSubsystem() const;
 
 protected:
     // ========================================================================

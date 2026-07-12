@@ -16,9 +16,14 @@ public class FlickerVoidCore : ModuleRules
             "EnhancedInput",
             "GameplayTags",
             "PhysicsCore",
+            "StateTreeModule",
+            "GameplayStateTreeModule",
         });
 
-        PrivateDependencyModuleNames.AddRange(new string[] {  });
+        PrivateDependencyModuleNames.AddRange(new string[]
+        {
+            "StateTreeEditorModule",
+        });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));

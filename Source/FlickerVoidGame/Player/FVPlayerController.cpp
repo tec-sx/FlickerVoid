@@ -1,15 +1,12 @@
 #include "FVPlayerController.h"
 #include "FVPlayerState.h"
 #include "Character/FVCharacter.h"
-#include "Input/FVInputConfig.h"
 #include "Input/FVInputComponent.h"
 #include "FVCoreTags.h"
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "FVCharacterTags.h"
 #include "InputMappingContext.h"
 #include "Movement/FVCharacterMovementComponent.h"
-#include "Subsystems/FVInteractionSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
 
@@ -238,24 +235,4 @@ void AFVPlayerController::Input_AbilityInputTagReleased(FGameplayTag InputTag)
             ASC->AbilityInputTagReleased(InputTag);
         }
     }
-}
-
-UFVInteractionSubsystem* AFVPlayerController::GetInteractionSubsystem() const
-{
-    // Fast-path: return cached if valid.
-    if (InteractionSubsystem.IsValid())
-    {
-        return InteractionSubsystem.Get();
-    }
-    
-    if (const ULocalPlayer* LP = GetLocalPlayer())
-    {
-        if (UFVInteractionSubsystem* Sub = LP->GetSubsystem<UFVInteractionSubsystem>())
-        {
-            InteractionSubsystem = Sub;
-            return Sub;
-        }
-    }
-	
-    return nullptr;
 }

@@ -2,6 +2,8 @@
 #include "FVGameData.h"
 #include "AbilitySystemGlobals.h"
 #include "Character/FVPawnData.h"
+#include "Configuration/FlickerVoidDeveloperSettings.h"
+#include "Dialogue/FVDialogueSubsystem.h"
 #include "Misc/App.h"
 #include "Stats/StatsMisc.h"
 #include "Engine/Engine.h"
@@ -191,6 +193,118 @@ UPrimaryDataAsset* UFVAssetManager::LoadGameDataOfClass(TSubclassOf<UPrimaryData
 	}
 
 	return Asset;
+}
+
+void UFVAssetManager::AsyncLoadSoftPath(
+	UObject* WorldContext, 
+	FSoftObjectPath Path, 
+	UObject* Payload,
+	TFunction<void(UObject*, UObject*)> OnComplete)
+{
+    if (!Path.IsValid())
+    {
+        OnComplete(nullptr, Payload);
+        return;
+    }
+	
+    if (UObject* AlreadyLoaded = Path.ResolveObject())
+    {
+        if (WorldContext && WorldContext->GetWorld())
+        {
+            FTimerHandle DeferHandle;
+            WorldContext->GetWorld()->GetTimerManager().SetTimer(
+                DeferHandle,
+                [OnComplete, AlreadyLoaded, Payload]()
+                {
+                    OnComplete(AlreadyLoaded, Payload);
+                },
+                0.001f,
+                false);
+        }
+        else
+        {
+            OnComplete(AlreadyLoaded, Payload);
+        }
+        return;
+    }
+	
+    FStreamableManager& Manager = GetStreamableManager();
+	
+    TSharedPtr<FStreamableHandle> Handle = Manager.RequestAsyncLoad(
+        Path,
+        [Path, Payload, OnComplete]()
+        {
+            UObject* Loaded = Path.ResolveObject();
+            OnComplete(Loaded, Payload);   // Loaded may be null if cook failed
+        });
+}
+
+void UFVAssetManager::AsyncLoadSound(
+    UObject* WorldContext,
+    TSoftObjectPtr<USoundBase> SoftAsset,
+    UObject* Payload,
+    FOnSoundAssetLoaded OnLoaded)
+{
+    AsyncLoadSoftPath(WorldContext, SoftAsset.ToSoftObjectPath(), Payload,
+        [OnLoaded](UObject* Loaded, UObject* P)
+        {
+            OnLoaded.ExecuteIfBound(Cast<USoundBase>(Loaded), P);
+        });
+}
+ 
+void UFVAssetManager::AsyncLoadSkeletalMesh(
+    UObject* WorldContext,
+    TSoftObjectPtr<USkeletalMesh> SoftAsset,
+    UObject* Payload,
+    FOnSkeletalMeshAssetLoaded OnLoaded)
+{
+    AsyncLoadSoftPath(WorldContext, SoftAsset.ToSoftObjectPath(), Payload,
+        [OnLoaded](UObject* Loaded, UObject* P)
+        {
+            OnLoaded.ExecuteIfBound(Cast<USkeletalMesh>(Loaded), P);
+        });
+}
+ 
+void UFVAssetManager::AsyncLoadDataTable(
+    UObject* WorldContext,
+    TSoftObjectPtr<UDataTable> SoftAsset,
+    UObject* Payload,
+    FOnDataTableAssetLoaded OnLoaded)
+{
+    AsyncLoadSoftPath(WorldContext, SoftAsset.ToSoftObjectPath(), Payload,
+        [OnLoaded](UObject* Loaded, UObject* P)
+        {
+            OnLoaded.ExecuteIfBound(Cast<UDataTable>(Loaded), P);
+        });
+}
+ 
+void UFVAssetManager::AsyncLoadBlueprintClass(
+    UObject* WorldContext,
+    TSoftClassPtr<UObject> SoftClass,
+    UObject* Payload,
+    FOnBlueprintClassLoaded OnLoaded)
+{
+    // TSoftClassPtr uses a different path accessor than TSoftObjectPtr
+    AsyncLoadSoftPath(WorldContext, SoftClass.ToSoftObjectPath(), Payload,
+        [OnLoaded](UObject* Loaded, UObject* P)
+        {
+            // ResolveObject on a class path returns the UClass object itself
+            UClass* LoadedClass = Cast<UClass>(Loaded);
+            OnLoaded.ExecuteIfBound(LoadedClass, P);
+        });
+}
+ 
+void UFVAssetManager::AsyncLoadObject(
+    UObject* WorldContext,
+    TSoftObjectPtr<UObject> SoftAsset,
+    UObject* Payload,
+    FOnObjectAssetLoaded OnLoaded)
+{
+    AsyncLoadSoftPath(WorldContext, SoftAsset.ToSoftObjectPath(), Payload,
+        [OnLoaded](UObject* Loaded, UObject* P)
+        {
+            OnLoaded.ExecuteIfBound(Loaded, P);
+        });
 }
 
 void UFVAssetManager::DoAllStartupJobs()

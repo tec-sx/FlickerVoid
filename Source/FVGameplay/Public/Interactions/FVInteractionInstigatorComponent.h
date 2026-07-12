@@ -3,11 +3,9 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Interactions/FVInteractionTypes.h"
+
 #include "FVInteractionInstigatorComponent.generated.h"
 
-class UFVInteractionSubsystem;
-class AFVCharacter;
-class UFVInteractionInstigatorConfig;
 class UFVInteractionTargetComponent;
 
 //~=============================================================================
@@ -46,16 +44,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Interaction)
 	TArray<TEnumAsByte<EObjectTypeQuery>> DetectionObjectTypes;
 	
-	UFUNCTION()
-	UFVInteractionSubsystem* GetInteractionSubsystem() const;
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOnInteractionFocusChanged OnFocusChanged;
+	
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	bool HasFocus() const { return FocusedTarget != nullptr; }
+	
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	UFVInteractionTargetComponent* GetFocusedTarget() const { return FocusedTarget.Get(); }
 	
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<AActor> Owner;
 	
 	bool bIsInitialized = false;
-
-	mutable TWeakObjectPtr<UFVInteractionSubsystem> InteractionSubsystem;
+	
+	mutable TWeakObjectPtr<UFVInteractionTargetComponent> FocusedTarget;
 	float TimeSinceLastUpdate = 0.f;
 	
 	void DetectInteractables() const;

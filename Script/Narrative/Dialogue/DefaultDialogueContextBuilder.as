@@ -1,0 +1,4 @@
+class UDefaultDialogueContextBuilder : UFVDialogueContextBuilder
+{
+
+};

@@ -4,10 +4,9 @@
 
 #include "GameFramework/Character.h"
 #include "FVCharacterTypes.h"
-#include "GameplayTagContainer.h"
-#include "Interfaces/FVActorWithTags.h"
 #include "FVCharacter.generated.h"
 
+class UFVTagComponent;
 class UNavMoverComponent;
 class UInputAction;
 class UCharacterMoverComponent;
@@ -15,10 +14,9 @@ class UFVCharacterMovementComponent;
 struct FInputActionValue;
 class UFVAbilitySystemComponent;
 class USpringArmComponent;
-class UFVInteractionInstigatorComponent;
 
 UCLASS(Config = Game)
-class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter, public IFVActorWithTags
+class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -27,7 +25,7 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void Landed(const FHitResult& Hit) override;
-
+	
 	//~=============================================================================
 	// Character Properties
 	//~=============================================================================
@@ -83,18 +81,10 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	bool RequestTraverse();
-	
-	// IFVCharacterWithTags
-	virtual FGameplayTagContainer& GetAllTags() override { return  CharacterTags; }
-	virtual void AddTag(FGameplayTag& InTag) override { CharacterTags.AddTag(InTag); }
-	virtual void RemoveTag(FGameplayTag& InTag) override { CharacterTags.RemoveTag(InTag); }
-	virtual bool HasTag(FGameplayTag& InTag) const override { return CharacterTags.HasTag(InTag); }
-	virtual bool HasAllTagsExact(FGameplayTagContainer& InTags) const override { return CharacterTags.HasAllExact(InTags); }
-	virtual bool HasAnyTagExact(FGameplayTagContainer& InTags) const override { return CharacterTags.HasAnyExact(InTags); }
-	// ~IFVCharacterWithTags
+
 private:
-	UPROPERTY(EditAnywhere)
-	FGameplayTagContainer CharacterTags;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character|Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UFVTagComponent> TagComponent;
 	
 	// Intent Data
 	FVector MovementDirection = FVector::ZeroVector;

@@ -5,7 +5,6 @@
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
 #include "Engine/OverlapResult.h"
-#include "Subsystems/FVInteractionSubsystem.h"
 
 static TAutoConsoleVariable CVarInteractionDebug(TEXT("FVCvar.Interaction.Debug"), false, TEXT("Debug the interaction system"));
 
@@ -61,7 +60,24 @@ void UFVInteractionInstigatorComponent::DetectInteractables() const
 {
 	UFVInteractionTargetComponent* NewTarget = FindBestTarget();
 	
-	GetInteractionSubsystem()->UpdateFocus(NewTarget);
+	if (FocusedTarget.Get() == NewTarget)
+	{
+		return;
+	}
+	
+	if (UFVInteractionTargetComponent* Previous = FocusedTarget.Get())
+	{
+		Previous->SetFocused(false);
+	}
+
+	FocusedTarget = NewTarget;
+	
+	if (NewTarget)
+	{
+		NewTarget->SetFocused(true);
+	}
+	
+	OnFocusChanged.Broadcast(NewTarget);
 }
 
 UFVInteractionTargetComponent* UFVInteractionInstigatorComponent::FindBestTarget() const
@@ -149,27 +165,4 @@ UFVInteractionTargetComponent* UFVInteractionInstigatorComponent::FindBestTarget
 #endif
 	
 	return BestTarget;
-}
-
-UFVInteractionSubsystem* UFVInteractionInstigatorComponent::GetInteractionSubsystem() const
-{
-	// Fast-path: return cached if valid.
-	if (InteractionSubsystem.IsValid())
-	{
-		return InteractionSubsystem.Get();
-	}
-
-	if (const APlayerController* PC = Cast<APlayerController>(Owner->GetInstigatorController()))
-	{
-		if (const ULocalPlayer* LP = PC->GetLocalPlayer())
-		{
-			if (UFVInteractionSubsystem* Sub = LP->GetSubsystem<UFVInteractionSubsystem>())
-			{
-				InteractionSubsystem = Sub;
-				return Sub;
-			}
-		}
-	}
-	
-	return nullptr;
 }

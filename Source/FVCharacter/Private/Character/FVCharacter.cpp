@@ -1,6 +1,7 @@
 #include "Character/FVCharacter.h"
 
 #include "FVCharacterTypes.h"
+#include "Components/FVTagComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Movement/FVCharacterMovementComponent.h"
 
@@ -11,8 +12,10 @@ AFVCharacter::AFVCharacter(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
-
+	
 	SetReplicatingMovement(false);
+	
+	TagComponent = CreateDefaultSubobject<UFVTagComponent>(TEXT("Tags"));
 }
 
 

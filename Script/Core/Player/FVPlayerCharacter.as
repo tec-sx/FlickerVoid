@@ -4,7 +4,10 @@ class AFVPlayerCharacter : AFVCharacter
     UMotionWarpingComponent MotionWarpingComponent;
 
     UPROPERTY(DefaultComponent, Category = "Interaction")
-    UFVInteractionInstigatorComponent InteractionComponent;
+    UFVInteractionInstigatorComponent InteractionInstigator;
+
+    UPROPERTY(DefaultComponent, Category = "Interaction")
+    UPlayerDialogueComponent DialogueComponent;
 
     UPROPERTY(DefaultComponent, Category = "Animation")
     UContextualAnimSceneActorComponent ContextualAnimation;
