@@ -94,12 +94,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "AI|Events", meta = (DisplayName = "On Hearing Stimulus Forgotten"))
 	FFVStimulusForgottenSignature OnHearingStimulusForgotten;
 	
-	UPROPERTY(BlueprintAssignable, Category = "AI|Events", meta = (DisplayName = "On Enter Interaction Range"))
-	FFVInteractionZoneEventSignature OnEnterInteractionZone;
-	
-	UPROPERTY(BlueprintAssignable, Category = "AI|Events", meta = (DisplayName = "On Exit Interaction Range"))
-	FFVInteractionZoneEventSignature OnExitInteractionZone;
-	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Output, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> AcquiredTarget = nullptr;
 
@@ -113,30 +107,12 @@ protected:
 	UFUNCTION()
 	void OnTargetPerceptionForgotten(AActor* Actor);
 	
-	UFUNCTION()
-	void HandleEnterInteractionZone(
-		UPrimitiveComponent* OverlappedComp,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult);
-	
-	UFUNCTION()
-	void HandleExitInteractionZone(
-		UPrimitiveComponent* OverlappedComp,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex);
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UFVStateTreeAIComponent> StateTreeAIComponent;
 	
 	UPROPERTY(Transient)
 	TObjectPtr<AFVAICharacter> PossesedCharacter = nullptr;
-	
-	UPROPERTY(Transient)
-	TObjectPtr<UBoxComponent> InteractionZone;
 	
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
 	TObjectPtr<UAISenseConfig_Sight> SightConfig;
@@ -151,7 +127,6 @@ private:
 	TObjectPtr<UAISenseConfig_Prediction> PredictionConfig;
 	
 	EFVStimulusSenseType CurrentStimulusSenseType = EFVStimulusSenseType::Unknown;
-	// bool bIsPlayerClose = false;
 	
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 };

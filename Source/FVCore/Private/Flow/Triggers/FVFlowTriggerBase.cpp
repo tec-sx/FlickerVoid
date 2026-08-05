@@ -1,26 +1,51 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿#include "Flow/Triggers/FVFlowTriggerBase.h"
 
+#include "Components/BillboardComponent.h"
+#include "Components/ShapeComponent.h"
+#include "Flow/Components/FVFlowTriggerComponent.h"
 
-#include "Flow/Triggers/FVFlowTriggerBase.h"
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVFlowTriggerBase)
 
-
-// Sets default values
-AFVFlowTriggerBase::AFVFlowTriggerBase()
+AFVFlowTriggerBase::AFVFlowTriggerBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-}
-
-// Called when the game starts or when spawned
-void AFVFlowTriggerBase::BeginPlay()
-{
-	Super::BeginPlay();
+	SetHidden(true);
+	SetCanBeDamaged(false);
 	
-}
+	FlowTriggerComponent = CreateDefaultSubobject<UFVFlowTriggerComponent>(TEXT("FlowTriggerComponent"));
+	TriggerZone = CreateDefaultSubobject<UShapeComponent>(TEXT("TriggerZone"));
+	
+	if (TriggerZone)
+	{
+		RootComponent = TriggerZone;
+		TriggerZone->bHiddenInGame = false;
+	}
+	
+#if WITH_EDITORONLY_DATA
+	SpriteComponent = CreateEditorOnlyDefaultSubobject<UBillboardComponent>(TEXT("Sprite"));
+	if (SpriteComponent)
+	{
+		// Structure to hold one-time initialization
+		struct FConstructorStatics
+		{
+			ConstructorHelpers::FObjectFinderOptional<UTexture2D> TriggerTextureObject;
+			FName ID_Triggers;
+			FText NAME_Triggers;
+			FConstructorStatics()
+				: TriggerTextureObject(TEXT("/Engine/EditorResources/S_Trigger"))
+				, ID_Triggers(TEXT("Triggers"))
+				, NAME_Triggers(NSLOCTEXT( "SpriteCategory", "Triggers", "Triggers" ))
+			{
+			}
+		};
+		static FConstructorStatics ConstructorStatics;
 
-// Called every frame
-void AFVFlowTriggerBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
+		SpriteComponent->Sprite = ConstructorStatics.TriggerTextureObject.Get();
+		SpriteComponent->SetRelativeScale3D(FVector(0.5f, 0.5f, 0.5f));
+		SpriteComponent->bHiddenInGame = false;
+		SpriteComponent->SpriteInfo.Category = ConstructorStatics.ID_Triggers;
+		SpriteComponent->SpriteInfo.DisplayName = ConstructorStatics.NAME_Triggers;
+		SpriteComponent->bIsScreenSizeScaled = true;
+	}
+#endif
 }
-

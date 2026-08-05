@@ -5,6 +5,8 @@
 
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVSTT_UpdateMovementSpeed)
+
 EStateTreeRunStatus UFVSTT_UpdateMovementSpeed::EnterState(
 	FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition)

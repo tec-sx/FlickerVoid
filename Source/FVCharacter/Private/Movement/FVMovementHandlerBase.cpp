@@ -7,6 +7,8 @@
 #include "Logging/FVLogCategories.h"
 #include "Logging/FVLogSystem.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVMovementHandlerBase)
+
 UFVMovementHandlerBase::UFVMovementHandlerBase()
 	: Character(nullptr)
 	, MovementComponent(nullptr)

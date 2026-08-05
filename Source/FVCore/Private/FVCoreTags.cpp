@@ -13,7 +13,14 @@ namespace FVCoreTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Primary, "InputTag.Action.Primary", "Primary Action.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Secondary, "InputTag.Action.Secondary", "Secondary Action.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Ternary, "InputTag.Action.Ternary", "Ternary Action.");
-
+	
+	UE_DEFINE_GAMEPLAY_TAG(Player_Pawn, "Player.Pawn");
+	
+	UE_DEFINE_GAMEPLAY_TAG(Flow_Common_Enable, "Flow.Common.Enable");
+	UE_DEFINE_GAMEPLAY_TAG(Flow_Common_Disable, "Flow.Common.Disable");
+	UE_DEFINE_GAMEPLAY_TAG(Flow_Common_TriggerZone, "Flow.Common.TriggerZone");
+	UE_DEFINE_GAMEPLAY_TAG(Flow_Common_InteractionZone, "Flow.Common.InteractionZone");
+	
 	FGameplayTag FindTagByString(const FString& TagString, bool bMatchPartialString)
 	{
 		const UGameplayTagsManager& Manager = UGameplayTagsManager::Get();

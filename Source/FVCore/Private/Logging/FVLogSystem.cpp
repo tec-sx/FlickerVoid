@@ -28,6 +28,18 @@ void FFVLogSystem::Shutdown()
 	bIsInitialized = false;
 }
 
+void FFVLogSystem::HandleInfo(const FString& InfoMessage, const FLogCategoryBase& Category, const FString& Context)
+{
+	if (!Context.IsEmpty())
+	{
+		UE_LOG_REF(Category, Display, TEXT("[%s] %s"), *Context, *InfoMessage);
+	}
+	else
+	{
+		UE_LOG_REF(Category, Display, TEXT("%s"), *InfoMessage);
+	}
+}
+
 void FFVLogSystem::HandleError(const FString& ErrorMessage, const FLogCategoryBase& Category, const FString& Context)
 {
 	if (!Context.IsEmpty())

@@ -25,7 +25,8 @@ public class FlickerVoidGameplay : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[] {
             "UMG",
             "GameplayMessageRuntime",
-            "FlickerVoidCharacter"
+            "FlickerVoidCharacter",
+            "Flow",
         });
 
 		if (Target.bBuildEditor)

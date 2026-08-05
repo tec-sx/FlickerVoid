@@ -3,13 +3,13 @@
 #pragma once
 
 #include "Components/ArrowComponent.h"
-#include "UFVInteractionComponent.generated.h"
+#include "FVInteractionComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FFVPlayerInInteractionEvent, TWeakObjectPtr<class UInteractionComponent> /*Interaction*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FFVPlayerInInteractionEvent, TWeakObjectPtr<class UFVInteractionComponent>);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFVInteractionComponentEvent);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class FLICKERVOIDGAMEPLAY_API UUFVInteractionComponent : public UArrowComponent
+class FLICKERVOIDGAMEPLAY_API UFVInteractionComponent : public UArrowComponent
 {
 	GENERATED_BODY()
 	
@@ -17,11 +17,13 @@ class FLICKERVOIDGAMEPLAY_API UUFVInteractionComponent : public UArrowComponent
 	static FFVPlayerInInteractionEvent OnPlayerExit;
 	
 public:
+	explicit UFVInteractionComponent(const FObjectInitializer& ObjectInitializer);
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (ClampMin = 50.0f))
 	float Distance;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FFVInteractionComponentEvent OnUsed;
+	FFVInteractionComponentEvent OnInteracted;
 	
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

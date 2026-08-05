@@ -12,14 +12,16 @@ class FLICKERVOIDCORE_API AFVFlowTriggerBox : public AFVFlowTriggerBase
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
-	AFVFlowTriggerBox();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	explicit AFVFlowTriggerBox(const FObjectInitializer& ObjectInitializer);
+	
+#if WITH_EDITOR
+	//~ Begin AActor Interface.
+	virtual void EditorApplyScale(
+		const FVector& DeltaScale, 
+		const FVector* PivotLocation, 
+		bool bAltDown, 
+		bool bShiftDown, 
+		bool bCtrlDown) override;
+	//~ End AActor Interface.
+#endif
 };

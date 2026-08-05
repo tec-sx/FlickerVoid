@@ -6,6 +6,8 @@
 #include "Misc/DataValidation.h"
 #include "Movement/FVMovementHandlerBase.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVMovementHandlerData)
+
 UFVMovementHandlerData::UFVMovementHandlerData()
 {
 	bEnableDebugVisualization = false;

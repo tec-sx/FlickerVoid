@@ -4,9 +4,12 @@
 #include "Actors/FVAICharacter.h"
 
 #include "FVAICharacterController.h"
+#include "FVCoreTags.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Flow/Components/FVFlowTriggerComponent.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVAICharacter)
 
 // Sets default values
 AFVAICharacter::AFVAICharacter()
@@ -16,19 +19,6 @@ AFVAICharacter::AFVAICharacter()
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorld;
 	AIControllerClass = AFVAICharacterController::StaticClass();
-	
-	InteractionZone = CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Sphere"));
-	InteractionZone->SetupAttachment(GetCapsuleComponent());
-	
-	const float CapsuleRadius = GetCapsuleComponent()->GetScaledCapsuleRadius();
-	const float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-	const float BoxExtentY = CapsuleRadius * 3.5;
-	const float BoxExtentX = CapsuleRadius * 3.7;
-	constexpr float InteractionBackOffset = 12.f;
-	const FVector InteractionExtent = FVector(BoxExtentX, BoxExtentY,CapsuleHalfHeight);
-	
-	InteractionZone->SetBoxExtent(InteractionExtent);
-	InteractionZone->SetWorldLocation(FVector(BoxExtentX - InteractionBackOffset, 0, 0));
 }
 
 void AFVAICharacter::BeginPlay()
@@ -49,6 +39,22 @@ void AFVAICharacter::PossessedBy(AController* NewController)
 void AFVAICharacter::UnPossessed()
 {
 	Super::UnPossessed();
+}
+
+void AFVAICharacter::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+{
+	TagContainer.Reset();
+	TagContainer.AppendTags(OwnedTags);
+}
+
+void AFVAICharacter::AddGameplayTag(FGameplayTag Tag)
+{
+	OwnedTags.AddTag(Tag);
+}
+
+void AFVAICharacter::RemoveGameplayTag(FGameplayTag Tag)
+{
+	OwnedTags.RemoveTag(Tag);
 }
 
 

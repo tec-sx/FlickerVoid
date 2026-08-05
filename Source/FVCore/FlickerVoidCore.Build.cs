@@ -18,11 +18,12 @@ public class FlickerVoidCore : ModuleRules
             "PhysicsCore",
             "StateTreeModule",
             "GameplayStateTreeModule",
+            "Flow"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "StateTreeEditorModule",
+            "StateTreeEditorModule", "AITestSuite",
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));

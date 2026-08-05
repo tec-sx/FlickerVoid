@@ -10,3 +10,6 @@
 	path = Plugins/SUDS
 	url = https://github.com/sinbad/SUDS.git
 	branch = master
+[submodule "Plugins/GameplayMessageRouter"]
+	path = Plugins/GameplayMessageRouter
+	url = https://github.com/IncantaUnreal/GameplayMessageRouter.git

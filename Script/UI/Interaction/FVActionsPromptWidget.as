@@ -21,12 +21,12 @@ class UFVInteractionPromptWidget : UUserWidget
 	UFVInteractionSlotWidget Slot2;
 
 	UPROPERTY()
-	AFVPlayerCharacter Player;
+	APlayerCharacter Player;
 
 	UFUNCTION(BlueprintOverride)
 	void Construct()
 	{
-		Player = Cast<AFVPlayerCharacter>(GetOwningPlayer().GetControlledPawn());
+		Player = Cast<APlayerCharacter>(GetOwningPlayer().GetControlledPawn());
 		
 		if (Player != nullptr)
 		{
@@ -65,7 +65,9 @@ class UFVInteractionPromptWidget : UUserWidget
 		{
 			for (int i = 0; i < Actions.Num(); i++)
 			{
-				const FFVInteractionActionInfo Action = Actions[i].CreateActionUIInfo(Player.TagComponent.GetOwnedTags());
+				FGameplayTagContainer CharacterTags;
+				Player.GetOwnedGameplayTags(CharacterTags);
+				const FFVInteractionActionInfo Action = Actions[i].CreateActionUIInfo(CharacterTags);
 			    UpdateActionSlot(Action, i);
 			}
 

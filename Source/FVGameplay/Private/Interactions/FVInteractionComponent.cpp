@@ -1,48 +1,87 @@
-﻿#include "Interactions/UFVInteractionComponent.h"
+﻿#include "Interactions/FVInteractionComponent.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(UFVInteractionComponent)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionComponent)
 
-FPlayerInInteractionEvent UInteractionComponent::OnPlayerEnter;
-FPlayerInInteractionEvent UInteractionComponent::OnPlayerExit;
+FFVPlayerInInteractionEvent UFVInteractionComponent::OnPlayerEnter;
+FFVPlayerInInteractionEvent UFVInteractionComponent::OnPlayerExit;
 
 // Sets default values for this component's properties
-UUFVInteractionComponent::UUFVInteractionComponent(const FObjectInitializer& ObjectInitializer)
+UFVInteractionComponent::UFVInteractionComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, Distance(100.0f)
+	, Distance(300.0f)
 {
 	bAutoActivate = true;
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 	
 	SetUsingAbsoluteScale(true);
-	ArrowColor
+	ArrowColor = FColor::Orange;
+	ArrowSize = 0.5f;
 }
 
 
 // Called when the game starts
-void UUFVInteractionComponent::BeginPlay()
+void UFVInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	if (bEnabled)
+	{
+		Enable();
+	}
 }
 
 
 // Called every frame
-void UUFVInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+void UFVInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                              FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+	bool bConditionsMet = false;
+	if (CameraManager.IsValid())
+	{
+		const FVector DistanceToCamera = GetComponentLocation() - CameraManager->GetCameraLocation();
+		bConditionsMet = DistanceToCamera.Size() < Distance;
+	}
+
+	if (bConditionsMet)
+	{
+		if (!bCanInteract)
+		{
+			bCanInteract = true;
+			OnPlayerEnter.Broadcast(this);
+		}
+	}
+	else if (bCanInteract)
+	{
+		bCanInteract = false;
+		OnPlayerExit.Broadcast(this);
+	}
 }
 
-void UUFVInteractionComponent::Enable()
+void UFVInteractionComponent::Enable()
 {
+	if (const APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		bEnabled = true;
+
+		CameraManager = PlayerController->PlayerCameraManager;
+		PrimaryComponentTick.SetTickFunctionEnable(true);
+	}
 }
 
-void UUFVInteractionComponent::Disable()
+void UFVInteractionComponent::Disable()
 {
+	if (bCanInteract)
+	{
+		bCanInteract = false;
+		OnPlayerExit.Broadcast(this);
+	}
+
+	bEnabled = false;
+
+	PrimaryComponentTick.SetTickFunctionEnable(false);
+	CameraManager = nullptr;
 }
 

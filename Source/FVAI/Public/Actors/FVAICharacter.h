@@ -3,14 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagAssetInterface.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "FVAICharacter.generated.h"
 
+class UFVFlowTriggerComponent;
 class UBoxComponent;
 class UStateTree;
 
 UCLASS()
-class FLICKERVOIDAI_API AFVAICharacter : public ACharacter
+class FLICKERVOIDAI_API AFVAICharacter : public ACharacter, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -22,19 +25,22 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void UnPossessed() override;
 	
-	UFUNCTION(BlueprintPure, Category = "AICharacter", meta = (ReturnDisplayName = "State Tree"))
-	UStateTree* GetStateTree() const { return StateTree; }
+	UFUNCTION(BlueprintCallable, Category = "Tags")
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	
-	UFUNCTION(BlueprintPure, Category = "AICharacter", meta = (ReturnDisplayName = "Interaction Sphere"))
-	UBoxComponent* GetInteractionZone() const { return InteractionZone; }
+	UFUNCTION(BlueprintCallable, Category = "Tags")
+	void AddGameplayTag(FGameplayTag Tag);
 
-private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AICharacter", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UBoxComponent> InteractionZone;
+	UFUNCTION(BlueprintCallable, Category = "Tags")
+	void RemoveGameplayTag(FGameplayTag Tag);
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AICharacter", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character)
 	TObjectPtr<UStateTree> StateTree;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AICharacter", meta = (AllowPrivateAccess = "true"))
-	float InteractionRadius = 100.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Character)
+	FGameplayTag FlowIdentity;
+	
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
+	FGameplayTagContainer OwnedTags;
 };

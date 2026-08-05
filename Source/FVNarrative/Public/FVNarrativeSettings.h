@@ -44,17 +44,6 @@ public:
         meta = (RequiredAssetDataTags = "RowStructure=/Script/FlickerVoid.FVDialogueLineRow"))
     TArray<TSoftObjectPtr<UDataTable>> GlobalLineTables;
 
-    // ── Context Builder ───────────────────────────────────────────────────────
-
-    /**
-     * The context builder subclass to instantiate.
-     * Default: UDialogueContextBuilder (stub implementations).
-     * Set to your project-specific subclass that integrates with
-     * your relationship, faction, and quest systems.
-     */
-    UPROPERTY(Config, EditDefaultsOnly, Category = Dialogue)
-    TSoftClassPtr<UFVDialogueContextBuilder> ContextBuilderClass;
-
     // ── Timing Defaults ───────────────────────────────────────────────────────
 
     /**

@@ -1,16 +1,10 @@
 class AFVHUD : AHUD
 {
-    UPROPERTY(EditDefaultsOnly, Category = "UI|Interaction")
-	TSubclassOf<UFVInteractionPromptWidget> InteractionPromptWidgetClass;
-
-    UPROPERTY(EditDefaultsOnly, Category = "UI|Dialogue")
-	TSubclassOf<UFVDialogueWidget> DialogueWidgetClass;
-
     UPROPERTY()
     private UUserWidget InteractionPromptWidget;
 
 	UPROPERTY(VisibleAnywhere)
-	private UDialogueHUDManager DialogueManager;
+	private UFVDialogueUIManagerBase DialogueManager;
 
 	UFUNCTION(BlueprintOverride)
 	void BeginPlay()
@@ -19,21 +13,28 @@ class AFVHUD : AHUD
 
         if (PC != nullptr)
 	    {
-			if (InteractionPromptWidgetClass != nullptr)
+			UPlayerSettings PlayerSettings = UPlayerSettings.GetDefaultObject();
+
+			if (PlayerSettings.InteractionPromptWidgetClass.IsValid())
 			{
-				InteractionPromptWidget = WidgetBlueprint::CreateWidget(InteractionPromptWidgetClass, PC);
+				InteractionPromptWidget = WidgetBlueprint::CreateWidget(PlayerSettings.InteractionPromptWidgetClass.Get(), PC);
 				InteractionPromptWidget.AddToViewport(0);
 			}
 
-			DialogueManager = NewObject(this, UDialogueHUDManager);
-			
-			//   DialogueManager.Initialize(DialogueWidgetClass, GetOwningPlayerController());
+			if (PlayerSettings.DialogueWidgetClass.IsValid())
+			{
+				DialogueManager = NewObject(this, UDialogueHUDManager);
+				DialogueManager.Initialize(PlayerSettings.DialogueWidgetClass.Get(), GetOwningPlayerController());
+			}
 	    }
 	}
 
-	UFUNCTION()
-	UDialogueHUDManager GetDialogueManager()
-	{
-		return DialogueManager;
-	}
+	UFUNCTION(BlueprintOverride)
+    void EndPlay(EEndPlayReason EndPlayReason)
+    {
+		if (IsValid(DialogueManager))
+		{
+			DialogueManager.Deinitialize();
+		}
+    }
 }

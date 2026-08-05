@@ -1,6 +1,8 @@
 #include "Interactions/FVInteractionStateTaskBase.h"
 #include "Interactions/FVInteractionTargetComponent.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionStateTaskBase)
+
 UFVInteractionTargetComponent* UFVInteractionStateTaskBase::GetInteractable(AActor* OwnerActor)
 {
 	if (!OwnerActor)

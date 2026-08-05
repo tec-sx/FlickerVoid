@@ -15,7 +15,7 @@ class UFVInteractAbility : UFVGameplayAbility
 	UFUNCTION()
 	EFVInteractionResult ExecuteInteraction()
 	{
-		AFVPlayerCharacter Character = Cast<AFVPlayerCharacter>(Gameplay::GetPlayerCharacter(0));
+		APlayerCharacter Character = Cast<APlayerCharacter>(Gameplay::GetPlayerCharacter(0));
 
 		if (Character == nullptr)
 		{
@@ -25,7 +25,8 @@ class UFVInteractAbility : UFVGameplayAbility
 		if (Character.InteractionInstigator.HasFocus())
 		{
 			UFVInteractionTargetComponent FocusedTarget = Character.InteractionInstigator.FocusedTarget;
-			FGameplayTagContainer CharacterTags = Character.TagComponent.GetOwnedTags();
+			FGameplayTagContainer CharacterTags;
+			Character.GetOwnedGameplayTags(CharacterTags);
 			TArray<UFVInteractionAction> AvailableActions = FocusedTarget.GetAvailableActions();
 			UFVInteractionAction SelectedAction = nullptr;
 

@@ -8,7 +8,8 @@
 #include "FVStateTreeAIComponent.h"
 #include "StateTreeExecutionContext.h"
 #include "Actors/FVAICharacter.h"
-#include "Components/BoxComponent.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVSTE_Perception)
 
 void UFVSTE_Perception::TreeStart(FStateTreeExecutionContext& Context)
 {
@@ -29,8 +30,6 @@ void UFVSTE_Perception::TreeStart(FStateTreeExecutionContext& Context)
 	AIController->OnHearingStimulusDetected.AddDynamic(this, &UFVSTE_Perception::HandleHearingStimulus);
 	AIController->OnHearingStimulusForgotten.AddDynamic(this, &UFVSTE_Perception::HandleHearingStimulusForgotten);
 	AIController->OnDamageStimulusDetected.AddDynamic(this, &UFVSTE_Perception::HandleDamageStimulus);
-	AIController->OnEnterInteractionZone.AddDynamic(this, &UFVSTE_Perception::HandleEnterInteractionZone);
-	AIController->OnExitInteractionZone.AddDynamic(this, &UFVSTE_Perception::HandleExitInteractionZone);
 	
 	AIController->CurrentStateTreeState = EFVStateTreeEvent::Unknown;
 	
@@ -67,18 +66,12 @@ void UFVSTE_Perception::TreeStop(FStateTreeExecutionContext& Context)
 		AIController->OnHearingStimulusDetected.RemoveDynamic(this, &UFVSTE_Perception::HandleHearingStimulus);
 		AIController->OnHearingStimulusForgotten.RemoveDynamic(this, &UFVSTE_Perception::HandleHearingStimulusForgotten);
 		AIController->OnDamageStimulusDetected.RemoveDynamic(this, &UFVSTE_Perception::HandleDamageStimulus);
-		AIController->OnEnterInteractionZone.RemoveDynamic(this, &UFVSTE_Perception::HandleEnterInteractionZone);
-		AIController->OnExitInteractionZone.RemoveDynamic(this, &UFVSTE_Perception::HandleExitInteractionZone);
 
 		AIController->CurrentStateTreeState = EFVStateTreeEvent::Unknown;
 	}
 	
-	// InteractionZone->OnComponentBeginOverlap.RemoveDynamic(this, &UFVSTE_Perception::HandleEnterInteractionZone);
-	// InteractionZone->OnComponentEndOverlap.RemoveDynamic(this, &UFVSTE_Perception::HandleExitInteractionZone);
-	
 	StateTreeComp = nullptr;
 	AcquiredTarget = nullptr;
-	InteractionZone = nullptr;
 }
 
 void UFVSTE_Perception::HandleSightStimulus(AActor* Actor, const FAIStimulus& Stimulus)
@@ -154,29 +147,6 @@ void UFVSTE_Perception::HandleDamageStimulus(AActor* Actor, const FAIStimulus& S
 		SendEvent(EFVStateTreeEvent::Act);
 		AIController->CurrentStateTreeState = EFVStateTreeEvent::Act;
 	}
-}
-
-void UFVSTE_Perception::HandleEnterInteractionZone(AActor* Actor)
-{
-	if (AIController->CurrentStateTreeState != EFVStateTreeEvent::Focus)
-	{
-		AcquiredTarget = Actor;
-		if (AIController.IsValid())
-		{
-			AIController->AcquiredTarget = Actor;
-		}
-
-		SendEvent(EFVStateTreeEvent::Focus);
-		AIController->CurrentStateTreeState = EFVStateTreeEvent::Focus;
-	}
-}
-
-void UFVSTE_Perception::HandleExitInteractionZone(AActor* Actor)
-{
-	UE_LOG(LogTemp, Log, TEXT("UFVSTE_Perception: Exited interaction zone for actor: %s"), *GetNameSafe(Actor));
-	// Keep the Acquired target since we transition to Notice and it should be the same as the sensed one
-	AIController->CurrentStateTreeState = LastEvent;
-	OnExitInteractionRange(Actor);
 }
 
 void UFVSTE_Perception::SendEvent(const EFVStateTreeEvent InEvent)

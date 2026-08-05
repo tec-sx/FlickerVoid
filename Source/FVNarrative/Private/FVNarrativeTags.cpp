@@ -6,14 +6,14 @@ namespace FVNarrativeTags
 	// DIALOGUE TAGS
 	// ============================================================================
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Speaker_Player, "Dialogue.Speaker.Player");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Speaker_NPC_Generic, "Dialogue.Speaker.GenericNPC");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Speaker_NPC_Dealer, "Dialogue.Speaker.Dealer");
 	
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Signal_Greeting, "Dialogue.Signal.Greeting");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Signal_Farewell, "Dialogue.Signal.Farewell");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Signal_Trade, "Dialogue.Signal.Trade");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Signal_Flirt, "Dialogue.Signal.Flirt");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Signal_Interact, "Dialogue.Signal.Interact");
+	UE_DEFINE_GAMEPLAY_TAG(Dialogue_CallOut, "Dialogue.CallOut");
+	UE_DEFINE_GAMEPLAY_TAG(Dialogue_LineReady, "Dialogue.LineReady");
+	UE_DEFINE_GAMEPLAY_TAG(Dialogue_ChoicesReady, "Dialogue.ChoicesReady");
+	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event, "Dialogue.Event");
+	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Ended, "Dialogue.Ended");
+	UE_DEFINE_GAMEPLAY_TAG(Dialogue_SubmitChoice, "Dialogue.SubmitChoice");
+	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Continue, "Dialogue.Continue");
 	
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Icon_Trade_Item, "Dialogue.Icon.Trade.Item");
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Icon_Trade_Info, "Dialogue.Icon.Trade.Info");

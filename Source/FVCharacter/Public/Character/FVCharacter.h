@@ -4,8 +4,11 @@
 
 #include "GameFramework/Character.h"
 #include "FVCharacterTypes.h"
+#include "GameplayTagAssetInterface.h"
+#include "GameplayTagContainer.h"
 #include "FVCharacter.generated.h"
 
+class UFlowComponent;
 class UFVTagComponent;
 class UNavMoverComponent;
 class UInputAction;
@@ -16,7 +19,7 @@ class UFVAbilitySystemComponent;
 class USpringArmComponent;
 
 UCLASS(Config = Game)
-class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter
+class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -81,11 +84,28 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	bool RequestTraverse();
-
-private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character|Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UFVTagComponent> TagComponent;
 	
+	UFUNCTION(BlueprintPure, Category = "FlowGraph")
+	FGameplayTagContainer GetIdentityTags() const;
+	
+	UFlowComponent* GetFlowComponent() const { return FlowComponent; }
+	
+	UFUNCTION(BlueprintCallable, Category = "Tags")
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	
+	UFUNCTION(BlueprintCallable, Category = "Tags")
+	void AddGameplayTag(FGameplayTag Tag);
+
+	UFUNCTION(BlueprintCallable, Category = "Tags")
+	void RemoveGameplayTag(FGameplayTag Tag);
+	
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UFlowComponent> FlowComponent;	
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
+	FGameplayTagContainer OwnedTags;
+private:
 	// Intent Data
 	FVector MovementDirection = FVector::ZeroVector;
 	EFVGait DesiredGait = EFVGait::Walking;

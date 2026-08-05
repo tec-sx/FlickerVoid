@@ -59,12 +59,6 @@ protected:
     UFUNCTION(BlueprintImplementableEvent, Category = "Perception")
     void OnDamageStimulus(AActor* Actor, const FAIStimulus& Stimulus);
 	
-	UFUNCTION(BlueprintImplementableEvent, Category = "Perception")
-	void OnEnterInteractionRange(AActor* Actor, const FAIStimulus& Stimulus);
-	
-	UFUNCTION(BlueprintImplementableEvent, Category = "Perception")
-	void OnExitInteractionRange(AActor* Actor);
-	
 private:
     UFUNCTION()
     void HandleSightStimulus(AActor* Actor, const FAIStimulus& Stimulus);
@@ -80,21 +74,12 @@ private:
 
     UFUNCTION()
     void HandleDamageStimulus(AActor* Actor, const FAIStimulus& Stimulus);
-	
-	UFUNCTION()
-	void HandleEnterInteractionZone(AActor* Actor);
-	
-	UFUNCTION()
-	void HandleExitInteractionZone(AActor* Actor);
 
     /** Sends a StateTree event with the specified tag */
     void SendEvent(const EFVStateTreeEvent InEvent);
 	
     UPROPERTY()
     TObjectPtr<UFVStateTreeAIComponent> StateTreeComp;
-	
-	UPROPERTY()
-	TObjectPtr<UBoxComponent> InteractionZone;
 	
     EFVStateTreeEvent LastEvent = EFVStateTreeEvent::Idle;
 };

@@ -6,6 +6,8 @@
 #include "FVAICharacterController.h"
 #include "Actors/FVAICharacter.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVAICharacterStateTreeSchema)
+
 TArray<FStateTreeExternalDataDesc> UFVAICharacterStateTreeSchema::ContextDataDescriptors;
 
 UFVAICharacterStateTreeSchema::UFVAICharacterStateTreeSchema()

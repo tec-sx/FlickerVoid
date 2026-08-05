@@ -6,12 +6,14 @@
 #include "FVFlowNode_SetInteractionState.generated.h"
 
 
-UCLASS()
-class FLICKERVOIDCORE_API UFVFlowNode_SetInteractionState : public UFlowNode
+UCLASS(NotBlueprintable, meta = (DisplayName = "Set Interaction State"))
+class FLICKERVOIDGAMEPLAY_API UFVFlowNode_SetInteractionState : public UFlowNode
 {
 	GENERATED_BODY()
 	
 public:	
+	UFVFlowNode_SetInteractionState();
+	
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
 	virtual EDataValidationResult ValidateNode() override;

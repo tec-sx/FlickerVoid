@@ -1,15 +1,7 @@
-delegate void FOnResponseButtonClicked(FName ResponseID);
+delegate void FOnChoiceButtonClicked(int ResponseID);
 
-// ═════════════════════════════════════════════════════════════════════════════
-// 1. UDialogueResponseButton
-//
-// Sub-widget representing one player response option in the choice list.
-// Created dynamically by UDialogueWidget for each FEvaluatedResponse entry.
-// The Blueprint child (WBP_ResponseButton) binds named widget properties.
-// ═════════════════════════════════════════════════════════════════════════════
 class UDialogueResponseButton : UUserWidget
 {
-    // The root button — we bind OnClicked to here in NativeConstruct
     UPROPERTY(BindWidget)
     UButton RootButton;
 
@@ -22,14 +14,10 @@ class UDialogueResponseButton : UUserWidget
     UPROPERTY(BindWidget)
     UImage LockedOverlay;
 
-    // ── Data ──────────────────────────────────────────────────────────────────
-
-    private FName ResponseID;
+    private int ChoiceIndex;
 
     UPROPERTY()
-    FOnResponseButtonClicked OnResponseClicked;
-
-    // ── Setup ─────────────────────────────────────────────────────────────────
+    FOnChoiceButtonClicked OnResponseClicked;
 
     UFUNCTION(BlueprintOverride)
     void Construct()
@@ -37,64 +25,36 @@ class UDialogueResponseButton : UUserWidget
         RootButton.OnClicked.AddUFunction(this, n"HandleClicked");
     }
 
-    /**
-     * Called by UDialogueWidget after creating this sub-widget instance.
-     * Populates all visual state from the evaluated response data.
-     */
     UFUNCTION(BlueprintCallable, Category = "Dialogue")
-    void SetupFromResponse(const FFVEvaluatedResponse& Response)
+    void SetupFromResponse(FFVDialogueChoiceMessage Choice)
     {
-        ResponseID = Response.ResponseID;
-        ResponseText.SetText(Response.DisplayText);
+        ChoiceIndex = Choice.Index;
+        ResponseText.SetText(Choice.Text);
 
-        if (!Response.TooltipText.IsEmpty())
-        {
-            SetToolTipText(Response.TooltipText);
-        }
+        // No icons for now. Future logic might be getting a response type and select
+        // an icon from a data table.
+        IconImage.SetVisibility(ESlateVisibility::Collapsed);
 
-        if (Response.IconTag.IsValid())
-        {
-            IconImage.SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-            BP_SetIcon(Response.IconTag);
-        }
-        else
-        {
-            IconImage.SetVisibility(ESlateVisibility::Collapsed);
-        }
-
-        if (Response.bIsAvailable)
-        {
-            RootButton.SetIsEnabled(true);
-            LockedOverlay.SetVisibility(ESlateVisibility::Collapsed);
-            
-            SetRenderOpacity(1.f);
-        }
-        else
+        if (Choice.bWasTakenBefore)
         {
             RootButton.SetIsEnabled(false);
             LockedOverlay.SetVisibility(ESlateVisibility::SelfHitTestInvisible);
             SetRenderOpacity(0.45f);
         }
+        else
+        {
+            RootButton.SetIsEnabled(true);
+            LockedOverlay.SetVisibility(ESlateVisibility::Collapsed);
+            SetRenderOpacity(1.f);
+        }
     }
-
-    // ── Click Handler ─────────────────────────────────────────────────────────
 
     UFUNCTION()
     private void HandleClicked()
     {
-
-        if (ResponseID == NAME_None) return;
-        OnResponseClicked.Execute(ResponseID);
+        if (ChoiceIndex != -1)
+        {
+            OnResponseClicked.Execute(ChoiceIndex);
+        }
     }
-
-    // ── Blueprint Events (implement visuals in WBP_ResponseButton) ────────────
-
-    /**
-     * Override in WBP_ResponseButton to set IconImage.Brush from a texture
-     * looked up by the IconTag. Keeps texture asset references out of code.
-     *
-     * Example tags: UI.Icon.Question, UI.Icon.Trade, UI.Icon.Threat, UI.Icon.Flirt
-     */
-    UFUNCTION(BlueprintEvent, Category = "Dialogue")
-    void BP_SetIcon(FGameplayTag IconTag) {}
 }

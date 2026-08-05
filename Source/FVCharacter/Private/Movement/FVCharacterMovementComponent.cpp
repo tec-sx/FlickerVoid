@@ -8,6 +8,8 @@
 #include "Logging/FVLogCategories.h"
 #include "Logging/FVLogSystem.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVCharacterMovementComponent)
+
 UFVCharacterMovementComponent::UFVCharacterMovementComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, MovementConfig(nullptr)

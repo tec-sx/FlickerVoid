@@ -3,6 +3,8 @@
 
 #include "StateTree/FVSTC_CompareGameplayTags.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVSTC_CompareGameplayTags)
+
 bool UFVSTC_CompareGameplayTags::TestCondition(FStateTreeExecutionContext& Context) const
 {
 	const bool bMatch = ExactMatch

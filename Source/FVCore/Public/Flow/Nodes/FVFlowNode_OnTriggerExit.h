@@ -2,15 +2,14 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "FVFlowNode_OnTriggerEvent.h"
 #include "FVFlowNode_OnTriggerExit.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class FLICKERVOIDCORE_API UFVFlowNode_OnTriggerExit : public UFVFlowNode_OnTriggerEvent
 {
 	GENERATED_BODY()
+	
+public:
+	UFVFlowNode_OnTriggerExit();
 };

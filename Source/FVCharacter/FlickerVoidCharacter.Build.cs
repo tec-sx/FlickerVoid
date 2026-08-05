@@ -21,7 +21,8 @@ public class FlickerVoidCharacter : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "ControlRig",
-            "RigVM"
+            "RigVM",
+            "Flow"
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));

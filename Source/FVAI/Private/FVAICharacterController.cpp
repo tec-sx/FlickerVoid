@@ -2,10 +2,13 @@
 
 #include "FVAICharacterController.h"
 
+#include "FVCoreTags.h"
 #include "FVStateTreeAIComponent.h"
 #include "Actors/FVAICharacter.h"
 #include "StateTree.h"
 #include "Components/BoxComponent.h"
+#include "Logging/FVLogCategories.h"
+#include "Logging/FVLogSystem.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISenseConfig_Hearing.h"
@@ -69,41 +72,26 @@ void AFVAICharacterController::OnPossess(APawn* InPawn)
 	PossesedCharacter = Cast<AFVAICharacter>(InPawn);
 	if (!PossesedCharacter)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AFVAICharacterController::OnPossess - InPawn is not a PGAS_EnemyCharacter!"));
+		FV_LOG_WARNING(LogFVAI, "AFVAICharacterController::OnPossess - InPawn is not a PGAS_EnemyCharacter!");
 		return;
 	}
-	
-	UStateTree* StateTree = PossesedCharacter->GetStateTree();
-	
-	if (StateTreeAIComponent && StateTree)
+
+	if (UStateTree* StateTree = PossesedCharacter->StateTree.Get(); StateTreeAIComponent && StateTree)
 	{
 		StateTreeAIComponent->AddTickPrerequisiteActor(PossesedCharacter);
 		StateTreeAIComponent->StartStateTree(StateTree);
-		
-		UE_LOG(LogTemp, Log, TEXT("StateTree started for %s"), *GetNameSafe(PossesedCharacter));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("StateTree not started: missing component or DefaultStateTree. Component=%s Tree=%s"),
-			*GetNameSafe(StateTreeAIComponent), *GetNameSafe(StateTree));
+		FV_LOG_ERROR(LogFVAI, "StateTree not started: Component=%s Tree=%s", *GetNameSafe(StateTreeAIComponent), *GetNameSafe(StateTree));
 	}
 	
-	InteractionZone = PossesedCharacter->GetInteractionZone();
-	if (!InteractionZone)
-	{
-		UE_LOG(LogTemp, Error, TEXT("UFVSTE_Perception: No InteractionZone - UBoxComponent found on AIController!"));
-		return;
-	}
-	
-	InteractionZone->OnComponentBeginOverlap.AddDynamic(this, &AFVAICharacterController::HandleEnterInteractionZone);
-	InteractionZone->OnComponentEndOverlap.AddDynamic(this, &AFVAICharacterController::HandleExitInteractionZone);
+	const FName Tag = FVCoreTags::Flow_Common_InteractionZone.GetTag().GetTagName();
 }
-
 void AFVAICharacterController::OnUnPossess()
 {
-	InteractionZone->OnComponentBeginOverlap.RemoveDynamic(this, &AFVAICharacterController::HandleEnterInteractionZone);
-	InteractionZone->OnComponentEndOverlap.RemoveDynamic(this, &AFVAICharacterController::HandleExitInteractionZone);
-	InteractionZone = nullptr;
+	const FName Tag = FVCoreTags::Flow_Common_InteractionZone.GetTag().GetTagName();
+	
 	PossesedCharacter = nullptr;
 	Super::OnUnPossess();
 }
@@ -112,7 +100,7 @@ void AFVAICharacterController::ForgetPerceptionActor(AActor* ActorToForget)
 {
 	if (!ActorToForget)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ForgetPerceptionActor: ActorToForget is nullptr."));
+		FV_LOG_WARNING(LogFVAI, "ForgetPerceptionActor: ActorToForget is nullptr.");
 		return;
 	}
 
@@ -120,11 +108,10 @@ void AFVAICharacterController::ForgetPerceptionActor(AActor* ActorToForget)
 	if (PC)
 	{
 		PC->ForgetActor(ActorToForget);
-		UE_LOG(LogTemp, Log, TEXT("ForgetPerceptionActor: Forgot actor %s"), *ActorToForget->GetName());
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ForgetPerceptionActor: PerceptionComponent is null."));
+		FV_LOG_WARNING(LogFVAI,"ForgetPerceptionActor: PerceptionComponent is null.");
 	}
 }
 
@@ -133,13 +120,13 @@ void AFVAICharacterController::ForgetPerceptionActors(const TArray<AActor*>& Act
 	UAIPerceptionComponent* PC = GetPerceptionComponent();
 	if (!PC)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ForgetPerceptionActors: PerceptionComponent is null."));
+		FV_LOG_WARNING(LogFVAI, "ForgetPerceptionActors: PerceptionComponent is null.");
 		return;
 	}
 
 	if (ActorsToForget.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ForgetPerceptionActors: No actors provided."));
+		FV_LOG_WARNING(LogFVAI, "ForgetPerceptionActors: No actors provided.");
 		return;
 	}
 
@@ -148,11 +135,10 @@ void AFVAICharacterController::ForgetPerceptionActors(const TArray<AActor*>& Act
 		if (Actor)
 		{
 			PC->ForgetActor(Actor);
-			UE_LOG(LogTemp, Log, TEXT("ForgetPerceptionActors: Forgot actor %s"), *Actor->GetName());
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("ForgetPerceptionActors: Encountered null actor, skipping."));
+			FV_LOG_WARNING(LogFVAI, "ForgetPerceptionActors: Encountered null actor, skipping.");
 		}
 	}
 }
@@ -212,7 +198,7 @@ void AFVAICharacterController::ReportDamageEvent(AActor* DamagedActor, AActor* I
 	UWorld* World = GetWorld();
 	if (!World || !DamagedActor)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ReportDamageEvent: Missing world or damaged actor."));
+		FV_LOG_WARNING(LogFVAI, "ReportDamageEvent: Missing world or damaged actor.");
 		return;
 	}
 	
@@ -234,7 +220,7 @@ void AFVAICharacterController::ReportNoiseEvent(AActor* NoiseInstigator, FVector
 	UWorld* World = GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ReportNoiseEvent: No valid World context."));
+		FV_LOG_WARNING(LogFVAI, "ReportNoiseEvent: No valid World context.");
 		return;
 	}
 	
@@ -272,7 +258,7 @@ void AFVAICharacterController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimu
     AActor* SensedActor = Actor;
     if (!SensedActor)
     {
-        UE_LOG(LogTemp, Verbose, TEXT("Sensed Actor %s is not a valid actor."), *GetNameSafe(Actor));
+        FV_LOG(LogFVAI, Verbose, "Sensed Actor %s is not a valid actor.", *GetNameSafe(Actor));
         return;
     }
 
@@ -318,29 +304,6 @@ void AFVAICharacterController::OnTargetPerceptionForgotten(AActor* Actor)
 {
 	OnSightStimulusForgotten.Broadcast(Actor);
 	OnHearingStimulusForgotten.Broadcast(Actor);
-}
-
-void AFVAICharacterController::HandleEnterInteractionZone(
-	UPrimitiveComponent* OverlappedComp, 
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, 
-	int32 OtherBodyIndex, 
-	bool bFromSweep, 
-	const FHitResult& SweepResult)
-{
-	if (IsValid(OtherActor) && OtherActor != PossesedCharacter)
-	{
-		OnEnterInteractionZone.Broadcast(OtherActor);
-	}
-}
-
-void AFVAICharacterController::HandleExitInteractionZone(
-	UPrimitiveComponent* OverlappedComp, 
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, 
-	int32 OtherBodyIndex)
-{
-	OnExitInteractionZone.Broadcast(OtherActor);
 }
 
 ETeamAttitude::Type AFVAICharacterController::GetTeamAttitudeTowards(const AActor& Other) const

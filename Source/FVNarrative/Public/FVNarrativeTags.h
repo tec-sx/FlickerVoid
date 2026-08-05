@@ -10,14 +10,14 @@ namespace FVNarrativeTags
 	// DIALOGUE TAGS
 	// ============================================================================
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Speaker_Player);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Speaker_GenericNPC);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Speaker_Dealer);
 	
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Signal_Greeting);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Signal_Farewell);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Signal_Trade);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Signal_Flirt);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Signal_Interact);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_CallOut);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_LineReady);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_ChoicesReady);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Ended);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_SubmitChoice);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Continue);
 	
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Icon_Trade_Item);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Icon_Trade_Info);

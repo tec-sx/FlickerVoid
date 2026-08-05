@@ -4,6 +4,8 @@
 
 #include "UI/FVInteractionActionInfo.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionAction)
+
 bool UFVInteractionAction::CheckRequirements(FGameplayTagContainer& InstigatorTags) const
 {
 	bool bRequirementsMet = MatchAnyBlockedByTag 

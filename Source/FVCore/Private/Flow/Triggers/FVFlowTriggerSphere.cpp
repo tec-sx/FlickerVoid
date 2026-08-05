@@ -1,26 +1,37 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿#include "Flow/Triggers/FVFlowTriggerSphere.h"
 
+#include "Components/BillboardComponent.h"
+#include "Components/SphereComponent.h"
 
-#include "Flow/Triggers/MyClass.h"
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVFlowTriggerSphere)
 
+static constexpr FColor FlowTriggerBaseColor(100, 255, 100, 255);
+static const FName TriggerCollisionProfileName(TEXT("Trigger"));
 
 // Sets default values
-AMyClass::AMyClass()
+AFVFlowTriggerSphere::AFVFlowTriggerSphere(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<USphereComponent>(TEXT("TriggerZone")))
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-}
+	USphereComponent* SphereTriggerZone = CastChecked<USphereComponent>(GetCollisionComponent());
 
-// Called when the game starts or when spawned
-void AMyClass::BeginPlay()
-{
-	Super::BeginPlay();
+	SphereTriggerZone->ShapeColor = FlowTriggerBaseColor;
+	SphereTriggerZone->InitSphereRadius(+200.0f);
+	SphereTriggerZone->SetCollisionProfileName(TriggerCollisionProfileName);
 	
+#if WITH_EDITORONLY_DATA
+	if (UBillboardComponent* TriggerSpriteComponent = GetSpriteComponent())
+	{
+		TriggerSpriteComponent->SetupAttachment(SphereTriggerZone);
+	}
+#endif
 }
 
-// Called every frame
-void AMyClass::Tick(float DeltaTime)
+#if WITH_EDITOR
+void AFVFlowTriggerSphere::EditorApplyScale(const FVector& DeltaScale, const FVector* PivotLocation, bool bAltDown, bool bShiftDown, bool bCtrlDown)
 {
-	Super::Tick(DeltaTime);
-}
+	const FVector ModifiedScale = DeltaScale * ( AActor::bUsePercentageBasedScaling ? 500.0f : 5.0f );
 
+	USphereComponent * SphereComponent = CastChecked<USphereComponent>(GetRootComponent());
+	SphereComponent->SetSphereRadius(FMath::Max<float>(0.0f, SphereComponent->GetUnscaledSphereRadius() + ModifiedScale.X));
+}
+#endif

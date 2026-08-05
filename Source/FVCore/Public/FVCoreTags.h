@@ -22,6 +22,24 @@ namespace FVCoreTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Action_Primary);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Action_Secondary);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Action_Ternary);
+	
+	// ============================================================================
+	// CORE ACTOR TAGS
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Pawn);
+	
+	// ============================================================================
+	// FLOW GRAPH
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Flow_Common_Enable);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Flow_Common_Disable);
+	
+	// ============================================================================
+	// COMPONENT TAGS
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Flow_Common_TriggerZone);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Flow_Common_InteractionZone);
+	
 }
 
 #undef UE_API

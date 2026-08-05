@@ -1,11 +1,12 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿#pragma once
 
-#pragma once
-
-#include "CoreMinimal.h"
 #include "FlowComponent.h"
 #include "FVFlowTriggerComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FFlowTriggerComponentEvent, 
+	const bool, bOverlapping, 
+	class UFlowComponent*, OtherFlowComponent);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FLICKERVOIDCORE_API UFVFlowTriggerComponent : public UFlowComponent
@@ -13,15 +14,44 @@ class FLICKERVOIDCORE_API UFVFlowTriggerComponent : public UFlowComponent
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this component's properties
-	UFVFlowTriggerComponent();
+	explicit UFVFlowTriggerComponent(const FObjectInitializer& ObjectInitializer);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowTrigger")
+	bool bAutoEnable;
 
-protected:
-	// Called when the game starts
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "FlowTrigger")
+	bool bOverlapEnabled;
+
+	UPROPERTY(BlueprintAssignable, Category = "FlowTrigger")
+	FFlowTriggerComponentEvent OnTriggerEvent;
+	
+	void EnableOverlap();
+	void DisableOverlap();
+
 	virtual void BeginPlay() override;
-
-public:
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
+	virtual void NotifyFromGraph(
+		const FGameplayTagContainer& NotifyTags, 
+		const EFlowNetMode NetMode = EFlowNetMode::Authority) override;
+	
+private:
+	TWeakObjectPtr<UShapeComponent> TriggerZonePtr;
+	TWeakObjectPtr<UFlowComponent> FlowComponentPtr;
+	
+	UFUNCTION()
+	void OnComponentBeginOverlap(
+		UPrimitiveComponent* InOverlappedComponent, 
+		AActor* InOtherActor, 
+		UPrimitiveComponent* InOtherComp, 
+		int32 InOtherBodyIndex, 
+		bool bFromSweep, 
+		const FHitResult& InSweepResult);
+	
+	UFUNCTION()
+	void OnComponentEndOverlap(
+		UPrimitiveComponent* InOverlappedComponent, 
+		AActor* InOtherActor, 
+		UPrimitiveComponent* InOtherComp, 
+		int32 InOtherBodyIndex);
 };

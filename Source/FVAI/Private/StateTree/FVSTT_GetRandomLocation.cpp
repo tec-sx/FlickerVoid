@@ -7,8 +7,11 @@
 #include "StateTreeExecutionContext.h"
 #include "Actors/FVAICharacter.h"
 
-EStateTreeRunStatus FFVSTT_GetRandomLocation::EnterState(FStateTreeExecutionContext& Context,
-                                                         const FStateTreeTransitionResult& Transition) const
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVSTT_GetRandomLocation)
+
+EStateTreeRunStatus FFVSTT_GetRandomLocation::EnterState(
+	FStateTreeExecutionContext& Context,
+    const FStateTreeTransitionResult& Transition) const
 {
 	FGetRandomLocationTaskInstanceData& Data = Context.GetInstanceData(*this);
 	

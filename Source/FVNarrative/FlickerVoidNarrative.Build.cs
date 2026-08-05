@@ -20,6 +20,15 @@ public class FlickerVoidNarrative : ModuleRules
             "StateTreeModule",
             "GameplayStateTreeModule",
         });
+        
+        PrivateDependencyModuleNames.AddRange(new string[]
+        {
+            "SUDS",
+            "Flow",
+            "GameplayMessageRuntime",
+            "CinematicCamera",
+            "LevelSequence"
+        });
 
         if (Target.bBuildEditor)
         {

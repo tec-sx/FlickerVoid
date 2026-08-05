@@ -7,6 +7,8 @@
 #include "Interactions/FVInteractionInstigatorComponent.h"
 #include "Logging/FVLogCategories.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionTargetComponent)
+
 UFVInteractionTargetComponent::UFVInteractionTargetComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;

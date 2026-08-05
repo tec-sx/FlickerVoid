@@ -1,7 +1,8 @@
-﻿#include "Flow/Nodes/FVFlowNode_SetInteractionState.h"
+﻿#include "Interactions/Flow/FVFlowNode_SetInteractionState.h"
 
 #include "FlowComponent.h"
 #include "FlowSubsystem.h"
+#include "Interactions/FVInteractionComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVFlowNode_SetInteractionState)
 
@@ -24,8 +25,9 @@ void UFVFlowNode_SetInteractionState::ExecuteInput(const FName& PinName)
 	
 	for (const TWeakObjectPtr<UFlowComponent>& FoundComponent : Components)
 	{
-		TArray<UInteractionComponent*> FoundInteractions;
-		FoundComponent->GetOwner()->GetComponents<UInteractionComponent>(FoundInteractions);
+		TArray<UFVInteractionComponent*> FoundInteractions;
+		FoundComponent->GetOwner()->GetComponents<UFVInteractionComponent>(FoundInteractions);
+		
 		if (FoundInteractions.Num() > 0)
 		{
 			if (PinName == TEXT("Enable"))
@@ -42,12 +44,20 @@ void UFVFlowNode_SetInteractionState::ExecuteInput(const FName& PinName)
 	TriggerFirstOutput(true);
 }
 
+#if WITH_EDITOR 
 FString UFVFlowNode_SetInteractionState::GetNodeDescription() const
 {
-	return Super::GetNodeDescription();
+	return GetIdentityTagsDescription(IdentityTags);
 }
 
 EDataValidationResult UFVFlowNode_SetInteractionState::ValidateNode()
 {
-	return Super::ValidateNode();
+	if (IdentityTags.IsEmpty())
+	{
+		ValidationLog.Error<UFlowNode>(*UFlowNode::MissingIdentityTag, this);
+		return EDataValidationResult::Invalid;
+	}
+
+	return EDataValidationResult::Valid;
 }
+#endif

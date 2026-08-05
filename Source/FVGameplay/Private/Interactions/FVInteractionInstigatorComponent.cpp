@@ -6,6 +6,8 @@
 #include "CollisionQueryParams.h"
 #include "Engine/OverlapResult.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionInstigatorComponent)
+
 static TAutoConsoleVariable CVarInteractionDebug(TEXT("FVCvar.Interaction.Debug"), false, TEXT("Debug the interaction system"));
 
 UFVInteractionInstigatorComponent::UFVInteractionInstigatorComponent()
@@ -148,21 +150,21 @@ UFVInteractionTargetComponent* UFVInteractionInstigatorComponent::FindBestTarget
 		}
 	}
 	
-#if UE_BUILD_DEVELOPMENT
-	if (CVarInteractionDebug.GetValueOnGameThread() == true)
-	{
-		FVector TargetOrigin = FVector::ZeroVector;
-		FVector TargetBoxExtent = FVector::ZeroVector;
-		
-		BestTarget->GetOwner()->GetActorBounds(false, TargetOrigin, TargetBoxExtent);
-		DrawDebugSphere(
-			GetWorld(), 
-			BestTarget->GetOwner()->GetActorLocation(),
-			TargetBoxExtent.GetMax(),
-			8,
-			FColor::Red);
-	}
-#endif
+// #if UE_BUILD_DEVELOPMENT
+// 	if (CVarInteractionDebug.GetValueOnGameThread() == true)
+// 	{
+// 		FVector TargetOrigin = FVector::ZeroVector;
+// 		FVector TargetBoxExtent = FVector::ZeroVector;
+// 		
+// 		BestTarget->GetOwner()->GetActorBounds(false, TargetOrigin, TargetBoxExtent);
+// 		DrawDebugSphere(
+// 			GetWorld(), 
+// 			BestTarget->GetOwner()->GetActorLocation(),
+// 			TargetBoxExtent.GetMax(),
+// 			8,
+// 			FColor::Red);
+// 	}
+// #endif
 	
 	return BestTarget;
 }

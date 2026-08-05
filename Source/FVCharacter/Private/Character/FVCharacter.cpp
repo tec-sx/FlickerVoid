@@ -1,7 +1,8 @@
 #include "Character/FVCharacter.h"
 
+#include "FlowComponent.h"
 #include "FVCharacterTypes.h"
-#include "Components/FVTagComponent.h"
+#include "FVCoreTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Movement/FVCharacterMovementComponent.h"
 
@@ -15,7 +16,9 @@ AFVCharacter::AFVCharacter(const FObjectInitializer& ObjectInitializer)
 	
 	SetReplicatingMovement(false);
 	
-	TagComponent = CreateDefaultSubobject<UFVTagComponent>(TEXT("Tags"));
+	FlowComponent = CreateDefaultSubobject<UFlowComponent>(TEXT("FlowComponent"));
+	
+	GetFlowComponent()->IdentityTags = FGameplayTagContainer(FVCoreTags::Player_Pawn);
 }
 
 
@@ -129,6 +132,27 @@ void AFVCharacter::RequestSprint(const bool bValue)
 void AFVCharacter::RequestJump()
 {
 	IsCrouched() ? UnCrouch() : Jump();
+}
+
+FGameplayTagContainer AFVCharacter::GetIdentityTags() const
+{
+	return GetFlowComponent()->IdentityTags;
+}
+
+void AFVCharacter::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+{
+	TagContainer.Reset();
+	TagContainer.AppendTags(OwnedTags);
+}
+
+void AFVCharacter::AddGameplayTag(FGameplayTag Tag)
+{
+	OwnedTags.AddTag(Tag);
+}
+
+void AFVCharacter::RemoveGameplayTag(FGameplayTag Tag)
+{
+	OwnedTags.RemoveTag(Tag);
 }
 
 EFVGait AFVCharacter::GetGait() const

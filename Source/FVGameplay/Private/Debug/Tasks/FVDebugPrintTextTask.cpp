@@ -5,6 +5,8 @@
 #include "DrawDebugHelpers.h"
 #include "StateTreeExecutionContext.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVDebugPrintTextTask)
+
 EStateTreeRunStatus UFVDebugPrintTextTask::EnterState(
     FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition)

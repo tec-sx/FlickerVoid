@@ -5,6 +5,7 @@
 // Core System Logging
 DEFINE_LOG_CATEGORY(LogFVCore);
 DEFINE_LOG_CATEGORY(LogFVSystem);
+DEFINE_LOG_CATEGORY(LogFVFlowGraph);
 
 // Character Module Logging
 DEFINE_LOG_CATEGORY(LogFVCharacter);
