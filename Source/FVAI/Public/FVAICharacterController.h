@@ -44,6 +44,7 @@ public:
 	
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
 	// Returns the State Tree AI Component for this character
 	// This component handles the AI behavior for the enemy character.
@@ -127,6 +128,4 @@ private:
 	TObjectPtr<UAISenseConfig_Prediction> PredictionConfig;
 	
 	EFVStimulusSenseType CurrentStimulusSenseType = EFVStimulusSenseType::Unknown;
-	
-	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 };

@@ -2,6 +2,7 @@
 
 #include "FVAICharacterController.h"
 
+#include "FVAIConfigData.h"
 #include "FVCoreTags.h"
 #include "FVStateTreeAIComponent.h"
 #include "Actors/FVAICharacter.h"
@@ -24,43 +25,38 @@ AFVAICharacterController::AFVAICharacterController(const FObjectInitializer& Obj
 	
     StateTreeAIComponent = CreateDefaultSubobject<UFVStateTreeAIComponent>(TEXT("State Tree AI Component"));
     PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception Component"));
-	
-    SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
-    SightConfig->SightRadius = 1000.0f;
-    SightConfig->LoseSightRadius = 1500.0f;
-    SightConfig->PeripheralVisionAngleDegrees = 35.0f;
-    SightConfig->SetMaxAge(5.f);
-    SightConfig->PointOfViewBackwardOffset = 260.0f;
-    SightConfig->NearClippingRadius = 200.0f;
-    SightConfig->AutoSuccessRangeFromLastSeenLocation = -1.0f;
-    SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-    SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
-    SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
-
-    PerceptionComponent->ConfigureSense(*SightConfig);
-    PerceptionComponent->SetDominantSense(UAISense_Sight::StaticClass());
-	
-    HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
-    HearingConfig->HearingRange = 1200.f;
-    HearingConfig->SetMaxAge(3.f);
-    HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
-    HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
-    HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
-    PerceptionComponent->ConfigureSense(*HearingConfig);
-
-    // Add damage perception
-    DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage>(TEXT("DamageConfig"));
-    PerceptionComponent->ConfigureSense(*DamageConfig);
-
-    // Add prediction sense
-    PredictionConfig = CreateDefaultSubobject<UAISenseConfig_Prediction>(TEXT("PredictionConfig"));
-    PredictionConfig->SetMaxAge(1.0f); // How long the prediction lasts
-    PredictionConfig->SetStartsEnabled(true); // Start enabled
-    PerceptionComponent->ConfigureSense(*PredictionConfig);
-
-    // Bind perception events
-    PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AFVAICharacterController::OnTargetPerceptionUpdated);
-    PerceptionComponent->OnTargetPerceptionForgotten.AddDynamic(this, &AFVAICharacterController::OnTargetPerceptionForgotten);
+	   //
+    // SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+    // SightConfig->SightRadius = 1000.0f;
+    // SightConfig->LoseSightRadius = 1500.0f;
+    // SightConfig->PeripheralVisionAngleDegrees = 35.0f;
+    // SightConfig->SetMaxAge(5.f);
+    // SightConfig->PointOfViewBackwardOffset = 260.0f;
+    // SightConfig->NearClippingRadius = 200.0f;
+    // SightConfig->AutoSuccessRangeFromLastSeenLocation = -1.0f;
+    // SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+    // SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
+    // SightConfig->DetectionByAffiliation.bDetectNeutrals = false;
+    //
+    // PerceptionComponent->ConfigureSense(*SightConfig);
+	   //
+    // HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
+    // HearingConfig->HearingRange = 1200.f;
+    // HearingConfig->SetMaxAge(3.f);
+    // HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
+    // HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
+    // HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
+    // PerceptionComponent->ConfigureSense(*HearingConfig);
+    //
+    // // Add damage perception
+    // DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage>(TEXT("DamageConfig"));
+    // PerceptionComponent->ConfigureSense(*DamageConfig);
+    //
+    // // Add prediction sense
+    // PredictionConfig = CreateDefaultSubobject<UAISenseConfig_Prediction>(TEXT("PredictionConfig"));
+    // PredictionConfig->SetMaxAge(1.0f); // How long the prediction lasts
+    // PredictionConfig->SetStartsEnabled(true); // Start enabled
+    // PerceptionComponent->ConfigureSense(*PredictionConfig);
 	
 	StateTreeAIComponent->SetStartLogicAutomatically(false);
 }
@@ -72,25 +68,28 @@ void AFVAICharacterController::OnPossess(APawn* InPawn)
 	PossesedCharacter = Cast<AFVAICharacter>(InPawn);
 	if (!PossesedCharacter)
 	{
-		FV_LOG_WARNING(LogFVAI, "AFVAICharacterController::OnPossess - InPawn is not a PGAS_EnemyCharacter!");
+		FV_LOG_WARNING(LogFVAI, "AFVAICharacterController::OnPossess - InPawn is not a FVAICharacter!");
 		return;
 	}
-
-	if (UStateTree* StateTree = PossesedCharacter->StateTree.Get(); StateTreeAIComponent && StateTree)
+	
+	
+	TArray<UAISenseConfig*> SensesConfig = PossesedCharacter->AIConfig->SensesConfig;
+	for (UAISenseConfig* Config : SensesConfig)
 	{
-		StateTreeAIComponent->AddTickPrerequisiteActor(PossesedCharacter);
-		StateTreeAIComponent->StartStateTree(StateTree);
-	}
-	else
-	{
-		FV_LOG_ERROR(LogFVAI, "StateTree not started: Component=%s Tree=%s", *GetNameSafe(StateTreeAIComponent), *GetNameSafe(StateTree));
+		PerceptionComponent->ConfigureSense(*Config);
 	}
 	
-	const FName Tag = FVCoreTags::Flow_Common_InteractionZone.GetTag().GetTagName();
+	PerceptionComponent->SetDominantSense(PossesedCharacter->AIConfig->DominantSense);
+	
+	// Bind perception events
+	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AFVAICharacterController::OnTargetPerceptionUpdated);
+	PerceptionComponent->OnTargetPerceptionForgotten.AddDynamic(this, &AFVAICharacterController::OnTargetPerceptionForgotten);
 }
+
 void AFVAICharacterController::OnUnPossess()
 {
-	const FName Tag = FVCoreTags::Flow_Common_InteractionZone.GetTag().GetTagName();
+	PerceptionComponent->OnTargetPerceptionUpdated.RemoveDynamic(this, &AFVAICharacterController::OnTargetPerceptionUpdated);
+	PerceptionComponent->OnTargetPerceptionForgotten.RemoveDynamic(this, &AFVAICharacterController::OnTargetPerceptionForgotten);
 	
 	PossesedCharacter = nullptr;
 	Super::OnUnPossess();
@@ -240,6 +239,11 @@ void AFVAICharacterController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimu
         return;
     }
 	
+	if (GetTeamAttitudeTowards(*Actor) != ETeamAttitude::Hostile)
+	{
+		return;
+	}
+	
     static const FAISenseID SightID = UAISense::GetSenseID(UAISense_Sight::StaticClass());
     static const FAISenseID HearingID = UAISense::GetSenseID(UAISense_Hearing::StaticClass());
     static const FAISenseID DamageID = UAISense::GetSenseID(UAISense_Damage::StaticClass());
@@ -308,7 +312,22 @@ void AFVAICharacterController::OnTargetPerceptionForgotten(AActor* Actor)
 
 ETeamAttitude::Type AFVAICharacterController::GetTeamAttitudeTowards(const AActor& Other) const
 {
-	// TODO: Update fucntion to check for factions, affiliations, etc. and return the Attitude. Maybe create custom Enum?
-	return ETeamAttitude::Neutral;
+	// Use this to recognize factions
+	if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(&Other))
+	{
+		FGenericTeamId OtherTeamId = TeamAgent->GetGenericTeamId();
+
+		// Player = 1, Enemy= 2
+		if (OtherTeamId == FGenericTeamId(1))
+		{
+			return ETeamAttitude::Hostile;
+		}
+		else if (OtherTeamId == FGenericTeamId(2))
+		{
+			return ETeamAttitude::Friendly;
+		}
+	}
+
+	return ETeamAttitude::Neutral; 
 }
 

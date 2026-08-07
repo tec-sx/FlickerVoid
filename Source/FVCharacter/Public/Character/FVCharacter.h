@@ -1,11 +1,10 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "GameFramework/Character.h"
 #include "FVCharacterTypes.h"
 #include "GameplayTagAssetInterface.h"
 #include "GameplayTagContainer.h"
+#include "GenericTeamAgentInterface.h"
 #include "FVCharacter.generated.h"
 
 class UFlowComponent;
@@ -19,7 +18,7 @@ class UFVAbilitySystemComponent;
 class USpringArmComponent;
 
 UCLASS(Config = Game)
-class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter, public IGameplayTagAssetInterface
+class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter, public IGameplayTagAssetInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -28,6 +27,8 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void Landed(const FHitResult& Hit) override;
+	
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
 	
 	//~=============================================================================
 	// Character Properties
@@ -105,6 +106,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
 	FGameplayTagContainer OwnedTags;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGenericTeamId TeamId = FGenericTeamId(1);
 private:
 	// Intent Data
 	FVector MovementDirection = FVector::ZeroVector;

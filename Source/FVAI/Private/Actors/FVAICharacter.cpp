@@ -5,6 +5,7 @@
 
 #include "FVAICharacterController.h"
 #include "FVCoreTags.h"
+#include "FVStateTreeAIComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Flow/Components/FVFlowTriggerComponent.h"
@@ -34,6 +35,23 @@ void AFVAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AFVAICharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+	
+	FTimerHandle DummyHandle;
+	GetWorld()->GetTimerManager().SetTimer(
+		DummyHandle,
+		[ this, NewController ] ()
+		{
+			if (const AFVAICharacterController* AIController = Cast<AFVAICharacterController>(NewController))
+			{
+				if (AIController->GetStateTreeAIComponent() && StateTree)
+				{
+					AIController->GetStateTreeAIComponent()->StartStateTree(StateTree);
+				}
+			}
+		},
+		0.2f,
+		false
+	);
 }
 
 void AFVAICharacter::UnPossessed()

@@ -4,7 +4,9 @@ UFVStateTreeAIComponent::UFVStateTreeAIComponent(const FObjectInitializer& Objec
 	: Super(ObjectInitializer)
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = false;
+	PrimaryComponentTick.bStartWithTickEnabled = true;
+	
+	SetStartLogicAutomatically(false);
 }
 
 void UFVStateTreeAIComponent::BeginPlay()

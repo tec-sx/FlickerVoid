@@ -96,7 +96,11 @@ void UFVFlowNode_CallOut::Play()
 	{
 		if (USoundBase* Sound = Row->Voice.LoadSynchronous())
 		{
-
+			USoundAttenuation* AttenuationSettings = NewObject<USoundAttenuation>();
+			AttenuationSettings->Attenuation.DistanceAlgorithm = EAttenuationDistanceModel::NaturalSound;
+			AttenuationSettings->Attenuation.AttenuationShape = EAttenuationShape::Sphere;
+			AttenuationSettings->Attenuation.FalloffDistance = 3000.f;
+			
 			PlayingVoice = UGameplayStatics::SpawnSoundAtLocation(
 				GetWorld(),
 				Sound, 
@@ -105,7 +109,7 @@ void UFVFlowNode_CallOut::Play()
 				1,
 				1,
 				0,
-				Sound->AttenuationSettings);
+				AttenuationSettings);
 
 			if (PlayingVoice.IsValid())
 			{
