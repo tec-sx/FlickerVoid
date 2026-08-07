@@ -11,6 +11,7 @@
 #include "Logging/FVLogCategories.h"
 #include "Logging/FVLogSystem.h"
 #include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig.h"
 #include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISenseConfig_Hearing.h"
 #include "Perception/AISenseConfig_Prediction.h"
@@ -25,39 +26,7 @@ AFVAICharacterController::AFVAICharacterController(const FObjectInitializer& Obj
 	
     StateTreeAIComponent = CreateDefaultSubobject<UFVStateTreeAIComponent>(TEXT("State Tree AI Component"));
     PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception Component"));
-	   //
-    // SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
-    // SightConfig->SightRadius = 1000.0f;
-    // SightConfig->LoseSightRadius = 1500.0f;
-    // SightConfig->PeripheralVisionAngleDegrees = 35.0f;
-    // SightConfig->SetMaxAge(5.f);
-    // SightConfig->PointOfViewBackwardOffset = 260.0f;
-    // SightConfig->NearClippingRadius = 200.0f;
-    // SightConfig->AutoSuccessRangeFromLastSeenLocation = -1.0f;
-    // SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-    // SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
-    // SightConfig->DetectionByAffiliation.bDetectNeutrals = false;
-    //
-    // PerceptionComponent->ConfigureSense(*SightConfig);
-	   //
-    // HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
-    // HearingConfig->HearingRange = 1200.f;
-    // HearingConfig->SetMaxAge(3.f);
-    // HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
-    // HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
-    // HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
-    // PerceptionComponent->ConfigureSense(*HearingConfig);
-    //
-    // // Add damage perception
-    // DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage>(TEXT("DamageConfig"));
-    // PerceptionComponent->ConfigureSense(*DamageConfig);
-    //
-    // // Add prediction sense
-    // PredictionConfig = CreateDefaultSubobject<UAISenseConfig_Prediction>(TEXT("PredictionConfig"));
-    // PredictionConfig->SetMaxAge(1.0f); // How long the prediction lasts
-    // PredictionConfig->SetStartsEnabled(true); // Start enabled
-    // PerceptionComponent->ConfigureSense(*PredictionConfig);
-	
+
 	StateTreeAIComponent->SetStartLogicAutomatically(false);
 }
 
@@ -71,25 +40,38 @@ void AFVAICharacterController::OnPossess(APawn* InPawn)
 		FV_LOG_WARNING(LogFVAI, "AFVAICharacterController::OnPossess - InPawn is not a FVAICharacter!");
 		return;
 	}
-	
-	
-	TArray<UAISenseConfig*> SensesConfig = PossesedCharacter->AIConfig->SensesConfig;
-	for (UAISenseConfig* Config : SensesConfig)
+
+	if (!PossesedCharacter->AIConfig)
 	{
-		PerceptionComponent->ConfigureSense(*Config);
+		FV_LOG_WARNING(LogFVAI, "AFVAICharacterController::OnPossess - Missing AIConfig on possessed character.");
+		return;
+	}
+
+	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AFVAICharacterController::OnTargetPerceptionUpdated);
+	PerceptionComponent->OnTargetPerceptionForgotten.AddDynamic(this, &AFVAICharacterController::OnTargetPerceptionForgotten);
+	
+	for (const TObjectPtr<UAISenseConfig>& Config : PossesedCharacter->AIConfig->SensesConfig)
+	{
+		if (!Config)
+		{
+			continue;
+		}
+
+		UAISenseConfig* InstanceConfig = DuplicateObject<UAISenseConfig>(Config.Get(), PerceptionComponent);
+		PerceptionComponent->ConfigureSense(*InstanceConfig);
 	}
 	
 	PerceptionComponent->SetDominantSense(PossesedCharacter->AIConfig->DominantSense);
-	
-	// Bind perception events
-	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AFVAICharacterController::OnTargetPerceptionUpdated);
-	PerceptionComponent->OnTargetPerceptionForgotten.AddDynamic(this, &AFVAICharacterController::OnTargetPerceptionForgotten);
+	PerceptionComponent->RequestStimuliListenerUpdate();
 }
 
 void AFVAICharacterController::OnUnPossess()
 {
-	PerceptionComponent->OnTargetPerceptionUpdated.RemoveDynamic(this, &AFVAICharacterController::OnTargetPerceptionUpdated);
-	PerceptionComponent->OnTargetPerceptionForgotten.RemoveDynamic(this, &AFVAICharacterController::OnTargetPerceptionForgotten);
+	if (PerceptionComponent)
+	{
+		PerceptionComponent->OnTargetPerceptionUpdated.RemoveDynamic(this, &AFVAICharacterController::OnTargetPerceptionUpdated);
+		PerceptionComponent->OnTargetPerceptionForgotten.RemoveDynamic(this, &AFVAICharacterController::OnTargetPerceptionForgotten);
+	}
 	
 	PossesedCharacter = nullptr;
 	Super::OnUnPossess();
@@ -152,7 +134,7 @@ TArray<AActor*> AFVAICharacterController::GetAllDamageSensedActors() const
 	
 	SensedActors = SensedActors.FilterByPredicate([ this ] (AActor* Actor)
 	{
-		return Actor && GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile;
+		return IsValidPerceptionTarget(Actor);
 	});
     
 	return SensedActors;
@@ -166,10 +148,9 @@ TArray<AActor*> AFVAICharacterController::GetAllHeardActors() const
 		PerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Hearing::StaticClass(), SensedActors);
 	}
 
-	// Filter out non-hostiles
 	SensedActors = SensedActors.FilterByPredicate([this](AActor* Actor)
 	{
-		return Actor && GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile;
+		return IsValidPerceptionTarget(Actor);
 	});
 
 	return SensedActors;
@@ -183,10 +164,9 @@ TArray<AActor*> AFVAICharacterController::GetAllSeenActors() const
 		PerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), SensedActors);
 	}
 
-	// Filter out non-hostiles
 	SensedActors = SensedActors.FilterByPredicate([ this ] (AActor* Actor)
 	{
-		return Actor && GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Hostile;
+		return IsValidPerceptionTarget(Actor);
 	});
 
 	return SensedActors;
@@ -234,12 +214,7 @@ void AFVAICharacterController::ReportNoiseEvent(AActor* NoiseInstigator, FVector
 
 void AFVAICharacterController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-    if (!Actor)
-    {
-        return;
-    }
-	
-	if (GetTeamAttitudeTowards(*Actor) != ETeamAttitude::Hostile)
+	if (!IsValidPerceptionTarget(Actor))
 	{
 		return;
 	}
@@ -247,24 +222,8 @@ void AFVAICharacterController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimu
     static const FAISenseID SightID = UAISense::GetSenseID(UAISense_Sight::StaticClass());
     static const FAISenseID HearingID = UAISense::GetSenseID(UAISense_Hearing::StaticClass());
     static const FAISenseID DamageID = UAISense::GetSenseID(UAISense_Damage::StaticClass());
-	
-    FString SenseName;
-    if (Stimulus.Type == SightID)
-        SenseName = TEXT("Sight");
-    else if (Stimulus.Type == HearingID)
-        SenseName = TEXT("Hearing");
-    else if (Stimulus.Type == DamageID)
-        SenseName = TEXT("Damage");
-    else {
-        SenseName = TEXT("Unknown");
-    }
-	
+
     AActor* SensedActor = Actor;
-    if (!SensedActor)
-    {
-        FV_LOG(LogFVAI, Verbose, "Sensed Actor %s is not a valid actor.", *GetNameSafe(Actor));
-        return;
-    }
 
     CurrentStimulusSenseType = EFVStimulusSenseType::Unknown;
 	
@@ -306,28 +265,23 @@ void AFVAICharacterController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimu
 
 void AFVAICharacterController::OnTargetPerceptionForgotten(AActor* Actor)
 {
+	if (!IsValidPerceptionTarget(Actor))
+	{
+		return;
+	}
+
 	OnSightStimulusForgotten.Broadcast(Actor);
 	OnHearingStimulusForgotten.Broadcast(Actor);
 }
 
-ETeamAttitude::Type AFVAICharacterController::GetTeamAttitudeTowards(const AActor& Other) const
+bool AFVAICharacterController::IsValidPerceptionTarget(const AActor* Actor) const
 {
-	// Use this to recognize factions
-	if (const IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(&Other))
+	if (!Actor || Actor == GetPawn())
 	{
-		FGenericTeamId OtherTeamId = TeamAgent->GetGenericTeamId();
-
-		// Player = 1, Enemy= 2
-		if (OtherTeamId == FGenericTeamId(1))
-		{
-			return ETeamAttitude::Hostile;
-		}
-		else if (OtherTeamId == FGenericTeamId(2))
-		{
-			return ETeamAttitude::Friendly;
-		}
+		return false;
 	}
 
-	return ETeamAttitude::Neutral; 
+	const APawn* TargetPawn = Cast<APawn>(Actor);
+	return TargetPawn && TargetPawn->IsPlayerControlled();
 }
 

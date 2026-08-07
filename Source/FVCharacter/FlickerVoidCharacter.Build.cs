@@ -22,8 +22,7 @@ public class FlickerVoidCharacter : ModuleRules
         {
             "ControlRig",
             "RigVM",
-            "Flow",
-            "AIModule"
+            "Flow"
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
