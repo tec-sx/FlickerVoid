@@ -9,7 +9,6 @@ namespace FVQuestFactAspects
 {
 	const FName Stage(TEXT("Stage"));
 	const FName Outcome(TEXT("Outcome"));
-	const FName Failed(TEXT("Failed"));
 	const FName Objective(TEXT("Objective"));
 	const FName Counter(TEXT("Counter"));
 	const FName Reached(TEXT("Reached"));
@@ -20,7 +19,8 @@ namespace
 {
 	// Quest and objective ids are authored data, so the resulting tags are runtime tags
 	// rather than natively declared ones. ErrorIfNotFound is false to avoid ensure spam.
-	FGameplayTag MakeChildTag(const FGameplayTag& ParentTag, const TArray<FName, TInlineAllocator<3>>& Parts)
+	// Four inline parts covers the deepest tag: <ChapterId>.<QuestId>.Objective.<ObjectiveId>.
+	FGameplayTag MakeChildTag(const FGameplayTag& ParentTag, const TArray<FName, TInlineAllocator<4>>& Parts)
 	{
 		if (!ParentTag.IsValid())
 		{
@@ -43,34 +43,34 @@ namespace
 	}
 }
 
-FGameplayTag UFVQuestFactHelpers::MakeQuestTag(FName QuestId)
+FGameplayTag UFVQuestFactHelpers::MakeChapterQuestsTag(FName ChapterId)
 {
-	return MakeChildTag(FVNarrativeTags::Fact_Quest, {QuestId});
+	return MakeChildTag(FVNarrativeTags::Fact_Quest, {ChapterId});
 }
 
-FGameplayTag UFVQuestFactHelpers::MakeQuestStageTag(FName QuestId)
+FGameplayTag UFVQuestFactHelpers::MakeQuestTag(FName ChapterId, FName QuestId)
 {
-	return MakeChildTag(FVNarrativeTags::Fact_Quest, {QuestId, FVQuestFactAspects::Stage});
+	return MakeChildTag(FVNarrativeTags::Fact_Quest, {ChapterId, QuestId});
 }
 
-FGameplayTag UFVQuestFactHelpers::MakeQuestOutcomeTag(FName QuestId)
+FGameplayTag UFVQuestFactHelpers::MakeQuestStageTag(FName ChapterId, FName QuestId)
 {
-	return MakeChildTag(FVNarrativeTags::Fact_Quest, {QuestId, FVQuestFactAspects::Outcome});
+	return MakeChildTag(FVNarrativeTags::Fact_Quest, {ChapterId, QuestId, FVQuestFactAspects::Stage});
 }
 
-FGameplayTag UFVQuestFactHelpers::MakeQuestFailedTag(FName QuestId)
+FGameplayTag UFVQuestFactHelpers::MakeQuestOutcomeTag(FName ChapterId, FName QuestId)
 {
-	return MakeChildTag(FVNarrativeTags::Fact_Quest, {QuestId, FVQuestFactAspects::Failed});
+	return MakeChildTag(FVNarrativeTags::Fact_Quest, {ChapterId, QuestId, FVQuestFactAspects::Outcome});
 }
 
-FGameplayTag UFVQuestFactHelpers::MakeObjectiveTag(FName QuestId, FName ObjectiveId)
+FGameplayTag UFVQuestFactHelpers::MakeObjectiveTag(FName ChapterId, FName QuestId, FName ObjectiveId)
 {
-	return MakeChildTag(FVNarrativeTags::Fact_Quest, {QuestId, FVQuestFactAspects::Objective, ObjectiveId});
+	return MakeChildTag(FVNarrativeTags::Fact_Quest, {ChapterId, QuestId, FVQuestFactAspects::Objective, ObjectiveId});
 }
 
-FGameplayTag UFVQuestFactHelpers::MakeQuestCounterTag(FName QuestId, FName CounterId)
+FGameplayTag UFVQuestFactHelpers::MakeQuestCounterTag(FName ChapterId, FName QuestId, FName CounterId)
 {
-	return MakeChildTag(FVNarrativeTags::Fact_Quest, {QuestId, FVQuestFactAspects::Counter, CounterId});
+	return MakeChildTag(FVNarrativeTags::Fact_Quest, {ChapterId, QuestId, FVQuestFactAspects::Counter, CounterId});
 }
 
 FGameplayTag UFVQuestFactHelpers::MakeChapterTag(FName ChapterId, FName Aspect)
@@ -81,6 +81,16 @@ FGameplayTag UFVQuestFactHelpers::MakeChapterTag(FName ChapterId, FName Aspect)
 	}
 
 	return MakeChildTag(FVNarrativeTags::Fact_Chapter, {ChapterId, Aspect});
+}
+
+FGameplayTag UFVQuestFactHelpers::MakeChapterStageTag(FName ChapterId)
+{
+	return MakeChildTag(FVNarrativeTags::Fact_Chapter, {ChapterId, FVQuestFactAspects::Stage});
+}
+
+FGameplayTag UFVQuestFactHelpers::MakeChapterOutcomeTag(FName ChapterId)
+{
+	return MakeChildTag(FVNarrativeTags::Fact_Chapter, {ChapterId, FVQuestFactAspects::Outcome});
 }
 
 int32 UFVQuestFactHelpers::QuestStageToValue(EFVQuestStage Stage)

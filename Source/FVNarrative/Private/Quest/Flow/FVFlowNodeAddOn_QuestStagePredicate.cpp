@@ -16,7 +16,7 @@ UFVFlowNodeAddOn_QuestStagePredicate::UFVFlowNodeAddOn_QuestStagePredicate()
 FFVFactCondition UFVFlowNodeAddOn_QuestStagePredicate::MakeCondition() const
 {
 	FFVFactCondition Condition;
-	Condition.Tag = UFVQuestFactHelpers::MakeQuestStageTag(QuestId);
+	Condition.Tag = UFVQuestFactHelpers::MakeQuestStageTag(ChapterId, QuestId);
 	Condition.Operator = Operator;
 	Condition.WantedValue = UFVQuestFactHelpers::QuestStageToValue(Stage);
 
@@ -37,7 +37,7 @@ bool UFVFlowNodeAddOn_QuestStagePredicate::EvaluatePredicate_Implementation() co
 #if WITH_EDITOR
 FText UFVFlowNodeAddOn_QuestStagePredicate::GetNodeTitle() const
 {
-	if (!QuestId.IsNone() && GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
+	if (!ChapterId.IsNone() && !QuestId.IsNone() && GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles)
 	{
 		const FFVFactCondition Condition = MakeCondition();
 		if (Condition.IsValid())
@@ -51,9 +51,9 @@ FText UFVFlowNodeAddOn_QuestStagePredicate::GetNodeTitle() const
 
 EDataValidationResult UFVFlowNodeAddOn_QuestStagePredicate::ValidateNode()
 {
-	if (QuestId.IsNone())
+	if (ChapterId.IsNone() || QuestId.IsNone())
 	{
-		ValidationLog.Error<UFlowNodeBase>(TEXT("Missing Quest Id"), this);
+		ValidationLog.Error<UFlowNodeBase>(TEXT("Missing Chapter Id or Quest Id"), this);
 		return EDataValidationResult::Invalid;
 	}
 

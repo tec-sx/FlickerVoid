@@ -9,7 +9,7 @@
 
 /**
  * Sugar over Fact Predicate for the common quest test:
- * Fact.Quest.<QuestId>.Stage <Operator> <Stage>.
+ * Fact.Quest.<ChapterId>.<QuestId>.Stage <Operator> <Stage>.
  *
  * Because stage values are sparse and ordered, GreaterOrEqual expresses
  * "this quest has at least reached that point".
@@ -30,6 +30,9 @@ public:
 #endif
 
 protected:
+	UPROPERTY(EditAnywhere, Category = "Quest")
+	FName ChapterId;
+
 	UPROPERTY(EditAnywhere, Category = "Quest")
 	FName QuestId;
 

@@ -134,14 +134,21 @@ namespace FVNarrativeTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Blocker_Rehabilitation_Required);
 
 	// ============================================================================
-	// FACT TAGS (QUEST SYSTEM)
+	// FACT TAGS (CHAPTER / QUEST SYSTEM)
 	// Roots only. Concrete facts are composed at runtime by FVQuestFactHelpers:
-	//   Fact.Quest.<QuestId>.Stage              - sparse EFVQuestStage value
-	//   Fact.Quest.<QuestId>.Outcome            - designer defined outcome id
-	//   Fact.Quest.<QuestId>.Objective.<ObjId>  - per objective progress
-	//   Fact.Quest.<QuestId>.Counter.<Counter>  - per quest tallies
-	// Objectives and counters are nested under their quest so a whole quest can be
-	// wiped with UndefineFactsUnderTag(Fact.Quest.<QuestId>).
+	//   Fact.Chapter.<ChapterId>.Stage                            - sparse EFVQuestStage value
+	//   Fact.Chapter.<ChapterId>.Outcome                          - designer defined outcome id
+	//   Fact.Quest.<ChapterId>.<QuestId>.Stage                    - sparse EFVQuestStage value
+	//   Fact.Quest.<ChapterId>.<QuestId>.Outcome                  - designer defined outcome id
+	//   Fact.Quest.<ChapterId>.<QuestId>.Objective.<ObjId>        - undefined not issued, 0 active, 1 done
+	//   Fact.Quest.<ChapterId>.<QuestId>.Counter.<Counter>        - per quest tallies
+	// Quests nest under their chapter so UndefineFactsUnderTag can wipe either a whole
+	// chapter (Fact.Quest.<ChapterId>) or a single quest (Fact.Quest.<ChapterId>.<QuestId>).
+	//
+	// Whether a quest is REQUIRED to progress its chapter is deliberately not a fact.
+	// That is authored, immutable data; the fact DB holds mutable runtime state. The
+	// chapter's Flow graph declares it, by naming the gating quests in the condition
+	// group of its Wait For Fact Condition node.
 	// ============================================================================
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Chapter);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Chapter_Current);
