@@ -3,6 +3,7 @@
 #include "SSettingsEditorCheckoutNotice.h"
 #include "WorkspaceMenuStructure.h"
 #include "WorkspaceMenuStructureModule.h"
+#include "Editor.h"
 #include "Engine/AssetManager.h"
 #include "Engine/AssetManagerSettings.h"
 #include "FVCore/Public/FactDB/FVFactPreset.h"
@@ -47,6 +48,15 @@ void FFlickerVoidCoreEditorModule::StartupModule()
 
 	Tab.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsDebugCategory());
 
+	GameInstanceStartedHandle = FWorldDelegates::OnStartGameInstance.AddRaw(
+		this, &FFlickerVoidCoreEditorModule::HandleGameInstanceStarted);
+#if WITH_EDITOR
+	GameInstanceEndedHandle = FEditorDelegates::EndPIE.AddLambda([ this ](const bool)
+	{
+		HandleGameInstanceEnded();
+	});
+#endif
+
 	// Register to get a warning on startup if settings aren't configured correctly
 	UAssetManager::CallOrRegister_OnAssetManagerCreated(
 		FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FFlickerVoidCoreEditorModule::HandleAssetManagerCreated));
@@ -55,6 +65,13 @@ void FFlickerVoidCoreEditorModule::StartupModule()
 void FFlickerVoidCoreEditorModule::ShutdownModule()
 {
 	FFVFactDebuggerStyle::Unregister();
+
+	FWorldDelegates::OnStartGameInstance.Remove(GameInstanceStartedHandle);
+	GameInstanceStartedHandle.Reset();
+#if WITH_EDITOR
+	FEditorDelegates::EndPIE.Remove(GameInstanceEndedHandle);
+	GameInstanceEndedHandle.Reset();
+#endif
 
 	if (FSlateApplication::IsInitialized())
 	{

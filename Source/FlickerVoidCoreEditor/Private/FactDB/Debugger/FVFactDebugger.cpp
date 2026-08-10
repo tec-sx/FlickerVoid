@@ -15,6 +15,7 @@
 #include "FactDB/Debugger/Widgets/FVFactPresetPicker.h"
 #include "SlateOptMacros.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Editor.h"
 #include "Widgets/Input/SNumericEntryBox.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SComboButton.h"
@@ -54,9 +55,23 @@ namespace Settings
 		RebuildFactTreeItems(); \
 	}
 
+namespace
+{
+	UFVFactSubsystem* TryGetFactSubsystemSafe()
+	{
+		// GetPtr() never asserts, unlike Get(), which matters during module shutdown.
+		if (const FFlickerVoidCoreEditorModule* Module = FFlickerVoidCoreEditorModule::GetPtr())
+		{
+			return Module->TryGetFactSubsystem();
+		}
+
+		return nullptr;
+	}
+}
+
 FFVFactTreeItem::~FFVFactTreeItem()
 {
-	if (UFVFactSubsystem* FactSubsystem = FFlickerVoidCoreEditorModule::Get().TryGetFactSubsystem())
+	if (UFVFactSubsystem* FactSubsystem = TryGetFactSubsystemSafe())
 	{
 		FactSubsystem->GetOnFactValueChangedDelegate(Tag).Remove(Handle);
 	}
@@ -75,7 +90,7 @@ void FFVFactTreeItem::EndPlay()
 
 void FFVFactTreeItem::InitItem(bool bPlayAnimation)
 {
-	if (UFVFactSubsystem* FactSubsystem = FFlickerVoidCoreEditorModule::Get().TryGetFactSubsystem())
+	if (UFVFactSubsystem* FactSubsystem = TryGetFactSubsystemSafe())
 	{
 		Handle = FactSubsystem->GetOnFactValueChangedDelegate(Tag).AddSP(this, &FFVFactTreeItem::HandleValueChanged);
 
@@ -107,7 +122,7 @@ void FFVFactTreeItem::HandleNewValueCommited(int32 NewValue, ETextCommit::Type T
 		return;
 	}
 
-	if (UFVFactSubsystem* FactSubsystem = FFlickerVoidCoreEditorModule::Get().TryGetFactSubsystem())
+	if (UFVFactSubsystem* FactSubsystem = TryGetFactSubsystemSafe())
 	{
 		FactSubsystem->ChangeFactValue(Tag, NewValue, EFVFactValueChangeType::Set);
 	}
@@ -438,12 +453,15 @@ SFVFactDebugger::~SFVFactDebugger()
 #if WITH_EDITOR
 	UGameplayTagsManager::OnEditorRefreshGameplayTagTree.Remove(TagChangedHandle);
 #endif
-	FFlickerVoidCoreEditorModule::Get().OnGameInstanceStarted.Unbind();
-	FFlickerVoidCoreEditorModule::Get().OnGameInstanceEnded.Unbind();
+	if (FFlickerVoidCoreEditorModule* Module = FFlickerVoidCoreEditorModule::GetPtr())
+	{
+		Module->OnGameInstanceStarted.Unbind();
+		Module->OnGameInstanceEnded.Unbind();
+	}
 
 	if (bIsPlaying)
 	{
-		if (UFVFactSubsystem* FactSubsystem = FFlickerVoidCoreEditorModule::Get().TryGetFactSubsystem())
+		if (UFVFactSubsystem* FactSubsystem = TryGetFactSubsystemSafe())
 		{
 			FactSubsystem->OnFactsLoaded.Remove(FactsLoadedHandle);
 			FactsLoadedHandle.Reset();
@@ -455,7 +473,7 @@ void SFVFactDebugger::HandleGameInstanceStarted()
 {
 	bIsPlaying = true;
 
-	if (UFVFactSubsystem* FactSubsystem = FFlickerVoidCoreEditorModule::Get().TryGetFactSubsystem())
+	if (UFVFactSubsystem* FactSubsystem = TryGetFactSubsystemSafe())
 	{
 		FactsLoadedHandle = FactSubsystem->OnFactsLoaded.AddLambda([ this ]()
 		{
@@ -1045,27 +1063,54 @@ TSharedRef<SWidget> SFVFactDebugger::HandleGeneratePresetsMenu()
 
 	MenuBuilder.BeginSection(NAME_None, LOCTEXT("LoadPreset_MenuSection", "Load preset"));
 	{
-		TArray<FAssetData> AssetData;
-		IAssetRegistry::Get()->GetAssetsByClass(UFVFactPreset::StaticClass()->GetClassPathName(), AssetData);
+		IAssetRegistry& AssetRegistry = *IAssetRegistry::Get();
 
-		TSharedRef<SWidget> MenuWidget = SNew(SBox)
-			.WidthOverride(300.f)
-			.HeightOverride(300.f)
-			.Padding(2.f)
-			[
-				SNew(SFVFactPresetPicker, AssetData)
-				.OnPresetSelected_Lambda([ this ](const UFVFactPreset* Preset)
-				{
-					FFlickerVoidCoreEditorModule::Get().LoadFactPreset(Preset);
-					FSlateApplication::Get().DismissAllMenus();
-				})
-			];
+		if (AssetRegistry.IsLoadingAssets())
+		{
+			MenuBuilder.AddWidget(
+				SNew(SBox)
+				.Padding(8.f)
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("LoadPreset_Scanning", "Still scanning assets, try again shortly..."))
+				],
+				FText(), true, false);
+		}
+		else
+		{
+			TArray<FAssetData> AssetData;
+			AssetRegistry.GetAssetsByClass(UFVFactPreset::StaticClass()->GetClassPathName(), AssetData,
+										   /*bSearchSubClasses*/ true);
 
-		MenuBuilder.AddWidget(MenuWidget, FText(), true, false);
+			TSharedRef<SWidget> MenuWidget = SNew(SBox)
+				.WidthOverride(300.f)
+				.HeightOverride(300.f)
+				.Padding(2.f)
+				[
+					SNew(SFVFactPresetPicker, AssetData)
+					.OnPresetSelected(this, &SFVFactDebugger::HandlePresetSelected)
+				];
+
+			MenuBuilder.AddWidget(MenuWidget, FText(), true, false);
+		}
 	}
 	MenuBuilder.EndSection();
 
 	return MenuBuilder.MakeWidget();
+}
+
+void SFVFactDebugger::HandlePresetSelected(const UFVFactPreset* Preset)
+{
+	if (FFlickerVoidCoreEditorModule* Module = FFlickerVoidCoreEditorModule::GetPtr())
+	{
+		Module->LoadFactPreset(Preset);
+	}
+
+	// Dismiss next tick, so the list view is not destroyed inside its own selection callback.
+	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda([]()
+	{
+		FSlateApplication::Get().DismissAllMenus();
+	}));
 }
 
 TSharedRef<SWidget> SFVFactDebugger::HandleGenerateOptionsMenu()

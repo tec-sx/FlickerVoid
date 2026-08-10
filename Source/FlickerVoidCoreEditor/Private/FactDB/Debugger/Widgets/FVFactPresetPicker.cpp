@@ -166,9 +166,18 @@ void SFVFactPresetPicker::HandleSelectionChanged(TSharedPtr<FAssetData> AssetDat
 		return;
 	}
 
+	// Clearing the selection passes an invalid pointer.
+	if (!AssetData.IsValid() || !AssetData->IsValid())
+	{
+		return;
+	}
+
 	if (OnPresetSelected.IsBound())
 	{
-		OnPresetSelected.Execute(Cast<UFVFactPreset>(AssetData->GetAsset()));
+		if (const UFVFactPreset* Preset = Cast<UFVFactPreset>(AssetData->GetAsset()))
+		{
+			OnPresetSelected.Execute(Preset);
+		}
 	}
 }
 
@@ -250,9 +259,17 @@ void SFVFactPresetPicker::HandleSearchTextCommitted(const FText& Text, ETextComm
 			SelectionSet = PresetsListView->GetSelectedItems();
 		}
 
+		if (SelectionSet.Num() == 0 || !SelectionSet[0].IsValid())
+		{
+			return;
+		}
+
 		if (OnPresetSelected.IsBound())
 		{
-			OnPresetSelected.Execute(Cast<UFVFactPreset>(SelectionSet[0]->GetAsset()));
+			if (const UFVFactPreset* Preset = Cast<UFVFactPreset>(SelectionSet[0]->GetAsset()))
+			{
+				OnPresetSelected.Execute(Preset);
+			}
 		}
 	}
 }

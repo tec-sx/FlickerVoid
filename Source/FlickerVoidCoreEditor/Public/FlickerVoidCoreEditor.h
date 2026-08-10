@@ -11,10 +11,21 @@ class UFVFactPreset;
 class FLICKERVOIDCOREEDITOR_API FFlickerVoidCoreEditorModule : public IModuleInterface
 {
 public:
+	static FORCEINLINE FName GetModuleName()
+	{
+		static const FName ModuleName("FlickerVoidCoreEditor");
+		return ModuleName;
+	}
+
 	static FORCEINLINE FFlickerVoidCoreEditorModule& Get()
 	{
-		static FName FlickerVoidCoreEditorModule("FlickerVoidEditorModule");
-		return FModuleManager::LoadModuleChecked<FFlickerVoidCoreEditorModule>(FlickerVoidCoreEditorModule);
+		return FModuleManager::LoadModuleChecked<FFlickerVoidCoreEditorModule>(GetModuleName());
+	}
+
+	// Shutdown-safe accessor. Returns null if the module is not loaded, never asserts.
+	static FORCEINLINE FFlickerVoidCoreEditorModule* GetPtr()
+	{
+		return FModuleManager::GetModulePtr<FFlickerVoidCoreEditorModule>(GetModuleName());
 	}
 
 	virtual void StartupModule() override;
@@ -39,6 +50,9 @@ private:
 	void AddDefaultGameDataRule();
 
 	TWeakObjectPtr<UGameInstance> WeakGameInstance;
+
+	FDelegateHandle GameInstanceStartedHandle;
+	FDelegateHandle GameInstanceEndedHandle;
 
 	// FACT
 	TSharedRef<SDockTab> SpawnFactDebuggerTab(const FSpawnTabArgs& SpawnTabArgs);

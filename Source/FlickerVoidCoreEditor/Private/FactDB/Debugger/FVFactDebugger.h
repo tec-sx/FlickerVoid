@@ -86,6 +86,7 @@ private:
 	FSlateColor GetFilterStatusTextColor(bool bIsFavoritesTree) const;
 
 	TSharedRef<SWidget> HandleGeneratePresetsMenu();
+	void HandlePresetSelected(const UFVFactPreset* Preset);
 	TSharedRef<SWidget> HandleGenerateOptionsMenu();
 	void GenerateCommonContextMenu(FMenuBuilder& MenuBuilder, bool bIsFavoritesTree);
 	TSharedPtr<SWidget> HandleGenerateMainContextMenu();
