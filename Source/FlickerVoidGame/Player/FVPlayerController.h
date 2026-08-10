@@ -42,7 +42,7 @@ public:
     virtual void OnUnPossess() override;
 
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerController")
-	AFVCharacter* GetControlledCharacter() const { return CachedCharacter; }
+	AFVCharacter* GetControlledCharacter() const { return CachedCharacter.Get(); }
 
 protected:
     // ========================================================================
@@ -79,8 +79,7 @@ protected:
     void Input_AbilityInputTagReleased(FGameplayTag InputTag);
 
 private:
-	UPROPERTY(Transient)
-    TObjectPtr<AFVCharacter> CachedCharacter;
+	TWeakObjectPtr<AFVCharacter> CachedCharacter;
 	
 	mutable TWeakObjectPtr<UFVInteractionSubsystem> InteractionSubsystem;
 

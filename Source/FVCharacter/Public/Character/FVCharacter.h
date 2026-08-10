@@ -7,14 +7,8 @@
 #include "FVCharacter.generated.h"
 
 class UFlowComponent;
-class UFVTagComponent;
-class UNavMoverComponent;
-class UInputAction;
-class UCharacterMoverComponent;
 class UFVCharacterMovementComponent;
 struct FInputActionValue;
-class UFVAbilitySystemComponent;
-class USpringArmComponent;
 
 UCLASS(Config = Game)
 class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter, public IGameplayTagAssetInterface

@@ -59,13 +59,16 @@ protected:
 	void ReloadConfiguration();
 
 private:
-	AFVCharacter* Character;
+	UPROPERTY()
+	TObjectPtr<AFVCharacter> Character;
+
 	FGameplayTagContainer ActiveTags;
 	bool bIsInitialized;
 
 	void InitializeHandlers();
 	void TransitionToHandler(UFVMovementHandlerBase* NewHandler);
 	UFVMovementHandlerBase* SelectHandler() const;
+	bool CanInterruptCurrentHandler() const;
 
 
 public:
