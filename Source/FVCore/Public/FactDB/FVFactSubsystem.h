@@ -1,0 +1,55 @@
+﻿#pragma once
+
+#include "CoreMinimal.h"
+#include "Subsystems/GameInstanceSubsystem.h"
+#include "FactDB/FVFactTypes.h"
+#include "FVFactSubsystem.generated.h"
+
+class UFVFactSaveGame;
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FFactChanged, int32)
+DECLARE_MULTICAST_DELEGATE(FFactLoaded)
+
+UCLASS()
+class FLICKERVOIDCORE_API UFVFactSubsystem : public UGameInstanceSubsystem
+{
+	GENERATED_BODY()
+
+public:
+	[[nodiscard]] static UFVFactSubsystem& Get(const UObject* WorldContextObject);
+	void ChangeFactValue(const FGameplayTag Tag, int32 NewValue, EFVFactValueChangeType ChangeType);
+	void ResetFactValue(const FGameplayTag Tag);
+	[[nodiscard]] bool GetFactValueIfDefined(const FGameplayTag Tag, int32& OutValue) const;
+	[[nodiscard]] bool CheckFactCondition(const FFVFactCondition& Condition) const;
+	[[nodiscard]] bool IsFactDefined(const FGameplayTag Tag) const;
+
+	FFactChanged& GetOnFactValueChangedDelegate(FGameplayTag Tag);
+	FFactChanged& GetOnFactBecameDefinedDelegate(FGameplayTag Tag);
+
+	UFUNCTION(BlueprintCallable, Category = "FactSubsystem")
+	void OnGameSaved(UFVFactSaveGame* SaveGame) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FactSubsystem")
+	void OnGameLoaded(const UFVFactSaveGame* SaveGame);
+
+	FFactLoaded OnFactsLoaded;
+
+private:
+	void BroadcastFactValueChanged(const FGameplayTag Tag, int32 Value);
+	void BroadcastFactDefined(const FGameplayTag Tag, int32 Value);
+
+private:
+	UPROPERTY(SaveGame)
+	TMap<FGameplayTag, int32> DefinedFacts;
+
+	// maybe merge them together, some struct?
+	// also some form of map compaction
+	TMap<FGameplayTag, FFactChanged> ValueDelegates;
+	TMap<FGameplayTag, FFactChanged> DefinitionDelegates;
+
+#if !UE_BUILD_SHIPPING
+	static FAutoConsoleCommandWithWorldAndArgs ChangeFactValueCommand;
+	static FAutoConsoleCommandWithWorldAndArgs GetFactValueCommand;
+	static FAutoConsoleCommandWithWorld DumpFactsCommand;
+#endif
+};

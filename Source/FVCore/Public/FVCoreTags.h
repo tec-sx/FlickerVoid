@@ -40,6 +40,8 @@ namespace FVCoreTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Flow_Common_TriggerZone);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Flow_Common_InteractionZone);
 	
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact);
+	
 }
 
 #undef UE_API

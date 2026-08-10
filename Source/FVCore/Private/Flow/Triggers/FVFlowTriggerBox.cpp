@@ -2,12 +2,10 @@
 
 #include "Engine/EngineTypes.h"
 #include "Components/BillboardComponent.h"
+#include "FVFlowTriggerDefs.h"
 #include "Components/BoxComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVFlowTriggerBox)
-
-static constexpr FColor FlowTriggerBaseColor(100, 255, 100, 255);
-static const FName TriggerCollisionProfileName(TEXT("Trigger"));
 
 AFVFlowTriggerBox::AFVFlowTriggerBox(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UBoxComponent>(TEXT("TriggerZone")))

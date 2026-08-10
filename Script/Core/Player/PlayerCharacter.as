@@ -11,6 +11,9 @@ class APlayerCharacter : AFVCharacter
 
     UPROPERTY(DefaultComponent, Category = Interaction)
     UPlayerInteractionComponent InteractionComponent;
+
+    UPROPERTY(DefaultComponent, Category = Camera)
+    UGameplayCameraComponent GameplayCamera;
     
     UPROPERTY()
     UFVTraversalComponent Traversal;
@@ -20,6 +23,25 @@ class APlayerCharacter : AFVCharacter
 
     default Mesh.SetRelativeLocation(FVector(0, 0, -CapsuleComponent.CapsuleHalfHeight));
     default Mesh.SetRelativeRotation(FRotator(0, -90, 0));
+
+    UFUNCTION(BlueprintOverride)
+    void Possessed(AController NewController)
+    {
+        APlayerCharacterController PlayerController = Cast<APlayerCharacterController>(NewController);
+
+        if (IsValid(PlayerController))
+        {
+            GameplayCamera.AttachToComponent(
+                Mesh,
+                NAME_None,
+                EAttachmentRule::SnapToTarget,
+                EAttachmentRule::SnapToTarget,
+                EAttachmentRule::KeepRelative,
+                false);
+
+            GameplayCamera.ActivateCameraForPlayerController(PlayerController, true);
+        }
+    }
 
     APlayerCharacter()
     {

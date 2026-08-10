@@ -21,6 +21,8 @@ namespace FVCoreTags
 	UE_DEFINE_GAMEPLAY_TAG(Flow_Common_TriggerZone, "Flow.Common.TriggerZone");
 	UE_DEFINE_GAMEPLAY_TAG(Flow_Common_InteractionZone, "Flow.Common.InteractionZone");
 	
+	UE_DEFINE_GAMEPLAY_TAG(Fact, "Fact");
+	
 	FGameplayTag FindTagByString(const FString& TagString, bool bMatchPartialString)
 	{
 		const UGameplayTagsManager& Manager = UGameplayTagsManager::Get();
