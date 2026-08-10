@@ -12,6 +12,12 @@ UFVFlowNode_ChangeFactValue::UFVFlowNode_ChangeFactValue()
 
 void UFVFlowNode_ChangeFactValue::ExecuteInput(const FName& PinName)
 {
+	if (!ArePredicateAddOnsSatisfied())
+	{
+		TriggerFirstOutput(true);
+		return;
+	}
+
 	if (const UWorld* World = GetWorld())
 	{
 		UFVFactSubsystem& Subsystem = UFVFactSubsystem::Get(World);

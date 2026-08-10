@@ -74,6 +74,11 @@ void UFVFlowNode_OnFactChanged::OnEventReceived(int32 CurrentValue)
 		return;
 	}
 
+	if (!ArePredicateAddOnsSatisfied())
+	{
+		return;
+	}
+
 	TriggerOutput(TEXT("Success"));
 	SuccessCount++;
 	

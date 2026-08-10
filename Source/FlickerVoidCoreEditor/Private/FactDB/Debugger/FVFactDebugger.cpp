@@ -71,10 +71,8 @@ namespace
 
 FFVFactTreeItem::~FFVFactTreeItem()
 {
-	if (UFVFactSubsystem* FactSubsystem = TryGetFactSubsystemSafe())
-	{
-		FactSubsystem->GetOnFactValueChangedDelegate(Tag).Remove(Handle);
-	}
+	// Value updates arrive through SFVFactDebugger's single global subscription,
+	// so there is nothing per-item to unsubscribe here.
 }
 
 void FFVFactTreeItem::StartPlay()
@@ -92,8 +90,6 @@ void FFVFactTreeItem::InitItem(bool bPlayAnimation)
 {
 	if (UFVFactSubsystem* FactSubsystem = TryGetFactSubsystemSafe())
 	{
-		Handle = FactSubsystem->GetOnFactValueChangedDelegate(Tag).AddSP(this, &FFVFactTreeItem::HandleValueChanged);
-
 		int32 FactValue;
 		if (FactSubsystem->GetFactValueIfDefined(Tag, FactValue))
 		{
@@ -113,6 +109,14 @@ void FFVFactTreeItem::HandleValueChanged(int32 NewValue)
 	ValueChangedTime = FSlateApplication::Get().GetCurrentTime();
 
 	(void)OnFactItemValueChanged.Broadcast(Tag, NewValue);
+}
+
+void FFVFactTreeItem::HandleUndefined()
+{
+	Value.Reset();
+	ValueChangedTime = FSlateApplication::Get().GetCurrentTime();
+
+	(void)OnFactItemValueChanged.Broadcast(Tag, 0);
 }
 
 void FFVFactTreeItem::HandleNewValueCommited(int32 NewValue, ETextCommit::Type Type) const
@@ -465,6 +469,9 @@ SFVFactDebugger::~SFVFactDebugger()
 		{
 			FactSubsystem->OnFactsLoaded.Remove(FactsLoadedHandle);
 			FactsLoadedHandle.Reset();
+
+			FactSubsystem->OnAnyFactChanged.Remove(AnyFactChangedHandle);
+			AnyFactChangedHandle.Reset();
 		}
 	}
 }
@@ -479,6 +486,10 @@ void SFVFactDebugger::HandleGameInstanceStarted()
 		{
 			RebuildFactTreeItems(true);
 		});
+
+		// One subscription for the whole DB, instead of one delegate per tag item.
+		AnyFactChangedHandle = FactSubsystem->OnAnyFactChanged.AddSP(
+			this, &SFVFactDebugger::HandleAnyFactChanged);
 	}
 
 	if (Settings::bShowOnlyDefinedFacts)
@@ -1794,7 +1805,6 @@ FFVFactTreeItemPtr SFVFactDebugger::BuildFactItem(const FFVFactTreeItemPtr& Pare
 	ThisItem->SimpleTagName = ThisNode->GetSimpleTagName();
 	ThisItem->Children.Reserve(ThisNode->GetChildTagNodes().Num());
 	ThisItem->InitItem(bPlayAnimation);
-	ThisItem->OnFactItemValueChanged.AddSP(this, &SFVFactDebugger::HandleFactValueChanged);
 
 	ParentNode->Children.Add(ThisItem);
 
@@ -1810,6 +1820,47 @@ void SFVFactDebugger::RebuildFactTreeItems(bool bPlayAnimation)
 {
 	BuildFactTreeItems(bPlayAnimation);
 	FilterItems();
+}
+
+void SFVFactDebugger::DispatchToItemRecursive(const FFVFactTreeItemPtr& Item, const FGameplayTag FactTag,
+											 int32 NewValue, bool bUndefined)
+{
+	if (!Item.IsValid())
+	{
+		return;
+	}
+
+	if (Item->Tag == FactTag)
+	{
+		if (bUndefined)
+		{
+			Item->HandleUndefined();
+		}
+		else
+		{
+			Item->HandleValueChanged(NewValue);
+		}
+	}
+
+	for (const FFVFactTreeItemPtr& ChildItem : Item->Children)
+	{
+		DispatchToItemRecursive(ChildItem, FactTag, NewValue, bUndefined);
+	}
+}
+
+void SFVFactDebugger::HandleAnyFactChanged(FGameplayTag FactTag, int32 NewValue, EFVFactChangeReason Reason)
+{
+	const bool bUndefined = Reason == EFVFactChangeReason::Undefined;
+
+	// The filtered trees hold copies of the source items, so every root has to be visited.
+	DispatchToItemRecursive(RootItem, FactTag, NewValue, bUndefined);
+	if (MainTreeItem != RootItem)
+	{
+		DispatchToItemRecursive(MainTreeItem, FactTag, NewValue, bUndefined);
+	}
+	DispatchToItemRecursive(FavoritesTreeItem, FactTag, NewValue, bUndefined);
+
+	HandleFactValueChanged(FactTag, NewValue);
 }
 
 void SFVFactDebugger::HandleFactValueChanged(FGameplayTag FactTag, int32 NewValue)

@@ -20,6 +20,16 @@ namespace FVWorldTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(World_TimeOfDay_Afternoon);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(World_TimeOfDay_Evening);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(World_TimeOfDay_Night);
+
+	// ============================================================================
+	// FACT TAGS (WORLD)
+	// Locations follow Fact.Location.<LocationId>.<Aspect>, e.g.
+	//   Fact.Location.Docks.Discovered
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_World);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_World_Time);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_World_Flag);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Location);
 }
 
 #undef UE_API

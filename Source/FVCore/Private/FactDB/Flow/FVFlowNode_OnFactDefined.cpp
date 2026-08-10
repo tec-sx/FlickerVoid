@@ -55,6 +55,11 @@ void UFVFlowNode_OnFactDefined::StopObserving()
 
 void UFVFlowNode_OnFactDefined::OnEventReceived(int32 CurrentValue)
 {
+	if (!ArePredicateAddOnsSatisfied())
+	{
+		return;
+	}
+
 	TriggerFirstOutput(true);
 }
 

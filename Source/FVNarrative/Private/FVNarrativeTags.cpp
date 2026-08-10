@@ -29,8 +29,7 @@ namespace FVNarrativeTags
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event_Flirt, "Dialogue.Event.Flirt");
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event_QuestAccepted, "Dialogue.Event.QuestAccepted");
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event_QuestCompleted, "Dialogue.Event.QuestCompleted");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event_QuestFailed, "Dialogue.Event.QuestFailed");
-	
+	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event_QuestFailed, "Dialogue.Event.QuestFailed");	
 	// ============================================================================
 	// QUEST STATE TAGS
 	// ============================================================================
@@ -128,4 +127,15 @@ namespace FVNarrativeTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Blocker_Trust_Insufficient, "Blocker.Trust.Insufficient", "Insufficient NPC trust.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Blocker_Memory_Required, "Blocker.Memory.Required", "Required memory not recovered.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Blocker_Rehabilitation_Required, "Blocker.Rehabilitation.Required", "Must complete rehabilitation.");
+
+	// ============================================================================
+	// FACT TAGS (QUEST SYSTEM)
+	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Chapter, "Fact.Chapter", "Root for chapter progression facts.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Chapter_Current, "Fact.Chapter.Current",
+								   "Index of the chapter the story is currently in.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Quest, "Fact.Quest",
+								   "Root for per quest facts: Fact.Quest.<QuestId>.Stage/Outcome/Objective/Counter.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Dialogue, "Fact.Dialogue",
+								   "Root for dialogue facts, e.g. lines already spoken or topics unlocked.");
 }

@@ -34,8 +34,7 @@ namespace FVNarrativeTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestAccepted);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestCompleted);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestFailed);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestFailed);
-	
+
 	// ============================================================================
 	// QUEST STATE TAGS
 	// ============================================================================
@@ -133,6 +132,21 @@ namespace FVNarrativeTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Blocker_Trust_Insufficient);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Blocker_Memory_Required);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Blocker_Rehabilitation_Required);
+
+	// ============================================================================
+	// FACT TAGS (QUEST SYSTEM)
+	// Roots only. Concrete facts are composed at runtime by FVQuestFactHelpers:
+	//   Fact.Quest.<QuestId>.Stage              - sparse EFVQuestStage value
+	//   Fact.Quest.<QuestId>.Outcome            - designer defined outcome id
+	//   Fact.Quest.<QuestId>.Objective.<ObjId>  - per objective progress
+	//   Fact.Quest.<QuestId>.Counter.<Counter>  - per quest tallies
+	// Objectives and counters are nested under their quest so a whole quest can be
+	// wiped with UndefineFactsUnderTag(Fact.Quest.<QuestId>).
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Chapter);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Chapter_Current);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Quest);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Dialogue);
 }
 
 #undef UE_API

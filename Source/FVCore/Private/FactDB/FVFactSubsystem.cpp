@@ -22,6 +22,19 @@ UFVFactSubsystem& UFVFactSubsystem::Get(const UObject* WorldContextObject)
 	return *FactSubsystem;
 }
 
+void UFVFactSubsystem::Deinitialize()
+{
+	// Facts and listeners are per-session; leaving them would leak stale state and
+	// dangling subscribers across PIE runs.
+	DefinedFacts.Empty();
+	ValueDelegates.Empty();
+	DefinitionDelegates.Empty();
+	OnFactsLoaded.Clear();
+	OnAnyFactChanged.Clear();
+
+	Super::Deinitialize();
+}
+
 void UFVFactSubsystem::ChangeFactValue(const FGameplayTag Tag, int32 NewValue, EFVFactValueChangeType ChangeType)
 {
 	if (Tag.IsValid() == false)
@@ -59,7 +72,7 @@ void UFVFactSubsystem::ChangeFactValue(const FGameplayTag Tag, int32 NewValue, E
 
 		// first broadcast event, that fact became defined
 		BroadcastFactDefined(Tag, Value);
-		BroadcastFactValueChanged(Tag, Value);
+		BroadcastFactValueChanged(Tag, Value, EFVFactChangeReason::Defined);
 	}
 }
 
@@ -71,11 +84,69 @@ void UFVFactSubsystem::ResetFactValue(const FGameplayTag Tag)
 		return;
 	}
 
-	if (DefinedFacts.Contains(Tag))
+	if (int32* CurrentValue = DefinedFacts.Find(Tag))
 	{
-		// just re-add fact to map
-		const int32 NewValue = DefinedFacts.Add(Tag);
-		BroadcastFactValueChanged(Tag, NewValue);
+		if (*CurrentValue != 0)
+		{
+			*CurrentValue = 0;
+			BroadcastFactValueChanged(Tag, 0);
+		}
+	}
+}
+
+bool UFVFactSubsystem::UndefineFact(const FGameplayTag Tag)
+{
+	if (Tag.IsValid() == false)
+	{
+		FV_LOG_ERROR(LogFVCore, "Passed fact tag %s is not valid", *Tag.ToString());
+		return false;
+	}
+
+	if (DefinedFacts.Remove(Tag) > 0)
+	{
+		BroadcastFactUndefined(Tag);
+		return true;
+	}
+
+	return false;
+}
+
+int32 UFVFactSubsystem::UndefineFactsUnderTag(const FGameplayTag ParentTag)
+{
+	if (ParentTag.IsValid() == false)
+	{
+		FV_LOG_ERROR(LogFVCore, "Passed fact tag %s is not valid", *ParentTag.ToString());
+		return 0;
+	}
+
+	TArray<FGameplayTag> TagsToRemove;
+	for (const TPair<FGameplayTag, int32>& Pair : DefinedFacts)
+	{
+		if (Pair.Key.MatchesTag(ParentTag))
+		{
+			TagsToRemove.Add(Pair.Key);
+		}
+	}
+
+	for (const FGameplayTag& Tag : TagsToRemove)
+	{
+		DefinedFacts.Remove(Tag);
+		BroadcastFactUndefined(Tag);
+	}
+
+	return TagsToRemove.Num();
+}
+
+void UFVFactSubsystem::ClearAllFacts()
+{
+	TArray<FGameplayTag> TagsToRemove;
+	DefinedFacts.GetKeys(TagsToRemove);
+
+	DefinedFacts.Empty();
+
+	for (const FGameplayTag& Tag : TagsToRemove)
+	{
+		BroadcastFactUndefined(Tag);
 	}
 }
 
@@ -128,6 +199,34 @@ bool UFVFactSubsystem::CheckFactCondition(const FFVFactCondition& Condition) con
 	}
 }
 
+bool UFVFactSubsystem::CheckFactConditions(const FFVFactConditionGroup& ConditionGroup) const
+{
+	if (ConditionGroup.Conditions.IsEmpty())
+	{
+		// An empty AllOf is vacuously true; an empty AnyOf has nothing to satisfy it.
+		return ConditionGroup.LogicOp == EFVFactLogicOp::AllOf;
+	}
+
+	for (const FFVFactCondition& Condition : ConditionGroup.Conditions)
+	{
+		const bool bPassed = CheckFactCondition(Condition);
+
+		if (ConditionGroup.LogicOp == EFVFactLogicOp::AllOf)
+		{
+			if (!bPassed)
+			{
+				return false;
+			}
+		}
+		else if (bPassed)
+		{
+			return true;
+		}
+	}
+
+	return ConditionGroup.LogicOp == EFVFactLogicOp::AllOf;
+}
+
 bool UFVFactSubsystem::IsFactDefined(const FGameplayTag Tag) const
 {
 	if (Tag.IsValid() == false)
@@ -167,15 +266,29 @@ void UFVFactSubsystem::OnGameSaved(UFVFactSaveGame* SaveGame) const
 void UFVFactSubsystem::OnGameLoaded(const UFVFactSaveGame* SaveGame)
 {
 	DefinedFacts = SaveGame->Facts;
+
+	for (const TPair<FGameplayTag, int32>& Pair : DefinedFacts)
+	{
+		if (FFactChanged* Delegate = ValueDelegates.Find(Pair.Key))
+		{
+			Delegate->Broadcast(Pair.Value);
+		}
+
+		OnAnyFactChanged.Broadcast(Pair.Key, Pair.Value, EFVFactChangeReason::Loaded);
+	}
+
 	OnFactsLoaded.Broadcast();
 }
 
-void UFVFactSubsystem::BroadcastFactValueChanged(const FGameplayTag Tag, int32 Value)
+void UFVFactSubsystem::BroadcastFactValueChanged(const FGameplayTag Tag, int32 Value, EFVFactChangeReason Reason)
 {
 	if (FFactChanged* Delegate = ValueDelegates.Find(Tag))
 	{
 		Delegate->Broadcast(Value);
 	}
+
+	// Single funnel for the global delegate, so listeners never see a duplicate for the define case.
+	OnAnyFactChanged.Broadcast(Tag, Value, Reason);
 }
 
 void UFVFactSubsystem::BroadcastFactDefined(const FGameplayTag Tag, int32 Value)
@@ -184,6 +297,12 @@ void UFVFactSubsystem::BroadcastFactDefined(const FGameplayTag Tag, int32 Value)
 	{
 		Delegate->Broadcast(Value);
 	}
+}
+
+void UFVFactSubsystem::BroadcastFactUndefined(const FGameplayTag Tag)
+{
+	// Listeners see an undefined fact as value 0; use IsFactDefined to distinguish.
+	BroadcastFactValueChanged(Tag, 0, EFVFactChangeReason::Undefined);
 }
 
 #if !UE_BUILD_SHIPPING

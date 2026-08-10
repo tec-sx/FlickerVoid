@@ -1,5 +1,8 @@
 ﻿#include "FactDB/Flow/FVFlowNode_FactBase.h"
 
+#include "AddOns/FlowNodeAddOn_PredicateAND.h"
+#include "Interfaces/FlowPredicateInterface.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVFlowNode_FactBase)
 
 UE_DEFINE_GAMEPLAY_TAG( FlowNodeStyle::Fact, "Flow.NodeStyle.Node.Fact" );
@@ -10,6 +13,23 @@ UFVFlowNode_FactBase::UFVFlowNode_FactBase()
 	NodeDisplayStyle = FlowNodeStyle::Fact;
 	Category = TEXT("Fact");
 #endif
+}
+
+EFlowAddOnAcceptResult UFVFlowNode_FactBase::AcceptFlowNodeAddOnChild_Implementation(
+	const UFlowNodeAddOn* AddOnTemplate,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
+{
+	if (IFlowPredicateInterface::ImplementsInterfaceSafe(AddOnTemplate))
+	{
+		return EFlowAddOnAcceptResult::TentativeAccept;
+	}
+
+	return Super::AcceptFlowNodeAddOnChild_Implementation(AddOnTemplate, AdditionalAddOnsToAssumeAreChildren);
+}
+
+bool UFVFlowNode_FactBase::ArePredicateAddOnsSatisfied() const
+{
+	return UFlowNodeAddOn_PredicateAND::EvaluatePredicateAND(AddOns);
 }
 
 #if WITH_EDITOR

@@ -63,4 +63,15 @@ namespace FVGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable_Character, "Interactable.Character", "A Character that can be talked to.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable_Device, "Interactable.Device", "A device that can be activated.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable_Document, "Interactable.Document", "A readable document.");
+
+	// ============================================================================
+	// FACT TAGS (GAMEPLAY)
+	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Gameplay, "Fact.Gameplay", "Root for narrative relevant gameplay facts.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Gameplay_Item, "Fact.Gameplay.Item",
+								   "Story relevant item state, e.g. a key item was obtained or handed over.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Gameplay_Interaction, "Fact.Gameplay.Interaction",
+								   "Records that a specific interaction happened at least once.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Gameplay_Counter, "Fact.Gameplay.Counter",
+								   "Global tallies not owned by a quest, e.g. total civilians saved.");
 }

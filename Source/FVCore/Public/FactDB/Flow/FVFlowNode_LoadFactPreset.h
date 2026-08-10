@@ -14,7 +14,11 @@ class FLICKERVOIDCORE_API UFVFlowNode_LoadFactPreset : public UFlowNode
 	GENERATED_BODY()
 public:
 	UFVFlowNode_LoadFactPreset();
-	
+
+	virtual EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild_Implementation(
+		const UFlowNodeAddOn* AddOnTemplate,
+		const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const override;
+
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 

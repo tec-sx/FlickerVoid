@@ -3,6 +3,7 @@
 #include "FactDB/FVFactPreset.h"
 #include "FactDB/FVFactSubsystem.h"
 #include "FactDB/Flow/FVFlowNode_FactBase.h"
+#include "Interfaces/FlowPredicateInterface.h"
 #include "Logging/FVLogCategories.h"
 #include "Logging/FVLogSystem.h"
 
@@ -17,6 +18,18 @@ UFVFlowNode_LoadFactPreset::UFVFlowNode_LoadFactPreset()
 
 	InputPins = {FFlowPin(TEXT("In"))};
 	OutputPins = {FFlowPin(TEXT("Out"))};
+}
+
+EFlowAddOnAcceptResult UFVFlowNode_LoadFactPreset::AcceptFlowNodeAddOnChild_Implementation(
+	const UFlowNodeAddOn* AddOnTemplate,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
+{
+	if (IFlowPredicateInterface::ImplementsInterfaceSafe(AddOnTemplate))
+	{
+		return EFlowAddOnAcceptResult::TentativeAccept;
+	}
+
+	return Super::AcceptFlowNodeAddOnChild_Implementation(AddOnTemplate, AdditionalAddOnsToAssumeAreChildren);
 }
 
 void UFVFlowNode_LoadFactPreset::ExecuteInput(const FName& PinName)

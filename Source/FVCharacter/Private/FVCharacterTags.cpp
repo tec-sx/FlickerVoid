@@ -23,4 +23,16 @@ namespace FVCharacterTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Character_Mood_Horny, "Character.Mood.Horny", "Aroused mood.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Character_Mood_Exhausted, "Character.Mood.Exhausted", "Exhausted mood.");
 
+	// ============================================================================
+	// FACT TAGS (PLAYER)
+	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Player, "Fact.Player", "Root for facts about the player character.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Player_Knows, "Fact.Player.Knows",
+								   "Information the player has learned. Gates dialogue options.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Player_Choice, "Fact.Player.Choice",
+								   "Irreversible choices the player has made.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Player_Skill, "Fact.Player.Skill", "Skills or perks the player has acquired.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Player_State, "Fact.Player.State",
+								   "Persistent narrative state of the player, e.g. sanity or addiction tiers.");
+
 }

@@ -68,6 +68,16 @@ namespace FVGameplayTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Character);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Device);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Document);
+
+	// ============================================================================
+	// FACT TAGS (GAMEPLAY)
+	// For narrative relevant gameplay state only. Live inventory and cooldowns stay
+	// in their own systems; facts record what the story needs to branch on.
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Gameplay);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Gameplay_Item);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Gameplay_Interaction);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Gameplay_Counter);
 }
 
 #undef UE_API

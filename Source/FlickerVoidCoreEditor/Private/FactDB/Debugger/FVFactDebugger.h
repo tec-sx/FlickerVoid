@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "FactDB/FVFactTypes.h"
 #include "FactDB/Debugger/FVFactDebuggerSettingsLocal.h"
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Views/STreeView.h"
@@ -32,11 +33,11 @@ struct FFVFactTreeItem : public TSharedFromThis<FFVFactTreeItem>
 	void InitItem(bool bPlayAnimation = false);
 
 	void HandleValueChanged(int32 NewValue);
+	void HandleUndefined();
 	void HandleNewValueCommited(int32 NewValue, ETextCommit::Type Type) const;
 
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnFactItemValueChanged, FGameplayTag, int32)
 	FOnFactItemValueChanged OnFactItemValueChanged;
-	FDelegateHandle Handle;
 };
 
 
@@ -139,6 +140,9 @@ private:
 	                               bool bPlayAnimation);
 	void RebuildFactTreeItems(bool bPlayAnimation = false);
 	void HandleFactValueChanged(FGameplayTag FactTag, int32 NewValue);
+	void HandleAnyFactChanged(FGameplayTag FactTag, int32 NewValue, EFVFactChangeReason Reason);
+	static void DispatchToItemRecursive(const FFVFactTreeItemPtr& Item, const FGameplayTag FactTag, int32 NewValue,
+										bool bUndefined);
 
 	// Settings
 	void LoadSettings();
@@ -183,6 +187,7 @@ private:
 	FDelegateHandle TagChangedHandle;
 #endif
 	FDelegateHandle FactsLoadedHandle;
+	FDelegateHandle AnyFactChangedHandle;
 
 	bool bIsPlaying = false;
 };
