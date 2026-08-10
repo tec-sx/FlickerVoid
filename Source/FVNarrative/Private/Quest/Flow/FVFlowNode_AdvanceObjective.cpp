@@ -2,6 +2,8 @@
 
 #include "FactDB/FVFactSubsystem.h"
 #include "FactDB/Flow/FVFlowNode_FactBase.h"
+#include "FactDB/Flow/FVFlowNodeAddOn_SetFact.h"
+#include "Interfaces/FlowPredicateInterface.h"
 #include "Quest/FVQuestFactHelpers.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVFlowNode_AdvanceObjective)
@@ -17,23 +19,28 @@ UFVFlowNode_AdvanceObjective::UFVFlowNode_AdvanceObjective()
 #endif
 }
 
-FGameplayTag UFVFlowNode_AdvanceObjective::MakeObjectiveTag() const
+EFlowAddOnAcceptResult UFVFlowNode_AdvanceObjective::AcceptFlowNodeAddOnChild_Implementation(
+	const UFlowNodeAddOn* AddOnTemplate,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
 {
-	return UFVQuestFactHelpers::MakeObjectiveTag(ChapterId, QuestId, ObjectiveId);
+	if (IFlowPredicateInterface::ImplementsInterfaceSafe(AddOnTemplate) || (IsValid(AddOnTemplate) && AddOnTemplate->IsA<UFVFlowNodeAddOn_SetFact>()))
+	{
+		return EFlowAddOnAcceptResult::TentativeAccept;
+	}
+
+	return Super::AcceptFlowNodeAddOnChild_Implementation(AddOnTemplate, AdditionalAddOnsToAssumeAreChildren);
 }
 
 void UFVFlowNode_AdvanceObjective::ExecuteInput(const FName& PinName)
 {
-	const FGameplayTag ObjectiveTag = MakeObjectiveTag();
-
-	if (!ObjectiveTag.IsValid())
+	if (!UFVQuestFactHelpers::IsObjectiveTag(Objective))
 	{
-		LogError(TEXT("Objective fact tag does not exist"));
+		LogError(TEXT("Objective must be a Fact.Quest.<Chapter>.<Quest>.Objective.<Id> tag"));
 	}
 	else if (const UWorld* World = GetWorld())
 	{
 		UFVFactSubsystem::Get(World).ChangeFactValue(
-			ObjectiveTag,
+			Objective,
 			static_cast<int32>(NewState),
 			EFVFactValueChangeType::Set);
 	}
@@ -48,15 +55,15 @@ void UFVFlowNode_AdvanceObjective::ExecuteInput(const FName& PinName)
 #if WITH_EDITOR
 EDataValidationResult UFVFlowNode_AdvanceObjective::ValidateNode()
 {
-	if (ChapterId.IsNone() || QuestId.IsNone() || ObjectiveId.IsNone())
+	if (!Objective.IsValid())
 	{
-		ValidationLog.Error<UFlowNode>(TEXT("Missing Chapter, Quest or Objective Id"), this);
+		ValidationLog.Error<UFlowNode>(TEXT("Missing Objective tag"), this);
 		return EDataValidationResult::Invalid;
 	}
 
-	if (!MakeObjectiveTag().IsValid())
+	if (!UFVQuestFactHelpers::IsObjectiveTag(Objective))
 	{
-		ValidationLog.Error<UFlowNode>(TEXT("Objective fact tag does not exist"), this);
+		ValidationLog.Error<UFlowNode>(TEXT("Objective must be Fact.Quest.<Chapter>.<Quest>.Objective.<Id>"), this);
 		return EDataValidationResult::Invalid;
 	}
 
@@ -65,14 +72,18 @@ EDataValidationResult UFVFlowNode_AdvanceObjective::ValidateNode()
 
 FString UFVFlowNode_AdvanceObjective::GetNodeDescription() const
 {
-	const FGameplayTag ObjectiveTag = MakeObjectiveTag();
-	if (!ObjectiveTag.IsValid())
+	if (!Objective.IsValid())
 	{
 		return TEXT("None");
 	}
 
+	if (!UFVQuestFactHelpers::IsObjectiveTag(Objective))
+	{
+		return FString::Printf(TEXT("%s\nNot an Objective tag"), *Objective.ToString());
+	}
+
 	FStringFormatOrderedArguments Args;
-	Args.Add(ObjectiveTag.ToString());
+	Args.Add(Objective.ToString());
 	Args.Add(UEnum::GetDisplayValueAsText(NewState).ToString());
 
 	return FString::Format(TEXT("{0}\n{1}"), Args);

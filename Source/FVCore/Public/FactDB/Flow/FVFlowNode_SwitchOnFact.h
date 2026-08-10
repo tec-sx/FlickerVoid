@@ -42,6 +42,18 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Fact")
 	bool bUndefinedTakesDefault = true;
 
+	/** Label the value pins with enumerator names. Pin identity stays numeric, so renaming an enumerator never breaks a connection. */
+	UPROPERTY(EditAnywhere, Category = "Fact")
+	bool bUseEnumForDisplay = false;
+
+	/** Enum used to label the value pins, typically EFVQuestStage. */
+	UPROPERTY(EditAnywhere, Category = "Fact", meta = (EditCondition = "bUseEnumForDisplay"))
+	TObjectPtr<UEnum> ValueEnum;
+
 private:
 	static FName MakeValuePinName(int32 Value);
+
+#if WITH_EDITOR
+	FText MakeValuePinFriendlyName(int32 Value) const;
+#endif
 };

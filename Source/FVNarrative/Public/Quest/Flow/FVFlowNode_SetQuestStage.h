@@ -6,10 +6,10 @@
 #include "FVFlowNode_SetQuestStage.generated.h"
 
 /**
- * Writes Fact.Quest.<ChapterId>.<QuestId>.Stage, or Fact.Chapter.<ChapterId>.Stage
- * when Quest Id is left empty.
+ * Writes Fact.Quest.<ChapterId>.<QuestId>.Stage.
  *
- * Exists so graphs never contain raw stage integers.
+ * Exists so graphs never contain raw stage integers. Use Set Chapter Stage for
+ * chapter level progression.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Set Quest Stage"))
 class FLICKERVOIDNARRATIVE_API UFVFlowNode_SetQuestStage : public UFlowNode
@@ -19,6 +19,10 @@ class FLICKERVOIDNARRATIVE_API UFVFlowNode_SetQuestStage : public UFlowNode
 public:
 	UFVFlowNode_SetQuestStage();
 
+	virtual EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild_Implementation(
+		const UFlowNodeAddOn* AddOnTemplate,
+		const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const override;
+
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
@@ -27,16 +31,10 @@ protected:
 	virtual FString GetNodeDescription() const override;
 #endif
 
-	UPROPERTY(EditAnywhere, Category = "Quest")
-	FName ChapterId;
-
-	/** Leave empty to write the chapter stage instead of a quest stage. */
-	UPROPERTY(EditAnywhere, Category = "Quest")
-	FName QuestId;
+	/** Must be an existing Fact.Quest.<ChapterId>.<QuestId>.Stage tag. */
+	UPROPERTY(EditAnywhere, Category = "Quest", meta = (Categories = "Fact.Quest"))
+	FGameplayTag QuestStage;
 
 	UPROPERTY(EditAnywhere, Category = "Quest")
 	EFVQuestStage Stage = EFVQuestStage::Accepted;
-
-private:
-	FGameplayTag MakeStageTag() const;
 };

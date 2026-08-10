@@ -98,4 +98,16 @@ public:
 	/** Convenience wrapper so Blueprints can convert a stage enum to the int stored in the fact. */
 	UFUNCTION(BlueprintPure, Category = "FlickerVoid|Facts|Quest")
 	static int32 QuestStageToValue(EFVQuestStage Stage);
+
+	/** True for exactly Fact.Quest.<ChapterId>.<QuestId>.Stage. */
+	UFUNCTION(BlueprintPure, Category = "FlickerVoid|Facts|Quest")
+	static bool IsQuestStageTag(const FGameplayTag& Tag);
+
+	/** True for exactly Fact.Quest.<ChapterId>.<QuestId>.Objective.<ObjectiveId>. */
+	UFUNCTION(BlueprintPure, Category = "FlickerVoid|Facts|Quest")
+	static bool IsObjectiveTag(const FGameplayTag& Tag);
+
+	/** True for exactly Fact.Chapter.<ChapterId>.Stage. */
+	UFUNCTION(BlueprintPure, Category = "FlickerVoid|Facts|Chapter")
+	static bool IsChapterStageTag(const FGameplayTag& Tag);
 };

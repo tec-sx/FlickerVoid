@@ -1,6 +1,8 @@
 #include "FactDB/Flow/FVFlowNode_WaitForFactCondition.h"
 
 #include "FactDB/FVFactSubsystem.h"
+#include "FactDB/Flow/FVFlowNodeAddOn_SetFact.h"
+#include "Interfaces/FlowPredicateInterface.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVFlowNode_WaitForFactCondition)
 
@@ -13,6 +15,18 @@ UFVFlowNode_WaitForFactCondition::UFVFlowNode_WaitForFactCondition()
 	NodeDisplayStyle = FlowNodeStyle::Condition;
 	Category = TEXT("Fact");
 #endif
+}
+
+EFlowAddOnAcceptResult UFVFlowNode_WaitForFactCondition::AcceptFlowNodeAddOnChild_Implementation(
+	const UFlowNodeAddOn* AddOnTemplate,
+	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
+{
+	if (IFlowPredicateInterface::ImplementsInterfaceSafe(AddOnTemplate) || (IsValid(AddOnTemplate) && AddOnTemplate->IsA<UFVFlowNodeAddOn_SetFact>()))
+	{
+		return EFlowAddOnAcceptResult::TentativeAccept;
+	}
+
+	return Super::AcceptFlowNodeAddOnChild_Implementation(AddOnTemplate, AdditionalAddOnsToAssumeAreChildren);
 }
 
 void UFVFlowNode_WaitForFactCondition::ExecuteInput(const FName& PinName)

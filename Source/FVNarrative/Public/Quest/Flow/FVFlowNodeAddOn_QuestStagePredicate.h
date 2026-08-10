@@ -30,11 +30,9 @@ public:
 #endif
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Quest")
-	FName ChapterId;
-
-	UPROPERTY(EditAnywhere, Category = "Quest")
-	FName QuestId;
+	/** Must be an existing Fact.Quest.<ChapterId>.<QuestId>.Stage tag. */
+	UPROPERTY(EditAnywhere, Category = "Quest", meta = (Categories = "Fact.Quest"))
+	FGameplayTag QuestStage;
 
 	UPROPERTY(EditAnywhere, Category = "Quest")
 	EFVFactCompareOperator Operator = EFVFactCompareOperator::GreaterOrEqual;

@@ -45,6 +45,22 @@ void UFVFlowNode_SwitchOnFact::ExecuteInput(const FName& PinName)
 }
 
 #if WITH_EDITOR
+FText UFVFlowNode_SwitchOnFact::MakeValuePinFriendlyName(int32 Value) const
+{
+	if (!bUseEnumForDisplay || ValueEnum == nullptr)
+	{
+		return FText::GetEmpty();
+	}
+
+	const int32 EnumIndex = ValueEnum->GetIndexByValue(Value);
+	if (EnumIndex == INDEX_NONE)
+	{
+		return FText::FromString(FString::Printf(TEXT("%d (unknown)"), Value));
+	}
+
+	return ValueEnum->GetDisplayNameTextByIndex(EnumIndex);
+}
+
 TArray<FFlowPin> UFVFlowNode_SwitchOnFact::GetContextOutputs() const
 {
 	TArray<FFlowPin> Pins;
@@ -57,7 +73,7 @@ TArray<FFlowPin> UFVFlowNode_SwitchOnFact::GetContextOutputs() const
 		SeenValues.Add(Value, &bAlreadySeen);
 		if (!bAlreadySeen)
 		{
-			Pins.Emplace(MakeValuePinName(Value));
+			Pins.Emplace(MakeValuePinName(Value), MakeValuePinFriendlyName(Value));
 		}
 	}
 
@@ -69,7 +85,10 @@ void UFVFlowNode_SwitchOnFact::PostEditChangeProperty(FPropertyChangedEvent& Pro
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFVFlowNode_SwitchOnFact, Values))
+	const FName ChangedName = PropertyChangedEvent.GetPropertyName();
+	if (ChangedName == GET_MEMBER_NAME_CHECKED(UFVFlowNode_SwitchOnFact, Values)
+		|| ChangedName == GET_MEMBER_NAME_CHECKED(UFVFlowNode_SwitchOnFact, bUseEnumForDisplay)
+		|| ChangedName == GET_MEMBER_NAME_CHECKED(UFVFlowNode_SwitchOnFact, ValueEnum))
 	{
 		OnReconstructionRequested.ExecuteIfBound();
 	}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Nodes/FlowNode.h"
 #include "FVFlowNode_AdvanceObjective.generated.h"
 
@@ -37,6 +38,10 @@ class FLICKERVOIDNARRATIVE_API UFVFlowNode_AdvanceObjective : public UFlowNode
 public:
 	UFVFlowNode_AdvanceObjective();
 
+	virtual EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild_Implementation(
+		const UFlowNodeAddOn* AddOnTemplate,
+		const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const override;
+
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
@@ -45,18 +50,10 @@ protected:
 	virtual FString GetNodeDescription() const override;
 #endif
 
-	UPROPERTY(EditAnywhere, Category = "Quest")
-	FName ChapterId;
-
-	UPROPERTY(EditAnywhere, Category = "Quest")
-	FName QuestId;
-
-	UPROPERTY(EditAnywhere, Category = "Quest")
-	FName ObjectiveId;
+	/** Must be an existing Fact.Quest.<ChapterId>.<QuestId>.Objective.<ObjectiveId> tag. */
+	UPROPERTY(EditAnywhere, Category = "Quest", meta = (Categories = "Fact.Quest"))
+	FGameplayTag Objective;
 
 	UPROPERTY(EditAnywhere, Category = "Quest")
 	EFVObjectiveFactState NewState = EFVObjectiveFactState::Activate;
-
-private:
-	FGameplayTag MakeObjectiveTag() const;
 };

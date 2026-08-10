@@ -20,6 +20,10 @@ class FLICKERVOIDCORE_API UFVFlowNode_WaitForFactCondition : public UFlowNode
 public:
 	UFVFlowNode_WaitForFactCondition();
 
+	virtual EFlowAddOnAcceptResult AcceptFlowNodeAddOnChild_Implementation(
+		const UFlowNodeAddOn* AddOnTemplate,
+		const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const override;
+
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void OnLoad_Implementation() override;

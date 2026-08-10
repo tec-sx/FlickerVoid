@@ -1,6 +1,7 @@
 ﻿#include "FactDB/Flow/FVFlowNode_FactBase.h"
 
 #include "AddOns/FlowNodeAddOn_PredicateAND.h"
+#include "FactDB/Flow/FVFlowNodeAddOn_SetFact.h"
 #include "Interfaces/FlowPredicateInterface.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVFlowNode_FactBase)
@@ -19,7 +20,7 @@ EFlowAddOnAcceptResult UFVFlowNode_FactBase::AcceptFlowNodeAddOnChild_Implementa
 	const UFlowNodeAddOn* AddOnTemplate,
 	const TArray<UFlowNodeAddOn*>& AdditionalAddOnsToAssumeAreChildren) const
 {
-	if (IFlowPredicateInterface::ImplementsInterfaceSafe(AddOnTemplate))
+	if (IFlowPredicateInterface::ImplementsInterfaceSafe(AddOnTemplate) || (IsValid(AddOnTemplate) && AddOnTemplate->IsA<UFVFlowNodeAddOn_SetFact>()))
 	{
 		return EFlowAddOnAcceptResult::TentativeAccept;
 	}

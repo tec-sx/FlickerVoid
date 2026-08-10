@@ -27,8 +27,9 @@ public:
 #endif
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Chapter")
-	FName ChapterId;
+	/** Must be an existing Fact.Chapter.<ChapterId>.Stage tag. */
+	UPROPERTY(EditAnywhere, Category = "Chapter", meta = (Categories = "Fact.Chapter"))
+	FGameplayTag ChapterStage;
 
 	UPROPERTY(EditAnywhere, Category = "Chapter")
 	EFVFactCompareOperator Operator = EFVFactCompareOperator::GreaterOrEqual;

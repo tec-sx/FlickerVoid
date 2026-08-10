@@ -97,3 +97,49 @@ int32 UFVQuestFactHelpers::QuestStageToValue(EFVQuestStage Stage)
 {
 	return static_cast<int32>(Stage);
 }
+
+namespace
+{
+	// Tag shapes are checked part by part: a suffix test alone would accept
+	// Fact.Quest.<Chapter>.Stage, which is a different fact entirely.
+	bool MatchesTagShape(const FGameplayTag& Tag, int32 ExpectedNumParts, const TMap<int32, FName>& FixedParts)
+	{
+		if (!Tag.IsValid())
+		{
+			return false;
+		}
+
+		TArray<FString> Parts;
+		Tag.ToString().ParseIntoArray(Parts, TEXT("."), /*InCullEmpty*/ true);
+
+		if (Parts.Num() != ExpectedNumParts)
+		{
+			return false;
+		}
+
+		for (const TPair<int32, FName>& Fixed : FixedParts)
+		{
+			if (!Parts.IsValidIndex(Fixed.Key) || Parts[Fixed.Key] != Fixed.Value.ToString())
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+}
+
+bool UFVQuestFactHelpers::IsQuestStageTag(const FGameplayTag& Tag)
+{
+	return MatchesTagShape(Tag, 5, {{0, TEXT("Fact")}, {1, TEXT("Quest")}, {4, FVQuestFactAspects::Stage}});
+}
+
+bool UFVQuestFactHelpers::IsObjectiveTag(const FGameplayTag& Tag)
+{
+	return MatchesTagShape(Tag, 6, {{0, TEXT("Fact")}, {1, TEXT("Quest")}, {4, FVQuestFactAspects::Objective}});
+}
+
+bool UFVQuestFactHelpers::IsChapterStageTag(const FGameplayTag& Tag)
+{
+	return MatchesTagShape(Tag, 4, {{0, TEXT("Fact")}, {1, TEXT("Chapter")}, {3, FVQuestFactAspects::Stage}});
+}
