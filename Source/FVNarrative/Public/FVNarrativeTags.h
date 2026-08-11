@@ -36,16 +36,6 @@ namespace FVNarrativeTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestFailed);
 
 	// ============================================================================
-	// QUEST STATE TAGS
-	// ============================================================================
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Unavailable);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Available);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Active);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Completed);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Failed);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Abandoned);
-
-	// ============================================================================
 	// QUEST TYPE TAGS
 	// ============================================================================
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_Type_MainStory);
@@ -54,20 +44,6 @@ namespace FVNarrativeTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_Type_Rehabilitation);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_Type_Errand);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_Type_Social);
-
-	// ============================================================================
-	// OBJECTIVE TYPE TAGS
-	// ============================================================================
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Talk);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Investigate);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Infiltrate);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Obtain);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Deliver);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Attend);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Wait);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Threshold);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_MaintainState);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Location);
 
 	// ============================================================================
 	// SANITY & PSYCHOLOGICAL STATE TAGS

@@ -29,17 +29,7 @@ namespace FVNarrativeTags
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event_Flirt, "Dialogue.Event.Flirt");
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event_QuestAccepted, "Dialogue.Event.QuestAccepted");
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event_QuestCompleted, "Dialogue.Event.QuestCompleted");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event_QuestFailed, "Dialogue.Event.QuestFailed");	
-	// ============================================================================
-	// QUEST STATE TAGS
-	// ============================================================================
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Quest_State_Unavailable, "Quest.State.Unavailable", "Quest is not yet available.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Quest_State_Available, "Quest.State.Available", "Quest is available to start.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Quest_State_Active, "Quest.State.Active", "Quest is currently active.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Quest_State_Completed, "Quest.State.Completed", "Quest has been completed.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Quest_State_Failed, "Quest.State.Failed", "Quest has been failed.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Quest_State_Abandoned, "Quest.State.Abandoned", "Quest was abandoned by player.");
-
+	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event_QuestFailed, "Dialogue.Event.QuestFailed");
 	// ============================================================================
 	// QUEST TYPE TAGS
 	// ============================================================================
@@ -49,20 +39,6 @@ namespace FVNarrativeTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Quest_Type_Rehabilitation, "Quest.Type.Rehabilitation", "Rehabilitation/recovery quest.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Quest_Type_Errand, "Quest.Type.Errand", "Simple errand task.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Quest_Type_Social, "Quest.Type.Social", "Social interaction quest.");
-
-	// ============================================================================
-	// OBJECTIVE TYPE TAGS
-	// ============================================================================
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Objective_Type_Talk, "Objective.Type.Talk", "Talk to an NPC.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Objective_Type_Investigate, "Objective.Type.Investigate", "Investigate something.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Objective_Type_Infiltrate, "Objective.Type.Infiltrate", "Infiltrate a location.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Objective_Type_Obtain, "Objective.Type.Obtain", "Obtain an item.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Objective_Type_Deliver, "Objective.Type.Deliver", "Deliver an item.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Objective_Type_Attend, "Objective.Type.Attend", "Attend an event.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Objective_Type_Wait, "Objective.Type.Wait", "Wait for time to pass.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Objective_Type_Threshold, "Objective.Type.Threshold", "Reach a threshold.");
-	UE_DEFINE_GAMEPLAY_TAG(Objective_Type_MaintainState, "Objective.Type.MaintainState");
-	UE_DEFINE_GAMEPLAY_TAG(Objective_Type_Location, "Objective.Type.Location");
 
 	// ============================================================================
 	// SANITY & PSYCHOLOGICAL STATE TAGS

@@ -15,7 +15,6 @@ public class FlickerVoidNarrative : ModuleRules
             "GameplayTags",
             "GameplayAbilities",
             "FlickerVoidCore",
-            "FlickerVoidWorld",
             "FlickerVoidGameplay",
             "StateTreeModule",
             "GameplayStateTreeModule",

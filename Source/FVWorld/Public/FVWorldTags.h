@@ -28,6 +28,9 @@ namespace FVWorldTags
 	// ============================================================================
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_World);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_World_Time);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_World_Time_Day);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_World_Time_Hour);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_World_Time_Phase);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_World_Flag);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Location);
 }
