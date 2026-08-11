@@ -3,9 +3,9 @@
 
 #include "FVDialogueUIManagerBase.h"
 
-#include "FVNarrativeTags.h"
+#include "FVUITags.h"
 #include "Blueprint/UserWidget.h"
-#include "Dialogue/FVDialogueMessageTypes.h"
+#include "Dialogue/FVUIDialogueMessageTypes.h"
 
 UFVDialogueUIManagerBase* UFVDialogueUIManagerBase::Get(UObject* WorldContextObject)
 {
@@ -54,10 +54,10 @@ void UFVDialogueUIManagerBase::Deinitialize()
 void UFVDialogueUIManagerBase::RegisterListeners()
 {
 	UGameplayMessageSubsystem& Router = UGameplayMessageSubsystem::Get(this);
-	LineReadyHandle = Router.RegisterListener<FFVDialogueLineMessage>(FVNarrativeTags::Dialogue_LineReady, this, &UFVDialogueUIManagerBase::HandleLineReady);
-	ChoicesReadyHandle = Router.RegisterListener<FFVDialogueChoicesMessage>(FVNarrativeTags::Dialogue_ChoicesReady, this, &UFVDialogueUIManagerBase::HandleChoicesReady);
-	EventHandle = Router.RegisterListener<FFVDialogueEventMessage>(FVNarrativeTags::Dialogue_Event, this, &UFVDialogueUIManagerBase::HandleEvent);
-	EndedHandle = Router.RegisterListener<FFVDialogueEndedMessage>(FVNarrativeTags::Dialogue_Ended, this, &UFVDialogueUIManagerBase::HandleEnded);
+	LineReadyHandle = Router.RegisterListener<FFVUIDialogueLineMessage>(FVUITags::Dialogue_LineReady, this, &UFVDialogueUIManagerBase::HandleLineReady);
+	ChoicesReadyHandle = Router.RegisterListener<FFVUIDialogueChoicesMessage>(FVUITags::Dialogue_ChoicesReady, this, &UFVDialogueUIManagerBase::HandleChoicesReady);
+	EventHandle = Router.RegisterListener<FFVUIDialogueEventMessage>(FVUITags::Dialogue_Event, this, &UFVDialogueUIManagerBase::HandleEvent);
+	EndedHandle = Router.RegisterListener<FFVUIDialogueEndedMessage>(FVUITags::Dialogue_Ended, this, &UFVDialogueUIManagerBase::HandleEnded);
 }
 
 void UFVDialogueUIManagerBase::UnregisterListeners()
@@ -73,35 +73,35 @@ void UFVDialogueUIManagerBase::UnregisterListeners()
 
 void UFVDialogueUIManagerBase::SubmitChoice(int32 ChoiceIndex)
 {
-	FFVDialogueSubmitChoiceMessage Msg;
+	FFVUIDialogueSubmitChoiceMessage Msg;
 	Msg.ChoiceIndex = ChoiceIndex;
-	
+
 	UGameplayMessageSubsystem& Router = UGameplayMessageSubsystem::Get(this);
-	Router.BroadcastMessage(FVNarrativeTags::Dialogue_SubmitChoice, Msg);
+	Router.BroadcastMessage(FVUITags::Dialogue_SubmitChoice, Msg);
 }
 
 void UFVDialogueUIManagerBase::SubmitContinue()
 {
 	UGameplayMessageSubsystem& Router = UGameplayMessageSubsystem::Get(this);
-	Router.BroadcastMessage(FVNarrativeTags::Dialogue_Continue, FFVDialogueEndedMessage{});
+	Router.BroadcastMessage(FVUITags::Dialogue_Continue, FFVUIDialogueEndedMessage{});
 }
 
-void UFVDialogueUIManagerBase::HandleLineReady(FGameplayTag Channel, const FFVDialogueLineMessage& Message)
+void UFVDialogueUIManagerBase::HandleLineReady(FGameplayTag Channel, const FFVUIDialogueLineMessage& Message)
 {
 	OnDialogueLineReady(Message);
 }
 
-void UFVDialogueUIManagerBase::HandleChoicesReady(FGameplayTag Channel, const FFVDialogueChoicesMessage& Message)
+void UFVDialogueUIManagerBase::HandleChoicesReady(FGameplayTag Channel, const FFVUIDialogueChoicesMessage& Message)
 {
 	OnDialogueChoicesReady(Message);
 }
 
-void UFVDialogueUIManagerBase::HandleEvent(FGameplayTag Channel, const FFVDialogueEventMessage& Message)
+void UFVDialogueUIManagerBase::HandleEvent(FGameplayTag Channel, const FFVUIDialogueEventMessage& Message)
 {
 	OnDialogueEvent(Message);
 }
 
-void UFVDialogueUIManagerBase::HandleEnded(FGameplayTag Channel, const FFVDialogueEndedMessage& Message)
+void UFVDialogueUIManagerBase::HandleEnded(FGameplayTag Channel, const FFVUIDialogueEndedMessage& Message)
 {
 	OnDialogueEnded(Message);
 }

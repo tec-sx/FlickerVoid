@@ -12,6 +12,7 @@ class AFVCharacter;
 class UFVInputConfig;
 class UInputMappingContext;
 class UFVInventoryUIRouterComponent;
+class UFVDialogueUIRouterComponent;
 struct FInputActionValue;
 
 UCLASS(Config = Game)
@@ -82,6 +83,9 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
 	TObjectPtr<UFVInventoryUIRouterComponent> InventoryUIRouterComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
+	TObjectPtr<UFVDialogueUIRouterComponent> DialogueUIRouterComponent;
 
 	TWeakObjectPtr<AFVCharacter> CachedCharacter;
 

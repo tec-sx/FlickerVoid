@@ -5,10 +5,10 @@
 #include "UObject/Object.h"
 #include "FVDialogueUIManagerBase.generated.h"
 
-struct FFVDialogueEndedMessage;
-struct FFVDialogueEventMessage;
-struct FFVDialogueChoicesMessage;
-struct FFVDialogueLineMessage;
+struct FFVUIDialogueEndedMessage;
+struct FFVUIDialogueEventMessage;
+struct FFVUIDialogueChoicesMessage;
+struct FFVUIDialogueLineMessage;
 
 UCLASS(BlueprintType, Blueprintable)
 class FLICKERVOIDUI_API UFVDialogueUIManagerBase : public UObject
@@ -38,16 +38,16 @@ protected:
 	void OnManagerDeinitialized();
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue")
-	void OnDialogueLineReady(const FFVDialogueLineMessage& Message);
+	void OnDialogueLineReady(const FFVUIDialogueLineMessage& Message);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue")
-	void OnDialogueChoicesReady(const FFVDialogueChoicesMessage& Message);
+	void OnDialogueChoicesReady(const FFVUIDialogueChoicesMessage& Message);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue")
-	void OnDialogueEvent(const FFVDialogueEventMessage& Message);
+	void OnDialogueEvent(const FFVUIDialogueEventMessage& Message);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue")
-	void OnDialogueEnded(const FFVDialogueEndedMessage& Message);
+	void OnDialogueEnded(const FFVUIDialogueEndedMessage& Message);
 
 	UPROPERTY()
 	TWeakObjectPtr<APlayerController> OwningPC;
@@ -56,10 +56,10 @@ private:
 	void RegisterListeners();
 	void UnregisterListeners();
 
-	void HandleLineReady(FGameplayTag Channel, const FFVDialogueLineMessage& Message);
-	void HandleChoicesReady(FGameplayTag Channel, const FFVDialogueChoicesMessage& Message);
-	void HandleEvent(FGameplayTag Channel, const FFVDialogueEventMessage& Message);
-	void HandleEnded(FGameplayTag Channel, const FFVDialogueEndedMessage& Message);
+	void HandleLineReady(FGameplayTag Channel, const FFVUIDialogueLineMessage& Message);
+	void HandleChoicesReady(FGameplayTag Channel, const FFVUIDialogueChoicesMessage& Message);
+	void HandleEvent(FGameplayTag Channel, const FFVUIDialogueEventMessage& Message);
+	void HandleEnded(FGameplayTag Channel, const FFVUIDialogueEndedMessage& Message);
 
 	FGameplayMessageListenerHandle LineReadyHandle;
 	FGameplayMessageListenerHandle ChoicesReadyHandle;

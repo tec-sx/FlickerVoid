@@ -13,9 +13,7 @@ public class FlickerVoidUI : ModuleRules
             "CoreUObject",
             "Engine",
             "GameplayTags",
-            "FlickerVoidCore",
-            "FlickerVoidGameplay",
-            "FlickerVoidNarrative"
+            "FlickerVoidCore"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] 
