@@ -22,13 +22,8 @@ public:
 	virtual void Deinitialize() override;
 
 	void ChangeFactValue(const FGameplayTag Tag, int32 NewValue, EFVFactValueChangeType ChangeType);
-	// Sets a defined fact back to 0. The fact stays defined - use UndefineFact to remove it.
 	void ResetFactValue(const FGameplayTag Tag);
-
-	// Removes the fact entirely, so IsFactDefined returns false again. Returns true if it was defined.
 	bool UndefineFact(const FGameplayTag Tag);
-
-	// Removes every fact at or below ParentTag. Used for whole-quest resets. Returns the number removed.
 	int32 UndefineFactsUnderTag(const FGameplayTag ParentTag);
 
 	void ClearAllFacts();
@@ -47,9 +42,6 @@ public:
 	void OnGameLoaded(const UFVFactSaveGame* SaveGame);
 
 	FFactLoaded OnFactsLoaded;
-
-	// Fires for every fact change regardless of tag. Lets tools observe the whole DB
-	// with one subscription instead of one delegate per tag.
 	FAnyFactChanged OnAnyFactChanged;
 
 private:

@@ -27,17 +27,12 @@ enum class EFVFactValueChangeType : uint8
 UENUM(BlueprintType)
 enum class EFVFactChangeReason : uint8
 {
-	// Fact went from undefined to defined.
 	Defined,
-	// Value of an already defined fact changed.
 	ValueChanged,
-	// Fact was removed and is undefined again.
 	Undefined,
-	// Facts were replaced wholesale by a save game load.
 	Loaded
 };
 
-// Helper struct for checking single fact condition
 USTRUCT(BlueprintType)
 struct FLICKERVOIDCORE_API FFVFactCondition
 {
@@ -72,18 +67,10 @@ private:
 UENUM(BlueprintType)
 enum class EFVFactLogicOp : uint8
 {
-	// Every condition must pass. An empty group passes.
 	AllOf,
-	// At least one condition must pass. An empty group fails.
 	AnyOf
 };
 
-/**
- * A flat list of fact conditions combined with a single logic operator.
- *
- * Deliberately non recursive: USTRUCTs cannot contain themselves, and arbitrary
- * nesting is expressed in Flow by composing predicate AddOns instead.
- */
 USTRUCT(BlueprintType)
 struct FLICKERVOIDCORE_API FFVFactConditionGroup
 {

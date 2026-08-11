@@ -27,7 +27,6 @@ public:
 #endif
 
 protected:
-	/** Must be an existing Fact.Chapter.<ChapterId>.Stage tag. */
 	UPROPERTY(EditAnywhere, Category = "Chapter", meta = (Categories = "Fact.Chapter"))
 	FGameplayTag ChapterStage;
 

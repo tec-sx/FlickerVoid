@@ -5,12 +5,6 @@
 #include "Quest/FVQuestFactHelpers.h"
 #include "FVFlowNode_SetChapterStage.generated.h"
 
-/**
- * Writes Fact.Chapter.<ChapterId>.Stage.
- *
- * Separate from Set Quest Stage so each node can filter its tag picker to the
- * subtree it is allowed to write.
- */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Set Chapter Stage"))
 class FLICKERVOIDNARRATIVE_API UFVFlowNode_SetChapterStage : public UFlowNode
 {
@@ -31,7 +25,6 @@ protected:
 	virtual FString GetNodeDescription() const override;
 #endif
 
-	/** Must be an existing Fact.Chapter.<ChapterId>.Stage tag. */
 	UPROPERTY(EditAnywhere, Category = "Chapter", meta = (Categories = "Fact.Chapter"))
 	FGameplayTag ChapterStage;
 

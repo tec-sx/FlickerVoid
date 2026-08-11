@@ -28,7 +28,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Lifetime", meta = (ClampMin = 0))
 	int32 SuccessLimit;
 
-	// This node will become Completed, if Success Limit > 0 and Success Count reaches this limit
 	UPROPERTY(VisibleAnywhere, Category = "Lifetime", SaveGame)
 	int32 SuccessCount;
 

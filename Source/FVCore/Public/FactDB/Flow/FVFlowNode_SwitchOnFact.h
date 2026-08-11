@@ -8,8 +8,7 @@
  * Routes execution based on the current value of a single fact.
  *
  * Each configured value gets its own output pin; anything else (including an
- * undefined fact) takes Default. Intended for quest Stage routing, where the
- * values come from EFVQuestStage.
+ * undefined fact) takes Default.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Switch On Fact"))
 class FLICKERVOIDCORE_API UFVFlowNode_SwitchOnFact : public UFVFlowNode_FactBase
@@ -34,19 +33,15 @@ protected:
 	virtual FString GetNodeDescription() const override;
 #endif
 
-	/** Values to branch on. Duplicates are ignored; unmatched values take Default. */
 	UPROPERTY(EditAnywhere, Category = "Fact")
 	TArray<int32> Values;
 
-	/** When set, an undefined fact takes Default instead of matching a configured 0. */
 	UPROPERTY(EditAnywhere, Category = "Fact")
 	bool bUndefinedTakesDefault = true;
 
-	/** Label the value pins with enumerator names. Pin identity stays numeric, so renaming an enumerator never breaks a connection. */
 	UPROPERTY(EditAnywhere, Category = "Fact")
 	bool bUseEnumForDisplay = false;
 
-	/** Enum used to label the value pins, typically EFVQuestStage. */
 	UPROPERTY(EditAnywhere, Category = "Fact", meta = (EditCondition = "bUseEnumForDisplay"))
 	TObjectPtr<UEnum> ValueEnum;
 

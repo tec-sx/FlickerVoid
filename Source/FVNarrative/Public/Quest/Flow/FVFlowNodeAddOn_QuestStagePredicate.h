@@ -30,7 +30,6 @@ public:
 #endif
 
 protected:
-	/** Must be an existing Fact.Quest.<ChapterId>.<QuestId>.Stage tag. */
 	UPROPERTY(EditAnywhere, Category = "Quest", meta = (Categories = "Fact.Quest"))
 	FGameplayTag QuestStage;
 

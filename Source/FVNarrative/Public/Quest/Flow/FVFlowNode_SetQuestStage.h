@@ -5,12 +5,6 @@
 #include "Quest/FVQuestFactHelpers.h"
 #include "FVFlowNode_SetQuestStage.generated.h"
 
-/**
- * Writes Fact.Quest.<ChapterId>.<QuestId>.Stage.
- *
- * Exists so graphs never contain raw stage integers. Use Set Chapter Stage for
- * chapter level progression.
- */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Set Quest Stage"))
 class FLICKERVOIDNARRATIVE_API UFVFlowNode_SetQuestStage : public UFlowNode
 {
@@ -31,7 +25,6 @@ protected:
 	virtual FString GetNodeDescription() const override;
 #endif
 
-	/** Must be an existing Fact.Quest.<ChapterId>.<QuestId>.Stage tag. */
 	UPROPERTY(EditAnywhere, Category = "Quest", meta = (Categories = "Fact.Quest"))
 	FGameplayTag QuestStage;
 
