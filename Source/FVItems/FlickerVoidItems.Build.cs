@@ -20,6 +20,7 @@ public class FlickerVoidItems : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[] {
             "UMG",
+            "GameplayMessageRuntime",
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));

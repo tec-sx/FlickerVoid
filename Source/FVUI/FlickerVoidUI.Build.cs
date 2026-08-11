@@ -23,7 +23,9 @@ public class FlickerVoidUI : ModuleRules
             "UMG",
             "Slate",
             "SlateCore",
-            "GameplayMessageRuntime"
+            "GameplayMessageRuntime",
+            "CommonUI",
+            "CommonInput"
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));

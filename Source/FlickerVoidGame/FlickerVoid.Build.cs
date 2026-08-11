@@ -33,12 +33,13 @@ public class FlickerVoid : ModuleRules
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
-            "UMG",
+			"UMG",
 			"RHI",
-            "DeveloperSettings",
-            "EngineSettings",
-            "RigVM",
-        });
+			"DeveloperSettings",
+			"EngineSettings",
+			"RigVM",
+			"GameplayMessageRuntime",
+		});
 
 		PublicIncludePaths.Add(ModuleDirectory);
 		PrivateIncludePaths.Add(ModuleDirectory);

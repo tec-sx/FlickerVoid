@@ -21,4 +21,9 @@ namespace FVItemsTags
 	// ============================================================================
 	UE_DEFINE_GAMEPLAY_TAG(ItemEffect_Clarity_Down, "ItemEffect.Clarity.Down");
 	UE_DEFINE_GAMEPLAY_TAG(ItemEffect_Clarity_Up, "ItemEffect.Clarity.Up");
+
+	// ============================================================================
+	// MESSAGE CHANNELS
+	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG(Inventory_Changed, "Inventory.Changed");
 }

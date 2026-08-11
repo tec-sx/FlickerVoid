@@ -9,12 +9,15 @@
 #include "Movement/FVCharacterMovementComponent.h"
 #include "Logging/FVLogCategories.h"
 #include "Logging/FVLogSystem.h"
+#include "Player/FVInventoryUIRouterComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
 
 AFVPlayerController::AFVPlayerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-{ }
+{
+	InventoryUIRouterComponent = CreateDefaultSubobject<UFVInventoryUIRouterComponent>(TEXT("InventoryUIRouterComponent"));
+}
 
 void AFVPlayerController::SetupInputComponent()
 {

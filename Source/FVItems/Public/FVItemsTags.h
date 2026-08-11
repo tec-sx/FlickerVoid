@@ -25,6 +25,11 @@ namespace FVItemsTags
 	// ============================================================================
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(ItemEffect_Clarity_Down);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(ItemEffect_Clarity_Up);
+
+	// ============================================================================
+	// MESSAGE CHANNELS
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Inventory_Changed);
 }
 
 #undef UE_API

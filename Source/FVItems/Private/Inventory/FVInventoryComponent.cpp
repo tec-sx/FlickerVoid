@@ -3,6 +3,9 @@
 #include "Inventory/FVInventoryComponent.h"
 #include "Items/FVItemDataAsset.h"
 #include "Items/FVItemPickup.h"
+#include "Inventory/FVInventoryMessageTypes.h"
+#include "FVItemsTags.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "Misc/Guid.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInventoryComponent)
@@ -41,6 +44,7 @@ bool UFVInventoryComponent::AddItem(UFVItemDataAsset* ItemAsset, int32 Quantity)
 			{
 				// Partial add - return success
 				OnInventoryChanged.Broadcast(InventoryItems[0], true);
+				BroadcastInventoryChanged(InventoryItems[0]);
 				return true;
 			}
 			return false;
@@ -51,6 +55,7 @@ bool UFVInventoryComponent::AddItem(UFVItemDataAsset* ItemAsset, int32 Quantity)
 		RemainingQuantity -= QuantityToAdd;
 
 		OnInventoryChanged.Broadcast(InventoryItems[SlotIndex], true);
+		BroadcastInventoryChanged(InventoryItems[SlotIndex]);
 	}
 
 	OnInventorySlotsChanged.Broadcast(InventoryItems.Num(), MaxInventorySlots);
@@ -72,10 +77,15 @@ int32 UFVInventoryComponent::RemoveItem(const FGuid& InstanceID, int32 Quantity)
 
 			OnItemRemoved.Broadcast(InventoryItems[i], i, RemovedQuantity);
 
-			if (InventoryItems[i].Quantity <= 0)
+			const FGuid RemovedInstanceID = InventoryItems[i].InstanceID;
+			const int32 NewQuantity = InventoryItems[i].Quantity;
+
+			if (NewQuantity <= 0)
 			{
 				InventoryItems.RemoveAt(i);
 			}
+
+			BroadcastInventoryChangedRaw(RemovedInstanceID, FMath::Max(NewQuantity, 0));
 
 			OnInventorySlotsChanged.Broadcast(InventoryItems.Num(), MaxInventorySlots);
 			break;
@@ -83,6 +93,20 @@ int32 UFVInventoryComponent::RemoveItem(const FGuid& InstanceID, int32 Quantity)
 	}
 
 	return RemovedQuantity;
+}
+
+void UFVInventoryComponent::BroadcastInventoryChanged(const FFVItemInstance& Item)
+{
+	BroadcastInventoryChangedRaw(Item.InstanceID, Item.Quantity);
+}
+
+void UFVInventoryComponent::BroadcastInventoryChangedRaw(const FGuid& InstanceID, int32 NewQuantity)
+{
+	FFVInventoryChangedMessage Message;
+	Message.InstanceID = InstanceID;
+	Message.NewQuantity = NewQuantity;
+
+	UGameplayMessageSubsystem::Get(this).BroadcastMessage(FVItemsTags::Inventory_Changed, Message);
 }
 
 //bool UFVInventoryComponent::ExecuteItemAction(const FGuid& InstanceID, FGameplayTag ActionTag)

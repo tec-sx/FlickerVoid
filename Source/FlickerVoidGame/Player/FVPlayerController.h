@@ -11,6 +11,7 @@ class AFVPlayerState;
 class AFVCharacter;
 class UFVInputConfig;
 class UInputMappingContext;
+class UFVInventoryUIRouterComponent;
 struct FInputActionValue;
 
 UCLASS(Config = Game)
@@ -79,8 +80,11 @@ protected:
     void Input_AbilityInputTagReleased(FGameplayTag InputTag);
 
 private:
+	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
+	TObjectPtr<UFVInventoryUIRouterComponent> InventoryUIRouterComponent;
+
 	TWeakObjectPtr<AFVCharacter> CachedCharacter;
-	
+
 	mutable TWeakObjectPtr<UFVInteractionSubsystem> InteractionSubsystem;
 
     TArray<uint32> AbilityBindHandles;
