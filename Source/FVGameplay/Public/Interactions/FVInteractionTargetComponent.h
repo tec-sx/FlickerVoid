@@ -85,6 +85,13 @@ public:
 	void SetFocused(bool bFocused);
 	float GetFocusRadius() const { return Config ? Config->FocusRadius : 0.f; }
 
+	FFVInteractionFocusProfile GetFocusProfile() const
+	{
+		return Config ? Config->GetFocusProfile() : FFVInteractionFocusProfile::Precise();
+	}
+
+	FVector GetAimProbeLocation() const;
+
 	UFUNCTION(BlueprintPure, Category = "Interaction|Actions")
 	TArray<UFVInteractionAction*> GetAvailableActions() const;
 
@@ -98,6 +105,8 @@ public:
 private:
 	UFUNCTION()
 	void OnStateTreeStatusChanged(EStateTreeRunStatus RunStatus);
+
+	void EnsureZoneComponent(AActor* Owner);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UStateTreeComponent> StateTreeComponent;

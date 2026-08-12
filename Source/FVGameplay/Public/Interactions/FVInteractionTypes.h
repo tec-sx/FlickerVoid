@@ -48,13 +48,13 @@ USTRUCT(BlueprintType)
 struct FLICKERVOIDGAMEPLAY_API FFVInteractionContext
 {
 	GENERATED_BODY()
-	
+
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	TObjectPtr<AActor> Instigator;
-	
+
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	TObjectPtr<AActor> TargetActor;
-	
+
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	TObjectPtr<UFVInteractionTargetComponent> TargetComponent;
 
@@ -63,6 +63,48 @@ struct FLICKERVOIDGAMEPLAY_API FFVInteractionContext
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	FVector InteractionPoint = FVector::ZeroVector;
+};
+
+UENUM(BlueprintType)
+enum class EFVInteractionFocusProfile : uint8
+{
+	Precise,
+	Loose,
+	Custom,
+};
+
+USTRUCT(BlueprintType)
+struct FLICKERVOIDGAMEPLAY_API FFVInteractionFocusProfile
+{
+	GENERATED_BODY()
+
+	// Cosine of the half-angle of the focus cone (0 = 90°, 0.5 = ~60°, 0.85 = ~32°).
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "-1", ClampMax = "1"))
+	float ConeCosine = 0.85f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+	float AngularWeight = 1.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+	float DistanceWeight = 0.2f;
+
+	static FFVInteractionFocusProfile Precise()
+	{
+		FFVInteractionFocusProfile Profile;
+		Profile.ConeCosine = 0.85f;
+		Profile.AngularWeight = 1.f;
+		Profile.DistanceWeight = 0.2f;
+		return Profile;
+	}
+
+	static FFVInteractionFocusProfile Loose()
+	{
+		FFVInteractionFocusProfile Profile;
+		Profile.ConeCosine = 0.35f;
+		Profile.AngularWeight = 0.7f;
+		Profile.DistanceWeight = 0.5f;
+		return Profile;
+	}
 };
 
 // Broadcast delegate used to push display data to the UI

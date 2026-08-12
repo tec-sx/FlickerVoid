@@ -12,7 +12,7 @@ class UFVInteractionTargetComponent;
 // Player-side interaction manager.
 //
 // Responsibilities:
-//   - Sphere sweep each tick to find the best interactable in focus
+//   - Track candidate targets registered via zone overlaps
 //   - Broadcast focus changes to the UI
 //   - Route input tag calls (E press, F hold, etc.) to the focused interactable
 //~=============================================================================
@@ -29,39 +29,42 @@ public:
 		float DeltaTime, 
 		ELevelTick TickType, 
 		FActorComponentTickFunction* ThisTickFunction) override;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Interaction)
-	float DetectionRadius = 350.f;
 
-	// Cosine of the half-angle of the cone in which an interactable can be focused
-	// (0 = 90°, 0.5 = ~60°, 0.707 = 45°). Interactables outside this cone are ignored.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "-1", ClampMax = "1"), Category=Interaction)
-	float DetectionConeAngle = 0.5f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"), Category=Interaction)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"), Category = Interaction)
 	float DetectionUpdateInterval = 0.05f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Interaction)
-	TArray<TEnumAsByte<EObjectTypeQuery>> DetectionObjectTypes;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"), Category = Interaction)
+	float StickyFocusBonus = 0.1f;
+
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOnInteractionFocusChanged OnFocusChanged;
-	
+
 	UFUNCTION(BlueprintPure, Category = "Interaction")
 	bool HasFocus() const { return FocusedTarget != nullptr; }
-	
+
 	UFUNCTION(BlueprintPure, Category = "Interaction")
 	UFVInteractionTargetComponent* GetFocusedTarget() const { return FocusedTarget.Get(); }
-	
+
+	void RegisterCandidate(UFVInteractionTargetComponent* Target);
+	void UnregisterCandidate(UFVInteractionTargetComponent* Target);
+
+#if !UE_BUILD_SHIPPING
+	const TArray<TWeakObjectPtr<UFVInteractionTargetComponent>>& GetDebugCandidates() const { return Candidates; }
+#endif
+
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<AActor> Owner;
-	
+
 	bool bIsInitialized = false;
-	
+
 	mutable TWeakObjectPtr<UFVInteractionTargetComponent> FocusedTarget;
 	float TimeSinceLastUpdate = 0.f;
-	
-	void DetectInteractables() const;
+
+	TArray<TWeakObjectPtr<UFVInteractionTargetComponent>> Candidates;
+
+	void DetectInteractables();
 	UFVInteractionTargetComponent* FindBestTarget() const;
+	void RefreshTickState();
 };
+
