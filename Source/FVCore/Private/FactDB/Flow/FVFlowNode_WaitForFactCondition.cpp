@@ -15,7 +15,7 @@ UFVFlowNode_WaitForFactCondition::UFVFlowNode_WaitForFactCondition()
 	NodeDisplayStyle = FlowNodeStyle::Condition;
 	Category = TEXT("Fact");
 #endif
-}
+} 
 
 EFlowAddOnAcceptResult UFVFlowNode_WaitForFactCondition::AcceptFlowNodeAddOnChild_Implementation(
 	const UFlowNodeAddOn* AddOnTemplate,

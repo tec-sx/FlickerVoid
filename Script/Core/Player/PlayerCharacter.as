@@ -15,6 +15,9 @@ class APlayerCharacter : AFVCharacter
     UPROPERTY(DefaultComponent, Category = Camera)
     UGameplayCameraComponent GameplayCamera;
     
+    UPROPERTY(DefaultComponent, Category = Logic)
+    UStateTreeComponent StateTree;
+
     UPROPERTY()
     UFVTraversalComponent Traversal;
 

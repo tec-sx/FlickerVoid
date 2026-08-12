@@ -6,11 +6,14 @@ class AInteractableAICharacter : AFVAICharacter
     UPROPERTY(EditAnywhere, Category = "Character")
     UCharacterDataAsset CharacterData;
 
-    UPROPERTY(DefaultComponent, Category = "Character")
+    UPROPERTY(DefaultComponent, Category = "Flow")
     UFlowComponent FlowComponent;
     default FlowComponent.bAutoStartRootFlow = false;
 
-    UPROPERTY(DefaultComponent)
+    UPROPERTY(DefaultComponent, Category = "Interaction")
+    UFVInteractionTargetComponent InteractionTargetComponent;
+
+    UPROPERTY(DefaultComponent, Category="UI")
     UWidgetComponent FloatingTextBarComponent;
     default FloatingTextBarComponent.RelativeLocation = FVector(0, 0, CapsuleComponent.CapsuleHalfHeight + 20.f);
     default FloatingTextBarComponent.Space = EWidgetSpace::Screen;
@@ -49,7 +52,7 @@ class AInteractableAICharacter : AFVAICharacter
         UGameplayMessageSubsystem::Get().RegisterListener(
             GameplayTags::Dialogue_CallOut,
             this,
-            n"HandleCallOut",
+            n"UpdateFloatingTextBar",
             FFVDialogueCallOutMessage());
     }
 
@@ -64,7 +67,7 @@ class AInteractableAICharacter : AFVAICharacter
     }
 
     UFUNCTION()
-    void HandleCallOut(FGameplayTag Channel, FFVDialogueCallOutMessage Message)
+    void UpdateFloatingTextBar(FGameplayTag Channel, FFVDialogueCallOutMessage Message)
     {
         if (Message.OwnerActor == this)
         {

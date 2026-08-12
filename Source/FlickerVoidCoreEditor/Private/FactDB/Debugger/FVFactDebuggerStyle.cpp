@@ -25,7 +25,7 @@ FFVFactDebuggerStyle& FFVFactDebuggerStyle::Get()
 	return *StyleInstance;
 }
 
-FName FFVFactDebuggerStyle::GetStyleSetName()
+FName& FFVFactDebuggerStyle::GetStyleSetName() const
 {
 	static FName FactDebuggerStyleName(TEXT("FactDebuggerStyle"));
 	return FactDebuggerStyleName;

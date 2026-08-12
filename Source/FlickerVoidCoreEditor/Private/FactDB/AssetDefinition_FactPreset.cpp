@@ -42,7 +42,7 @@ namespace MenuExtentions_FactsPreset
 					"FactPreset_Load",
 					LOCTEXT("FactPreset_Load", "Load preset(s)"),
 					LOCTEXT("FactPreset_LoadTooltip", "Load all facts from preset(s) (only in PIE)"),
-					FSlateIcon(FFVFactDebuggerStyle::GetStyleSetName(), "ClassIcon.FactPreset"),
+					FSlateIcon(FFVFactDebuggerStyle::Get().GetStyleSetName(), "ClassIcon.FactPreset"),
 					UIAction
 				);
 			}
