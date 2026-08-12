@@ -2,8 +2,11 @@
 
 #include "FVNarrativeTags.h"
 #include "GameplayTagsManager.h"
+#include "FactDB/FVFactEnumRegistry.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVQuestFactHelpers)
+
+FV_REGISTER_FACT_ENUM(EFVQuestStage);
 
 namespace FVQuestFactAspects
 {

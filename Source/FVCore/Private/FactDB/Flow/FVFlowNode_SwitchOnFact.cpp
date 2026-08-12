@@ -1,6 +1,7 @@
 #include "FactDB/Flow/FVFlowNode_SwitchOnFact.h"
 
 #include "FactDB/FVFactSubsystem.h"
+#include "FactDB/FVFactEnumRegistry.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVFlowNode_SwitchOnFact)
 
@@ -45,9 +46,15 @@ void UFVFlowNode_SwitchOnFact::ExecuteInput(const FName& PinName)
 }
 
 #if WITH_EDITOR
+TArray<FName> UFVFlowNode_SwitchOnFact::GetRegisteredFactEnumNames()
+{
+	return FFVFactEnumRegistry::Get().GetRegisteredEnumNames();
+}
+
 FText UFVFlowNode_SwitchOnFact::MakeValuePinFriendlyName(int32 Value) const
 {
-	if (!bUseEnumForDisplay || ValueEnum == nullptr)
+	const UEnum* ValueEnum = bUseEnumForDisplay ? FFVFactEnumRegistry::Get().FindEnum(ValueEnumName) : nullptr;
+	if (!ValueEnum)
 	{
 		return FText::GetEmpty();
 	}
@@ -88,7 +95,7 @@ void UFVFlowNode_SwitchOnFact::PostEditChangeProperty(FPropertyChangedEvent& Pro
 	const FName ChangedName = PropertyChangedEvent.GetPropertyName();
 	if (ChangedName == GET_MEMBER_NAME_CHECKED(UFVFlowNode_SwitchOnFact, Values)
 		|| ChangedName == GET_MEMBER_NAME_CHECKED(UFVFlowNode_SwitchOnFact, bUseEnumForDisplay)
-		|| ChangedName == GET_MEMBER_NAME_CHECKED(UFVFlowNode_SwitchOnFact, ValueEnum))
+		|| ChangedName == GET_MEMBER_NAME_CHECKED(UFVFlowNode_SwitchOnFact, ValueEnumName))
 	{
 		OnReconstructionRequested.ExecuteIfBound();
 	}

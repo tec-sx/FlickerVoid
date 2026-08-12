@@ -42,8 +42,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Fact")
 	bool bUseEnumForDisplay = false;
 
-	UPROPERTY(EditAnywhere, Category = "Fact", meta = (EditCondition = "bUseEnumForDisplay"))
-	TObjectPtr<UEnum> ValueEnum;
+	UPROPERTY(EditAnywhere, Category = "Fact", meta = (EditCondition = "bUseEnumForDisplay", GetOptions = "GetRegisteredFactEnumNames"))
+	FName ValueEnumName;
+
+	UFUNCTION()
+	static TArray<FName> GetRegisteredFactEnumNames();
 
 private:
 	static FName MakeValuePinName(int32 Value);
