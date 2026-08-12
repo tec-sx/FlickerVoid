@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Misc/DelayedAutoRegister.h"
 
 /**
  * Manual opt-in registry of UEnum types allowed to back Fact values.
@@ -20,5 +21,9 @@ private:
 	TMap<FName, UEnum*> RegisteredEnums;
 };
 
+// StaticEnum<EnumType>() must not run during static initialization (the reflection system may not be
+// ready yet), so the actual registration is deferred until after the engine has finished initializing.
 #define FV_REGISTER_FACT_ENUM(EnumType) \
-	static const bool PREPROCESSOR_JOIN(bFactEnumRegistered_, __LINE__) = FFVFactEnumRegistry::Get().RegisterEnum(StaticEnum<EnumType>())
+	static FDelayedAutoRegisterHelper UE_JOIN(GFactEnumAutoRegister_, __LINE__)( \
+		EDelayedRegisterRunPhase::EndOfEngineInit, \
+		[]() { FFVFactEnumRegistry::Get().RegisterEnum(StaticEnum<EnumType>()); })
