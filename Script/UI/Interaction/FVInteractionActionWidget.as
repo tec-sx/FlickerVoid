@@ -1,4 +1,0 @@
-class UFVInteractionActionWidget : UUserWidget
-{
-    
-}

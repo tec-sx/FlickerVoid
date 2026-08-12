@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "UI/FVInteractionActionInfo.h"
 #include "FVInteractionTypes.generated.h"
 
 class UFVInteractionTargetComponent;
@@ -13,7 +14,7 @@ enum class EFVInteractionResult : uint8
 	Success,
 	RequirementNotMet,	// Player lacks required tags / attributes / items
 	Blocked,			// Handler is already running or interactable is locked
-	ActionNotFound,		// No action with that InputTag on the current interactable
+	ActionNotFound,		// No action bound to that slot on the current interactable
 	NoInteractable,		// Nothing is focused
 };
 
@@ -26,6 +27,20 @@ enum class EFVInteractionStatus : uint8
 	Completed,
 	Failed,
 	Cancelled,
+};
+
+// Why a running interaction was cancelled. Tasks read this in ExitState to
+// decide whether to roll back, play a reaction, or fail silently.
+UENUM(BlueprintType)
+enum class EFVInteractionCancelReason : uint8
+{
+	None,
+	WalkedAway,
+	HigherPriorityOffer,
+	OfferExpired,
+	CombatStarted,
+	Death,
+	Scripted,
 };
 
 // Full context passed to every handler — everything it could need

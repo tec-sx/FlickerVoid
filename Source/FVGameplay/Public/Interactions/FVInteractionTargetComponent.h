@@ -75,12 +75,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Context")
 	void CompleteActiveTask(bool bSuccess);
 	
-	void CancelActiveInteraction();
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	void CancelActiveInteraction(EFVInteractionCancelReason Reason = EFVInteractionCancelReason::Scripted);
+
+	/** Why the last cancellation happened. Read by tasks during ExitState. */
+	UFUNCTION(BlueprintPure, Category = "Interaction|Context")
+	EFVInteractionCancelReason GetCancelReason() const { return ActiveCancelReason; }
+
 	void SetFocused(bool bFocused);
-	float GetFocusRadius() const { return Config->FocusRadius; }
-	
+	float GetFocusRadius() const { return Config ? Config->FocusRadius : 0.f; }
+
 	UFUNCTION(BlueprintPure, Category = "Interaction|Actions")
-	TArray<UFVInteractionAction*> GetAvailableActions() const { return Config->AvailableActions; }
+	TArray<UFVInteractionAction*> GetAvailableActions() const;
 
 	//~=========================================================================
 	// Events — bind in Blueprint/AngelScript for visual feedback
@@ -111,6 +117,9 @@ private:
 
 	UPROPERTY(Transient)
 	bool bActiveTaskSucceeded = false;
+
+	UPROPERTY(Transient)
+	EFVInteractionCancelReason ActiveCancelReason = EFVInteractionCancelReason::None;
 	
 	
 	// Cached action tag for the completion callback (ActiveActionTag may be cleared before broadcast)

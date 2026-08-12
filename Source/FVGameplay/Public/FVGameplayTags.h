@@ -20,6 +20,7 @@ namespace FVGameplayTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Death);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Death_Dying);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Death_Dead);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Interacting);
 
 	// ============================================================================
 	// ABILITY ACTIVATION FAILURE TAGS
@@ -45,6 +46,7 @@ namespace FVGameplayTags
 	// ============================================================================
 
 	// Runtime events fired by handlers — UI/Blueprint listens for these
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_OfferChanged);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_ExamineStarted);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_LockpickStarted);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_LockpickEnded);

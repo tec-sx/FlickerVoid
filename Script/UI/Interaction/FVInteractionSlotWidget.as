@@ -9,21 +9,42 @@ class UFVInteractionSlotWidget : UUserWidget
     UPROPERTY(BindWidgetOptional)
     UImage IconImage;
 
-    // TODO: Update to use angelscript struct for easier iterations
-    void SetSlotData(FFVInteractionActionInfo Data, FText KeyHint)
+    UPROPERTY(BindWidgetOptional)
+    UTextBlock ActionNameText;
+
+    UPROPERTY(BindWidgetOptional)
+    UTextBlock KeyHintText;
+
+    // Consumes pure presentation data produced by the interaction UI router.
+    void SetSlotData(const FFVUIInteractionSlot& Data)
     {
+        if (!Data.bOccupied)
+        {
+            SetVisibility(ESlateVisibility::Collapsed);
+            return;
+        }
+
+        SetVisibility(ESlateVisibility::HitTestInvisible);
+
+        if (ActionNameText != nullptr)
+        {
+            ActionNameText.SetText(Data.DisplayName);
+        }
+
+        if (KeyHintText != nullptr)
+        {
+            KeyHintText.SetText(Data.InputHint);
+        }
+
         if (IconImage != nullptr)
         {
-            if (!Data.Icon.IsNull())
-            {
-                UTexture2D Tex = Data.Icon.Get();
+            UTexture2D Tex = Data.Icon.IsNull() ? nullptr : Data.Icon.Get();
 
-                if (Tex != nullptr)
-                {
-                    IconImage.SetColorAndOpacity(FLinearColor::White);
-                    IconImage.SetBrushFromTexture(Tex);
-                    IconImage.SetVisibility(ESlateVisibility::HitTestInvisible);
-                }
+            if (Tex != nullptr)
+            {
+                IconImage.SetColorAndOpacity(FLinearColor::White);
+                IconImage.SetBrushFromTexture(Tex);
+                IconImage.SetVisibility(ESlateVisibility::HitTestInvisible);
             }
             else
             {
@@ -31,12 +52,12 @@ class UFVInteractionSlotWidget : UUserWidget
             }
         }
 
-        float Opacity = Data.bAvailable ? 1.f : 0.4f;
-        SetRenderOpacity(Opacity);
+        SetRenderOpacity(Data.bEnabled ? 1.f : 0.4f);
+        SetToolTipText(Data.bEnabled ? FText() : Data.DisabledReason);
+    }
 
-        if (!Data.bAvailable && !Data.UnavailableReason.IsEmpty())
-        {
-            SetToolTipText(Data.UnavailableReason);
-        }
+    void Clear()
+    {
+        SetVisibility(ESlateVisibility::Collapsed);
     }
 }

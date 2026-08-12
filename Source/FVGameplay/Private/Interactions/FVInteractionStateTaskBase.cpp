@@ -30,6 +30,12 @@ FVector UFVInteractionStateTaskBase::GetInteractionPoint(AActor* OwnerActor)
 	return IC ? IC->GetActiveInteractionPoint() : FVector::ZeroVector;
 }
 
+EFVInteractionCancelReason UFVInteractionStateTaskBase::GetCancelReason(AActor* OwnerActor)
+{
+	const UFVInteractionTargetComponent* IC = GetInteractable(OwnerActor);
+	return IC ? IC->GetCancelReason() : EFVInteractionCancelReason::None;
+}
+
 void UFVInteractionStateTaskBase::CompleteTask(AActor* OwnerActor, bool bSuccess)
 {
 	if (UFVInteractionTargetComponent* IC = GetInteractable(OwnerActor))

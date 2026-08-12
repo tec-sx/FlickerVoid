@@ -1,7 +1,9 @@
 class UFVInteractAbility : UFVGameplayAbility
 {
-	UPROPERTY(EditDefaultsOnly, Meta = (Categories = "Interaction.Action"))
-	FGameplayTag ActionTag;
+	// Which input slot this ability drives. The focused target decides what
+	// actually occupies the slot; the ability never matches on ActionTag.
+	UPROPERTY(EditDefaultsOnly)
+	EFVInteractionSlot Slot = EFVInteractionSlot::Primary;
 
 	UFUNCTION(BlueprintOverride)
 	bool CanActivateAbility(
@@ -9,7 +11,7 @@ class UFVInteractAbility : UFVGameplayAbility
 		FGameplayAbilitySpecHandle Handle,
 		FGameplayTagContainer& RelevantTags) const
 	{
-		return ActionTag.IsValid();
+		return true;
 	}
 
 	UFUNCTION()
@@ -22,52 +24,42 @@ class UFVInteractAbility : UFVGameplayAbility
 			return EFVInteractionResult::NoInteractable;
 		}
 
-		if (Character.InteractionInstigator.HasFocus())
-		{
-			UFVInteractionTargetComponent FocusedTarget = Character.InteractionInstigator.FocusedTarget;
-			FGameplayTagContainer CharacterTags;
-			Character.GetOwnedGameplayTags(CharacterTags);
-			TArray<UFVInteractionAction> AvailableActions = FocusedTarget.GetAvailableActions();
-			UFVInteractionAction SelectedAction = nullptr;
+		UFVInteractionOfferComponent Offers = Character.InteractionOffers;
 
-			for (int i = 0; i < AvailableActions.Num(); i++)
-			{
-				UFVInteractionAction CurrentAction = AvailableActions[i];
-
-				if (CurrentAction.ActionTag.MatchesTagExact(ActionTag))
-				{
-					SelectedAction = CurrentAction;
-					break;
-				}
-			}
-
-			if (SelectedAction == nullptr)
-			{
-				return EFVInteractionResult::ActionNotFound;
-			}
-
-			if (SelectedAction.CheckRequirements(CharacterTags))
-			{
-				UFVInteractionInstigatorComponent Instigator = Character.InteractionInstigator;
-
-				if (Instigator.FocusedTarget.IsInteractionInProgress())
-				{
-					return EFVInteractionResult::Blocked;
-				}
-				
-				Instigator.FocusedTarget.RunAction(Character, SelectedAction);
-				Instigator.OnFocusChanged.Broadcast(Instigator.FocusedTarget);
-
-				return EFVInteractionResult::Success;
-			}
-			else
-			{
-				return EFVInteractionResult::RequirementNotMet;
-			}
-		}
-		else
+		if (Offers == nullptr || !Offers.HasActiveOffer())
 		{
 			return EFVInteractionResult::NoInteractable;
 		}
+
+		// The player tree owns the Interacting state; refuse to stack a second
+		// interaction on top of the one it is already committed to.
+		if (Offers.IsInteracting())
+		{
+			return EFVInteractionResult::Blocked;
+		}
+
+		UFVInteractionTargetComponent FocusedTarget = Offers.GetActiveOffer().Target;
+
+		FFVResolvedInteraction Resolved = Offers.GetActiveSlot(Slot);
+
+		if (Resolved.Action == nullptr)
+		{
+			return EFVInteractionResult::ActionNotFound;
+		}
+
+		if (!Resolved.Info.bAvailable)
+		{
+			return EFVInteractionResult::RequirementNotMet;
+		}
+
+		if (FocusedTarget == nullptr || FocusedTarget.IsInteractionInProgress())
+		{
+			return EFVInteractionResult::Blocked;
+		}
+
+		FocusedTarget.RunAction(Character, Resolved.Action);
+		Offers.NotifyActiveOfferTaken();
+
+		return EFVInteractionResult::Success;
 	}
 }

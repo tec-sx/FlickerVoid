@@ -66,6 +66,7 @@ void UFVInteractionTargetComponent::RunAction(AActor* Instigator, UFVInteraction
 	ActiveInteractionPoint = GetOwner()->GetActorLocation();
 	bActiveTaskDone       = false;
 	bActiveTaskSucceeded  = false;
+	ActiveCancelReason    = EFVInteractionCancelReason::None;
 	CompletingActionTag   = Action->ActionTag;
 	
 #if UE_BUILD_DEVELOPMENT
@@ -85,13 +86,15 @@ void UFVInteractionTargetComponent::RunAction(AActor* Instigator, UFVInteraction
 	}
 }
 
-void UFVInteractionTargetComponent::CancelActiveInteraction()
+void UFVInteractionTargetComponent::CancelActiveInteraction(EFVInteractionCancelReason Reason)
 {
 	if (!bIsInitialized || !bOwnerHasStateTreeComponent)
 	{
 		return;
 	}
-	
+
+	ActiveCancelReason = Reason;
+
 	if (StateTreeComponent && StateTreeComponent->IsRunning())
 	{
 		StateTreeComponent->StopLogic(TEXT("Cancelled"));
@@ -122,6 +125,16 @@ void UFVInteractionTargetComponent::SetFocused(bool bFocused)
 	}
 
 	bIsInFocus = bFocused;
+}
+
+TArray<UFVInteractionAction*> UFVInteractionTargetComponent::GetAvailableActions() const
+{
+	if (!Config)
+	{
+		return TArray<UFVInteractionAction*>();
+	}
+
+	return Config->AvailableActions;
 }
 
 //~=============================================================================

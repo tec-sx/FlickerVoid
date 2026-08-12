@@ -25,4 +25,8 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
 	float InteractionRadius = 200.f;
+
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
 };

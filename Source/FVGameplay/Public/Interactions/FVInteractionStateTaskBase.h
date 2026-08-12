@@ -52,6 +52,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interaction|Task")
 	static FVector GetInteractionPoint(AActor* OwnerActor);
 
+	// Why the interaction was cancelled. Valid inside ReceiveExitState; returns
+	// None when the task exited normally rather than being cancelled.
+	UFUNCTION(BlueprintPure, Category = "Interaction|Task")
+	static EFVInteractionCancelReason GetCancelReason(AActor* OwnerActor);
+
 	//~=========================================================================
 	// Completion — call when async work finishes
 	//~=========================================================================

@@ -6,11 +6,11 @@ class APlayerCharacter : AFVCharacter
     UPROPERTY(DefaultComponent, Category = Interaction)
     UFVInteractionInstigatorComponent InteractionInstigator;
 
+    UPROPERTY(DefaultComponent, Category = Interaction)
+    UFVInteractionOfferComponent InteractionOffers;
+
     UPROPERTY(DefaultComponent, Category = Animation)
     UContextualAnimSceneActorComponent ContextualAnimation;
-
-    UPROPERTY(DefaultComponent, Category = Interaction)
-    UPlayerInteractionComponent InteractionComponent;
 
     UPROPERTY(DefaultComponent, Category = Camera)
     UGameplayCameraComponent GameplayCamera;

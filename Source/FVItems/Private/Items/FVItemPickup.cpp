@@ -66,16 +66,6 @@ void AFVItemPickup::Tick(float DeltaTime)
 // Item Pickup API
 // ============================================================================
 
-FGameplayTag AFVItemPickup::GetInteractableTag() const
-{
-	return FGameplayTag();
-}
-
-FGameplayTagContainer AFVItemPickup::GetAvailableActions_Implementation() const
-{
-	return FGameplayTagContainer();
-}
-
 bool AFVItemPickup::ExecutePickup(UFVInventoryComponent* TargetInventory)
 {
 	if (!TargetInventory || !ItemData)

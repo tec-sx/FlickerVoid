@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Interactions/FVInteractionTypes.h"
 #include "FVInteractionAction.generated.h"
 
 struct FFVInteractionActionInfo;
@@ -25,22 +26,27 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSoftObjectPtr<UTexture2D> Icon;
-	
+
+	/** Input slot this action binds to. At most one action per slot per target. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	bool bIsSimple;
-	
+	EFVInteractionSlot Slot = EFVInteractionSlot::Primary;
+
 	//~=========================================================================
 	// Execution
 	//~=========================================================================
+
+	/** Execution style only: when true the action resolves instantly and runs no State Tree. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bIsSimple;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (EditCondition = "!bIsSimple"))
 	TObjectPtr<UStateTree> ActionStateTree;
 	
 	UFUNCTION(BlueprintCallable)
-	bool CheckRequirements(FGameplayTagContainer& InstigatorTags) const;
-	
+	bool CheckRequirements(const FGameplayTagContainer& InstigatorTags) const;
+
 	UFUNCTION(BlueprintCallable)
-	FFVInteractionActionInfo CreateActionUIInfo(FGameplayTagContainer& InstigatorTags) const;
+	FFVInteractionActionInfo CreateActionUIInfo(const FGameplayTagContainer& InstigatorTags) const;
 	
 	UFUNCTION(BlueprintCallable)
 	const FGameplayTagContainer& GetGrantedTags() const { return GrantedTags; }

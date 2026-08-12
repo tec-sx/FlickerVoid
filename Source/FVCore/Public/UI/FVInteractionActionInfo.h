@@ -2,6 +2,18 @@
 #include "GameplayTagContainer.h"
 #include "FVInteractionActionInfo.generated.h"
 
+// Input slot an action binds to. Determines which prompt widget slot shows it
+// and which input drives it. Independent of how the action executes.
+UENUM(BlueprintType)
+enum class EFVInteractionSlot : uint8
+{
+	Primary,
+	Secondary,
+	Hold,
+
+	MAX UMETA(Hidden)
+};
+
 USTRUCT(BlueprintType)
 struct FLICKERVOIDCORE_API FFVInteractionActionInfo
 {
@@ -9,6 +21,9 @@ struct FLICKERVOIDCORE_API FFVInteractionActionInfo
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction|Display")
 	FGameplayTag ActionTag;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction|Display")
+	EFVInteractionSlot Slot = EFVInteractionSlot::Primary;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction|Display")
 	FText DisplayName;

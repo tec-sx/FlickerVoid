@@ -16,6 +16,7 @@ namespace FVGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_Death, "Status.Death", "Target has the death status.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_Death_Dying, "Status.Death.Dying", "Target has begun the death process.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_Death_Dead, "Status.Death.Dead", "Target has finished the death process.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_Interacting, "Status.Interacting", "Actor is currently running an interaction and should suppress movement and further interaction input.");
 
 
 	// ============================================================================
@@ -40,6 +41,7 @@ namespace FVGameplayTags
 	// ============================================================================
 	// INTERACTION ACTION TAGS
 	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_OfferChanged, "Interaction.OfferChanged", "Broadcast when the player's active interaction offer changes.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Event_ExamineStarted,  "Interaction.Event.ExamineStarted",  "Fired when an examine overlay should open.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Event_LockpickStarted, "Interaction.Event.LockpickStarted", "Fired when a lockpick mini-game should open.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Event_LockpickEnded,   "Interaction.Event.LockpickEnded",   "Fired when the lockpick mini-game closes.");

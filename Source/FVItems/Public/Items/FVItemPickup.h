@@ -3,7 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "Interfaces/FVInteractableInterface.h"
+#include "GameplayTagContainer.h"
 #include "FVItemPickup.generated.h"
 
 #define UE_API FLICKERVOIDITEMS_API
@@ -12,14 +12,12 @@ class UFVInteractionAction;
 class UBoxComponent;
 class UFVInventoryItemBase;
 class UFVInventoryComponent;
-class UFVInteractionActionData;
 
 /**
  * World actor representing an item that can be picked up.
- * Implements IFVInteractableInterface for GAS-based interaction system.
  */
 UCLASS(MinimalAPI)
-class AFVItemPickup : public AActor, public IFVInteractableInterface
+class AFVItemPickup : public AActor
 {
 	GENERATED_BODY()
 
@@ -28,13 +26,6 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-	
-	// ============================================================================
-	// IFVInteractableInterface Implementation
-	// ============================================================================
-	
-	virtual FGameplayTag GetInteractableTag() const override;
-	FGameplayTagContainer GetAvailableActions_Implementation() const;
 
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|Item")
 	UE_API bool ExecutePickup(UFVInventoryComponent* TargetInventory);
@@ -94,9 +85,6 @@ private:
 	
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> DynamicMaterials;
-
-	/** Cache of interaction tags */
-	FGameplayTagContainer CachedInteractionTags;
 
 	void SetupVisualFeedback(bool bEnabled);
 };

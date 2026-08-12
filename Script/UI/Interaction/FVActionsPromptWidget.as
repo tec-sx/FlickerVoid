@@ -1,124 +1,93 @@
 class UFVInteractionPromptWidget : UUserWidget
 {
-	// Designer-configured: maps input slot tag → short key hint string shown in the slot
-	// Example entries:
-	//   InputTag.Interact.Primary       → "E"
-	//   InputTag.Interact.PrimaryHold   → "[Hold] E"
-	//   InputTag.Interact.Secondary     → "F"
-	//   InputTag.Interact.SecondaryHold → "[Hold] F"
-	UPROPERTY(EditDefaultsOnly, Category = "Interaction|Input Hints")
-	TMap<FGameplayTag, FText> InputTagHints;
-
-	// Four action slots — bind these in the UMG designer by naming the child
-	// widgets Slot0, Slot1, Slot2, Slot3 (must be UFVInteractionSlotWidget instances).
+	// Bind these in the UMG designer by naming the child widgets PrimarySlot,
+	// SecondarySlot and HoldSlot (must be UFVInteractionSlotWidget instances).
+	// Binding is by input slot, not by array position.
 	UPROPERTY(BindWidget)
-	UFVInteractionSlotWidget Slot0;
+	UFVInteractionSlotWidget PrimarySlot;
 
 	UPROPERTY(BindWidget)
-	UFVInteractionSlotWidget Slot1;
+	UFVInteractionSlotWidget SecondarySlot;
 
 	UPROPERTY(BindWidget)
-	UFVInteractionSlotWidget Slot2;
+	UFVInteractionSlotWidget HoldSlot;
 
-	UPROPERTY()
-	APlayerCharacter Player;
+	// Optional radial/bar filled from 1 -> 0 while a timed offer counts down.
+	UPROPERTY(BindWidgetOptional)
+	UProgressBar TimeoutBar;
+
+	private FGameplayMessageListenerHandle ListenerHandle;
 
 	UFUNCTION(BlueprintOverride)
 	void Construct()
 	{
-		Player = Cast<APlayerCharacter>(GetOwningPlayer().GetControlledPawn());
-		
-		if (Player != nullptr)
-		{
-			Player.InteractionInstigator.OnFocusChanged.AddUFunction(this, n"OnFocusChanged");
-			OnFocusChanged(Player.InteractionInstigator.GetFocusedTarget());
-		}
+		ListenerHandle = UGameplayMessageSubsystem::Get().RegisterListener(
+			GameplayTags::UI_Interaction_PromptChanged,
+			this,
+			n"OnPromptChanged",
+			FFVUIInteractionPromptMessage());
 
+		ResetSlots();
 		SetVisibility(ESlateVisibility::Hidden);
 	}
 
 	UFUNCTION(BlueprintOverride)
 	void Destruct()
 	{
-		if (Player != nullptr)
-		{
-			Player.InteractionInstigator.OnFocusChanged.Unbind(this, n"OnFocusChanged");
-		}
-
-		Player = nullptr;
+		UGameplayMessageSubsystem::Get().UnregisterListener(ListenerHandle);
 	}
 
 	UFUNCTION()
-	void OnFocusChanged(UFVInteractionTargetComponent Target)
+	void OnPromptChanged(FGameplayTag Channel, const FFVUIInteractionPromptMessage& Message)
 	{
-		ResetSlots();
-		SetVisibility(ESlateVisibility::Hidden);
-
-		if (Player == nullptr || Target == nullptr)
+		if (!Message.bVisible)
 		{
+			ResetSlots();
+			SetVisibility(ESlateVisibility::Hidden);
 			return;
 		}
 
-		TArray<UFVInteractionAction> Actions = Target.GetAvailableActions();
-
-		if (Actions.Num() > 0)
+		for (int i = 0; i < Message.Slots.Num(); i++)
 		{
-			for (int i = 0; i < Actions.Num(); i++)
+			const FFVUIInteractionSlot Data = Message.Slots[i];
+			UFVInteractionSlotWidget SlotWidget = GetSlotWidget(Data.Slot);
+
+			if (SlotWidget != nullptr)
 			{
-				FGameplayTagContainer CharacterTags;
-				Player.GetOwnedGameplayTags(CharacterTags);
-				const FFVInteractionActionInfo Action = Actions[i].CreateActionUIInfo(CharacterTags);
-			    UpdateActionSlot(Action, i);
+				SlotWidget.SetSlotData(Data);
 			}
-
-			SetVisibility(ESlateVisibility::HitTestInvisible);
 		}
+
+		if (TimeoutBar != nullptr)
+		{
+			TimeoutBar.SetVisibility(Message.bTimed
+				? ESlateVisibility::HitTestInvisible
+				: ESlateVisibility::Collapsed);
+			TimeoutBar.SetPercent(Message.TimeRemainingRatio);
+		}
+
+		SetVisibility(ESlateVisibility::HitTestInvisible);
 	}
 
-	private void UpdateActionSlot(const FFVInteractionActionInfo Action, int32 Index)
+	private UFVInteractionSlotWidget GetSlotWidget(EFVInteractionSlot Slot)
 	{
-		UFVInteractionSlotWidget ActionSlot = GetSlotByIndex(Index);
-
-		if (ActionSlot == nullptr)
+		switch (Slot)
 		{
-			return;
+			case EFVInteractionSlot::Primary:
+				return PrimarySlot;
+			case EFVInteractionSlot::Secondary:
+				return SecondarySlot;
+			case EFVInteractionSlot::Hold:
+				return HoldSlot;
 		}
 
-        FText Hint = GetHintForTag(Action.ActionTag);
-
-        ActionSlot.SetSlotData(Action, Hint);
-        ActionSlot.SetVisibility(ESlateVisibility::HitTestInvisible);
-	}
-
-	private UFVInteractionSlotWidget GetSlotByIndex(int32 Index)
-	{
-		switch (Index)
-		{
-			case 0:
-				return Slot0;
-			case 1:
-				return Slot1;
-			case 2:
-				return Slot2;
-			default:
-				return nullptr;
-		}
+		return nullptr;
 	}
 
 	private void ResetSlots()
 	{
-		Slot0.SetVisibility(ESlateVisibility::Hidden);
-		Slot1.SetVisibility(ESlateVisibility::Hidden);
-		Slot2.SetVisibility(ESlateVisibility::Hidden);
-	}
-
-	private FText GetHintForTag(FGameplayTag Tag)
-	{
-		FText HintText;
-		if (InputTagHints.Find(Tag, HintText))
-		{
-			return HintText;
-		}
-		return FText::FromString("?");
+		PrimarySlot.Clear();
+		SecondarySlot.Clear();
+		HoldSlot.Clear();
 	}
 }
