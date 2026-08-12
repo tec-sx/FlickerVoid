@@ -26,7 +26,7 @@ class UDialogueResponseButton : UUserWidget
     }
 
     UFUNCTION(BlueprintCallable, Category = "Dialogue")
-    void SetupFromResponse(FFVDialogueChoiceMessage Choice)
+    void SetupFromResponse(FFVUIDialogueChoiceMessage Choice)
     {
         ChoiceIndex = Choice.Index;
         ResponseText.SetText(Choice.Text);

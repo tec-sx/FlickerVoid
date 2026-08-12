@@ -8,7 +8,7 @@ struct FLICKERVOIDCOREEDITOR_API FFVFactDebuggerStyle final : public FSlateStyle
 	static void Unregister();
 
 	static FFVFactDebuggerStyle& Get();
-	static FName GetStyleSetName();
+	virtual FName& GetStyleSetName() const override;
 
 	FFVFactDebuggerStyle();
 	virtual ~FFVFactDebuggerStyle() override = default;

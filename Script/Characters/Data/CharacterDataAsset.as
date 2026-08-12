@@ -18,6 +18,9 @@ class UCharacterDataAsset : UPrimaryDataAsset
     UFlowAsset FlowAsset;
 
     UPROPERTY(EditDefaultsOnly, Category = "Logic")
+    UDataTable CalloutDB;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Logic")
     USUDSScript DialogueScript;
 
     // Cosmetics

@@ -25,7 +25,7 @@ class UDialogueWidget : UUserWidget
     private int32 RevealedCharCount = 0;
     private bool bTypewriterComplete = false;
     private bool bChoicesVisible = false;
-    private TArray<FFVDialogueChoiceMessage> PendingChoices;
+    private TArray<FFVUIDialogueChoiceMessage> PendingChoices;
 
     private FTimerHandle TypewriterTimer;
     private FTimerHandle AutoDismissTimer;
@@ -69,7 +69,7 @@ class UDialogueWidget : UUserWidget
     }
 
     UFUNCTION(BlueprintCallable)
-    void ShowChoices(const TArray<FFVDialogueChoiceMessage> Choices)
+    void ShowChoices(const TArray<FFVUIDialogueChoiceMessage> Choices)
     {
         PendingChoices = Choices;
 
@@ -199,7 +199,7 @@ class UDialogueWidget : UUserWidget
             return;
         }
 
-        for (FFVDialogueChoiceMessage Choice : PendingChoices)
+        for (FFVUIDialogueChoiceMessage Choice : PendingChoices)
         {
             UDialogueResponseButton Button = Cast<UDialogueResponseButton>(WidgetBlueprint::CreateWidget(ResponseButtonClass, GetOwningPlayer()));
 

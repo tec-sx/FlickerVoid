@@ -29,7 +29,7 @@ static FAutoConsoleCommandWithWorld GShowFactDebugger
 	})
 );
 
-
+#undef LOCTEXT_NAMESPACE
 #define LOCTEXT_NAMESPACE "FactDebugger"
 
 void FFlickerVoidCoreEditorModule::StartupModule()
@@ -43,7 +43,7 @@ void FFlickerVoidCoreEditorModule::StartupModule()
 	                                                .SetDisplayName(LOCTEXT("FactDebugger_Title", "Fact Debugger"))
 	                                                .SetTooltipText(
 		                                                LOCTEXT("FactDebugger_ToolTip", "Open Fact Debugger tab."))
-	                                                .SetIcon(FSlateIcon(FFVFactDebuggerStyle::GetStyleSetName(),
+	                                                .SetIcon(FSlateIcon(FFVFactDebuggerStyle::Get().GetStyleSetName(),
 	                                                                    "ClassIcon.FactPreset"));
 
 	Tab.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsDebugCategory());

@@ -548,7 +548,7 @@ TSharedRef<SWidget> SFVFactDebugger::CreateLeftToolBar()
 			NAME_None,
 			TAttribute<FText>(),
 			LOCTEXT("Options_ShowFavorites_ToolTip", "Show Favorites in Main Tree also"),
-			FSlateIcon(FFVFactDebuggerStyle::GetStyleSetName(), "Icons.Star.OutlineFilled"),
+			FSlateIcon(FFVFactDebuggerStyle::Get().GetStyleSetName(), "Icons.Star.OutlineFilled"),
 			EUserInterfaceActionType::ToggleButton
 		);
 
@@ -569,7 +569,7 @@ TSharedRef<SWidget> SFVFactDebugger::CreateLeftToolBar()
 			TAttribute<FText>(),
 			LOCTEXT("Options_ShowLeafs_ToolTip",
 			        "Show only leaf Facts in each tree as a list.\nNote: Facts with child tags will not be show in the trees, even if they have defined values.\n"),
-			FSlateIcon(FFVFactDebuggerStyle::GetStyleSetName(), "Icons.LeafFacts"),
+			FSlateIcon(FFVFactDebuggerStyle::Get().GetStyleSetName(), "Icons.LeafFacts"),
 			EUserInterfaceActionType::ToggleButton
 		);
 
@@ -582,7 +582,7 @@ TSharedRef<SWidget> SFVFactDebugger::CreateLeftToolBar()
 			NAME_None,
 			TAttribute<FText>(),
 			LOCTEXT("Options_ShowDefined_ToolTip", "Show only defined Facts with values"),
-			FSlateIcon(FFVFactDebuggerStyle::GetStyleSetName(), "Icons.DefinedFacts"),
+			FSlateIcon(FFVFactDebuggerStyle::Get().GetStyleSetName(), "Icons.DefinedFacts"),
 			EUserInterfaceActionType::ToggleButton,
 			NAME_None,
 			TAttribute<EVisibility>::CreateLambda([ this ]()
@@ -606,7 +606,7 @@ TSharedRef<SWidget> SFVFactDebugger::CreateRightToolBar()
 			FOnGetContent::CreateSP(this, &SFVFactDebugger::HandleGeneratePresetsMenu),
 			LOCTEXT("PresetsButton", "Presets"),
 			LOCTEXT("PresetsButton_Toolpit", "Open menu to load FactPresets"),
-			FSlateIcon(FFVFactDebuggerStyle::GetStyleSetName(), "ClassIcon.FactPreset"),
+			FSlateIcon(FFVFactDebuggerStyle::Get().GetStyleSetName(), "ClassIcon.FactPreset"),
 			false,
 			NAME_None,
 			TAttribute<EVisibility>::CreateLambda([ this ]()
