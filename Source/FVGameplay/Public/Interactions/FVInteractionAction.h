@@ -5,6 +5,7 @@
 #include "Interactions/FVInteractionTypes.h"
 #include "FVInteractionAction.generated.h"
 
+class UFlowAsset;
 struct FFVInteractionActionInfo;
 class UStateTree;
 
@@ -40,7 +41,7 @@ public:
 	bool bIsSimple;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (EditCondition = "!bIsSimple"))
-	TObjectPtr<UStateTree> ActionStateTree;
+	TObjectPtr<UFlowAsset> FlowGraph;
 	
 	UFUNCTION(BlueprintCallable)
 	bool CheckRequirements(const FGameplayTagContainer& InstigatorTags) const;

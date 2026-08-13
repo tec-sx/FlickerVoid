@@ -1,4 +1,4 @@
-#include "Interactions/FVInteractionPerceptionEvaluator.h"
+#include "Interactions/StateTree/FVInteractionPerceptionEvaluator.h"
 
 #include "Interactions/FVInteractionInstigatorComponent.h"
 #include "Interactions/FVInteractionOfferComponent.h"

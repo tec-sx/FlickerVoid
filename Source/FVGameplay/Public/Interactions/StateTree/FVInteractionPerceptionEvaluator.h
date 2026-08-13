@@ -26,37 +26,37 @@ class FLICKERVOIDGAMEPLAY_API UFVInteractionPerceptionEvaluator : public UStateT
 
 public:
 	/** Actor owning the interaction components. Bind to the tree's context actor. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Context")
 	TObjectPtr<AActor> InteractionOwner;
 
 	//~=========================================================================
 	// Published output \u2014 bind transitions and tasks to these
 	//~=========================================================================
 
-	UPROPERTY(BlueprintReadOnly, Category = "Output")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Output")
 	bool bHasFocus = false;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Output")
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category = "Output")
 	bool bHasOffer = false;
 
 	/** True while an interaction the player committed to is still running. */
-	UPROPERTY(BlueprintReadOnly, Category = "Output")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Output")
 	bool bIsInteracting = false;
 
 	/** True when the active offer counts down and will auto-resolve. */
-	UPROPERTY(BlueprintReadOnly, Category = "Output")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Output")
 	bool bOfferIsTimed = false;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Output")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Output")
 	float OfferTimeRemaining = 0.f;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Output")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Output")
 	TObjectPtr<UFVInteractionTargetComponent> FocusedTarget;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Output")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Output")
 	TObjectPtr<UFVInteractionTargetComponent> EngagedTarget;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Output")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Output")
 	TObjectPtr<AActor> EngagedActor;
 
 protected:
