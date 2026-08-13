@@ -9,11 +9,6 @@
 class UFVInteractionAction;
 class UFVInteractionTargetComponent;
 
-/**
- * A single resolved slot binding for a focused target.
- * Carries both the runtime action (for execution) and its display info (for UI),
- * so the ability and the UI never filter independently.
- */
 USTRUCT(BlueprintType)
 struct FLICKERVOIDGAMEPLAY_API FFVResolvedInteraction
 {
@@ -28,10 +23,7 @@ struct FLICKERVOIDGAMEPLAY_API FFVResolvedInteraction
 	bool IsBound() const { return Action != nullptr; }
 };
 
-/**
- * The resolved state of every input slot for one target/instigator pair.
- * Indexed by EFVInteractionSlot; always sized to EFVInteractionSlot::MAX.
- */
+
 USTRUCT(BlueprintType)
 struct FLICKERVOIDGAMEPLAY_API FFVResolvedInteractionSet
 {
@@ -56,26 +48,21 @@ struct FLICKERVOIDGAMEPLAY_API FFVResolvedInteractionSet
 	}
 };
 
-/**
- * The single source of truth for "which actions are on which slot, and are they available".
- * Both the interact ability and the UI router consume this; neither filters on its own.
- */
+
 UCLASS()
 class FLICKERVOIDGAMEPLAY_API UFVInteractionResolver : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
 public:
-	/** Resolves every slot for the given target against the instigator's owned tags. */
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	static FFVResolvedInteractionSet ResolveInteractions(
 		UFVInteractionTargetComponent* Target,
-		const FGameplayTagContainer& InstigatorTags);
+		AActor* Instigator);
 
-	/** Resolves a single slot. Returns an unbound entry when nothing occupies it. */
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	static FFVResolvedInteraction ResolveSlot(
 		UFVInteractionTargetComponent* Target,
-		const FGameplayTagContainer& InstigatorTags,
+		AActor* Instigator,
 		EFVInteractionSlot Slot);
 };

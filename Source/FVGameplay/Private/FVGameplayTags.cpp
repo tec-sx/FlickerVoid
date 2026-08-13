@@ -55,6 +55,13 @@ namespace FVGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Action_Read, "Interaction.Action.Read", "Read a document/note.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Action_Activate, "Interaction.Action.Activate", "Activate a device/switch.");
 
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_WalkedAway, "Interaction.Cancel.WalkedAway", "Interaction aborted because the player left the target.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_HigherPriorityOffer, "Interaction.Cancel.HigherPriorityOffer", "Interaction aborted for a higher priority offer.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_OfferExpired, "Interaction.Cancel.OfferExpired", "Interaction aborted because the offer expired.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_CombatStarted, "Interaction.Cancel.CombatStarted", "Interaction aborted because combat started.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_Death, "Interaction.Cancel.Death", "Interaction aborted because the instigator died.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_Scripted, "Interaction.Cancel.Scripted", "Interaction aborted by script.");
+
 	// ============================================================================
 	// INTERACTABLE TYPE TAGS
 	// ============================================================================

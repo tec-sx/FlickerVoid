@@ -37,10 +37,10 @@ EDataValidationResult UFVInteractionTargetConfig::IsDataValid(FDataValidationCon
 			continue;
 		}
 
-		if (!Action->ActionTag.IsValid())
+		if (!Action->AbilityTag.IsValid())
 		{
 			Context.AddError(FText::Format(
-				LOCTEXT("InvalidActionTag", "AvailableActions[{0}] ('{1}') has an invalid ActionTag."),
+				LOCTEXT("InvalidAbilityTag", "AvailableActions[{0}] ('{1}') has an invalid AbilityTag."),
 				Index,
 				FText::FromString(Action->GetName())));
 			Result = EDataValidationResult::Invalid;

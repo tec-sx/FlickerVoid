@@ -60,6 +60,15 @@ namespace FVGameplayTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Read);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Activate);
 
+	// Applied to the instigator ASC while an engaged interaction is being aborted,
+	// so the dispatched ability can branch on the reason inside EndAbility.
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_WalkedAway);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_HigherPriorityOffer);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_OfferExpired);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_CombatStarted);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_Death);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_Scripted);
+
 	// ============================================================================
 	// INTERACTABLE TYPE TAGS
 	// ============================================================================

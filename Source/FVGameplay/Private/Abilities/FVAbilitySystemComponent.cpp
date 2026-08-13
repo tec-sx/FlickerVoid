@@ -3,6 +3,7 @@
 
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "Abilities/FVAbilityTagRelationshipMap.h"
+#include "AbilitySystemGlobals.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVAbilitySystemComponent)
 
@@ -342,4 +343,96 @@ void UFVAbilitySystemComponent::HandleChangeAbilityCanBeCanceled(const FGameplay
 	Super::HandleChangeAbilityCanBeCanceled(AbilityTags, RequestingAbility, bCanBeCanceled);
 
 	//@TODO: Apply any special logic like blocking input or movement
+}
+
+bool UFVAbilitySystemComponent::QueryAbilityAvailabilityByTag(
+	const FGameplayTag& AbilityTag,
+	bool& OutAvailable,
+	FGameplayTag& OutFailureTag) const
+{
+	OutAvailable = false;
+	OutFailureTag = FGameplayTag::EmptyTag;
+
+	if (!AbilityTag.IsValid())
+	{
+		return false;
+	}
+
+	const FGameplayAbilitySpec* FoundSpec = nullptr;
+
+	for (const FGameplayAbilitySpec& Spec : GetActivatableAbilities())
+	{
+		const UFVGameplayAbility* AbilityCDO = Cast<UFVGameplayAbility>(Spec.Ability);
+		if (AbilityCDO && AbilityCDO->GetAssetTags().HasTagExact(AbilityTag))
+		{
+			FoundSpec = &Spec;
+			break;
+		}
+	}
+
+	if (!FoundSpec)
+	{
+		return false;
+	}
+
+	const UFVGameplayAbility* AbilityCDO = CastChecked<UFVGameplayAbility>(FoundSpec->Ability);
+	const FGameplayTagContainer& AssetTags = AbilityCDO->GetAssetTags();
+
+	if (AreAbilityTagsBlocked(AssetTags))
+	{
+		OutFailureTag = UAbilitySystemGlobals::Get().ActivateFailTagsBlockedTag;
+		return true;
+	}
+
+	FGameplayTagContainer AllRequiredTags = AbilityCDO->GetActivationRequiredTags();
+	FGameplayTagContainer AllBlockedTags = AbilityCDO->GetActivationBlockedTags();
+	GetAdditionalActivationTagRequirements(AssetTags, AllRequiredTags, AllBlockedTags);
+
+	if (AllRequiredTags.Num() || AllBlockedTags.Num())
+	{
+		FGameplayTagContainer OwnedTags;
+		GetOwnedGameplayTags(OwnedTags);
+
+		if (OwnedTags.HasAny(AllBlockedTags))
+		{
+			OutFailureTag = UAbilitySystemGlobals::Get().ActivateFailTagsBlockedTag;
+			return true;
+		}
+
+		if (!OwnedTags.HasAll(AllRequiredTags))
+		{
+			OutFailureTag = UAbilitySystemGlobals::Get().ActivateFailTagsMissingTag;
+			return true;
+		}
+	}
+
+	OutAvailable = true;
+	return true;
+}
+
+FGameplayAbilitySpecHandle UFVAbilitySystemComponent::TryActivateAbilityByAssetTagAndGetHandle(FGameplayTag AbilityTag)
+{
+	if (!AbilityTag.IsValid())
+	{
+		return FGameplayAbilitySpecHandle();
+	}
+
+	for (const FGameplayAbilitySpec& Spec : GetActivatableAbilities())
+	{
+		if (!Spec.Ability || !Spec.Ability->GetAssetTags().HasTagExact(AbilityTag))
+		{
+			continue;
+		}
+
+		const FGameplayAbilitySpecHandle Handle = Spec.Handle;
+
+		if (TryActivateAbility(Handle))
+		{
+			return Handle;
+		}
+
+		break;
+	}
+
+	return FGameplayAbilitySpecHandle();
 }

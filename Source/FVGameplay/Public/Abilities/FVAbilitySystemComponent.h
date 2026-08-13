@@ -59,6 +59,17 @@ public:
 
 	UE_API void TryActivateAbilitiesOnSpawn();
 
+	/**
+	 * Read-only availability probe for a granted ability, matched by asset tag.
+	 * Never instantiates the ability. Returns false when no spec is granted for the tag.
+	 * OutAvailable is false when the ability is granted but its activation tag
+	 * requirements are currently unmet, with OutFailureTag describing why.
+	 */
+	UE_API bool QueryAbilityAvailabilityByTag(const FGameplayTag& AbilityTag, bool& OutAvailable, FGameplayTag& OutFailureTag) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|Ability")
+	UE_API FGameplayAbilitySpecHandle TryActivateAbilityByAssetTagAndGetHandle(FGameplayTag AbilityTag);
+
 protected:
 	UE_API virtual void AbilitySpecInputPressed(FGameplayAbilitySpec& Spec) override;
 	UE_API virtual void AbilitySpecInputReleased(FGameplayAbilitySpec& Spec) override;

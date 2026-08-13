@@ -2,6 +2,8 @@
 
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
+#include "Abilities/FVAbilitySystemComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "GameplayTagAssetInterface.h"
@@ -161,20 +163,96 @@ void UFVInteractionOfferComponent::NotifyActiveOfferTaken()
 {
 	if (ActiveOffer.IsValidOffer())
 	{
-		UFVInteractionTargetComponent* Target = ActiveOffer.Target;
 		FinishOffer(ActiveOffer.OfferId, EFVInteractionOfferOutcome::Taken);
-		SetEngagedTarget(Target && Target->IsInteractionInProgress() ? Target : nullptr);
+	}
+}
+
+void UFVInteractionOfferComponent::BeginEngagement(
+	UFVInteractionTargetComponent* Target,
+	FGameplayAbilitySpecHandle AbilityHandle)
+{
+	EngagedAbilityHandle = AbilityHandle;
+
+	// Engagement is bounded by the dispatched ability, so no interaction ability
+	// has to remember to release it.
+	if (UAbilitySystemComponent* ASC =
+		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
+	{
+		AbilityEndedHandle = ASC->OnAbilityEnded.AddUObject(
+			this, &UFVInteractionOfferComponent::HandleAbilityEnded);
+	}
+
+	SetEngagedTarget(Target);
+}
+
+void UFVInteractionOfferComponent::EndEngagement()
+{
+	if (AbilityEndedHandle.IsValid())
+	{
+		if (UAbilitySystemComponent* ASC =
+			UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
+		{
+			ASC->OnAbilityEnded.Remove(AbilityEndedHandle);
+		}
+
+		AbilityEndedHandle.Reset();
+	}
+
+	EngagedAbilityHandle = FGameplayAbilitySpecHandle();
+	SetEngagedTarget(nullptr);
+}
+
+void UFVInteractionOfferComponent::HandleAbilityEnded(const FAbilityEndedData& EndedData)
+{
+	if (EndedData.AbilitySpecHandle == EngagedAbilityHandle)
+	{
+		EndEngagement();
+	}
+}
+
+namespace
+{
+	FGameplayTag ToCancelTag(EFVInteractionCancelReason Reason)
+	{
+		switch (Reason)
+		{
+			case EFVInteractionCancelReason::WalkedAway:          return FVGameplayTags::Interaction_Cancel_WalkedAway;
+			case EFVInteractionCancelReason::HigherPriorityOffer: return FVGameplayTags::Interaction_Cancel_HigherPriorityOffer;
+			case EFVInteractionCancelReason::OfferExpired:        return FVGameplayTags::Interaction_Cancel_OfferExpired;
+			case EFVInteractionCancelReason::CombatStarted:       return FVGameplayTags::Interaction_Cancel_CombatStarted;
+			case EFVInteractionCancelReason::Death:               return FVGameplayTags::Interaction_Cancel_Death;
+			case EFVInteractionCancelReason::Scripted:            return FVGameplayTags::Interaction_Cancel_Scripted;
+			default:                                              return FGameplayTag::EmptyTag;
+		}
 	}
 }
 
 void UFVInteractionOfferComponent::AbortEngagedInteraction(EFVInteractionCancelReason Reason)
 {
-	if (UFVInteractionTargetComponent* Target = EngagedTarget.Get())
+	if (EngagedAbilityHandle.IsValid())
 	{
-		Target->CancelActiveInteraction(Reason);
+		if (UAbilitySystemComponent* ASC =
+			UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
+		{
+			// The reason is published as a loose tag for the duration of the cancel
+			// so the dispatched ability can branch on it inside EndAbility.
+			const FGameplayTag ReasonTag = ToCancelTag(Reason);
+
+			if (ReasonTag.IsValid())
+			{
+				ASC->AddLooseGameplayTag(ReasonTag);
+			}
+
+			ASC->CancelAbilityHandle(EngagedAbilityHandle);
+
+			if (ReasonTag.IsValid())
+			{
+				ASC->RemoveLooseGameplayTag(ReasonTag);
+			}
+		}
 	}
 
-	SetEngagedTarget(nullptr);
+	EndEngagement();
 }
 
 void UFVInteractionOfferComponent::SetEngagedTarget(UFVInteractionTargetComponent* Target)
@@ -190,11 +268,10 @@ void UFVInteractionOfferComponent::SetEngagedTarget(UFVInteractionTargetComponen
 
 void UFVInteractionOfferComponent::RefreshEngagement()
 {
-	// The target's tree owns execution; engagement ends when that tree stops.
-	UFVInteractionTargetComponent* Target = EngagedTarget.Get();
-	if (EngagedTarget.IsValid() && (!Target || !Target->IsInteractionInProgress()))
+	// The dispatched ability owns engagement; only reap a target that went away.
+	if (EngagedTarget.IsStale())
 	{
-		SetEngagedTarget(nullptr);
+		EndEngagement();
 	}
 }
 
@@ -256,17 +333,39 @@ void UFVInteractionOfferComponent::RefreshOffers(float DeltaTime)
 
 		const FFVInteractionOffer& Offer = Offers[Index];
 
-		if (Offer.DefaultSlot < EFVInteractionSlot::MAX && Offer.Target)
+		UFVInteractionTargetComponent* FallbackTarget = Offer.Target;
+		FGameplayTag FallbackAbilityTag;
+
+		if (Offer.DefaultSlot < EFVInteractionSlot::MAX && FallbackTarget && !IsInteracting())
 		{
 			const FFVResolvedInteraction& Fallback = Offer.Resolved.GetSlot(Offer.DefaultSlot);
 
-			if (Fallback.IsBound() && Fallback.Info.bAvailable && !Offer.Target->IsInteractionInProgress())
+			if (Fallback.IsBound() && Fallback.Info.bAvailable)
 			{
-				Offer.Target->RunAction(GetOwner(), Fallback.Action);
+				FallbackAbilityTag = Fallback.Action->AbilityTag;
 			}
 		}
 
-		FinishOffer(OfferId, EFVInteractionOfferOutcome::Expired);
+		FGameplayAbilitySpecHandle DispatchedHandle;
+
+		if (FallbackAbilityTag.IsValid())
+		{
+			if (UFVAbilitySystemComponent* ASC = Cast<UFVAbilitySystemComponent>(
+				UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner())))
+			{
+				DispatchedHandle = ASC->TryActivateAbilityByAssetTagAndGetHandle(FallbackAbilityTag);
+			}
+		}
+
+		if (DispatchedHandle.IsValid())
+		{
+			FinishOffer(OfferId, EFVInteractionOfferOutcome::Taken);
+			BeginEngagement(FallbackTarget, DispatchedHandle);
+		}
+		else
+		{
+			FinishOffer(OfferId, EFVInteractionOfferOutcome::Expired);
+		}
 	}
 }
 
@@ -332,7 +431,7 @@ void UFVInteractionOfferComponent::BroadcastOfferMessage() const
 
 void UFVInteractionOfferComponent::ResolveOfferInto(FFVInteractionOffer& Offer) const
 {
-	Offer.Resolved = UFVInteractionResolver::ResolveInteractions(Offer.Target, GetInstigatorTags());
+	Offer.Resolved = UFVInteractionResolver::ResolveInteractions(Offer.Target, GetOwner());
 }
 
 void UFVInteractionOfferComponent::FinishOffer(int32 OfferId, EFVInteractionOfferOutcome Outcome)
@@ -349,41 +448,15 @@ void UFVInteractionOfferComponent::FinishOffer(int32 OfferId, EFVInteractionOffe
 	Offers.RemoveAt(Index);
 
 	// Withdrawal and expiry must interrupt a running interaction using the same
-	// path as walking away, so tasks see a meaningful reason in ExitState.
-	if (Outcome != EFVInteractionOfferOutcome::Taken && Finished.Target)
+	// path as walking away, so the dispatched ability sees a meaningful reason.
+	if (Outcome != EFVInteractionOfferOutcome::Taken &&
+		Finished.Target &&
+		Finished.Target == EngagedTarget.Get())
 	{
-		if (Finished.Target->IsInteractionInProgress())
-		{
-			Finished.Target->CancelActiveInteraction(ToCancelReason(Outcome));
-		}
+		AbortEngagedInteraction(ToCancelReason(Outcome));
 	}
 
 	OnOfferResolved.Broadcast(Finished, Outcome);
 
 	RecomputeActiveOffer();
-}
-
-FGameplayTagContainer UFVInteractionOfferComponent::GetInstigatorTags() const
-{
-	FGameplayTagContainer Tags;
-
-	const AActor* OwnerActor = GetOwner();
-	if (!OwnerActor)
-	{
-		return Tags;
-	}
-
-	if (const IGameplayTagAssetInterface* TagOwner = Cast<IGameplayTagAssetInterface>(OwnerActor))
-	{
-		TagOwner->GetOwnedGameplayTags(Tags);
-	}
-	else if (const IAbilitySystemInterface* AbilityOwner = Cast<IAbilitySystemInterface>(OwnerActor))
-	{
-		if (const UAbilitySystemComponent* ASC = AbilityOwner->GetAbilitySystemComponent())
-		{
-			ASC->GetOwnedGameplayTags(Tags);
-		}
-	}
-
-	return Tags;
 }

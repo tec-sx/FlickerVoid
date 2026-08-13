@@ -21,6 +21,12 @@ The ability system handles:
 - [FC_AbilitySystem_GameplayEffects.md](FC_AbilitySystem_GameplayEffects.md) - Gameplay effect patterns
 - [FC_AbilitySystem_DataAssetBridge.md](FC_AbilitySystem_DataAssetBridge.md) - Data asset to GAS bridge
 
+## Interaction
+
+- [Interaction/FC_Interaction_GASDispatch.md](Interaction/FC_Interaction_GASDispatch.md) - How interactions execute as abilities on the instigator
+- [Interaction/FC_Interaction_PlayerStateTree.md](Interaction/FC_Interaction_PlayerStateTree.md) - Player-side State Tree authoring
+- [Interaction/FC_Interaction_FocusScoringAndDebugTooling.md](Interaction/FC_Interaction_FocusScoringAndDebugTooling.md) - Focus scoring and debug tooling
+
 ## Architecture
 
 ### Ownership Pattern

@@ -1,17 +1,29 @@
 #include "Interactions/FVInteractionResolver.h"
 
+#include "AbilitySystemGlobals.h"
+#include "Abilities/FVAbilitySystemComponent.h"
 #include "Interactions/FVInteractionAction.h"
 #include "Interactions/FVInteractionTargetComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionResolver)
 
+#define LOCTEXT_NAMESPACE "FVInteractionResolver"
+
 FFVResolvedInteractionSet UFVInteractionResolver::ResolveInteractions(
 	UFVInteractionTargetComponent* Target,
-	const FGameplayTagContainer& InstigatorTags)
+	AActor* Instigator)
 {
 	FFVResolvedInteractionSet Resolved;
 
 	if (!Target)
+	{
+		return Resolved;
+	}
+
+	const UFVAbilitySystemComponent* ASC = Cast<UFVAbilitySystemComponent>(
+		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Instigator));
+
+	if (!ASC)
 	{
 		return Resolved;
 	}
@@ -25,15 +37,30 @@ FFVResolvedInteractionSet UFVInteractionResolver::ResolveInteractions(
 
 		const int32 SlotIndex = static_cast<int32>(Action->Slot);
 
-		// Config validation guarantees one action per slot; first binding wins if data is stale.
 		if (Resolved.Slots[SlotIndex].IsBound())
+		{
+			continue;
+		}
+
+		bool bAvailable = false;
+		FGameplayTag FailureTag;
+
+		if (!ASC->QueryAbilityAvailabilityByTag(Action->AbilityTag, bAvailable, FailureTag))
 		{
 			continue;
 		}
 
 		FFVResolvedInteraction Entry;
 		Entry.Action = Action;
-		Entry.Info = Action->CreateActionUIInfo(InstigatorTags);
+		Entry.Info = Action->CreateActionUIInfo();
+		Entry.Info.bAvailable = bAvailable;
+
+		if (!bAvailable)
+		{
+			Entry.Info.UnavailableReason = FailureTag.IsValid()
+				? FText::FromName(FailureTag.GetTagName())
+				: LOCTEXT("UnavailableGeneric", "Unavailable");
+		}
 
 		Resolved.Slots[SlotIndex] = MoveTemp(Entry);
 	}
@@ -43,7 +70,7 @@ FFVResolvedInteractionSet UFVInteractionResolver::ResolveInteractions(
 
 FFVResolvedInteraction UFVInteractionResolver::ResolveSlot(
 	UFVInteractionTargetComponent* Target,
-	const FGameplayTagContainer& InstigatorTags,
+	AActor* Instigator,
 	EFVInteractionSlot Slot)
 {
 	if (Slot >= EFVInteractionSlot::MAX)
@@ -51,5 +78,7 @@ FFVResolvedInteraction UFVInteractionResolver::ResolveSlot(
 		return FFVResolvedInteraction();
 	}
 
-	return ResolveInteractions(Target, InstigatorTags).GetSlot(Slot);
+	return ResolveInteractions(Target, Instigator).GetSlot(Slot);
 }
+
+#undef LOCTEXT_NAMESPACE
