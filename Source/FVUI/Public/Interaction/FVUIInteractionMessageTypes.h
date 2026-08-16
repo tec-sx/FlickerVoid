@@ -1,10 +1,10 @@
 // Pure presentation data for the interaction prompt.
-// Contains no UFVInteractionAction*, no component pointers, and no FVGameplay types.
+// Contains no UFVInteractionConfig*, no component pointers, and no FVGameplay types.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/FVInteractionActionInfo.h"
+#include "UI/FVInteractionInfo.h"
 #include "FVUIInteractionMessageTypes.generated.h"
 
 /** One prompt slot as the widget should draw it. */

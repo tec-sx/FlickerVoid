@@ -6,7 +6,7 @@
 #include "Interactions/FVInteractionResolver.h"
 #include "FVInteractionOfferComponent.generated.h"
 
-class UFVInteractionAction;
+class UFVInteractionConfig;
 class UFVInteractionTargetComponent;
 
 // A focus offer is the ordinary "look at a door, see Open" case.A scripted offer
@@ -112,9 +112,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Offer")
 	void WithdrawOffer(int32 OfferId);
 
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Offer")
-	void NotifyActiveOfferTaken();
-
 	// Engagement
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Engagement")
@@ -124,7 +121,7 @@ public:
 	bool IsInteracting() const { return EngagedTarget.IsValid(); }
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Engagement")
-	void BeginEngagement(UFVInteractionTargetComponent* Target, FGameplayAbilitySpecHandle AbilityHandle);
+	EFVInteractionResult BeginEngagement(EFVInteractionSlot Slot);
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Engagement")
 	void EndEngagement();
@@ -155,6 +152,13 @@ private:
 	void ResolveOfferInto(FFVInteractionOffer& Offer) const;
 	void FinishOffer(int32 OfferId, EFVInteractionOfferOutcome Outcome);
 	void HandleAbilityEnded(const struct FAbilityEndedData& EndedData);
+	void NotifyActiveOfferTaken();
+
+	EFVInteractionResult EngageWithAbility(
+		UFVInteractionTargetComponent* Target,
+		FGameplayTag AbilityTag,
+		class UFVAbilitySystemComponent* ASC,
+		bool bTakeActiveOffer);
 
 	UPROPERTY(Transient)
 	TArray<FFVInteractionOffer> Offers;

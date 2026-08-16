@@ -14,25 +14,25 @@ EDataValidationResult UFVInteractionTargetConfig::IsDataValid(FDataValidationCon
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 
-	if (AvailableActions.Num() > static_cast<int32>(EFVInteractionSlot::MAX))
+	if (AvailableInteractions.Num() > static_cast<int32>(EFVInteractionSlot::MAX))
 	{
 		Context.AddError(FText::Format(
-			LOCTEXT("TooManyActions", "AvailableActions has {0} entries but only {1} input slots exist."),
-			AvailableActions.Num(),
+			LOCTEXT("TooManyActions", "AvailableInteractions has {0} entries but only {1} input slots exist."),
+			AvailableInteractions.Num(),
 			static_cast<int32>(EFVInteractionSlot::MAX)));
 		Result = EDataValidationResult::Invalid;
 	}
 
 	TMap<EFVInteractionSlot, int32> SlotUsage;
 
-	for (int32 Index = 0; Index < AvailableActions.Num(); ++Index)
+	for (int32 Index = 0; Index < AvailableInteractions.Num(); ++Index)
 	{
-		const UFVInteractionAction* Action = AvailableActions[Index];
+		const UFVInteractionConfig* Action = AvailableInteractions[Index];
 
 		if (!Action)
 		{
 			Context.AddError(FText::Format(
-				LOCTEXT("NullAction", "AvailableActions[{0}] is null."), Index));
+				LOCTEXT("NullAction", "AvailableInteractions[{0}] is null."), Index));
 			Result = EDataValidationResult::Invalid;
 			continue;
 		}
@@ -40,7 +40,7 @@ EDataValidationResult UFVInteractionTargetConfig::IsDataValid(FDataValidationCon
 		if (!Action->AbilityTag.IsValid())
 		{
 			Context.AddError(FText::Format(
-				LOCTEXT("InvalidAbilityTag", "AvailableActions[{0}] ('{1}') has an invalid AbilityTag."),
+				LOCTEXT("InvalidAbilityTag", "AvailableInteractions[{0}] ('{1}') has an invalid AbilityTag."),
 				Index,
 				FText::FromString(Action->GetName())));
 			Result = EDataValidationResult::Invalid;
@@ -49,7 +49,7 @@ EDataValidationResult UFVInteractionTargetConfig::IsDataValid(FDataValidationCon
 		if (const int32* ExistingIndex = SlotUsage.Find(Action->Slot))
 		{
 			Context.AddError(FText::Format(
-				LOCTEXT("DuplicateSlot", "AvailableActions[{0}] and [{1}] both bind to the same input slot."),
+				LOCTEXT("DuplicateSlot", "AvailableInteractions[{0}] and [{1}] both bind to the same input slot."),
 				*ExistingIndex,
 				Index));
 			Result = EDataValidationResult::Invalid;

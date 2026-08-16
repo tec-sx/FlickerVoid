@@ -3,12 +3,12 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Interactions/FVInteractionTypes.h"
-#include "FVInteractionAction.generated.h"
+#include "FVInteractionConfig.generated.h"
 
-struct FFVInteractionActionInfo;
+struct FFVInteractionInfo;
 
 UCLASS()
-class FLICKERVOIDGAMEPLAY_API UFVInteractionAction : public UPrimaryDataAsset
+class FLICKERVOIDGAMEPLAY_API UFVInteractionConfig : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 
@@ -18,7 +18,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FText DisplayName;
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSoftObjectPtr<UTexture2D> Icon;
 
@@ -26,5 +26,5 @@ public:
 	EFVInteractionSlot Slot = EFVInteractionSlot::Primary;
 
 	UFUNCTION(BlueprintCallable)
-	FFVInteractionActionInfo CreateActionUIInfo() const;
+	FFVInteractionInfo CreateUIInfo() const;
 };

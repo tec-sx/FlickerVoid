@@ -9,7 +9,7 @@
 #include "GameplayTagAssetInterface.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "FVGameplayTags.h"
-#include "Interactions/FVInteractionAction.h"
+#include "Interactions/FVInteractionConfig.h"
 #include "Interactions/FVInteractionInstigatorComponent.h"
 #include "Interactions/FVInteractionMessageTypes.h"
 #include "Interactions/FVInteractionTargetComponent.h"
@@ -167,20 +167,68 @@ void UFVInteractionOfferComponent::NotifyActiveOfferTaken()
 	}
 }
 
-void UFVInteractionOfferComponent::BeginEngagement(
-	UFVInteractionTargetComponent* Target,
-	FGameplayAbilitySpecHandle AbilityHandle)
+EFVInteractionResult UFVInteractionOfferComponent::BeginEngagement(EFVInteractionSlot Slot)
 {
-	EngagedAbilityHandle = AbilityHandle;
-
-	// Engagement is bounded by the dispatched ability, so no interaction ability
-	// has to remember to release it.
-	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
+	if (IsInteracting())
 	{
-		AbilityEndedHandle = ASC->OnAbilityEnded.AddUObject(this, &UFVInteractionOfferComponent::HandleAbilityEnded);
+		return EFVInteractionResult::Blocked;
 	}
 
+	if (!ActiveOffer.IsValidOffer() || !ActiveOffer.Target)
+	{
+		return EFVInteractionResult::NoInteractable;
+	}
+
+	const FFVResolvedInteraction Resolved = GetActiveSlot(Slot);
+
+	if (!Resolved.IsBound())
+	{
+		return EFVInteractionResult::NotOffered;
+	}
+
+	if (!Resolved.Info.bAvailable)
+	{
+		return EFVInteractionResult::RequirementNotMet;
+	}
+
+	UFVAbilitySystemComponent* ASC = Cast<UFVAbilitySystemComponent>(
+		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()));
+
+	if (!ASC)
+	{
+		return EFVInteractionResult::Blocked;
+	}
+
+	return EngageWithAbility(ActiveOffer.Target, Resolved.Config->AbilityTag, ASC, true);
+}
+
+EFVInteractionResult UFVInteractionOfferComponent::EngageWithAbility(
+	UFVInteractionTargetComponent* Target,
+	FGameplayTag AbilityTag,
+	UFVAbilitySystemComponent* ASC,
+	bool bTakeActiveOffer)
+{
+	// Engagement is bounded by the dispatched ability, so no interaction ability
+	// has to remember to release it.
+	AbilityEndedHandle = ASC->OnAbilityEnded.AddUObject(this, &UFVInteractionOfferComponent::HandleAbilityEnded);
 	SetEngagedTarget(Target);
+
+	if (bTakeActiveOffer)
+	{
+		NotifyActiveOfferTaken();
+	}
+
+	// TryActivateAbility runs the ability synchronously, so the engaged target must
+	// already be published before dispatch.
+	EngagedAbilityHandle = ASC->TryActivateAbilityByAssetTagAndGetHandle(AbilityTag);
+
+	if (!EngagedAbilityHandle.IsValid())
+	{
+		EndEngagement();
+		return EFVInteractionResult::Blocked;
+	}
+
+	return EFVInteractionResult::Success;
 }
 
 void UFVInteractionOfferComponent::EndEngagement()
@@ -331,36 +379,14 @@ void UFVInteractionOfferComponent::RefreshOffers(float DeltaTime)
 
 		const FFVInteractionOffer& Offer = Offers[Index];
 
-		UFVInteractionTargetComponent* FallbackTarget = Offer.Target;
-		FGameplayTag FallbackAbilityTag;
+		EFVInteractionResult Result = EFVInteractionResult::NoInteractable;
 
-		if (Offer.DefaultSlot < EFVInteractionSlot::MAX && FallbackTarget && !IsInteracting())
+		if (Offer.OfferId == ActiveOffer.OfferId)
 		{
-			const FFVResolvedInteraction& Fallback = Offer.Resolved.GetSlot(Offer.DefaultSlot);
-
-			if (Fallback.IsBound() && Fallback.Info.bAvailable)
-			{
-				FallbackAbilityTag = Fallback.Action->AbilityTag;
-			}
+			Result = BeginEngagement(Offer.DefaultSlot);
 		}
 
-		FGameplayAbilitySpecHandle DispatchedHandle;
-
-		if (FallbackAbilityTag.IsValid())
-		{
-			if (UFVAbilitySystemComponent* ASC = Cast<UFVAbilitySystemComponent>(
-				UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner())))
-			{
-				DispatchedHandle = ASC->TryActivateAbilityByAssetTagAndGetHandle(FallbackAbilityTag);
-			}
-		}
-
-		if (DispatchedHandle.IsValid())
-		{
-			FinishOffer(OfferId, EFVInteractionOfferOutcome::Taken);
-			BeginEngagement(FallbackTarget, DispatchedHandle);
-		}
-		else
+		if (Result != EFVInteractionResult::Success)
 		{
 			FinishOffer(OfferId, EFVInteractionOfferOutcome::Expired);
 		}

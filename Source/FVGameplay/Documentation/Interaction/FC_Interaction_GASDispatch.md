@@ -3,27 +3,54 @@
 How an interaction actually *runs*. The target advertises; the instigator executes.
 Nothing on the interactable side executes interaction logic anymore.
 
+## Naming
+
+Only two terms are used:
+
+- **Interaction** — what a target advertises. Data only: `UFVInteractionConfig`, surfaced to UI as `FFVInteractionInfo`.
+- **Ability** — what actually executes on the instigator's ASC. A `UFVInteractAbility` subclass.
+
+The term *Action* is no longer used anywhere in the interaction system.
+
 ## The core idea
 
 The player has abilities bound to input tags (`InputTag.Action.Primary`, etc.), Lyra-style.
-But `Action.Primary` means something different for every target: pick up an item, talk to
+But the primary slot means something different for every target: pick up an item, talk to
 an NPC, pry open a door. Rather than binding many abilities to one input tag and guessing,
-a single **dispatcher ability** is bound per input slot. It asks the current offer what that
-slot resolves to, and activates the corresponding ability on the *instigator's own* ASC.
+the input calls a single entry point that asks the current offer what that slot resolves to
+and activates the corresponding ability on the instigator's own ASC.
 
 ```
 'E' pressed
   -> InputTag.Action.Primary
-  -> UFVInteractAbility (Slot = Primary)          [dispatcher, one per slot]
-  -> Offers.GetActiveSlot(Primary).Action.AbilityTag
-  -> ASC->TryActivateAbilityByAssetTagAndGetHandle(AbilityTag)
+  -> UFVInteractAbility::TryBeginInteraction(Primary)
+  -> Offers.BeginEngagement(Primary)             [does everything below]
+       resolve slot -> check availability
+       -> publish EngagedTarget + subscribe OnAbilityEnded
+       -> take the active offer
+       -> dispatch the resolved AbilityTag
   -> UFVPickupAbility / UFVTalkAbility / ...      [the real work]
-  -> Offers.BeginEngagement(Target, Handle)
 ```
 
-## The action asset is advertisement only
+`BeginEngagement(EFVInteractionSlot)` returns an `EFVInteractionResult` and is the *only*
+public way to start an interaction. Ability dispatch and offer bookkeeping are private to
+the offer component, so ordering cannot be got wrong from script or Blueprint.
 
-`UFVInteractionAction` is now pure data. It carries no logic, no requirements, no graph.
+Ordering matters: `TryActivateAbility` runs the ability synchronously, so the engaged target
+is published *before* dispatch. A dispatched ability can therefore read `GetEngagedTarget()`
+immediately inside `ActivateAbility`. If dispatch fails, the engagement is rolled back and
+`Blocked` is returned.
+
+## The shared ability base
+
+`UFVInteractAbility` (C++, `Abstract`) is the base for every ability that represents an
+interaction. It provides `GetOfferComponent()`, `GetEngagedTarget()`, `GetEngagedActor()`
+and `TryBeginInteraction(Slot)`, so concrete AngelScript abilities never re-walk the avatar
+actor by hand.
+
+## The interaction asset is advertisement only
+
+`UFVInteractionConfig` is pure data. It carries no logic, no requirements, no graph.
 
 | Property | Role |
 | --- | --- |
@@ -32,7 +59,7 @@ slot resolves to, and activates the corresponding ability on the *instigator's o
 | `Icon` | Prompt icon. |
 | `Slot` | Which input slot advertises it. |
 
-`ActionTag`, `bIsSimple`, `FlowGraph`, `CheckRequirements`, `GetGrantedTags` and the
+`bIsSimple`, `FlowGraph`, `CheckRequirements`, `GetGrantedTags` and the
 `RequiredTags` / `BlockedByTags` / `GrantedTags` containers are all gone. Requirements now
 live where they belong: on the ability itself, as `ActivationRequiredTags` and
 `ActivationBlockedTags`.
@@ -147,7 +174,7 @@ the overlay cannot be orphaned by a walk-away or combat interrupt.
 
 Code alone is not enough. In-editor you must:
 
-1. Author `UFVInteractionAction` assets with a valid `AbilityTag` and `Slot`.
+1. Author `UFVInteractionConfig` assets with a valid `AbilityTag` and `Slot`.
 2. Add abilities whose asset tags match those `AbilityTag` values to the player's ability set.
 3. Grant the slot dispatcher `UFVInteractAbility` once per slot, bound to the matching input tag.
 4. Build the examine overlay and lockpick mini-game widgets against the message contracts above.

@@ -42,7 +42,7 @@ public:
 	FVector GetAimProbeLocation() const;
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Actions")
-	TArray<UFVInteractionAction*> GetAvailableActions() const;
+	TArray<UFVInteractionConfig*> GetAvailableInteractions() const;
 
 private:
 	void EnsureZoneComponent(AActor* Owner);

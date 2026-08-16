@@ -67,7 +67,6 @@ public:
 	 */
 	UE_API bool QueryAbilityAvailabilityByTag(const FGameplayTag& AbilityTag, bool& OutAvailable, FGameplayTag& OutFailureTag) const;
 
-	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|Ability")
 	UE_API FGameplayAbilitySpecHandle TryActivateAbilityByAssetTagAndGetHandle(FGameplayTag AbilityTag);
 
 protected:

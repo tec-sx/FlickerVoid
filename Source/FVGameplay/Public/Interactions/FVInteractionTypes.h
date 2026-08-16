@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "UI/FVInteractionActionInfo.h"
+#include "UI/FVInteractionInfo.h"
 #include "FVInteractionTypes.generated.h"
 
 class UFVInteractionTargetComponent;
@@ -14,7 +14,7 @@ enum class EFVInteractionResult : uint8
 	Success,
 	RequirementNotMet,	// Player lacks required tags / attributes / items
 	Blocked,			// Handler is already running or interactable is locked
-	ActionNotFound,		// No action bound to that slot on the current interactable
+	NotOffered,			// No interaction bound to that slot on the current interactable
 	NoInteractable,		// Nothing is focused
 };
 
@@ -57,9 +57,6 @@ struct FLICKERVOIDGAMEPLAY_API FFVInteractionContext
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	TObjectPtr<UFVInteractionTargetComponent> TargetComponent;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
-	FGameplayTag ActionTag;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	FVector InteractionPoint = FVector::ZeroVector;

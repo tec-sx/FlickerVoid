@@ -3,10 +3,10 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "UI/FVInteractionActionInfo.h"
+#include "UI/FVInteractionInfo.h"
 #include "FVInteractionResolver.generated.h"
 
-class UFVInteractionAction;
+class UFVInteractionConfig;
 class UFVInteractionTargetComponent;
 
 USTRUCT(BlueprintType)
@@ -15,12 +15,12 @@ struct FLICKERVOIDGAMEPLAY_API FFVResolvedInteraction
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
-	TObjectPtr<UFVInteractionAction> Action = nullptr;
+	TObjectPtr<UFVInteractionConfig> Config = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
-	FFVInteractionActionInfo Info;
+	FFVInteractionInfo Info;
 
-	bool IsBound() const { return Action != nullptr; }
+	bool IsBound() const { return Config != nullptr; }
 };
 
 

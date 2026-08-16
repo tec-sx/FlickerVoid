@@ -4,7 +4,7 @@
 #include "AbilitySystemInterface.h"
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "GameFramework/PlayerState.h"
-#include "Interactions/FVInteractionAction.h"
+#include "Interactions/FVInteractionConfig.h"
 #include "Interactions/FVInteractionTargetComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionResolver)
@@ -36,7 +36,7 @@ FFVResolvedInteractionSet UFVInteractionResolver::ResolveInteractions(
 		return Resolved;
 	}
 
-	for (UFVInteractionAction* Action : Target->GetAvailableActions())
+	for (UFVInteractionConfig* Action : Target->GetAvailableInteractions())
 	{
 		if (!Action || Action->Slot >= EFVInteractionSlot::MAX)
 		{
@@ -59,8 +59,8 @@ FFVResolvedInteractionSet UFVInteractionResolver::ResolveInteractions(
 		}
 
 		FFVResolvedInteraction Entry;
-		Entry.Action = Action;
-		Entry.Info = Action->CreateActionUIInfo();
+		Entry.Config = Action;
+		Entry.Info = Action->CreateUIInfo();
 		Entry.Info.bAvailable = bAvailable;
 
 		if (!bAvailable)
