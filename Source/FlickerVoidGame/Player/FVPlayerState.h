@@ -11,18 +11,12 @@ class UAbilitySystemComponent;
 class UFVPawnData;
 
 UCLASS(Config = Game)
-class FLICKERVOID_API AFVPlayerState : public APlayerState, public IAbilitySystemInterface
+class FLICKERVOID_API AFVPlayerState : public APlayerState
 {
 	GENERATED_BODY()
 public:
-	AFVPlayerState(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerState")
 	AFVPlayerController* GetFVPlayerController() const;
-
-	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerState")
-	UFVAbilitySystemComponent* GetFVAbilitySystemComponent() const { return AbilitySystemComponent; }
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "FlickerVoid|PlayerState")
 	UFVInputConfig* GetInputConfig() const;
@@ -37,10 +31,4 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<const UFVPawnData> PawnData;
-
-private:
-
-	// The ability system component sub-object used by player characters.
-	UPROPERTY(VisibleAnywhere, Category = "FV|PlayerState")
-	TObjectPtr<UFVAbilitySystemComponent> AbilitySystemComponent;
 };

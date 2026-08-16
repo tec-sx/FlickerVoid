@@ -98,6 +98,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
 	FGameplayTagContainer OwnedTags;
 private:
+	
 	// Intent Data
 	FVector MovementDirection = FVector::ZeroVector;
 	EFVGait DesiredGait = EFVGait::Walking;

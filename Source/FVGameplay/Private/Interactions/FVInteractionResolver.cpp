@@ -1,7 +1,9 @@
 #include "Interactions/FVInteractionResolver.h"
 
 #include "AbilitySystemGlobals.h"
+#include "AbilitySystemInterface.h"
 #include "Abilities/FVAbilitySystemComponent.h"
+#include "GameFramework/PlayerState.h"
 #include "Interactions/FVInteractionAction.h"
 #include "Interactions/FVInteractionTargetComponent.h"
 
@@ -19,9 +21,15 @@ FFVResolvedInteractionSet UFVInteractionResolver::ResolveInteractions(
 	{
 		return Resolved;
 	}
-
-	const UFVAbilitySystemComponent* ASC = Cast<UFVAbilitySystemComponent>(
-		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Instigator));
+	;
+	const IAbilitySystemInterface* PC = Cast<IAbilitySystemInterface>(Instigator->GetInstigatorController());
+	
+	if (!PC)
+	{
+		return Resolved;
+	}
+	
+	const UFVAbilitySystemComponent* ASC = Cast<UFVAbilitySystemComponent>(PC->GetAbilitySystemComponent());
 
 	if (!ASC)
 	{

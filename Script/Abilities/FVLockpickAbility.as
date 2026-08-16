@@ -10,17 +10,13 @@ class UFVLockpickAbility : UFVGameplayAbility
 	private AActor LockedActor;
 
 	UFUNCTION(BlueprintOverride)
-	void ActivateAbility(
-		FGameplayAbilitySpecHandle Handle,
-		FGameplayAbilityActorInfo ActorInfo,
-		FGameplayAbilityActivationInfo ActivationInfo,
-		FGameplayEventData TriggerEventData)
+	void ActivateAbility()
 	{
 		LockedActor = ResolveEngagedActor(ActorInfo);
 
 		if (LockedActor == nullptr)
 		{
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			EndLockpick(true);
 			return;
 		}
 
@@ -32,8 +28,7 @@ class UFVLockpickAbility : UFVGameplayAbility
 
 		if (LockpickMontage != nullptr)
 		{
-			UAbilityTask_PlayMontageAndWait MontageTask =
-				UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, n"Lockpick", LockpickMontage);
+			UAbilityTask_PlayMontageAndWait MontageTask = AngelscriptAbilityTask::PlayMontageAndWait(this, n"Lockpick", LockpickMontage);
 			MontageTask.ReadyForActivation();
 		}
 
@@ -54,16 +49,10 @@ class UFVLockpickAbility : UFVGameplayAbility
 		}
 
 		// TODO: apply the unlock to the target once a lock component exists.
-		EndAbility(CurrentAbilitySpecHandle, CurrentActorInfo, CurrentActivationInfo, true, !Message.bSucceeded);
+		EndLockpick(!Message.bSucceeded);
 	}
 
-	UFUNCTION(BlueprintOverride)
-	void EndAbility(
-		FGameplayAbilitySpecHandle Handle,
-		FGameplayAbilityActorInfo ActorInfo,
-		FGameplayAbilityActivationInfo ActivationInfo,
-		bool bReplicateEndAbility,
-		bool bWasCancelled)
+	private void EndLockpick(bool bWasCancelled)
 	{
 		UGameplayMessageSubsystem::Get().UnregisterListener(LockpickEndedHandle);
 
@@ -73,16 +62,16 @@ class UFVLockpickAbility : UFVGameplayAbility
 			Aborted.LockedActor = LockedActor;
 			Aborted.Difficulty = Difficulty;
 
-			UGameplayMessageSubsystem::Get().BroadcastMessage(
-				GameplayTags::Interaction_Event_LockpickEnded, Aborted);
+			UGameplayMessageSubsystem::Get().BroadcastMessage(GameplayTags::Interaction_Event_LockpickEnded, Aborted);
 		}
 
 		LockedActor = nullptr;
+		EndAbility();
 	}
 
-	private AActor ResolveEngagedActor(FGameplayAbilityActorInfo ActorInfo)
+	private AActor ResolveEngagedActor(FGameplayAbilityActorInfo InActorInfo)
 	{
-		AActor Instigator = ActorInfo.AvatarActor;
+		AActor Instigator = InActorInfo.AvatarActor;
 
 		if (Instigator == nullptr)
 		{

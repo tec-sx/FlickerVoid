@@ -69,9 +69,9 @@ class UFVInteractionPromptWidget : UUserWidget
 		SetVisibility(ESlateVisibility::HitTestInvisible);
 	}
 
-	private UFVInteractionSlotWidget GetSlotWidget(EFVInteractionSlot Slot)
+	private UFVInteractionSlotWidget GetSlotWidget(EFVInteractionSlot InSlot)
 	{
-		switch (Slot)
+		switch (InSlot)
 		{
 			case EFVInteractionSlot::Primary:
 				return PrimarySlot;
@@ -80,8 +80,6 @@ class UFVInteractionPromptWidget : UUserWidget
 			case EFVInteractionSlot::Hold:
 				return HoldSlot;
 		}
-
-		return nullptr;
 	}
 
 	private void ResetSlots()

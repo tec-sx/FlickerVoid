@@ -141,7 +141,7 @@ void UFVInteractionDebugComponent::DrawVisualizer() const
 		const bool bIsOffer = TargetOwner == OfferActor;
 
 		const FColor ProbeColor = bIsOffer ? FColor::Magenta : (bIsFocused ? FColor::Yellow : FColor::Cyan);
-		DrawDebugSphere(World, ProbeLocation, 6.f, 8, ProbeColor, false, -1.f, 0, 1.5f);
+		DrawDebugSphere(World, ProbeLocation, 4.f, 8, ProbeColor, false, -1.f, 0, 1.f);
 
 		const FFVInteractionFocusProfile Profile = Target->GetFocusProfile();
 		const float HalfAngleRad = FMath::Acos(FMath::Clamp(Profile.ConeCosine, -1.f, 1.f));
@@ -160,12 +160,12 @@ void UFVInteractionDebugComponent::DrawVisualizer() const
 
 		if (bIsFocused)
 		{
-			DrawDebugLine(World, ViewLocation, ProbeLocation, FColor::Yellow, false, -1.f, 0, 2.f);
+			DrawDebugLine(World, ViewLocation, ProbeLocation, FColor::Yellow, false, -1.f, 0, 1.5f);
 		}
 
 		if (bIsOffer)
 		{
-			DrawDebugSphere(World, TargetOwner->GetActorLocation(), 24.f, 12, FColor::Magenta, false, -1.f, 0, 2.f);
+			DrawDebugSphere(World, TargetOwner->GetActorLocation(), 24.f, 12, FColor::Magenta, false, -1.f, 0, 1.5f);
 		}
 	}
 }

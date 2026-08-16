@@ -1,75 +1,62 @@
 class UFVTalkAbility : UFVGameplayAbility
 {
-	UPROPERTY(EditDefaultsOnly, Category = "Talk")
-	FGameplayTag FlowNotifyTag;
-
 	private FGameplayMessageListenerHandle DialogueEndedHandle;
 
+	default AbilityTags.AddTag(GameplayTags::Interaction_Action_Talk);
+
 	UFUNCTION(BlueprintOverride)
-	void ActivateAbility(
-		FGameplayAbilitySpecHandle Handle,
-		FGameplayAbilityActorInfo ActorInfo,
-		FGameplayAbilityActivationInfo ActivationInfo,
-		FGameplayEventData TriggerEventData)
+	void ActivateAbility()
 	{
 		UFlowComponent FlowComponent = ResolveEngagedFlowComponent(ActorInfo);
 
-		if (FlowComponent == nullptr || !FlowNotifyTag.IsValid())
+		if (IsValid(FlowComponent))
 		{
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-			return;
+			DialogueEndedHandle = UGameplayMessageSubsystem::Get().RegisterListener(
+				GameplayTags::Dialogue_Ended,
+				this,
+				n"HandleDialogueEnded",
+				FFVDialogueEndedMessage());
+
+			FlowComponent.NotifyGraph(GameplayTags::Interaction_Action_Talk);
 		}
-
-		DialogueEndedHandle = UGameplayMessageSubsystem::Get().RegisterListener(
-			GameplayTags::Dialogue_Ended,
-			this,
-			n"HandleDialogueEnded",
-			FFVDialogueEndedMessage());
-
-		FlowComponent.NotifyGraph(FlowNotifyTag);
+		else
+		{
+			EndTalk();
+		}
 	}
 
 	UFUNCTION()
 	void HandleDialogueEnded(FGameplayTag Channel, const FFVDialogueEndedMessage& Message)
 	{
-		EndAbility(CurrentAbilitySpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		EndTalk();
 	}
 
-	UFUNCTION(BlueprintOverride)
-	void EndAbility(
-		FGameplayAbilitySpecHandle Handle,
-		FGameplayAbilityActorInfo ActorInfo,
-		FGameplayAbilityActivationInfo ActivationInfo,
-		bool bReplicateEndAbility,
-		bool bWasCancelled)
+	private void EndTalk()
 	{
 		UGameplayMessageSubsystem::Get().UnregisterListener(DialogueEndedHandle);
+		EndAbility();
 	}
 
-	private UFlowComponent ResolveEngagedFlowComponent(FGameplayAbilityActorInfo ActorInfo)
+	private UFlowComponent ResolveEngagedFlowComponent(FGameplayAbilityActorInfo InActorInfo)
 	{
-		AActor Instigator = ActorInfo.AvatarActor;
+		AFVPlayerController PC = Cast<AFVPlayerController>(InActorInfo.AvatarActor);
 
-		if (Instigator == nullptr)
+		if (IsValid(PC))
 		{
-			return nullptr;
+			AFVPlayerCharacter Character = PC.GetControlledCharacter();
+
+			if (IsValid(Character))
+			{
+				UFVInteractionTargetComponent Target = Character.Offers.GetEngagedTarget();
+				
+				Print(Character.Offers.GetEngagedTarget().ToString());
+				if (IsValid(Target) && IsValid(Target.GetOwner()))
+				{
+					return Cast<UFlowComponent>(Target.GetOwner().GetComponentByClass(UFlowComponent));
+				}
+			}
 		}
 
-		UFVInteractionOfferComponent Offers =
-			Cast<UFVInteractionOfferComponent>(Instigator.GetComponentByClass(UFVInteractionOfferComponent));
-
-		if (Offers == nullptr)
-		{
-			return nullptr;
-		}
-
-		UFVInteractionTargetComponent Target = Offers.GetEngagedTarget();
-
-		if (Target == nullptr || Target.GetOwner() == nullptr)
-		{
-			return nullptr;
-		}
-
-		return Cast<UFlowComponent>(Target.GetOwner().GetComponentByClass(UFlowComponent));
+		return nullptr;
 	}
 }

@@ -12,17 +12,13 @@ class UFVExamineAbility : UFVGameplayAbility
 	private TArray<int> FoundSecrets;
 
 	UFUNCTION(BlueprintOverride)
-	void ActivateAbility(
-		FGameplayAbilitySpecHandle Handle,
-		FGameplayAbilityActorInfo ActorInfo,
-		FGameplayAbilityActivationInfo ActivationInfo,
-		FGameplayEventData TriggerEventData)
+	void ActivateAbility()
 	{
 		ExaminedActor = ResolveEngagedActor(ActorInfo);
 
 		if (ExaminedActor == nullptr)
 		{
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			EndExamine(true);
 			return;
 		}
 
@@ -47,7 +43,7 @@ class UFVExamineAbility : UFVGameplayAbility
 
 		if (!Message.bVisible)
 		{
-			EndAbility(CurrentAbilitySpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+			EndExamine(false);
 			return;
 		}
 
@@ -84,13 +80,7 @@ class UFVExamineAbility : UFVGameplayAbility
 		Print("Examine: secret " + SecretIndex + " found on " + ExaminedActor.GetName());
 	}
 
-	UFUNCTION(BlueprintOverride)
-	void EndAbility(
-		FGameplayAbilitySpecHandle Handle,
-		FGameplayAbilityActorInfo ActorInfo,
-		FGameplayAbilityActivationInfo ActivationInfo,
-		bool bReplicateEndAbility,
-		bool bWasCancelled)
+	private void EndExamine(bool bWasCancelled)
 	{
 		UGameplayMessageSubsystem::Get().UnregisterListener(ExamineHandle);
 
@@ -100,6 +90,7 @@ class UFVExamineAbility : UFVGameplayAbility
 		}
 
 		ExaminedActor = nullptr;
+		EndAbility();
 	}
 
 	private void BroadcastExamineState(bool bVisible, FRotator ViewRotation)
@@ -113,9 +104,9 @@ class UFVExamineAbility : UFVGameplayAbility
 			GameplayTags::Interaction_Event_ExamineStarted, Message);
 	}
 
-	private AActor ResolveEngagedActor(FGameplayAbilityActorInfo ActorInfo)
+	private AActor ResolveEngagedActor(FGameplayAbilityActorInfo InActorInfo)
 	{
-		AActor Instigator = ActorInfo.AvatarActor;
+		AActor Instigator = InActorInfo.AvatarActor;
 
 		if (Instigator == nullptr)
 		{

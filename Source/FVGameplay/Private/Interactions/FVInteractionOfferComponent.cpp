@@ -175,11 +175,9 @@ void UFVInteractionOfferComponent::BeginEngagement(
 
 	// Engagement is bounded by the dispatched ability, so no interaction ability
 	// has to remember to release it.
-	if (UAbilitySystemComponent* ASC =
-		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
+	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
 	{
-		AbilityEndedHandle = ASC->OnAbilityEnded.AddUObject(
-			this, &UFVInteractionOfferComponent::HandleAbilityEnded);
+		AbilityEndedHandle = ASC->OnAbilityEnded.AddUObject(this, &UFVInteractionOfferComponent::HandleAbilityEnded);
 	}
 
 	SetEngagedTarget(Target);
@@ -424,9 +422,7 @@ void UFVInteractionOfferComponent::BroadcastOfferMessage() const
 		Message.OwningController = Cast<APlayerController>(OwnerPawn->GetController());
 	}
 
-	UGameplayMessageSubsystem::Get(World).BroadcastMessage(
-		FVGameplayTags::Interaction_OfferChanged,
-		Message);
+	UGameplayMessageSubsystem::Get(World).BroadcastMessage(FVGameplayTags::Interaction_OfferChanged, Message);
 }
 
 void UFVInteractionOfferComponent::ResolveOfferInto(FFVInteractionOffer& Offer) const

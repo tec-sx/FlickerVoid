@@ -1,4 +1,6 @@
 #include "FVPlayerState.h"
+
+#include "FVPlayerCharacter.h"
 #include "FVPlayerController.h"
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "Abilities/FVAbilitySet.h"
@@ -10,20 +12,9 @@
 
 const FName AFVPlayerState::NAME_FVAbilityReady("FVAbilitiesReady");
 
-AFVPlayerState::AFVPlayerState(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-	AbilitySystemComponent = ObjectInitializer.CreateDefaultSubobject<UFVAbilitySystemComponent>(this, TEXT("AbilitySystemComponent"));
-}
-
 AFVPlayerController* AFVPlayerState::GetFVPlayerController() const
 {
 	return Cast<AFVPlayerController>(GetOwner());
-}
-
-UAbilitySystemComponent* AFVPlayerState::GetAbilitySystemComponent() const
-{
-	return GetFVAbilitySystemComponent();
 }
 
 UFVInputConfig* AFVPlayerState::GetInputConfig() const
@@ -60,7 +51,7 @@ void AFVPlayerState::SetPawnData(const UFVPawnData* InPawnData)
 	{
 		if (AbilitySet)
 		{
-			AbilitySet->PassToAbilitySystem(AbilitySystemComponent, nullptr);
+			AbilitySet->PassToAbilitySystem(GetFVPlayerController()->GetFVAbilitySystemComponent(), nullptr);
 		}
 	}
 

@@ -542,6 +542,10 @@
 		{
 			"Name": "CineCameraRigs",
 			"Enabled": true
+		},
+		{
+			"Name": "AngelscriptGAS",
+			"Enabled": true
 		}
 	]
 }
