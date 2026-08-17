@@ -99,11 +99,13 @@ void UFVInteractionOfferComponent::HandleFocusChanged(UFVInteractionTargetCompon
 		}
 		return;
 	}
-
+	
+	const FFVResolvedInteractionSet ResolvedInteractions = ResolveInteractions(Target, GetOwner());
+	
 	if (ExistingIndex != INDEX_NONE)
 	{
 		Offers[ExistingIndex].Target = Target;
-		ResolveOfferInto(Offers[ExistingIndex]);
+		Offers[ExistingIndex].Resolved = ResolvedInteractions;
 		return;
 	}
 
@@ -112,7 +114,7 @@ void UFVInteractionOfferComponent::HandleFocusChanged(UFVInteractionTargetCompon
 	Offer.Source = EFVInteractionOfferSource::Focus;
 	Offer.Target = Target;
 	Offer.Priority = FocusOfferPriority;
-	ResolveOfferInto(Offer);
+	Offer.Resolved = ResolvedInteractions;
 
 	Offers.Add(MoveTemp(Offer));
 }
@@ -142,7 +144,7 @@ int32 UFVInteractionOfferComponent::PushScriptedOffer(
 	Offer.Timeout = FMath::Max(0.f, Timeout);
 	Offer.TimeRemaining = Offer.Timeout;
 	Offer.DefaultSlot = DefaultSlot;
-	ResolveOfferInto(Offer);
+	Offer.Resolved = ResolveInteractions(Target, GetOwner());
 
 	const int32 OfferId = Offer.OfferId;
 	Offers.Add(MoveTemp(Offer));
@@ -203,29 +205,14 @@ EFVInteractionResult UFVInteractionOfferComponent::BeginEngagement(EFVInteractio
 	{
 		return EFVInteractionResult::Blocked;
 	}
-
-	return EngageWithAbility(ActiveOffer.Target, Resolved.Config->AbilityTag, ASC, true);
-}
-
-EFVInteractionResult UFVInteractionOfferComponent::EngageWithAbility(
-	UFVInteractionTargetComponent* Target,
-	FGameplayTag AbilityTag,
-	UFVAbilitySystemComponent* ASC,
-	bool bTakeActiveOffer)
-{
-	// Engagement is bounded by the dispatched ability, so no interaction ability
-	// has to remember to release it.
+	
 	AbilityEndedHandle = ASC->OnAbilityEnded.AddUObject(this, &UFVInteractionOfferComponent::HandleAbilityEnded);
-	SetEngagedTarget(Target);
-
-	if (bTakeActiveOffer)
-	{
-		NotifyActiveOfferTaken();
-	}
+	SetEngagedTarget(ActiveOffer.Target);
+	NotifyActiveOfferTaken();
 
 	// TryActivateAbility runs the ability synchronously, so the engaged target must
 	// already be published before dispatch.
-	EngagedAbilityHandle = ASC->TryActivateAbilityByAssetTagAndGetHandle(AbilityTag);
+	EngagedAbilityHandle = ASC->TryActivateAbilityByAssetTagAndGetHandle(Resolved.Config->AbilityTag);
 
 	if (!EngagedAbilityHandle.IsValid())
 	{
@@ -354,7 +341,7 @@ void UFVInteractionOfferComponent::RefreshOffers(float DeltaTime)
 		}
 
 		// Re-resolve every tick so requirement changes are reflected live.
-		ResolveOfferInto(Offer);
+		Offer.Resolved = ResolveInteractions(Offer.Target, GetOwner());
 
 		if (Offer.IsTimed())
 		{
@@ -456,11 +443,6 @@ void UFVInteractionOfferComponent::BroadcastOfferMessage() const
 	UGameplayMessageSubsystem::Get(World).BroadcastMessage(FVGameplayTags::Interaction_OfferChanged, Message);
 }
 
-void UFVInteractionOfferComponent::ResolveOfferInto(FFVInteractionOffer& Offer) const
-{
-	Offer.Resolved = UFVInteractionResolver::ResolveInteractions(Offer.Target, GetOwner());
-}
-
 void UFVInteractionOfferComponent::FinishOffer(int32 OfferId, EFVInteractionOfferOutcome Outcome)
 {
 	const int32 Index = Offers.IndexOfByPredicate(
@@ -487,3 +469,76 @@ void UFVInteractionOfferComponent::FinishOffer(int32 OfferId, EFVInteractionOffe
 
 	RecomputeActiveOffer();
 }
+
+#define LOCTEXT_NAMESPACE "FVInteractionResolver"
+
+FFVResolvedInteractionSet UFVInteractionOfferComponent::ResolveInteractions(UFVInteractionTargetComponent* Target,
+	AActor* Instigator)
+{
+	FFVResolvedInteractionSet Resolved;
+
+	if (!Target)
+	{
+		return Resolved;
+	}
+	
+	UFVAbilitySystemComponent* ASC = 
+		Cast<UFVAbilitySystemComponent>(UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Instigator));
+
+	if (!ASC)
+	{
+		return Resolved;
+	}
+
+	for (UFVInteractionConfig* Action : Target->GetAvailableInteractions())
+	{
+		if (!Action || Action->Slot >= EFVInteractionSlot::MAX)
+		{
+			continue;
+		}
+
+		const int32 SlotIndex = static_cast<int32>(Action->Slot);
+
+		if (Resolved.Slots[SlotIndex].IsBound())
+		{
+			continue;
+		}
+
+		bool bAvailable = false;
+		FGameplayTag FailureTag;
+
+		if (!ASC->QueryAbilityAvailabilityByTag(Action->AbilityTag, bAvailable, FailureTag))
+		{
+			continue;
+		}
+
+		FFVResolvedInteraction Entry;
+		Entry.Config = Action;
+		Entry.Info = Action->CreateUIInfo();
+		Entry.Info.bAvailable = bAvailable;
+
+		if (!bAvailable)
+		{
+			Entry.Info.UnavailableReason = FailureTag.IsValid()
+				? FText::FromName(FailureTag.GetTagName())
+				: LOCTEXT("UnavailableGeneric", "Unavailable");
+		}
+
+		Resolved.Slots[SlotIndex] = MoveTemp(Entry);
+	}
+
+	return Resolved;
+}
+
+FFVResolvedInteraction UFVInteractionOfferComponent::ResolveSlot(UFVInteractionTargetComponent* Target,
+	AActor* Instigator, EFVInteractionSlot Slot)
+{
+	if (Slot >= EFVInteractionSlot::MAX)
+	{
+		return FFVResolvedInteraction();
+	}
+
+	return ResolveInteractions(Target, Instigator).GetSlot(Slot);
+}
+
+#undef LOCTEXT_NAMESPACE

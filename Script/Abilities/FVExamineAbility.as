@@ -27,7 +27,7 @@ class UFVExamineAbility : UFVInteractAbility
 	UFUNCTION()
 	void HandleExamineUpdate(FGameplayTag Channel, const FFVInteractionExamineMessage& Message)
 	{
-		if (Message.ExaminedActor != EngagedActor)
+		if (Message.ExaminedActor != GetOfferComponent().GetEngagedActor())
 		{
 			return;
 		}
@@ -68,14 +68,14 @@ class UFVExamineAbility : UFVInteractAbility
 	// TODO: unlock the memory tied to SecretViewAngles[SecretIndex].
 	private void UnlockMemory(int SecretIndex)
 	{
-		Print("Examine: secret " + SecretIndex + " found on " + EngagedActor.GetName());
+		Print("Examine: secret " + SecretIndex + " found on " + GetOfferComponent().GetEngagedActor().GetName());
 	}
 
 	private void EndExamine(bool bWasCancelled)
 	{
 		UGameplayMessageSubsystem::Get().UnregisterListener(ExamineHandle);
 
-		if (bWasCancelled && EngagedActor != nullptr)
+		if (bWasCancelled && GetOfferComponent().GetEngagedActor() != nullptr)
 		{
 			BroadcastExamineState(false, FRotator::ZeroRotator);
 		}
@@ -86,7 +86,7 @@ class UFVExamineAbility : UFVInteractAbility
 	private void BroadcastExamineState(bool bVisible, FRotator ViewRotation)
 	{
 		FFVInteractionExamineMessage Message;
-		Message.ExaminedActor = EngagedActor;
+		Message.ExaminedActor = GetOfferComponent().GetEngagedActor();
 		Message.bVisible = bVisible;
 		Message.ViewRotation = ViewRotation;
 

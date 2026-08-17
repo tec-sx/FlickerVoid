@@ -24,7 +24,7 @@ class UFVLockpickAbility : UFVInteractAbility
 		}
 
 		FFVInteractionLockpickMessage Started;
-		Started.LockedActor = EngagedActor;
+		Started.LockedActor = GetOfferComponent().GetEngagedActor();
 		Started.Difficulty = Difficulty;
 
 		UGameplayMessageSubsystem::Get().BroadcastMessage(
@@ -34,7 +34,7 @@ class UFVLockpickAbility : UFVInteractAbility
 	UFUNCTION()
 	void HandleLockpickEnded(FGameplayTag Channel, const FFVInteractionLockpickMessage& Message)
 	{
-		if (Message.LockedActor != EngagedActor)
+		if (Message.LockedActor != GetOfferComponent().GetEngagedActor())
 		{
 			return;
 		}
@@ -47,10 +47,10 @@ class UFVLockpickAbility : UFVInteractAbility
 	{
 		UGameplayMessageSubsystem::Get().UnregisterListener(LockpickEndedHandle);
 
-		if (bWasCancelled && EngagedActor != nullptr)
+		if (bWasCancelled && GetOfferComponent().GetEngagedActor() != nullptr)
 		{
 			FFVInteractionLockpickMessage Aborted;
-			Aborted.LockedActor = EngagedActor;
+			Aborted.LockedActor = GetOfferComponent().GetEngagedActor();
 			Aborted.Difficulty = Difficulty;
 
 			UGameplayMessageSubsystem::Get().BroadcastMessage(GameplayTags::Interaction_Event_LockpickEnded, Aborted);

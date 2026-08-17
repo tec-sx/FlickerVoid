@@ -1,13 +1,53 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FVInteractionTypes.h"
 #include "Components/ActorComponent.h"
 #include "GameplayAbilitySpecHandle.h"
-#include "Interactions/FVInteractionResolver.h"
+#include "UI/FVInteractionInfo.h"
 #include "FVInteractionOfferComponent.generated.h"
 
 class UFVInteractionConfig;
 class UFVInteractionTargetComponent;
+
+USTRUCT(BlueprintType)
+struct FLICKERVOIDGAMEPLAY_API FFVResolvedInteraction
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	TObjectPtr<UFVInteractionConfig> Config = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	FFVInteractionInfo Info;
+
+	bool IsBound() const { return Config != nullptr; }
+};
+
+
+USTRUCT(BlueprintType)
+struct FLICKERVOIDGAMEPLAY_API FFVResolvedInteractionSet
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	TArray<FFVResolvedInteraction> Slots;
+
+	FFVResolvedInteractionSet()
+	{
+		Slots.SetNum(static_cast<int32>(EFVInteractionSlot::MAX));
+	}
+
+	const FFVResolvedInteraction& GetSlot(EFVInteractionSlot Slot) const
+	{
+		return Slots[static_cast<int32>(Slot)];
+	}
+
+	bool HasAnyBinding() const
+	{
+		return Slots.ContainsByPredicate([](const FFVResolvedInteraction& Entry) { return Entry.IsBound(); });
+	}
+};
 
 // A focus offer is the ordinary "look at a door, see Open" case.A scripted offer
 // is a cinematic case, pushed by a narrative.
@@ -152,16 +192,9 @@ private:
 	void SetEngagedTarget(UFVInteractionTargetComponent* Target);
 	void RecomputeActiveOffer();
 	void BroadcastOfferMessage() const;
-	void ResolveOfferInto(FFVInteractionOffer& Offer) const;
 	void FinishOffer(int32 OfferId, EFVInteractionOfferOutcome Outcome);
 	void HandleAbilityEnded(const struct FAbilityEndedData& EndedData);
 	void NotifyActiveOfferTaken();
-
-	EFVInteractionResult EngageWithAbility(
-		UFVInteractionTargetComponent* Target,
-		FGameplayTag AbilityTag,
-		class UFVAbilitySystemComponent* ASC,
-		bool bTakeActiveOffer);
 
 	UPROPERTY(Transient)
 	TArray<FFVInteractionOffer> Offers;
@@ -176,4 +209,15 @@ private:
 	FGameplayAbilitySpecHandle EngagedAbilityHandle;
 
 	FDelegateHandle AbilityEndedHandle;
+	
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	static FFVResolvedInteractionSet ResolveInteractions(
+		UFVInteractionTargetComponent* Target,
+		AActor* Instigator);
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	static FFVResolvedInteraction ResolveSlot(
+		UFVInteractionTargetComponent* Target,
+		AActor* Instigator,
+		EFVInteractionSlot Slot);
 };

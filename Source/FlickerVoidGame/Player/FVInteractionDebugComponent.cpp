@@ -10,7 +10,6 @@
 #include "Interactions/FVInteractionOfferComponent.h"
 #include "Interactions/FVInteractionTargetComponent.h"
 #include "Interactions/FVInteractionZoneComponent.h"
-#include "Interactions/FVInteractionResolver.h"
 #include "DrawDebugHelpers.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
