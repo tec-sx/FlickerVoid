@@ -9,7 +9,7 @@ enum class EFVInteractionSlot : uint8
 {
 	Primary,
 	Secondary,
-	Hold,
+	Ternary,
 
 	MAX UMETA(Hidden)
 };

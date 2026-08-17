@@ -50,4 +50,24 @@ namespace FVCoreTags
 
 		return Tag;
 	}
+
+	EFVInteractionSlot InputTagToSlot(const FGameplayTag& InputTag)
+	{
+		if (InputTag.MatchesTagExact(InputTag_Action_Primary))
+		{
+			return EFVInteractionSlot::Primary;
+		}
+
+		if (InputTag.MatchesTagExact(InputTag_Action_Secondary))
+		{
+			return EFVInteractionSlot::Secondary;
+		}
+
+		if (InputTag.MatchesTagExact(InputTag_Action_Ternary))
+		{
+			return EFVInteractionSlot::Ternary;
+		}
+
+		return EFVInteractionSlot::MAX;
+	}
 }

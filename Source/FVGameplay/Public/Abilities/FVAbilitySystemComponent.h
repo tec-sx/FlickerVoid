@@ -67,8 +67,6 @@ public:
 	 */
 	UE_API bool QueryAbilityAvailabilityByTag(const FGameplayTag& AbilityTag, bool& OutAvailable, FGameplayTag& OutFailureTag) const;
 
-	UE_API FGameplayAbilitySpecHandle TryActivateAbilityByAssetTagAndGetHandle(FGameplayTag AbilityTag);
-
 protected:
 	UE_API virtual void AbilitySpecInputPressed(FGameplayAbilitySpec& Spec) override;
 	UE_API virtual void AbilitySpecInputReleased(FGameplayAbilitySpec& Spec) override;

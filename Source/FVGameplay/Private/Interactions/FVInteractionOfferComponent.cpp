@@ -7,7 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "FVGameplayTags.h"
-#include "Interactions/FVInteractionConfig.h"
+#include "Interactions/FVInteractionSet.h"
 #include "Interactions/FVInteractionInstigatorComponent.h"
 #include "Interactions/FVInteractionMessageTypes.h"
 #include "Interactions/FVInteractionTargetComponent.h"
@@ -205,47 +205,16 @@ EFVInteractionResult UFVInteractionOfferComponent::BeginEngagement(EFVInteractio
 	{
 		return EFVInteractionResult::Blocked;
 	}
-	
-	AbilityEndedHandle = ASC->OnAbilityEnded.AddUObject(this, &UFVInteractionOfferComponent::HandleAbilityEnded);
+
 	SetEngagedTarget(ActiveOffer.Target);
 	NotifyActiveOfferTaken();
-
-	// TryActivateAbility runs the ability synchronously, so the engaged target must
-	// already be published before dispatch.
-	EngagedAbilityHandle = ASC->TryActivateAbilityByAssetTagAndGetHandle(Resolved.Config->AbilityTag);
-
-	if (!EngagedAbilityHandle.IsValid())
-	{
-		EndEngagement();
-		return EFVInteractionResult::Blocked;
-	}
 
 	return EFVInteractionResult::Success;
 }
 
 void UFVInteractionOfferComponent::EndEngagement()
 {
-	if (AbilityEndedHandle.IsValid())
-	{
-		if (UAbilitySystemComponent* ASC =
-			UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
-		{
-			ASC->OnAbilityEnded.Remove(AbilityEndedHandle);
-		}
-
-		AbilityEndedHandle.Reset();
-	}
-
-	EngagedAbilityHandle = FGameplayAbilitySpecHandle();
 	SetEngagedTarget(nullptr);
-}
-
-void UFVInteractionOfferComponent::HandleAbilityEnded(const FAbilityEndedData& EndedData)
-{
-	if (EndedData.AbilitySpecHandle == EngagedAbilityHandle)
-	{
-		EndEngagement();
-	}
 }
 
 namespace
@@ -267,26 +236,24 @@ namespace
 
 void UFVInteractionOfferComponent::AbortEngagedInteraction(EFVInteractionCancelReason Reason)
 {
-	if (EngagedAbilityHandle.IsValid())
+	if (UAbilitySystemComponent* ASC =
+		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
 	{
-		if (UAbilitySystemComponent* ASC =
-			UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
+		// The reason is published as a loose tag for the duration of the cancel
+		// so the running ability can branch on it inside EndAbility.
+		const FGameplayTag ReasonTag = ToCancelTag(Reason);
+
+		if (ReasonTag.IsValid())
 		{
-			// The reason is published as a loose tag for the duration of the cancel
-			// so the dispatched ability can branch on it inside EndAbility.
-			const FGameplayTag ReasonTag = ToCancelTag(Reason);
+			ASC->AddLooseGameplayTag(ReasonTag);
+		}
 
-			if (ReasonTag.IsValid())
-			{
-				ASC->AddLooseGameplayTag(ReasonTag);
-			}
+		FGameplayTagContainer InteractAbilities(FVGameplayTags::Ability_Interact);
+		ASC->CancelAbilities(&InteractAbilities);
 
-			ASC->CancelAbilityHandle(EngagedAbilityHandle);
-
-			if (ReasonTag.IsValid())
-			{
-				ASC->RemoveLooseGameplayTag(ReasonTag);
-			}
+		if (ReasonTag.IsValid())
+		{
+			ASC->RemoveLooseGameplayTag(ReasonTag);
 		}
 	}
 
@@ -361,27 +328,7 @@ void UFVInteractionOfferComponent::RefreshOffers(float DeltaTime)
 
 	for (const int32 OfferId : ExpiredIds)
 	{
-		const int32 Index = Offers.IndexOfByPredicate(
-			[OfferId](const FFVInteractionOffer& Offer) { return Offer.OfferId == OfferId; });
-
-		if (Index == INDEX_NONE)
-		{
-			continue;
-		}
-
-		const FFVInteractionOffer& Offer = Offers[Index];
-
-		EFVInteractionResult Result = EFVInteractionResult::NoInteractable;
-
-		if (Offer.OfferId == ActiveOffer.OfferId)
-		{
-			Result = BeginEngagement(Offer.DefaultSlot);
-		}
-
-		if (Result != EFVInteractionResult::Success)
-		{
-			FinishOffer(OfferId, EFVInteractionOfferOutcome::Expired);
-		}
+		FinishOffer(OfferId, EFVInteractionOfferOutcome::Expired);
 	}
 }
 
@@ -490,16 +437,18 @@ FFVResolvedInteractionSet UFVInteractionOfferComponent::ResolveInteractions(UFVI
 		return Resolved;
 	}
 
-	for (UFVInteractionConfig* Action : Target->GetAvailableInteractions())
+	UFVInteractionSet* Set = Target->GetInteractionSet();
+	if (!Set)
 	{
-		if (!Action || Action->Slot >= EFVInteractionSlot::MAX)
-		{
-			continue;
-		}
+		return Resolved;
+	}
 
-		const int32 SlotIndex = static_cast<int32>(Action->Slot);
+	for (int32 SlotIndex = 0; SlotIndex < static_cast<int32>(EFVInteractionSlot::MAX); ++SlotIndex)
+	{
+		const EFVInteractionSlot Slot = static_cast<EFVInteractionSlot>(SlotIndex);
+		const FFVInteractionConfig& Action = Set->GetInteraction(Slot);
 
-		if (Resolved.Slots[SlotIndex].IsBound())
+		if (!Action.IsValid())
 		{
 			continue;
 		}
@@ -507,14 +456,14 @@ FFVResolvedInteractionSet UFVInteractionOfferComponent::ResolveInteractions(UFVI
 		bool bAvailable = false;
 		FGameplayTag FailureTag;
 
-		if (!ASC->QueryAbilityAvailabilityByTag(Action->AbilityTag, bAvailable, FailureTag))
+		if (!ASC->QueryAbilityAvailabilityByTag(Action.AbilityTag, bAvailable, FailureTag))
 		{
 			continue;
 		}
 
 		FFVResolvedInteraction Entry;
 		Entry.Config = Action;
-		Entry.Info = Action->CreateUIInfo();
+		Entry.Info = Action.CreateUIInfo(Slot);
 		Entry.Info.bAvailable = bAvailable;
 
 		if (!bAvailable)
@@ -528,17 +477,6 @@ FFVResolvedInteractionSet UFVInteractionOfferComponent::ResolveInteractions(UFVI
 	}
 
 	return Resolved;
-}
-
-FFVResolvedInteraction UFVInteractionOfferComponent::ResolveSlot(UFVInteractionTargetComponent* Target,
-	AActor* Instigator, EFVInteractionSlot Slot)
-{
-	if (Slot >= EFVInteractionSlot::MAX)
-	{
-		return FFVResolvedInteraction();
-	}
-
-	return ResolveInteractions(Target, Instigator).GetSlot(Slot);
 }
 
 #undef LOCTEXT_NAMESPACE

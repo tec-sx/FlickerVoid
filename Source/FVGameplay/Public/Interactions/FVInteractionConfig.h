@@ -2,17 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "Interactions/FVInteractionTypes.h"
+#include "UI/FVInteractionInfo.h"
 #include "FVInteractionConfig.generated.h"
 
-struct FFVInteractionInfo;
-
-UCLASS()
-class FLICKERVOIDGAMEPLAY_API UFVInteractionConfig : public UPrimaryDataAsset
+USTRUCT(BlueprintType)
+struct FLICKERVOIDGAMEPLAY_API FFVInteractionConfig
 {
 	GENERATED_BODY()
 
-public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "Ability.Interact"))
 	FGameplayTag AbilityTag;
 
@@ -22,9 +19,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSoftObjectPtr<UTexture2D> Icon;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	EFVInteractionSlot Slot = EFVInteractionSlot::Primary;
+	bool IsValid() const { return AbilityTag.IsValid(); }
 
-	UFUNCTION(BlueprintCallable)
-	FFVInteractionInfo CreateUIInfo() const;
+	FFVInteractionInfo CreateUIInfo(EFVInteractionSlot Slot) const;
 };

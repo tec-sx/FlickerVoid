@@ -410,29 +410,3 @@ bool UFVAbilitySystemComponent::QueryAbilityAvailabilityByTag(
 	return true;
 }
 
-FGameplayAbilitySpecHandle UFVAbilitySystemComponent::TryActivateAbilityByAssetTagAndGetHandle(FGameplayTag AbilityTag)
-{
-	if (!AbilityTag.IsValid())
-	{
-		return FGameplayAbilitySpecHandle();
-	}
-
-	for (const FGameplayAbilitySpec& Spec : GetActivatableAbilities())
-	{
-		if (!Spec.Ability || !Spec.Ability->GetAssetTags().HasTagExact(AbilityTag))
-		{
-			continue;
-		}
-
-		const FGameplayAbilitySpecHandle Handle = Spec.Handle;
-
-		if (TryActivateAbility(Handle))
-		{
-			return Handle;
-		}
-
-		break;
-	}
-
-	return FGameplayAbilitySpecHandle();
-}

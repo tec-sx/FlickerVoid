@@ -23,7 +23,7 @@ The ability system handles:
 
 ## Interaction
 
-- [Interaction/FC_Interaction_GASDispatch.md](Interaction/FC_Interaction_GASDispatch.md) - How interactions execute as abilities on the instigator
+- [Interaction/FC_Interaction_GASDispatch.md](Interaction/FC_Interaction_GASDispatch.md) - How interactions self-select and execute as abilities on the instigator
 - [Interaction/FC_Interaction_PlayerStateTree.md](Interaction/FC_Interaction_PlayerStateTree.md) - Player-side State Tree authoring
 - [Interaction/FC_Interaction_FocusScoringAndDebugTooling.md](Interaction/FC_Interaction_FocusScoringAndDebugTooling.md) - Focus scoring and debug tooling
 

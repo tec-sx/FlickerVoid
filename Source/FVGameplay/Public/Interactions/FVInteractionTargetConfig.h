@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FVInteractionConfig.h"
+#include "FVInteractionSet.h"
 #include "GameplayTagContainer.h"
 #include "Interactions/FVInteractionTypes.h"
 #include "Engine/DataAsset.h"
@@ -19,7 +19,7 @@ public:
 	FGameplayTag Type;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Meta = (Categories = "Interactable"))
-	TArray<TObjectPtr<UFVInteractionConfig>> AvailableInteractions;
+	TObjectPtr<UFVInteractionSet> InteractionSet;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
 	float FocusRadius = 300.f;

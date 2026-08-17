@@ -272,7 +272,7 @@ void UFVInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* P
 			DrawLine(FString::Printf(TEXT("TimeRemaining=%.1fs"), Offer.TimeRemaining), TextColor);
 		}
 
-		static const TCHAR* SlotNames[] = { TEXT("Primary"), TEXT("Secondary"), TEXT("Hold") };
+		static const TCHAR* SlotNames[] = { TEXT("Primary"), TEXT("Secondary"), TEXT("Ternary") };
 		for (int32 SlotIndex = 0; SlotIndex < static_cast<int32>(EFVInteractionSlot::MAX); ++SlotIndex)
 		{
 			const EFVInteractionSlot Slot = static_cast<EFVInteractionSlot>(SlotIndex);

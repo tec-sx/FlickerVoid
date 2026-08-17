@@ -5,9 +5,9 @@
 #include "Components/ActorComponent.h"
 #include "GameplayAbilitySpecHandle.h"
 #include "UI/FVInteractionInfo.h"
+#include "Interactions/FVInteractionConfig.h"
 #include "FVInteractionOfferComponent.generated.h"
 
-class UFVInteractionConfig;
 class UFVInteractionTargetComponent;
 
 USTRUCT(BlueprintType)
@@ -16,12 +16,12 @@ struct FLICKERVOIDGAMEPLAY_API FFVResolvedInteraction
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
-	TObjectPtr<UFVInteractionConfig> Config = nullptr;
+	FFVInteractionConfig Config;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	FFVInteractionInfo Info;
 
-	bool IsBound() const { return Config != nullptr; }
+	bool IsBound() const { return Config.IsValid(); }
 };
 
 
@@ -193,7 +193,6 @@ private:
 	void RecomputeActiveOffer();
 	void BroadcastOfferMessage() const;
 	void FinishOffer(int32 OfferId, EFVInteractionOfferOutcome Outcome);
-	void HandleAbilityEnded(const struct FAbilityEndedData& EndedData);
 	void NotifyActiveOfferTaken();
 
 	UPROPERTY(Transient)
@@ -206,18 +205,7 @@ private:
 
 	TWeakObjectPtr<UFVInteractionTargetComponent> EngagedTarget;
 
-	FGameplayAbilitySpecHandle EngagedAbilityHandle;
-
-	FDelegateHandle AbilityEndedHandle;
-	
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	static FFVResolvedInteractionSet ResolveInteractions(
 		UFVInteractionTargetComponent* Target,
 		AActor* Instigator);
-
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	static FFVResolvedInteraction ResolveSlot(
-		UFVInteractionTargetComponent* Target,
-		AActor* Instigator,
-		EFVInteractionSlot Slot);
 };

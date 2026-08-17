@@ -1,12 +1,15 @@
 #pragma once
 
 #include "NativeGameplayTags.h"
+#include "UI/FVInteractionInfo.h"
 
 #define UE_API FLICKERVOIDCORE_API
 
 namespace FVCoreTags
 {
 	UE_API FGameplayTag FindTagByString(const FString& TagString, bool bMatchPartialString = false);
+
+	UE_API EFVInteractionSlot InputTagToSlot(const FGameplayTag& InputTag);
 
 	// ============================================================================
 	// INPUT TAGS

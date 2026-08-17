@@ -1,5 +1,5 @@
 #include "Interactions/FVInteractionTargetComponent.h"
-#include "Interactions/FVInteractionConfig.h"
+#include "Interactions/FVInteractionSet.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Interactions/FVInteractionZoneComponent.h"
@@ -113,14 +113,9 @@ void UFVInteractionTargetComponent::SetFocused(bool bFocused)
 	bIsInFocus = bFocused;
 }
 
-TArray<UFVInteractionConfig*> UFVInteractionTargetComponent::GetAvailableInteractions() const
+UFVInteractionSet* UFVInteractionTargetComponent::GetInteractionSet() const
 {
-	if (!Config)
-	{
-		return TArray<UFVInteractionConfig*>();
-	}
-
-	return Config->AvailableInteractions;
+	return Config ? Config->InteractionSet : nullptr;
 }
 
 FVector UFVInteractionTargetComponent::GetAimProbeLocation() const

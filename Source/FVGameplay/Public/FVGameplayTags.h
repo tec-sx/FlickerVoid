@@ -32,6 +32,8 @@ namespace FVGameplayTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_ActivateFail_TagsMissing);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_ActivateFail_ActivationGroup);
 
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact);
+
 	// ============================================================================
 	// EFFECT TAGS
 	// ============================================================================

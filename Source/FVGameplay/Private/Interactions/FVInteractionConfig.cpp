@@ -6,7 +6,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionConfig)
 
-FFVInteractionInfo UFVInteractionConfig::CreateUIInfo() const
+FFVInteractionInfo FFVInteractionConfig::CreateUIInfo(EFVInteractionSlot Slot) const
 {
 	FFVInteractionInfo Entry;
 	Entry.AbilityTag  = AbilityTag;

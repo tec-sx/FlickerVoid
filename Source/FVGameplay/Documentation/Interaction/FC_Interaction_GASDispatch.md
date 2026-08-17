@@ -1,4 +1,4 @@
-# Interaction Execution via GAS Dispatch
+# Interaction Execution via Ability Self-Selection
 
 How an interaction actually *runs*. The target advertises; the instigator executes.
 Nothing on the interactable side executes interaction logic anymore.
@@ -7,7 +7,7 @@ Nothing on the interactable side executes interaction logic anymore.
 
 Only two terms are used:
 
-- **Interaction** — what a target advertises. Data only: `UFVInteractionConfig`, surfaced to UI as `FFVInteractionInfo`.
+- **Interaction** — what a target advertises. Data only: `FFVInteractionConfig`, surfaced to UI as `FFVInteractionInfo`.
 - **Ability** — what actually executes on the instigator's ASC. A `UFVInteractAbility` subclass.
 
 The term *Action* is no longer used anywhere in the interaction system.
@@ -16,48 +16,51 @@ The term *Action* is no longer used anywhere in the interaction system.
 
 The player has abilities bound to input tags (`InputTag.Action.Primary`, etc.), Lyra-style.
 But the primary slot means something different for every target: pick up an item, talk to
-an NPC, pry open a door. Rather than binding many abilities to one input tag and guessing,
-the input calls a single entry point that asks the current offer what that slot resolves to
-and activates the corresponding ability on the instigator's own ASC.
+an NPC, pry open a door. Nothing dispatches by tag. The input fans out to every ability
+bound to it and each one decides for itself whether it is the interaction the current offer
+advertises for that slot.
 
 ```
 'E' pressed
   -> InputTag.Action.Primary
-  -> UFVInteractAbility::TryBeginInteraction(Primary)
-  -> Offers.BeginEngagement(Primary)             [does everything below]
-       resolve slot -> check availability
-       -> publish EngagedTarget + subscribe OnAbilityEnded
-       -> take the active offer
-       -> dispatch the resolved AbilityTag
-  -> UFVPickupAbility / UFVTalkAbility / ...      [the real work]
+  -> ASC fans out to every ability bound to that input tag
+  -> UFVInteractAbility::CanActivateAbility
+       input tag -> slot -> Offers.GetActiveSlot(Slot)
+       true only if the resolved AbilityTag is this ability's own asset tag
+         and the interaction is available
+  -> winner's ActivateAbility
+       Offers.BeginEngagement(Slot)
+       -> ActivateInteraction(Offers, InteractableActor)   [the real work, in script]
 ```
 
-`BeginEngagement(EFVInteractionSlot)` returns an `EFVInteractionResult` and is the *only*
-public way to start an interaction. Ability dispatch and offer bookkeeping are private to
-the offer component, so ordering cannot be got wrong from script or Blueprint.
+Because selection happens inside `CanActivateAbility`, exactly one ability can win and
+recursive self-activation is impossible.
 
-Ordering matters: `TryActivateAbility` runs the ability synchronously, so the engaged target
-is published *before* dispatch. A dispatched ability can therefore read `GetEngagedTarget()`
-immediately inside `ActivateAbility`. If dispatch fails, the engagement is rolled back and
-`Blocked` is returned.
+`BeginEngagement(EFVInteractionSlot)` returns an `EFVInteractionResult` and only publishes
+the engaged target and takes the active offer. It never activates anything.
 
 ## The shared ability base
 
 `UFVInteractAbility` (C++, `Abstract`) is the base for every ability that represents an
-interaction. It provides `GetOfferComponent()`, `GetEngagedTarget()`, `GetEngagedActor()`
-and `TryBeginInteraction(Slot)`, so concrete AngelScript abilities never re-walk the avatar
-actor by hand.
+interaction. It implements `CanActivateAbility` (self-selection), `ActivateAbility`
+(engagement plus the `ActivateInteraction` BlueprintImplementableEvent) and `EndAbility`
+(release), and provides `GetOfferComponent()`. Concrete AngelScript abilities implement
+`ActivateInteraction` only.
 
 ## The interaction asset is advertisement only
 
-`UFVInteractionConfig` is pure data. It carries no logic, no requirements, no graph.
+`FFVInteractionConfig` is pure data held by a `UFVInteractionSet` data asset. It carries no
+logic, no requirements, no graph.
 
 | Property | Role |
 | --- | --- |
-| `AbilityTag` | Asset tag of the ability to dispatch (`Ability.Interact.*`). |
+| `AbilityTag` | Asset tag of the ability that implements it (`Ability.Interact.*`). |
 | `DisplayName` | Prompt label. |
 | `Icon` | Prompt icon. |
-| `Slot` | Which input slot advertises it. |
+
+`UFVInteractionSet` has exactly three fields — `Primary`, `Secondary`, `Ternary`. Field
+position *is* the slot, so a slot can never be duplicated or overflow. A target config
+references one set, which allows generic sets to be shared and swapped at runtime later.
 
 `bIsSimple`, `FlowGraph`, `CheckRequirements`, `GetGrantedTags` and the
 `RequiredTags` / `BlockedByTags` / `GrantedTags` containers are all gone. Requirements now
@@ -66,7 +69,7 @@ live where they belong: on the ability itself, as `ActivationRequiredTags` and
 
 ## Availability comes from the ability, not the asset
 
-`UFVInteractionResolver` asks the instigator's `UFVAbilitySystemComponent`:
+`ResolveInteractions` asks the instigator's `UFVAbilitySystemComponent`:
 
 ```cpp
 bool QueryAbilityAvailabilityByTag(const FGameplayTag& AbilityTag,
@@ -93,20 +96,21 @@ removed manually rather than always-on.
 
 ## Engagement lifetime
 
-Engagement is bounded by the dispatched ability, not by the target.
+Engagement is bounded by the running ability, not by the target.
 
-`BeginEngagement(Target, Handle)` stores the spec handle and subscribes to
-`ASC->OnAbilityEnded`. When the ability with that handle ends — for any reason, success,
-failure or cancellation — `HandleAbilityEnded` calls `EndEngagement()` automatically.
+`ActivateAbility` calls `BeginEngagement(Slot)`; `EndAbility` calls `EndEngagement()`. Since
+the ability that owns the engagement is the one that opened it, no handle bookkeeping or
+`OnAbilityEnded` subscription is needed.
 
-**Interaction abilities must never call `EndEngagement()` themselves.** Just end the
-ability; release is automatic.
+**Interaction scripts must never call `BeginEngagement` or `EndEngagement` themselves.**
+Implement `ActivateInteraction` and end the ability; both sides are automatic.
 
 ## Cancellation
 
 `AbortEngagedInteraction(Reason)` maps the reason to an `Interaction.Cancel.*` tag, applies
-it as a loose tag on the instigator ASC, cancels the ability by handle, then removes the tag
-and releases engagement. The ability observes the reason during its `EndAbility` if it cares.
+it as a loose tag on the instigator ASC, cancels every ability tagged `Ability.Interact`,
+then removes the tag and releases engagement. The ability observes the reason during its
+`EndAbility` if it cares.
 
 | Reason | Tag |
 | --- | --- |
@@ -127,7 +131,7 @@ detail is scripted. The boundary:
 
 | Layer | Owns |
 | --- | --- |
-| C++ | `UFVGameplayAbility` base, the ASC, `UFVInteractAbility` dispatch, engagement lifetime, availability queries, native tags, and message structs crossing a module boundary |
+| C++ | `UFVGameplayAbility` base, the ASC, `UFVInteractAbility` self-selection, engagement lifetime, availability queries, native tags, and message structs crossing a module boundary |
 | AngelScript | One class per interaction verb — pickup, talk, lockpick, examine — plus message structs used only by those abilities and their widgets |
 
 The ability scripts are leaf nodes: nothing depends on them, they hot-reload, and they are
@@ -174,12 +178,12 @@ the overlay cannot be orphaned by a walk-away or combat interrupt.
 
 Code alone is not enough. In-editor you must:
 
-1. Author `UFVInteractionConfig` assets with a valid `AbilityTag` and `Slot`.
-2. Add abilities whose asset tags match those `AbilityTag` values to the player's ability set.
-3. Grant the slot dispatcher `UFVInteractAbility` once per slot, bound to the matching input tag.
+1. Author `UFVInteractionSet` assets, filling the `Primary` / `Secondary` / `Ternary` entries with valid `AbilityTag` values.
+2. Reference the set from the target's `UFVInteractionTargetConfig`.
+3. Add abilities whose asset tags match those `AbilityTag` values to the player's ability set, each granted with the input tag of the slot it serves.
 4. Build the examine overlay and lockpick mini-game widgets against the message contracts above.
 
-An action whose `AbilityTag` matches no granted ability will simply never appear in the prompt.
+An interaction whose `AbilityTag` matches no granted ability will simply never appear in the prompt.
 
 ## What was removed
 
