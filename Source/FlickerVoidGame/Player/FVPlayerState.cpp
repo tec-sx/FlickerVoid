@@ -1,5 +1,6 @@
 #include "FVPlayerState.h"
 
+#include "FlickerVoid.h"
 #include "FVPlayerCharacter.h"
 #include "FVPlayerController.h"
 #include "Abilities/FVAbilitySystemComponent.h"
@@ -7,6 +8,7 @@
 #include "Character/FVPawnData.h"
 #include "Components/GameFrameworkComponentManager.h"
 #include "Engine/World.h"
+#include "Logging/FVLogSystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerState)
 
@@ -46,14 +48,6 @@ void AFVPlayerState::SetPawnData(const UFVPawnData* InPawnData)
 	}
 
 	PawnData = InPawnData;
-
-	for (const UFVAbilitySet* AbilitySet : PawnData->AbilitySets)
-	{
-		if (AbilitySet)
-		{
-			AbilitySet->PassToAbilitySystem(GetFVPlayerController()->GetFVAbilitySystemComponent(), nullptr);
-		}
-	}
 
 	UGameFrameworkComponentManager::SendGameFrameworkComponentExtensionEvent(this, NAME_FVAbilityReady);
 }

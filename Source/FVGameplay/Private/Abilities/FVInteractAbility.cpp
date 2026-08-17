@@ -12,24 +12,3 @@ UFVInteractionOfferComponent* UFVInteractAbility::GetOfferComponent() const
 
 	return Avatar ? Avatar->FindComponentByClass<UFVInteractionOfferComponent>() : nullptr;
 }
-
-UFVInteractionTargetComponent* UFVInteractAbility::GetEngagedTarget() const
-{
-	const UFVInteractionOfferComponent* Offers = GetOfferComponent();
-
-	return Offers ? Offers->GetEngagedTarget() : nullptr;
-}
-
-AActor* UFVInteractAbility::GetEngagedActor() const
-{
-	const UFVInteractionTargetComponent* Target = GetEngagedTarget();
-
-	return Target ? Target->GetOwner() : nullptr;
-}
-
-EFVInteractionResult UFVInteractAbility::TryBeginInteraction(EFVInteractionSlot InSlot)
-{
-	UFVInteractionOfferComponent* Offers = GetOfferComponent();
-
-	return Offers ? Offers->BeginEngagement(InSlot) : EFVInteractionResult::NoInteractable;
-}

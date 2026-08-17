@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystemInterface.h"
 #include "GameFramework/PlayerController.h"
 #include "GameplayTagContainer.h"
 #include "FVPlayerController.generated.h"
@@ -19,7 +18,7 @@ class UFVInteractionDebugComponent;
 struct FInputActionValue;
 
 UCLASS(Config = Game)
-class FLICKERVOID_API AFVPlayerController : public APlayerController, public IAbilitySystemInterface
+class FLICKERVOID_API AFVPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
@@ -48,10 +47,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerController")
 	AFVPlayerCharacter* GetControlledCharacter() const { return CachedCharacter.Get(); }
-	
-	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerState")
-	UFVAbilitySystemComponent* GetFVAbilitySystemComponent() const { return AbilitySystemComponent; }
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 protected:
     void InitializeInput();
@@ -93,9 +88,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
 	TObjectPtr<UFVInteractionDebugComponent> InteractionDebugComponent;
-	
-	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
-	TObjectPtr<UFVAbilitySystemComponent> AbilitySystemComponent;
 
 	TWeakObjectPtr<AFVPlayerCharacter> CachedCharacter;
 

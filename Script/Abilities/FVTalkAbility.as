@@ -1,62 +1,29 @@
-class UFVTalkAbility : UFVGameplayAbility
+class UFVTalkAbility : UFVInteractAbility
 {
-	private FGameplayMessageListenerHandle DialogueEndedHandle;
-
 	default AbilityTags.AddTag(GameplayTags::Interaction_Action_Talk);
 
 	UFUNCTION(BlueprintOverride)
 	void ActivateAbility()
 	{
-		UFlowComponent FlowComponent = ResolveEngagedFlowComponent(ActorInfo);
+		UFVInteractionOfferComponent Offers = GetOfferComponent();
 
-		if (IsValid(FlowComponent))
+		if (IsValid(Offers))
 		{
-			DialogueEndedHandle = UGameplayMessageSubsystem::Get().RegisterListener(
-				GameplayTags::Dialogue_Ended,
-				this,
-				n"HandleDialogueEnded",
-				FFVDialogueEndedMessage());
+			Offers.BeginEngagement(Slot);
 
-			FlowComponent.NotifyGraph(GameplayTags::Interaction_Action_Talk);
-		}
-		else
-		{
-			EndTalk();
-		}
-	}
-
-	UFUNCTION()
-	void HandleDialogueEnded(FGameplayTag Channel, const FFVDialogueEndedMessage& Message)
-	{
-		EndTalk();
-	}
-
-	private void EndTalk()
-	{
-		UGameplayMessageSubsystem::Get().UnregisterListener(DialogueEndedHandle);
-		EndAbility();
-	}
-
-	private UFlowComponent ResolveEngagedFlowComponent(FGameplayAbilityActorInfo InActorInfo)
-	{
-		AFVPlayerController PC = Cast<AFVPlayerController>(InActorInfo.AvatarActor);
-
-		if (IsValid(PC))
-		{
-			AFVPlayerCharacter Character = PC.GetControlledCharacter();
-
-			if (IsValid(Character))
+			if (IsValid(Offers.EngagedActor))
 			{
-				UFVInteractionTargetComponent Target = Character.Offers.GetEngagedTarget();
-				
-				Print(Character.Offers.GetEngagedTarget().ToString());
-				if (IsValid(Target) && IsValid(Target.GetOwner()))
+				UFlowComponent FlowComponent = Offers.EngagedActor.GetComponentByClass(UFlowComponent);
+
+				if (IsValid(FlowComponent))
 				{
-					return Cast<UFlowComponent>(Target.GetOwner().GetComponentByClass(UFlowComponent));
+					Print("Notifying Graph on " + Offers.EngagedActor);
+					
+					FlowComponent.NotifyGraph(GameplayTags::Interaction_Action_Talk);
 				}
 			}
 		}
 
-		return nullptr;
+		EndAbility();
 	}
 }

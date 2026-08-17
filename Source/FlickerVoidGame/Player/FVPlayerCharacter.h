@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
 #include "Character/FVCharacter.h"
 #include "UObject/Object.h"
 #include "FVPlayerCharacter.generated.h"
@@ -12,12 +13,16 @@ class UFVInteractionInstigatorComponent;
 class UFVAbilitySystemComponent;
 
 UCLASS()
-class FLICKERVOID_API AFVPlayerCharacter : public AFVCharacter
+class FLICKERVOID_API AFVPlayerCharacter : public AFVCharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 	
 public:
 	AFVPlayerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	
+	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerState")
+	UFVAbilitySystemComponent* GetFVAbilitySystemComponent() const { return AbilitySystemComponent; }
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|Interaction")
 	UFVInteractionInstigatorComponent* GetInteraction() const;
@@ -31,4 +36,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
 	TObjectPtr<UFVInteractionOfferComponent> InteractionOffers;
+	
+	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
+	TObjectPtr<UFVAbilitySystemComponent> AbilitySystemComponent;
 };

@@ -116,6 +116,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Engagement")
 	UFVInteractionTargetComponent* GetEngagedTarget() const { return EngagedTarget.Get(); }
+	
+	UFUNCTION(BlueprintPure, Category = "Interaction|Engagement")
+	AActor* GetEngagedActor() const;
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Engagement")
 	bool IsInteracting() const { return EngagedTarget.IsValid(); }

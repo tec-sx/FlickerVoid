@@ -3,8 +3,12 @@
 #include "FVCoreTags.h"
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "FlickerVoid.h"
 #include "FVPlayerCharacter.h"
+#include "FVPlayerState.h"
 #include "InputMappingContext.h"
+#include "Abilities/FVAbilitySet.h"
+#include "Character/FVPawnData.h"
 #include "Movement/FVCharacterMovementComponent.h"
 #include "Logging/FVLogCategories.h"
 #include "Logging/FVLogSystem.h"
@@ -12,6 +16,7 @@
 #include "Player/FVDialogueUIRouterComponent.h"
 #include "Player/FVInteractionUIRouterComponent.h"
 #include "Player/FVInteractionDebugComponent.h"
+#include "Systems/FVAssetManager.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
 
@@ -22,7 +27,6 @@ AFVPlayerController::AFVPlayerController(const FObjectInitializer& ObjectInitial
 	DialogueUIRouterComponent = CreateDefaultSubobject<UFVDialogueUIRouterComponent>(TEXT("DialogueUIRouterComponent"));
 	InteractionUIRouterComponent = CreateDefaultSubobject<UFVInteractionUIRouterComponent>(TEXT("InteractionUIRouterComponent"));
 	InteractionDebugComponent = CreateDefaultSubobject<UFVInteractionDebugComponent>(TEXT("InteractionDebugComponent"));
-	AbilitySystemComponent = CreateDefaultSubobject<UFVAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 }
 
 void AFVPlayerController::OnPossess(APawn* InPawn)
@@ -39,7 +43,24 @@ void AFVPlayerController::OnPossess(APawn* InPawn)
     {
         FV_LOG_WARNING(LogFVInput, "Possessed pawn is not AFVPlayerCharacter! Input will not be initialized.");
     }
-
+	
+	if (const AFVPlayerState* PS = GetPlayerState<AFVPlayerState>())
+	{
+		for (const UFVAbilitySet* AbilitySet : PS->GetPawnData<UFVPawnData>()->AbilitySets)
+		{
+			if (AbilitySet)
+			{
+				AbilitySet->PassToAbilitySystem(CachedCharacter->GetFVAbilitySystemComponent(), nullptr);
+			}
+		}
+	}
+	else
+	{
+		FV_LOG_ERROR(
+			LogFlickerVoid, 
+			"Player controller unable to set PawnData on the possessed pawn [%s].", 
+			*GetNameSafe(CachedCharacter.Get()));
+	}
 }
 
 void AFVPlayerController::OnUnPossess()
@@ -55,11 +76,6 @@ void AFVPlayerController::OnUnPossess()
     CachedCharacter.Reset();
 
     Super::OnUnPossess();
-}
-
-UAbilitySystemComponent* AFVPlayerController::GetAbilitySystemComponent() const
-{
-	return GetFVAbilitySystemComponent();
 }
 
 void AFVPlayerController::InitializeInput()
@@ -278,7 +294,7 @@ void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
 {
 	if (const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
     {
-        GetFVAbilitySystemComponent()->AbilityInputTagPressed(InputTag);
+        FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(InputTag);
     }
 }
 
@@ -287,6 +303,6 @@ void AFVPlayerController::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 {
 	if (const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
     {
-        GetFVAbilitySystemComponent()->AbilityInputTagReleased(InputTag);
+        FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagReleased(InputTag);
     }
 }

@@ -18,7 +18,6 @@ enum class EFVInteractionResult : uint8
 	NoInteractable,		// Nothing is focused
 };
 
-// Lifecycle state of a handler that runs over time (mini-games, cutscenes)
 UENUM(BlueprintType)
 enum class EFVInteractionStatus : uint8
 {

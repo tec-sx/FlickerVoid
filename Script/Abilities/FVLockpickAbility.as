@@ -1,4 +1,4 @@
-class UFVLockpickAbility : UFVGameplayAbility
+class UFVLockpickAbility : UFVInteractAbility
 {
 	UPROPERTY(EditDefaultsOnly, Category = "Lockpick")
 	float Difficulty = 0.5f;
@@ -7,19 +7,10 @@ class UFVLockpickAbility : UFVGameplayAbility
 	UAnimMontage LockpickMontage;
 
 	private FGameplayMessageListenerHandle LockpickEndedHandle;
-	private AActor LockedActor;
 
 	UFUNCTION(BlueprintOverride)
 	void ActivateAbility()
 	{
-		LockedActor = ResolveEngagedActor(ActorInfo);
-
-		if (LockedActor == nullptr)
-		{
-			EndLockpick(true);
-			return;
-		}
-
 		LockpickEndedHandle = UGameplayMessageSubsystem::Get().RegisterListener(
 			GameplayTags::Interaction_Event_LockpickEnded,
 			this,
@@ -33,7 +24,7 @@ class UFVLockpickAbility : UFVGameplayAbility
 		}
 
 		FFVInteractionLockpickMessage Started;
-		Started.LockedActor = LockedActor;
+		Started.LockedActor = EngagedActor;
 		Started.Difficulty = Difficulty;
 
 		UGameplayMessageSubsystem::Get().BroadcastMessage(
@@ -43,7 +34,7 @@ class UFVLockpickAbility : UFVGameplayAbility
 	UFUNCTION()
 	void HandleLockpickEnded(FGameplayTag Channel, const FFVInteractionLockpickMessage& Message)
 	{
-		if (Message.LockedActor != LockedActor)
+		if (Message.LockedActor != EngagedActor)
 		{
 			return;
 		}
@@ -56,38 +47,15 @@ class UFVLockpickAbility : UFVGameplayAbility
 	{
 		UGameplayMessageSubsystem::Get().UnregisterListener(LockpickEndedHandle);
 
-		if (bWasCancelled && LockedActor != nullptr)
+		if (bWasCancelled && EngagedActor != nullptr)
 		{
 			FFVInteractionLockpickMessage Aborted;
-			Aborted.LockedActor = LockedActor;
+			Aborted.LockedActor = EngagedActor;
 			Aborted.Difficulty = Difficulty;
 
 			UGameplayMessageSubsystem::Get().BroadcastMessage(GameplayTags::Interaction_Event_LockpickEnded, Aborted);
 		}
 
-		LockedActor = nullptr;
 		EndAbility();
-	}
-
-	private AActor ResolveEngagedActor(FGameplayAbilityActorInfo InActorInfo)
-	{
-		AActor Instigator = InActorInfo.AvatarActor;
-
-		if (Instigator == nullptr)
-		{
-			return nullptr;
-		}
-
-		UFVInteractionOfferComponent Offers =
-			Cast<UFVInteractionOfferComponent>(Instigator.GetComponentByClass(UFVInteractionOfferComponent));
-
-		if (Offers == nullptr)
-		{
-			return nullptr;
-		}
-
-		UFVInteractionTargetComponent Target = Offers.GetEngagedTarget();
-
-		return Target != nullptr ? Target.GetOwner() : nullptr;
 	}
 }

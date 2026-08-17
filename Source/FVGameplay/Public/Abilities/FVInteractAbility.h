@@ -19,15 +19,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interaction")
 	UE_API UFVInteractionOfferComponent* GetOfferComponent() const;
 
-	UFUNCTION(BlueprintPure, Category = "Interaction")
-	UE_API UFVInteractionTargetComponent* GetEngagedTarget() const;
-
-	UFUNCTION(BlueprintPure, Category = "Interaction")
-	UE_API AActor* GetEngagedActor() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	UE_API EFVInteractionResult TryBeginInteraction(EFVInteractionSlot InSlot);
-
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
 	EFVInteractionSlot Slot = EFVInteractionSlot::Primary;

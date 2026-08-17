@@ -1,12 +1,10 @@
 #include "Interactions/FVInteractionOfferComponent.h"
 
-#include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
-#include "GameplayTagAssetInterface.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "FVGameplayTags.h"
 #include "Interactions/FVInteractionConfig.h"
@@ -159,6 +157,13 @@ void UFVInteractionOfferComponent::WithdrawOffer(int32 OfferId)
 	FinishOffer(OfferId, EFVInteractionOfferOutcome::Withdrawn);
 }
 
+AActor* UFVInteractionOfferComponent::GetEngagedActor() const
+{
+	const UFVInteractionTargetComponent* Target = GetEngagedTarget();
+	
+	return Target ? Target->GetOwner() : nullptr;
+}
+
 void UFVInteractionOfferComponent::NotifyActiveOfferTaken()
 {
 	if (ActiveOffer.IsValidOffer())
@@ -191,8 +196,8 @@ EFVInteractionResult UFVInteractionOfferComponent::BeginEngagement(EFVInteractio
 		return EFVInteractionResult::RequirementNotMet;
 	}
 
-	UFVAbilitySystemComponent* ASC = Cast<UFVAbilitySystemComponent>(
-		UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()));
+	UFVAbilitySystemComponent* ASC = 
+		Cast<UFVAbilitySystemComponent>(UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()));
 
 	if (!ASC)
 	{

@@ -1,4 +1,4 @@
-class UFVExamineAbility : UFVGameplayAbility
+class UFVExamineAbility : UFVInteractAbility
 {
 	// Viewing orientations that hide a secret, matched within SecretAngleTolerance.
 	UPROPERTY(EditDefaultsOnly, Category = "Examine")
@@ -8,20 +8,11 @@ class UFVExamineAbility : UFVGameplayAbility
 	float SecretAngleTolerance = 12.f;
 
 	private FGameplayMessageListenerHandle ExamineHandle;
-	private AActor ExaminedActor;
 	private TArray<int> FoundSecrets;
 
 	UFUNCTION(BlueprintOverride)
 	void ActivateAbility()
 	{
-		ExaminedActor = ResolveEngagedActor(ActorInfo);
-
-		if (ExaminedActor == nullptr)
-		{
-			EndExamine(true);
-			return;
-		}
-
 		FoundSecrets.Empty();
 
 		ExamineHandle = UGameplayMessageSubsystem::Get().RegisterListener(
@@ -36,7 +27,7 @@ class UFVExamineAbility : UFVGameplayAbility
 	UFUNCTION()
 	void HandleExamineUpdate(FGameplayTag Channel, const FFVInteractionExamineMessage& Message)
 	{
-		if (Message.ExaminedActor != ExaminedActor)
+		if (Message.ExaminedActor != EngagedActor)
 		{
 			return;
 		}
@@ -77,52 +68,29 @@ class UFVExamineAbility : UFVGameplayAbility
 	// TODO: unlock the memory tied to SecretViewAngles[SecretIndex].
 	private void UnlockMemory(int SecretIndex)
 	{
-		Print("Examine: secret " + SecretIndex + " found on " + ExaminedActor.GetName());
+		Print("Examine: secret " + SecretIndex + " found on " + EngagedActor.GetName());
 	}
 
 	private void EndExamine(bool bWasCancelled)
 	{
 		UGameplayMessageSubsystem::Get().UnregisterListener(ExamineHandle);
 
-		if (bWasCancelled && ExaminedActor != nullptr)
+		if (bWasCancelled && EngagedActor != nullptr)
 		{
 			BroadcastExamineState(false, FRotator::ZeroRotator);
 		}
 
-		ExaminedActor = nullptr;
 		EndAbility();
 	}
 
 	private void BroadcastExamineState(bool bVisible, FRotator ViewRotation)
 	{
 		FFVInteractionExamineMessage Message;
-		Message.ExaminedActor = ExaminedActor;
+		Message.ExaminedActor = EngagedActor;
 		Message.bVisible = bVisible;
 		Message.ViewRotation = ViewRotation;
 
 		UGameplayMessageSubsystem::Get().BroadcastMessage(
 			GameplayTags::Interaction_Event_ExamineStarted, Message);
-	}
-
-	private AActor ResolveEngagedActor(FGameplayAbilityActorInfo InActorInfo)
-	{
-		AActor Instigator = InActorInfo.AvatarActor;
-
-		if (Instigator == nullptr)
-		{
-			return nullptr;
-		}
-
-		UFVInteractionOfferComponent Offers =
-			Cast<UFVInteractionOfferComponent>(Instigator.GetComponentByClass(UFVInteractionOfferComponent));
-
-		if (Offers == nullptr)
-		{
-			return nullptr;
-		}
-
-		UFVInteractionTargetComponent Target = Offers.GetEngagedTarget();
-
-		return Target != nullptr ? Target.GetOwner() : nullptr;
 	}
 }

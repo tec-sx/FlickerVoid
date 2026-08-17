@@ -3,6 +3,7 @@
 
 #include "FVPlayerCharacter.h"
 
+#include "Abilities/FVAbilitySystemComponent.h"
 #include "Interactions/FVInteractionInstigatorComponent.h"
 #include "Interactions/FVInteractionOfferComponent.h"
 
@@ -13,6 +14,12 @@ AFVPlayerCharacter::AFVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 {
 	InteractionInstigator = CreateDefaultSubobject<UFVInteractionInstigatorComponent>(TEXT("InteractionInstigator"));
 	InteractionOffers = CreateDefaultSubobject<UFVInteractionOfferComponent>(TEXT("InteractionOffers"));
+	AbilitySystemComponent = CreateDefaultSubobject<UFVAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+}
+
+UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const
+{
+	return GetFVAbilitySystemComponent();
 }
 
 UFVInteractionInstigatorComponent* AFVPlayerCharacter::GetInteraction() const
