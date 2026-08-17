@@ -122,6 +122,10 @@ public:
 	// The returned handles can be used later to take away anything that was granted.
 	void PassToAbilitySystem(UFVAbilitySystemComponent* FVASC, FFVAbilitySet_GrantedHandles* OutGrantedHandles, UObject* SourceObject = nullptr) const;
 
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
+
 protected:
 
 	// Gameplay abilities to grant when this ability set is granted.

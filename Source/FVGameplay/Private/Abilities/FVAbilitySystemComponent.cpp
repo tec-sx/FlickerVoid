@@ -4,6 +4,7 @@
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "Abilities/FVAbilityTagRelationshipMap.h"
 #include "AbilitySystemGlobals.h"
+#include "FVCoreTags.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVAbilitySystemComponent)
 
@@ -348,10 +349,12 @@ void UFVAbilitySystemComponent::HandleChangeAbilityCanBeCanceled(const FGameplay
 bool UFVAbilitySystemComponent::QueryAbilityAvailabilityByTag(
 	const FGameplayTag& AbilityTag,
 	bool& OutAvailable,
-	FGameplayTag& OutFailureTag) const
+	FGameplayTag& OutFailureTag,
+	FGameplayTag& OutInputTag) const
 {
 	OutAvailable = false;
 	OutFailureTag = FGameplayTag::EmptyTag;
+	OutInputTag = FGameplayTag::EmptyTag;
 
 	if (!AbilityTag.IsValid())
 	{
@@ -377,6 +380,15 @@ bool UFVAbilitySystemComponent::QueryAbilityAvailabilityByTag(
 
 	const UFVGameplayAbility* AbilityCDO = CastChecked<UFVGameplayAbility>(FoundSpec->Ability);
 	const FGameplayTagContainer& AssetTags = AbilityCDO->GetAssetTags();
+
+	for (const FGameplayTag& Tag : FoundSpec->GetDynamicSpecSourceTags())
+	{
+		if (FVCoreTags::InputTagToSlot(Tag) != EFVInteractionSlot::MAX)
+		{
+			OutInputTag = Tag;
+			break;
+		}
+	}
 
 	if (AreAbilityTagsBlocked(AssetTags))
 	{

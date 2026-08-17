@@ -58,9 +58,11 @@ logic, no requirements, no graph.
 | `DisplayName` | Prompt label. |
 | `Icon` | Prompt icon. |
 
-`UFVInteractionSet` has exactly three fields — `Primary`, `Secondary`, `Ternary`. Field
-position *is* the slot, so a slot can never be duplicated or overflow. A target config
-references one set, which allows generic sets to be shared and swapped at runtime later.
+`UFVInteractionSet` is a flat `Interactions` list with no slot notion of its own. A slot is
+derived at resolve time from the input tag the matching ability was granted with in the
+player's ability set, so the slot is stated exactly once. If two granted interactions map to
+the same slot the first wins and the rest are skipped. A target config references one set,
+which allows generic sets to be shared and swapped at runtime later.
 
 `bIsSimple`, `FlowGraph`, `CheckRequirements`, `GetGrantedTags` and the
 `RequiredTags` / `BlockedByTags` / `GrantedTags` containers are all gone. Requirements now
@@ -178,9 +180,9 @@ the overlay cannot be orphaned by a walk-away or combat interrupt.
 
 Code alone is not enough. In-editor you must:
 
-1. Author `UFVInteractionSet` assets, filling the `Primary` / `Secondary` / `Ternary` entries with valid `AbilityTag` values.
+1. Author `UFVInteractionSet` assets, adding one `Interactions` entry per verb with a valid `AbilityTag`.
 2. Reference the set from the target's `UFVInteractionTargetConfig`.
-3. Add abilities whose asset tags match those `AbilityTag` values to the player's ability set, each granted with the input tag of the slot it serves.
+3. Add abilities whose asset tags match those `AbilityTag` values to the player's ability set, each granted with the input tag of the slot it should occupy — that grant is what assigns the slot.
 4. Build the examine overlay and lockpick mini-game widgets against the message contracts above.
 
 An interaction whose `AbilityTag` matches no granted ability will simply never appear in the prompt.

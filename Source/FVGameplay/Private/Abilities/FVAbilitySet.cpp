@@ -3,7 +3,12 @@
 
 #include "Abilities/FVAbilitySet.h"
 #include "Abilities/FVGameplayAbility.h"
+#include "Abilities/FVInteractAbility.h"
 #include "Abilities/FVAbilitySystemComponent.h"
+
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVAbilitySet)
 
@@ -130,3 +135,40 @@ void UFVAbilitySet::PassToAbilitySystem(UFVAbilitySystemComponent* FVASC, FFVAbi
 		}
 	}
 }
+
+#if WITH_EDITOR
+
+#define LOCTEXT_NAMESPACE "FVAbilitySet"
+
+EDataValidationResult UFVAbilitySet::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+
+	for (int32 Index = 0; Index < GrantedGameplayAbilities.Num(); ++Index)
+	{
+		const FFVAbilitySet_GameplayAbility& Entry = GrantedGameplayAbilities[Index];
+
+		if (!Entry.Ability)
+		{
+			Context.AddError(FText::Format(
+				LOCTEXT("NullAbility", "GrantedGameplayAbilities[{0}] has no Ability set."), Index));
+			Result = EDataValidationResult::Invalid;
+			continue;
+		}
+
+		if (Entry.Ability->IsChildOf(UFVInteractAbility::StaticClass()) && !Entry.InputTag.IsValid())
+		{
+			Context.AddError(FText::Format(
+				LOCTEXT("MissingInteractInputTag", "GrantedGameplayAbilities[{0}] ('{1}') is an interaction ability but has no InputTag; its slot cannot be resolved."),
+				Index,
+				FText::FromString(Entry.Ability->GetName())));
+			Result = EDataValidationResult::Invalid;
+		}
+	}
+
+	return Result;
+}
+
+#undef LOCTEXT_NAMESPACE
+
+#endif

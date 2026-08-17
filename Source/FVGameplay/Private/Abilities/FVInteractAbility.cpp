@@ -8,11 +8,16 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractAbility)
 
-UFVInteractionOfferComponent* UFVInteractAbility::GetOfferComponent() const
+UFVInteractionOfferComponent* UFVInteractAbility::GetOfferComponentFromActorInfo(const FGameplayAbilityActorInfo* ActorInfo) const
 {
-	const AActor* Avatar = GetAvatarActorFromActorInfo();
+	const AActor* Avatar = ActorInfo ? ActorInfo->AvatarActor.Get() : GetAvatarActorFromActorInfo();
 
 	return Avatar ? Avatar->FindComponentByClass<UFVInteractionOfferComponent>() : nullptr;
+}
+
+UFVInteractionOfferComponent* UFVInteractAbility::GetOfferComponent() const
+{
+	return GetOfferComponentFromActorInfo(CurrentActorInfo);
 }
 
 EFVInteractionSlot UFVInteractAbility::ResolveSlotFromSpec(const FGameplayAbilitySpecHandle Handle,
@@ -55,7 +60,7 @@ bool UFVInteractAbility::CanActivateAbility(const FGameplayAbilitySpecHandle Han
 		return false;
 	}
 
-	const UFVInteractionOfferComponent* Offers = GetOfferComponent();
+	const UFVInteractionOfferComponent* Offers = GetOfferComponentFromActorInfo(ActorInfo);
 
 	if (!Offers)
 	{
@@ -73,7 +78,7 @@ void UFVInteractAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	UFVInteractionOfferComponent* Offers = GetOfferComponent();
+	UFVInteractionOfferComponent* Offers = GetOfferComponentFromActorInfo(ActorInfo);
 	const EFVInteractionSlot Slot = ResolveSlotFromSpec(Handle, ActorInfo);
 
 	if (!Offers || Offers->BeginEngagement(Slot) != EFVInteractionResult::Success)
@@ -89,7 +94,7 @@ void UFVInteractAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
-	if (UFVInteractionOfferComponent* Offers = GetOfferComponent())
+	if (UFVInteractionOfferComponent* Offers = GetOfferComponentFromActorInfo(ActorInfo))
 	{
 		Offers->EndEngagement();
 	}

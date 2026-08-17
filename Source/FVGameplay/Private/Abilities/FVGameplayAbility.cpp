@@ -24,6 +24,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_ABILITY_SIMPLE_FAILURE_MESSAGE, "Ability.UserFacingSi
 
 UFVGameplayAbility::UFVGameplayAbility(const FObjectInitializer& ObjectInitializer)
 {
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
 UFVAbilitySystemComponent* UFVGameplayAbility::GetAbilitySystemComponent() const

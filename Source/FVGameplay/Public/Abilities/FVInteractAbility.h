@@ -44,6 +44,8 @@ protected:
 	void ActivateInteraction(UFVInteractionOfferComponent* Offers, AActor* InteractableActor);
 
 private:
+	UE_API UFVInteractionOfferComponent* GetOfferComponentFromActorInfo(const FGameplayAbilityActorInfo* ActorInfo) const;
+
 	EFVInteractionSlot ResolveSlotFromSpec(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const;
 };
 

@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "FVGameplayTags.h"
+#include "FVCoreTags.h"
 #include "Interactions/FVInteractionSet.h"
 #include "Interactions/FVInteractionInstigatorComponent.h"
 #include "Interactions/FVInteractionMessageTypes.h"
@@ -443,11 +444,8 @@ FFVResolvedInteractionSet UFVInteractionOfferComponent::ResolveInteractions(UFVI
 		return Resolved;
 	}
 
-	for (int32 SlotIndex = 0; SlotIndex < static_cast<int32>(EFVInteractionSlot::MAX); ++SlotIndex)
+	for (const FFVInteractionConfig& Action : Set->Interactions)
 	{
-		const EFVInteractionSlot Slot = static_cast<EFVInteractionSlot>(SlotIndex);
-		const FFVInteractionConfig& Action = Set->GetInteraction(Slot);
-
 		if (!Action.IsValid())
 		{
 			continue;
@@ -455,8 +453,23 @@ FFVResolvedInteractionSet UFVInteractionOfferComponent::ResolveInteractions(UFVI
 
 		bool bAvailable = false;
 		FGameplayTag FailureTag;
+		FGameplayTag InputTag;
 
-		if (!ASC->QueryAbilityAvailabilityByTag(Action.AbilityTag, bAvailable, FailureTag))
+		if (!ASC->QueryAbilityAvailabilityByTag(Action.AbilityTag, bAvailable, FailureTag, InputTag))
+		{
+			continue;
+		}
+
+		const EFVInteractionSlot Slot = FVCoreTags::InputTagToSlot(InputTag);
+
+		if (Slot == EFVInteractionSlot::MAX)
+		{
+			continue;
+		}
+
+		const int32 SlotIndex = static_cast<int32>(Slot);
+
+		if (Resolved.Slots[SlotIndex].IsBound())
 		{
 			continue;
 		}
