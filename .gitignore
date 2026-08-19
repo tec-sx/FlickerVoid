@@ -3,7 +3,7 @@ DerivedDataCache
 Intermediate
 Saved
 Content
-Plugins
+Plugins/*
 .vscode
 .vs
 .idea
@@ -18,3 +18,5 @@ Plugins
 *.suo
 *.xcodeproj
 *.xcworkspace
+
+!Plugins/FVInteractionSystem
