@@ -15,6 +15,7 @@ class UFVInventoryUIRouterComponent;
 class UFVDialogueUIRouterComponent;
 class UFVInteractionUIRouterComponent;
 class UFVInteractionDebugComponent;
+class UInteractorComponent;
 struct FInputActionValue;
 
 UCLASS(Config = Game)
@@ -90,6 +91,7 @@ private:
 	TObjectPtr<UFVInteractionDebugComponent> InteractionDebugComponent;
 
 	TWeakObjectPtr<AFVPlayerCharacter> CachedCharacter;
+    TWeakObjectPtr<UInteractorComponent> CachedInteractor;
 
     TArray<uint32> AbilityBindHandles;
     

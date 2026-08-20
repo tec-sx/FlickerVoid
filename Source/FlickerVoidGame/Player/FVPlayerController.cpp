@@ -17,6 +17,8 @@
 #include "Player/FVInteractionUIRouterComponent.h"
 #include "Player/FVInteractionDebugComponent.h"
 #include "Systems/FVAssetManager.h"
+#include "Core/InteractionTypes.h"
+#include "Components/InteractorComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
 
@@ -34,6 +36,7 @@ void AFVPlayerController::OnPossess(APawn* InPawn)
     Super::OnPossess(InPawn);
 
     CachedCharacter = Cast<AFVPlayerCharacter>(InPawn);
+    CachedInteractor = CachedCharacter.IsValid() ? CachedCharacter->FindComponentByClass<UInteractorComponent>() : nullptr;
 
     if (CachedCharacter.IsValid())
     {
@@ -292,10 +295,23 @@ void AFVPlayerController::Input_AimCompleted(const FInputActionValue& Value)
 // ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
 {
-	if (const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+    const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
+    if (!FVPlayer)
     {
-        FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(InputTag);
+        return;
     }
+
+    if (UInteractorComponent* Interactor = CachedInteractor.Get())
+    {
+        const EInteractionResult Result = Interactor->TryExecuteAction(InputTag);
+
+        if (Result != EInteractionResult::NoInteractable)
+        {
+            return;
+        }
+    }
+	
+    FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(InputTag);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst

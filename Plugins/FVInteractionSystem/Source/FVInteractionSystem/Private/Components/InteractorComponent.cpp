@@ -49,15 +49,20 @@ void UInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 EInteractionResult UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 {
 	UInteractableComponent* Target = FocusedTarget.Get();
-	UAbilitySystemComponent* ASC = GetOwnerASC();
 
-	if (!Target || !ASC)
+	if (!Target)
 	{
 		return EInteractionResult::NoInteractable;
 	}
 
 	const FInteractionOffer* Offer = Target->FindOffer(InputTag);
 	if (!Offer || !Offer->IsValid())
+	{
+		return EInteractionResult::NoInteractable;
+	}
+
+	UAbilitySystemComponent* ASC = GetOwnerASC();
+	if (!ASC)
 	{
 		return EInteractionResult::NoInteractable;
 	}
