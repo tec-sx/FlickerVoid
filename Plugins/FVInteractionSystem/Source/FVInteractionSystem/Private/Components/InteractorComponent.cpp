@@ -70,6 +70,13 @@ void UInteractorComponent::UnregisterCandidate(UInteractableComponent* Target)
 	}
 }
 
+TArray<FInteractionAction> UInteractorComponent::ResolveOffers()
+{
+	TArray<FInteractionAction> AvailableInteractions;
+	
+	return AvailableInteractions;
+}
+
 void UInteractorComponent::DetectInteractables()
 {
 	FVector ViewLocation = Owner->GetActorLocation();
@@ -127,4 +134,23 @@ void UInteractorComponent::DetectInteractables()
 			}
 		}
 	}
+	
+	if (FocusedTarget.Get() == BestCandidate)
+	{
+		return;
+	}
+
+	if (UInteractableComponent* Previous = FocusedTarget.Get())
+	{
+		Previous->SetFocused(false);
+	}
+
+	FocusedTarget = BestCandidate;
+
+	if (BestCandidate)
+	{
+		BestCandidate->SetFocused(true);
+	}
+
+	OnFocusChanged.Broadcast(BestCandidate);
 }

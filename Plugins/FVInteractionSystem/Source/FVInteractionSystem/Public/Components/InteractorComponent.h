@@ -23,7 +23,17 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
+	void RegisterCandidate(UInteractableComponent* Target);
+	void UnregisterCandidate(UInteractableComponent* Target);
+	TArray<FInteractionAction> ResolveOffers();
 
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	UE_API bool HasFocus() const { return FocusedTarget != nullptr; }
+
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	UE_API UInteractableComponent* GetFocusedTarget() const { return FocusedTarget.Get(); }
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"), Category = "Interaction")
 	float DetectionUpdateInterval = 0.05f;
 
@@ -33,20 +43,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOnInteractionFocusChanged OnFocusChanged;
 
-	UFUNCTION(BlueprintPure, Category = "Interaction")
-	UE_API bool HasFocus() const { return FocusedTarget != nullptr; }
-
-	UFUNCTION(BlueprintPure, Category = "Interaction")
-	UE_API UInteractableComponent* GetFocusedTarget() const { return FocusedTarget.Get(); }
-
-	void RegisterCandidate(UInteractableComponent* Target);
-	void UnregisterCandidate(UInteractableComponent* Target);
-
 #if !UE_BUILD_SHIPPING
 	const TArray<TWeakObjectPtr<UInteractableComponent>>& GetDebugCandidates() const { return Candidates; }
 #endif
 
 private:
+	void DetectInteractables();
+	
 	UPROPERTY(Transient)
 	TObjectPtr<APawn> Owner;
 
@@ -56,9 +59,6 @@ private:
 	float TimeSinceLastUpdate = 0.f;
 
 	TArray<TWeakObjectPtr<UInteractableComponent>> Candidates;
-
-	void DetectInteractables();
-	UInteractableComponent* FindBestTarget() const;
 };
 
 #undef UE_API

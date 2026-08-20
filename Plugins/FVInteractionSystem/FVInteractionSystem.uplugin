@@ -16,7 +16,7 @@
 	"Modules": [
 	{
 		"Name": "FVInteractionSystem",
-		"Type": "Editor",
+		"Type": "Runtime",
 		"LoadingPhase": "Default"
 	}],
 	"Plugins": [

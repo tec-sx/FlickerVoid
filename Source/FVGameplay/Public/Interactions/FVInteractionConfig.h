@@ -10,7 +10,7 @@ struct FLICKERVOIDGAMEPLAY_API FFVInteractionConfig
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "Ability.Interact"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "Interaction.Action"))
 	FGameplayTag AbilityTag;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)

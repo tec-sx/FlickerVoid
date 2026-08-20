@@ -12,6 +12,12 @@ class APlayerCharacter : AFVPlayerCharacter
     UPROPERTY(DefaultComponent, Category = Logic)
     UStateTreeComponent StateTree;
 
+    UPROPERTY(DefaultComponent)
+    UNavigationMarkerComponent NavigationMarker;
+
+    UPROPERTY(DefaultComponent)
+    UInteractorComponent InteractorComponent;
+    
     UPROPERTY()
     UFVTraversalComponent Traversal;
 

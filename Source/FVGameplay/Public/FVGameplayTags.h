@@ -32,8 +32,6 @@ namespace FVGameplayTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_ActivateFail_TagsMissing);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_ActivateFail_ActivationGroup);
 
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Interact);
-
 	// ============================================================================
 	// EFFECT TAGS
 	// ============================================================================
@@ -52,7 +50,8 @@ namespace FVGameplayTags
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_ExamineStarted);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_LockpickStarted);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_LockpickEnded);
-
+	
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Pickup);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Use);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Open);

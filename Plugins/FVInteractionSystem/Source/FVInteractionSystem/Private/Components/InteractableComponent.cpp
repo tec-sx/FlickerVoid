@@ -6,13 +6,15 @@
 UInteractableComponent::UInteractableComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-
-	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	SetCollisionObjectType(ECC_WorldDynamic);
-	SetCollisionResponseToAllChannels(ECR_Ignore);
-	SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	
+	Super::SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	Super::SetCollisionObjectType(ECC_WorldDynamic);
+	Super::SetCollisionResponseToAllChannels(ECR_Ignore);
+	Super::SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	
 	SetGenerateOverlapEvents(true);
-	SetSphereRadius(400);
+	SetSphereRadius(150);
+	SetRelativeLocation(FVector(60, 0, 0));
 }
 
 

@@ -11,7 +11,7 @@ class UFVExamineAbility : UFVInteractAbility
 	private TArray<int> FoundSecrets;
 
 	UFUNCTION(BlueprintOverride)
-	void ActivateAbility()
+	void ActivateInteraction(UFVInteractionOfferComponent Offers, AActor InteractableActor)
 	{
 		FoundSecrets.Empty();
 

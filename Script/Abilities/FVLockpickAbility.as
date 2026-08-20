@@ -9,7 +9,7 @@ class UFVLockpickAbility : UFVInteractAbility
 	private FGameplayMessageListenerHandle LockpickEndedHandle;
 
 	UFUNCTION(BlueprintOverride)
-	void ActivateAbility()
+	void ActivateInteraction(UFVInteractionOfferComponent Offers, AActor InteractableActor)
 	{
 		LockpickEndedHandle = UGameplayMessageSubsystem::Get().RegisterListener(
 			GameplayTags::Interaction_Event_LockpickEnded,
@@ -24,11 +24,10 @@ class UFVLockpickAbility : UFVInteractAbility
 		}
 
 		FFVInteractionLockpickMessage Started;
-		Started.LockedActor = GetOfferComponent().GetEngagedActor();
+		Started.LockedActor = InteractableActor;
 		Started.Difficulty = Difficulty;
 
-		UGameplayMessageSubsystem::Get().BroadcastMessage(
-			GameplayTags::Interaction_Event_LockpickStarted, Started);
+		UGameplayMessageSubsystem::Get().BroadcastMessage(GameplayTags::Interaction_Event_LockpickStarted, Started);
 	}
 
 	UFUNCTION()

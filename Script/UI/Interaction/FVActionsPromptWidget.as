@@ -77,7 +77,7 @@ class UFVInteractionPromptWidget : UUserWidget
 				return PrimarySlot;
 			case EFVInteractionSlot::Secondary:
 				return SecondarySlot;
-			case EFVInteractionSlot::Hold:
+			case EFVInteractionSlot::Ternary:
 				return HoldSlot;
 		}
 	}

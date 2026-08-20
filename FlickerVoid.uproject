@@ -546,6 +546,23 @@
 		{
 			"Name": "AngelscriptGAS",
 			"Enabled": true
+		},
+		{
+			"Name": "CommonConversation",
+			"Enabled": true
+		},
+		{
+			"Name": "ConversationToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "FVInteractionSystem",
+			"Enabled": true
+		},
+		{
+			"Name": "NarrativeInteraction",
+			"Enabled": false,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/46d407c1917d4575bfc2a8bb1cb5185d"
 		}
 	]
 }

@@ -1,4 +1,7 @@
 #pragma once
+#include "GameplayTagContainer.h"
+
+#include "InteractionTypes.generated.h"
 
 class UInteractableComponent;
 
@@ -53,6 +56,23 @@ struct FVINTERACTIONSYSTEM_API FInteractionFocusProfile
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
 	float DistanceWeight = 0.4f;
+};
+
+USTRUCT(BlueprintType)
+struct FVINTERACTIONSYSTEM_API FInteractionAction
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "Interaction.Action"))
+	FGameplayTag AbilityTag;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FText DisplayName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSoftObjectPtr<UTexture2D> Icon;
+
+	bool IsValid() const { return AbilityTag.IsValid(); }
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionFocusChanged, UInteractableComponent*, Target);

@@ -249,7 +249,7 @@ void UFVInteractionOfferComponent::AbortEngagedInteraction(EFVInteractionCancelR
 			ASC->AddLooseGameplayTag(ReasonTag);
 		}
 
-		FGameplayTagContainer InteractAbilities(FVGameplayTags::Ability_Interact);
+		FGameplayTagContainer InteractAbilities(FVGameplayTags::Interaction_Action);
 		ASC->CancelAbilities(&InteractAbilities);
 
 		if (ReasonTag.IsValid())
