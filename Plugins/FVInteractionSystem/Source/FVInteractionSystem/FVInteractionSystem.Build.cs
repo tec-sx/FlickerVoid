@@ -36,16 +36,15 @@ public class FVInteractionSystem : ModuleRules
 			{
 				"Projects",
 				"InputCore",
-				"EditorFramework",
-				"UnrealEd",
-				"ToolMenus",
+				"EnhancedInput",
 				"CoreUObject",
 				"Engine",
 				"Slate",
 				"SlateCore",
-                "GameplayAbilities",
-                "DeveloperSettings",
-            }
+				"UMG",
+				"GameplayAbilities",
+				"DeveloperSettings",
+			}
 			);
 		
 		

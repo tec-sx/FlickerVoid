@@ -24,6 +24,14 @@ enum class EInteractionStatus : uint8
 	Cancelled,
 };
 
+UENUM(BlueprintType)
+enum class EInteractionAvailability : uint8
+{
+	Available,
+	RequirementNotMet,
+	Blocked,
+};
+
 USTRUCT(BlueprintType)
 struct FVINTERACTIONSYSTEM_API FInteractionContext
 {
@@ -47,6 +55,9 @@ struct FVINTERACTIONSYSTEM_API FInteractionFocusProfile
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FName Name;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+	float DetectionRadius = 10.f;
+
 	// Cosine of the half-angle of the focus cone (0 = 90°, 0.5 = ~60°, 0.85 = ~32°).
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "-1", ClampMax = "1"))
 	float ConeCosine = 0.55f;
@@ -59,21 +70,36 @@ struct FVINTERACTIONSYSTEM_API FInteractionFocusProfile
 };
 
 USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FInteractionAction
+struct FVINTERACTIONSYSTEM_API FInteractionOffer
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "Interaction.Action"))
-	FGameplayTag AbilityTag;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Interaction.Action"))
+	FGameplayTag ActionTag;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FText DisplayName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bOffered = true;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSoftObjectPtr<UTexture2D> Icon;
+	bool IsValid() const { return bOffered && ActionTag.IsValid(); }
+};
 
-	bool IsValid() const { return AbilityTag.IsValid(); }
+/** Runtime, resolved offer handed to UI. */
+USTRUCT(BlueprintType)
+struct FVINTERACTIONSYSTEM_API FInteractionPrompt
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayTag InputTag;
+
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayTag ActionTag;
+
+	UPROPERTY(BlueprintReadOnly)
+	EInteractionAvailability Availability = EInteractionAvailability::RequirementNotMet;
+
+	bool IsEnabled() const { return Availability == EInteractionAvailability::Available; }
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionFocusChanged, UInteractableComponent*, Target);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnInteractionCompleted, const FInteractionContext&, Context, EInteractionStatus, Status, bool, bSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionOffersChanged, const TArray<FInteractionPrompt>&, Prompts);

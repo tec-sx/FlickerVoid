@@ -18,6 +18,11 @@
 		"Name": "FVInteractionSystem",
 		"Type": "Runtime",
 		"LoadingPhase": "Default"
+	},
+	{
+		"Name": "FVInteractionSystemEditor",
+		"Type": "Editor",
+		"LoadingPhase": "Default"
 	}],
 	"Plugins": [
 		{

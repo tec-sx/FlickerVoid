@@ -1,0 +1,81 @@
+#include "UI/InteractionPromptWidget.h"
+
+#include "Components/InteractorComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "Engine/LocalPlayer.h"
+#include "InputAction.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(InteractionPromptWidget)
+
+void UInteractionPromptWidget::BindToInteractor(UInteractorComponent* InInteractor)
+{
+	UnbindFromInteractor();
+
+	Interactor = InInteractor;
+
+	if (InInteractor)
+	{
+		InInteractor->OnOffersChanged.AddDynamic(this, &UInteractionPromptWidget::HandleOffersChanged);
+		HandleOffersChanged(InInteractor->GetPrompts());
+	}
+}
+
+void UInteractionPromptWidget::UnbindFromInteractor()
+{
+	if (UInteractorComponent* Bound = Interactor.Get())
+	{
+		Bound->OnOffersChanged.RemoveDynamic(this, &UInteractionPromptWidget::HandleOffersChanged);
+	}
+
+	Interactor = nullptr;
+}
+
+void UInteractionPromptWidget::NativeDestruct()
+{
+	UnbindFromInteractor();
+
+	Super::NativeDestruct();
+}
+
+bool UInteractionPromptWidget::ResolveStyle(FGameplayTag ActionTag, FInteractionPromptStyle& OutStyle) const
+{
+	if (StyleAsset)
+	{
+		return StyleAsset->FindStyle(ActionTag, OutStyle);
+	}
+
+	OutStyle = FInteractionPromptStyle();
+	return false;
+}
+
+bool UInteractionPromptWidget::ResolveKeyForInputTag_Implementation(FGameplayTag InputTag, FKey& OutKey) const
+{
+	const TObjectPtr<const UInputAction>* InputAction = InputActions.Find(InputTag);
+	if (!InputAction || !*InputAction)
+	{
+		return false;
+	}
+
+	const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
+	const UEnhancedInputLocalPlayerSubsystem* InputSubsystem = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+	if (!InputSubsystem)
+	{
+		return false;
+	}
+
+	const TArray<FKey> Keys = InputSubsystem->QueryKeysMappedToAction(*InputAction);
+	if (Keys.Num() == 0)
+	{
+		return false;
+	}
+
+	OutKey = Keys[0];
+	return true;
+}
+
+void UInteractionPromptWidget::HandleOffersChanged(const TArray<FInteractionPrompt>& Prompts)
+{
+	SetVisibility(Prompts.Num() > 0 ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+
+	OnPromptsUpdated(Prompts);
+}

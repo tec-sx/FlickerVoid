@@ -1,64 +1,54 @@
 #include "Components/InteractableComponent.h"
 #include "Components/InteractorComponent.h"
+#include <Subsystems/InteractionRegistrySubsystem.h>
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(InteractableComponent)
 
 UInteractableComponent::UInteractableComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	
-	Super::SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	Super::SetCollisionObjectType(ECC_WorldDynamic);
-	Super::SetCollisionResponseToAllChannels(ECR_Ignore);
-	Super::SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	
-	SetGenerateOverlapEvents(true);
-	SetSphereRadius(150);
-	SetRelativeLocation(FVector(60, 0, 0));
 }
-
 
 void UInteractableComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (ensure(GetOwner()))
+	if (!ensure(GetOwner()))
 	{
-		OnComponentBeginOverlap.AddDynamic(this, &UInteractableComponent::OnBeginOverlap);
-		OnComponentEndOverlap.AddDynamic(this, &UInteractableComponent::OnEndOverlap);
+		return;
+	}
 
-		bIsInitialized = true;
+	bIsInitialized = true;
+
+	UInteractionRegistrySubsystem* Registry = GetWorld()->GetSubsystem<UInteractionRegistrySubsystem>();
+
+	if (Registry)
+	{
+		Registry->Register(this);
 	}
 }
 
 void UInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (bIsInitialized)
+	UInteractionRegistrySubsystem* Registry = GetWorld() 
+		? GetWorld()->GetSubsystem<UInteractionRegistrySubsystem>() 
+		: nullptr;
+
+	if (Registry)
 	{
-		OnComponentBeginOverlap.RemoveDynamic(this, &UInteractableComponent::OnBeginOverlap);
-		OnComponentEndOverlap.RemoveDynamic(this, &UInteractableComponent::OnEndOverlap);
-
-		Super::EndPlay(EndPlayReason);
+		Registry->Unregister(this);
 	}
-}
 
-void UInteractableComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	bIsInitialized = false;
 
+	Super::EndPlay(EndPlayReason);
 }
 
 FVector UInteractableComponent::GetAimProbeLocation() const
 {
-	const AActor* Owner = GetOwner();
-	if (!Owner)
-	{
-		return FVector::ZeroVector;
-	}
-
 	if (!AimProbeSocket.IsNone())
 	{
-		if (const USceneComponent* Mesh = Owner->FindComponentByClass<USkeletalMeshComponent>())
+		if (const USceneComponent* Mesh = GetOwner()->FindComponentByClass<USkeletalMeshComponent>())
 		{
 			if (Mesh->DoesSocketExist(AimProbeSocket))
 			{
@@ -67,7 +57,7 @@ FVector UInteractableComponent::GetAimProbeLocation() const
 		}
 	}
 
-	return Owner->GetActorLocation() + AimProbeOffset;
+	return GetOwner()->GetActorLocation() + AimProbeOffset;
 }
 
 void UInteractableComponent::SetFocused(bool bFocused)
@@ -75,35 +65,5 @@ void UInteractableComponent::SetFocused(bool bFocused)
 	if (bIsInitialized && bFocused != bIsInFocus)
 	{
 		bIsInFocus = bFocused;
-	}
-}
-
-void UInteractableComponent::OnBeginOverlap(
-	UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex,
-	bool bFromSweep,
-	const FHitResult& SweepResult)
-{
-	UInteractorComponent* Interactor = OtherActor->FindComponentByClass<UInteractorComponent>();
-
-	if (Interactor)
-	{
-		Interactor->RegisterCandidate(this);
-	}
-}
-
-void UInteractableComponent::OnEndOverlap(
-	UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex)
-{
-	UInteractorComponent* Interactor = OtherActor->FindComponentByClass<UInteractorComponent>();
-
-	if (Interactor)
-	{
-		Interactor->UnregisterCandidate(this);
 	}
 }
