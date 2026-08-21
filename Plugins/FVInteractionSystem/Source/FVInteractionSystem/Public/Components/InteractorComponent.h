@@ -12,13 +12,8 @@
 #define UE_API FVINTERACTIONSYSTEM_API
 
 class UInteractableComponent;
+class UInteractionRequirement;
 
-/**
- * Seam to the owning game's ability system. The plugin never talks to GAS directly:
- * the game binds these on its pawn. While unbound every action reports Available and
- * execution is a no-op, so the plugin stays usable standalone.
- */
-DECLARE_DELEGATE_RetVal_OneParam(FInteractionAvailabilityResult, FResolveInteractionAction, const FGameplayTag& /*ActionTag*/);
 DECLARE_DELEGATE_RetVal_TwoParams(bool, FExecuteInteractionAction, const FGameplayTag& /*ActionTag*/, const FInteractionContext& /*Context*/);
 
 UCLASS(MinimalAPI, ClassGroup=(Interaction), meta=(BlueprintSpawnableComponent))
@@ -42,16 +37,12 @@ public:
 	UE_API const TArray<FInteractionPrompt>& GetPrompts() const { return CachedPrompts; }
 
 	UFUNCTION(BlueprintCallable)
-	UE_API void RefreshOffers();
+	UE_API bool TryExecuteAction(FGameplayTag InputTag);
 
-	UFUNCTION(BlueprintCallable)
-	UE_API EInteractionResult TryExecuteAction(FGameplayTag InputTag);
-
-	/** Bound by the game to validate an action against its ability system. */
-	FResolveInteractionAction ResolveAction;
-
-	/** Bound by the game to actually run an action through its ability system. */
 	FExecuteInteractionAction ExecuteAction;
+
+	UPROPERTY(EditAnywhere, Instanced, Category = "Interaction")
+	TArray<TObjectPtr<UInteractionRequirement>> GlobalRequirements;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
 	float MaxDetectionRadius = 600.f;
@@ -73,10 +64,10 @@ public:
 #endif
 
 private:
+	void RefreshOffers(bool bForceBroadcast = true);
 	void DetectInteractables();
 	void SetFocusedTarget(UInteractableComponent* NewTarget);
-	void RevalidatePrompts();
-	FInteractionAvailabilityResult ResolveAvailability(const FGameplayTag& ActionTag) const;
+	bool ResolveAvailability(const FInteractionOffer& Offer, bool& bOutHidden) const;
 	FInteractionContext MakeContext(const UInteractableComponent& Target) const;
 
 	UPROPERTY(Transient)

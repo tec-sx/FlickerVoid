@@ -1,5 +1,6 @@
 #include "Components/InteractorComponent.h"
 #include "Components/InteractableComponent.h"
+#include "Core/InteractionRequirement.h"
 #include "FVInteractionSystemSettings.h"
 #include "GameFramework/PlayerController.h"
 
@@ -41,18 +42,18 @@ void UInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 		{
 			TimeSinceLastUpdate = 0.f;
 			DetectInteractables();
-			RevalidatePrompts();
+			RefreshOffers(false);
 		}
 	}
 }
 
-EInteractionResult UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
+bool UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 {
 	UInteractableComponent* Target = FocusedTarget.Get();
 
 	if (!Target)
 	{
-		return EInteractionResult::NoInteractable;
+		return false;
 	}
 
 	const FInteractionPrompt* Prompt = CachedPrompts.FindByPredicate(
@@ -60,28 +61,22 @@ EInteractionResult UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 
 	if (!Prompt)
 	{
-		return EInteractionResult::NoInteractable;
+		return false;
 	}
 
-	switch (Prompt->Result.Availability)
+	if (Prompt->IsEnabled())
 	{
-	case EInteractionAvailability::RequirementNotMet:
-		return EInteractionResult::RequirementNotMet;
-	case EInteractionAvailability::Blocked:
-		return EInteractionResult::Blocked;
-	default:
-		break;
+		const FGameplayTag ActionTag = Prompt->ActionTag;
+
+		if (ExecuteAction.IsBound())
+		{
+			ExecuteAction.Execute(ActionTag, MakeContext(*Target));
+		}
+
+		RefreshOffers();
 	}
 
-	const FGameplayTag ActionTag = Prompt->ActionTag;
-
-	if (ExecuteAction.IsBound() && !ExecuteAction.Execute(ActionTag, MakeContext(*Target)))
-	{
-		return EInteractionResult::Blocked;
-	}
-
-	RefreshOffers();
-	return EInteractionResult::Success;
+	return true;
 }
 
 FInteractionContext UInteractorComponent::MakeContext(const UInteractableComponent& Target) const
@@ -93,16 +88,29 @@ FInteractionContext UInteractorComponent::MakeContext(const UInteractableCompone
 	return Context;
 }
 
-FInteractionAvailabilityResult UInteractorComponent::ResolveAvailability(const FGameplayTag& ActionTag) const
+bool UInteractorComponent::ResolveAvailability(const FInteractionOffer& Offer, bool& bOutHidden) const
 {
-	if (ResolveAction.IsBound())
-	{
-		return ResolveAction.Execute(ActionTag);
-	}
+	bOutHidden = false;
 
-	FInteractionAvailabilityResult Result;
-	Result.Availability = EInteractionAvailability::Available;
-	return Result;
+	FInteractionResolveContext Context;
+	Context.Interactor = GetOwner();
+	Context.Interactable = FocusedTarget.Get();
+	Context.ActionTag = Offer.ActionTag;
+
+	auto Evaluate = [&Context, &bOutHidden](const TArray<TObjectPtr<UInteractionRequirement>>& Requirements)
+	{
+		for (const UInteractionRequirement* Requirement : Requirements)
+		{
+			if (Requirement && !Requirement->IsMet(Context))
+			{
+				bOutHidden = Requirement->Gate == EInteractionGate::Hide;
+				return false;
+			}
+		}
+		return true;
+	};
+
+	return Evaluate(GlobalRequirements) && Evaluate(Offer.Requirements);
 }
 
 void UInteractorComponent::DetectInteractables()
@@ -188,55 +196,46 @@ void UInteractorComponent::SetFocusedTarget(UInteractableComponent* NewTarget)
 	RefreshOffers();
 }
 
-void UInteractorComponent::RefreshOffers()
+void UInteractorComponent::RefreshOffers(bool bForceBroadcast)
 {
-	CachedPrompts.Reset();
-
-	if (const UInteractableComponent* Target = FocusedTarget.Get())
-	{
-		for (const TPair<FGameplayTag, FInteractionOffer>& Pair : Target->GetOffers())
-		{
-			if (!Pair.Value.IsValid())
-			{
-				continue;
-			}
-
-			FInteractionPrompt& Prompt = CachedPrompts.AddDefaulted_GetRef();
-			Prompt.InputTag = Pair.Key;
-			Prompt.ActionTag = Pair.Value.ActionTag;
-			Prompt.Result = ResolveAvailability(Pair.Value.ActionTag);
-		}
-
-		CachedPrompts.Sort([](const FInteractionPrompt& A, const FInteractionPrompt& B)
-		{
-			return A.InputTag.ToString() < B.InputTag.ToString();
-		});
-	}
-
-	OnOffersChanged.Broadcast(CachedPrompts);
-}
-
-void UInteractorComponent::RevalidatePrompts()
-{
-	if (CachedPrompts.IsEmpty())
+	const UInteractableComponent* Target = FocusedTarget.Get();
+	if (!Target)
 	{
 		return;
 	}
 
-	bool bChanged = false;
+	TArray<FInteractionPrompt> NewPrompts;
 
-	for (FInteractionPrompt& Prompt : CachedPrompts)
+	for (const TPair<FGameplayTag, FInteractionOffer>& Pair : Target->GetOffers())
 	{
-		const FInteractionAvailabilityResult NewResult = ResolveAvailability(Prompt.ActionTag);
-
-		if (NewResult != Prompt.Result)
+		if (!Pair.Value.IsValid())
 		{
-			Prompt.Result = NewResult;
-			bChanged = true;
+			continue;
 		}
+
+		bool bHidden = false;
+		const bool bMet = ResolveAvailability(Pair.Value, bHidden);
+
+		if (!bMet && bHidden)
+		{
+			continue;
+		}
+
+		FInteractionPrompt& Prompt = NewPrompts.AddDefaulted_GetRef();
+		Prompt.InputTag = Pair.Key;
+		Prompt.ActionTag = Pair.Value.ActionTag;
+		Prompt.bEnabled = bMet;
 	}
 
-	if (bChanged)
+	NewPrompts.Sort([](const FInteractionPrompt& A, const FInteractionPrompt& B)
+	{
+		return A.InputTag.ToString() < B.InputTag.ToString();
+	});
+
+	const bool bChanged = NewPrompts != CachedPrompts;
+	CachedPrompts = MoveTemp(NewPrompts);
+
+	if (bChanged || bForceBroadcast)
 	{
 		OnOffersChanged.Broadcast(CachedPrompts);
 	}

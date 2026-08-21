@@ -451,14 +451,33 @@ FFVResolvedInteractionSet UFVInteractionOfferComponent::ResolveInteractions(UFVI
 			continue;
 		}
 
-		bool bAvailable = false;
-		FGameplayTag FailureTag;
 		FGameplayTag InputTag;
 
-		if (!ASC->QueryAbilityAvailabilityByTag(Action.AbilityTag, bAvailable, FailureTag, InputTag))
+		for (const FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+		{
+			const UGameplayAbility* AbilityCDO = Spec.Ability;
+			if (!AbilityCDO || !AbilityCDO->GetAssetTags().HasTagExact(Action.AbilityTag))
+			{
+				continue;
+			}
+
+			for (const FGameplayTag& Tag : Spec.GetDynamicSpecSourceTags())
+			{
+				if (Tag.MatchesTag(FVCoreTags::InputTag_Interaction))
+				{
+					InputTag = Tag;
+					break;
+				}
+			}
+			break;
+		}
+
+		if (!InputTag.IsValid())
 		{
 			continue;
 		}
+
+		const bool bAvailable = ASC->CanActivateAbilityByTag(Action.AbilityTag);
 
 		const EFVInteractionSlot Slot = FVCoreTags::InputTagToSlot(InputTag);
 
@@ -481,9 +500,7 @@ FFVResolvedInteractionSet UFVInteractionOfferComponent::ResolveInteractions(UFVI
 
 		if (!bAvailable)
 		{
-			Entry.Info.UnavailableReason = FailureTag.IsValid()
-				? FText::FromName(FailureTag.GetTagName())
-				: LOCTEXT("UnavailableGeneric", "Unavailable");
+			Entry.Info.UnavailableReason = LOCTEXT("UnavailableGeneric", "Unavailable");
 		}
 
 		Resolved.Slots[SlotIndex] = MoveTemp(Entry);

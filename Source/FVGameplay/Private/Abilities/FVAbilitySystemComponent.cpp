@@ -373,79 +373,45 @@ bool UFVAbilitySystemComponent::ExecuteInteractionAction(const FGameplayTag& Act
 	return false;
 }
 
-bool UFVAbilitySystemComponent::QueryAbilityAvailabilityByTag(
-	const FGameplayTag& AbilityTag,
-	bool& OutAvailable,
-	FGameplayTag& OutFailureTag,
-	FGameplayTag& OutInputTag) const
+bool UFVAbilitySystemComponent::CanActivateAbilityByTag(const FGameplayTag& AbilityTag) const
 {
-	OutAvailable = false;
-	OutFailureTag = FGameplayTag::EmptyTag;
-	OutInputTag = FGameplayTag::EmptyTag;
-
 	if (!AbilityTag.IsValid())
 	{
 		return false;
 	}
 
-	const FGameplayAbilitySpec* FoundSpec = nullptr;
-
 	for (const FGameplayAbilitySpec& Spec : GetActivatableAbilities())
 	{
 		const UFVGameplayAbility* AbilityCDO = Cast<UFVGameplayAbility>(Spec.Ability);
-		if (AbilityCDO && AbilityCDO->GetAssetTags().HasTagExact(AbilityTag))
+		if (!AbilityCDO || !AbilityCDO->GetAssetTags().HasTagExact(AbilityTag))
 		{
-			FoundSpec = &Spec;
-			break;
+			continue;
 		}
-	}
 
-	if (!FoundSpec)
-	{
-		return false;
-	}
-
-	const UFVGameplayAbility* AbilityCDO = CastChecked<UFVGameplayAbility>(FoundSpec->Ability);
-	const FGameplayTagContainer& AssetTags = AbilityCDO->GetAssetTags();
-
-	for (const FGameplayTag& Tag : FoundSpec->GetDynamicSpecSourceTags())
-	{
-		if (Tag.MatchesTag(FVCoreTags::InputTag_Interaction))
+		const FGameplayTagContainer& AssetTags = AbilityCDO->GetAssetTags();
+		if (AreAbilityTagsBlocked(AssetTags))
 		{
-			OutInputTag = Tag;
-			break;
+			return false;
 		}
-	}
 
-	if (AreAbilityTagsBlocked(AssetTags))
-	{
-		OutFailureTag = UAbilitySystemGlobals::Get().ActivateFailTagsBlockedTag;
+		FGameplayTagContainer AllRequiredTags = AbilityCDO->GetActivationRequiredTags();
+		FGameplayTagContainer AllBlockedTags = AbilityCDO->GetActivationBlockedTags();
+		GetAdditionalActivationTagRequirements(AssetTags, AllRequiredTags, AllBlockedTags);
+
+		if (AllRequiredTags.Num() || AllBlockedTags.Num())
+		{
+			FGameplayTagContainer OwnedTags;
+			GetOwnedGameplayTags(OwnedTags);
+
+			if (OwnedTags.HasAny(AllBlockedTags) || !OwnedTags.HasAll(AllRequiredTags))
+			{
+				return false;
+			}
+		}
+
 		return true;
 	}
 
-	FGameplayTagContainer AllRequiredTags = AbilityCDO->GetActivationRequiredTags();
-	FGameplayTagContainer AllBlockedTags = AbilityCDO->GetActivationBlockedTags();
-	GetAdditionalActivationTagRequirements(AssetTags, AllRequiredTags, AllBlockedTags);
-
-	if (AllRequiredTags.Num() || AllBlockedTags.Num())
-	{
-		FGameplayTagContainer OwnedTags;
-		GetOwnedGameplayTags(OwnedTags);
-
-		if (OwnedTags.HasAny(AllBlockedTags))
-		{
-			OutFailureTag = UAbilitySystemGlobals::Get().ActivateFailTagsBlockedTag;
-			return true;
-		}
-
-		if (!OwnedTags.HasAll(AllRequiredTags))
-		{
-			OutFailureTag = UAbilitySystemGlobals::Get().ActivateFailTagsMissingTag;
-			return true;
-		}
-	}
-
-	OutAvailable = true;
-	return true;
+	return false;
 }
 

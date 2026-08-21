@@ -54,6 +54,14 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 					*Pair.Value.ActionTag.ToString(),
 					*InteractionTags::Interaction_Action.GetTag().ToString()));
 			}
+
+			if (Pair.Value.Requirements.Contains(nullptr))
+			{
+				Context.MessageLog.Error(*FString::Printf(
+					TEXT("Interactable component '%s' offer '%s' has an empty requirement entry."),
+					*Interactable->GetName(),
+					*Pair.Key.ToString()));
+			}
 		}
 	}
 }

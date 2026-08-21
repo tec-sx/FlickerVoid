@@ -59,19 +59,8 @@ public:
 
 	UE_API void TryActivateAbilitiesOnSpawn();
 
-	/**
-	 * Read-only availability probe for a granted ability, matched by asset tag.
-	 * Never instantiates the ability. Returns false when no spec is granted for the tag.
-	 * OutAvailable is false when the ability is granted but its activation tag
-	 * requirements are currently unmet, with OutFailureTag describing why.
-	 */
-	UE_API bool QueryAbilityAvailabilityByTag(const FGameplayTag& AbilityTag, bool& OutAvailable, FGameplayTag& OutFailureTag, FGameplayTag& OutInputTag) const;
+	UE_API bool CanActivateAbilityByTag(const FGameplayTag& AbilityTag) const;
 
-	/**
-	 * Activates the granted ability whose asset tags match ActionTag, mirroring the
-	 * input-driven activation path. Returns true when the ability was activated or
-	 * already-active input was forwarded to it.
-	 */
 	UE_API bool ExecuteInteractionAction(const FGameplayTag& ActionTag);
 
 protected:

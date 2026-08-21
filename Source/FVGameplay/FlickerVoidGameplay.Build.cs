@@ -20,6 +20,7 @@ public class FlickerVoidGameplay : ModuleRules
 			"FlickerVoidCore",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
+			"FVInteractionSystem",
 		});
 
         PrivateDependencyModuleNames.AddRange(new string[] {

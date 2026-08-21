@@ -7,15 +7,7 @@
 class UTexture2D;
 
 class UInteractableComponent;
-
-UENUM(BlueprintType)
-enum class EInteractionResult : uint8
-{
-	Success,
-	RequirementNotMet,
-	Blocked,
-	NoInteractable,
-};
+class UInteractionRequirement;
 
 UENUM(BlueprintType)
 enum class EInteractionStatus : uint8
@@ -25,14 +17,6 @@ enum class EInteractionStatus : uint8
 	Completed,
 	Failed,
 	Cancelled,
-};
-
-UENUM(BlueprintType)
-enum class EInteractionAvailability : uint8
-{
-	Available,
-	RequirementNotMet,
-	Blocked,
 };
 
 USTRUCT(BlueprintType)
@@ -80,33 +64,12 @@ struct FVINTERACTIONSYSTEM_API FInteractionOffer
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bOffered = true;
 
+	UPROPERTY(EditAnywhere, Instanced, Category = "Interaction")
+	TArray<TObjectPtr<UInteractionRequirement>> Requirements;
+
 	bool IsValid() const { return bOffered && ActionTag.IsValid(); }
 };
 
-/** Outcome of asking the owning game whether an action can run right now. */
-USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FInteractionAvailabilityResult
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadOnly)
-	EInteractionAvailability Availability = EInteractionAvailability::RequirementNotMet;
-
-	UPROPERTY(BlueprintReadOnly)
-	FGameplayTag FailureTag;
-
-	UPROPERTY(BlueprintReadOnly)
-	FText FailureText;
-
-	bool operator==(const FInteractionAvailabilityResult& Other) const
-	{
-		return Availability == Other.Availability && FailureTag == Other.FailureTag;
-	}
-
-	bool operator!=(const FInteractionAvailabilityResult& Other) const { return !(*this == Other); }
-};
-
-/** Presentation data for one interaction input, authored in project settings. */
 USTRUCT(BlueprintType)
 struct FVINTERACTIONSYSTEM_API FInteractionKeyBinding
 {
@@ -119,7 +82,6 @@ struct FVINTERACTIONSYSTEM_API FInteractionKeyBinding
 	TSoftObjectPtr<UTexture2D> Glyph;
 };
 
-/** Runtime, resolved offer handed to UI. */
 USTRUCT(BlueprintType)
 struct FVINTERACTIONSYSTEM_API FInteractionPrompt
 {
@@ -132,13 +94,13 @@ struct FVINTERACTIONSYSTEM_API FInteractionPrompt
 	FGameplayTag ActionTag;
 
 	UPROPERTY(BlueprintReadOnly)
-	FInteractionAvailabilityResult Result;
+	bool bEnabled = false;
 
-	bool IsEnabled() const { return Result.Availability == EInteractionAvailability::Available; }
+	bool IsEnabled() const { return bEnabled; }
 
 	bool operator==(const FInteractionPrompt& Other) const
 	{
-		return InputTag == Other.InputTag && ActionTag == Other.ActionTag && Result == Other.Result;
+		return InputTag == Other.InputTag && ActionTag == Other.ActionTag && bEnabled == Other.bEnabled;
 	}
 
 	bool operator!=(const FInteractionPrompt& Other) const { return !(*this == Other); }

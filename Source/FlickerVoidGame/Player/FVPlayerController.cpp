@@ -306,9 +306,7 @@ void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
     {
         if (UInteractorComponent* Interactor = CachedInteractor.Get())
         {
-            const EInteractionResult Result = Interactor->TryExecuteAction(InputTag);
-
-            if (Result != EInteractionResult::NoInteractable)
+            if (Interactor->TryExecuteAction(InputTag))
             {
                 return;
             }

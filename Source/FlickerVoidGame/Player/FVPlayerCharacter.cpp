@@ -24,25 +24,6 @@ void AFVPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Interactor->ResolveAction.BindWeakLambda(this, [this](const FGameplayTag& ActionTag)
-	{
-		FInteractionAvailabilityResult Result;
-
-		bool bAvailable = false;
-		FGameplayTag FailureTag;
-		FGameplayTag InputTag;
-
-		if (!AbilitySystemComponent->QueryAbilityAvailabilityByTag(ActionTag, bAvailable, FailureTag, InputTag))
-		{
-			Result.Availability = EInteractionAvailability::RequirementNotMet;
-			return Result;
-		}
-
-		Result.Availability = bAvailable ? EInteractionAvailability::Available : EInteractionAvailability::Blocked;
-		Result.FailureTag = FailureTag;
-		return Result;
-	});
-
 	Interactor->ExecuteAction.BindWeakLambda(this, [this](const FGameplayTag& ActionTag, const FInteractionContext&)
 	{
 		return AbilitySystemComponent->ExecuteInteractionAction(ActionTag);
