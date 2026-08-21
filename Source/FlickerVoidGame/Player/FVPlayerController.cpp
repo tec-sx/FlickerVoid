@@ -15,7 +15,7 @@
 #include "Player/FVInventoryUIRouterComponent.h"
 #include "Player/FVDialogueUIRouterComponent.h"
 #include "Player/FVInteractionUIRouterComponent.h"
-#include "Player/FVInteractionDebugComponent.h"
+#include "Debug/InteractionDebugComponent.h"
 #include "Systems/FVAssetManager.h"
 #include "Core/InteractionTypes.h"
 #include "Components/InteractorComponent.h"
@@ -28,7 +28,7 @@ AFVPlayerController::AFVPlayerController(const FObjectInitializer& ObjectInitial
 	InventoryUIRouterComponent = CreateDefaultSubobject<UFVInventoryUIRouterComponent>(TEXT("InventoryUIRouterComponent"));
 	DialogueUIRouterComponent = CreateDefaultSubobject<UFVDialogueUIRouterComponent>(TEXT("DialogueUIRouterComponent"));
 	InteractionUIRouterComponent = CreateDefaultSubobject<UFVInteractionUIRouterComponent>(TEXT("InteractionUIRouterComponent"));
-	InteractionDebugComponent = CreateDefaultSubobject<UFVInteractionDebugComponent>(TEXT("InteractionDebugComponent"));
+	InteractionDebugComponent = CreateDefaultSubobject<UInteractionDebugComponent>(TEXT("InteractionDebugComponent"));
 }
 
 void AFVPlayerController::OnPossess(APawn* InPawn)

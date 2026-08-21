@@ -49,6 +49,12 @@ void UInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 bool UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 {
+#if !UE_BUILD_SHIPPING
+	DebugLastInputTag = InputTag;
+	DebugLastActionTime = FPlatformTime::Seconds();
+	DebugLastOutcome = EDebugActionOutcome::NoPrompt;
+#endif
+
 	UInteractableComponent* Target = FocusedTarget.Get();
 
 	if (!Target)
@@ -67,14 +73,20 @@ bool UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 	if (Prompt->IsEnabled())
 	{
 		const FGameplayTag ActionTag = Prompt->ActionTag;
+		const bool bExecuted = !ExecuteAction.IsBound() || ExecuteAction.Execute(ActionTag, MakeContext(*Target));
 
-		if (ExecuteAction.IsBound())
-		{
-			ExecuteAction.Execute(ActionTag, MakeContext(*Target));
-		}
+#if !UE_BUILD_SHIPPING
+		DebugLastOutcome = bExecuted ? EDebugActionOutcome::Succeeded : EDebugActionOutcome::ExecuteFailed;
+#endif
 
 		RefreshOffers();
 	}
+#if !UE_BUILD_SHIPPING
+	else
+	{
+		DebugLastOutcome = EDebugActionOutcome::Disabled;
+	}
+#endif
 
 	return true;
 }

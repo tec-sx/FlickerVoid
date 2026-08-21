@@ -60,7 +60,19 @@ public:
 	FOnInteractionOffersChanged OnOffersChanged;
 
 #if !UE_BUILD_SHIPPING
+	enum class EDebugActionOutcome : uint8
+	{
+		None,
+		Succeeded,
+		NoPrompt,
+		Disabled,
+		ExecuteFailed,
+	};
+
 	const TArray<UInteractableComponent*>& GetDebugCandidates() const { return Candidates; }
+	EDebugActionOutcome GetDebugLastOutcome() const { return DebugLastOutcome; }
+	FGameplayTag GetDebugLastInputTag() const { return DebugLastInputTag; }
+	double GetDebugLastActionTime() const { return DebugLastActionTime; }
 #endif
 
 private:
@@ -82,6 +94,12 @@ private:
 
 	UPROPERTY(Transient)
 	TArray<FInteractionPrompt> CachedPrompts;
+
+#if !UE_BUILD_SHIPPING
+	EDebugActionOutcome DebugLastOutcome = EDebugActionOutcome::None;
+	FGameplayTag DebugLastInputTag;
+	double DebugLastActionTime = 0.0;
+#endif
 };
 
 #undef UE_API
