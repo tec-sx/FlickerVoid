@@ -67,6 +67,13 @@ public:
 	 */
 	UE_API bool QueryAbilityAvailabilityByTag(const FGameplayTag& AbilityTag, bool& OutAvailable, FGameplayTag& OutFailureTag, FGameplayTag& OutInputTag) const;
 
+	/**
+	 * Activates the granted ability whose asset tags match ActionTag, mirroring the
+	 * input-driven activation path. Returns true when the ability was activated or
+	 * already-active input was forwarded to it.
+	 */
+	UE_API bool ExecuteInteractionAction(const FGameplayTag& ActionTag);
+
 protected:
 	UE_API virtual void AbilitySpecInputPressed(FGameplayAbilitySpec& Spec) override;
 	UE_API virtual void AbilitySpecInputReleased(FGameplayAbilitySpec& Spec) override;

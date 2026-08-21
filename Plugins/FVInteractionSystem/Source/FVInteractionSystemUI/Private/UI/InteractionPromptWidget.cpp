@@ -1,9 +1,7 @@
 #include "UI/InteractionPromptWidget.h"
 
 #include "Components/InteractorComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "Engine/LocalPlayer.h"
-#include "InputAction.h"
+#include "FVInteractionSystemSettings.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(InteractionPromptWidget)
 
@@ -48,29 +46,16 @@ bool UInteractionPromptWidget::ResolveStyle(FGameplayTag ActionTag, FInteraction
 	return false;
 }
 
-bool UInteractionPromptWidget::ResolveKeyForInputTag_Implementation(FGameplayTag InputTag, FKey& OutKey) const
+bool UInteractionPromptWidget::ResolveKeyBinding(FGameplayTag InputTag, FInteractionKeyBinding& OutBinding) const
 {
-	const TObjectPtr<const UInputAction>* InputAction = InputActions.Find(InputTag);
-	if (!InputAction || !*InputAction)
+	if (const FInteractionKeyBinding* Binding = GetDefault<UFVInteractionSystemSettings>()->FindInputBinding(InputTag))
 	{
-		return false;
+		OutBinding = *Binding;
+		return true;
 	}
 
-	const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
-	const UEnhancedInputLocalPlayerSubsystem* InputSubsystem = LocalPlayer ? LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
-	if (!InputSubsystem)
-	{
-		return false;
-	}
-
-	const TArray<FKey> Keys = InputSubsystem->QueryKeysMappedToAction(*InputAction);
-	if (Keys.Num() == 0)
-	{
-		return false;
-	}
-
-	OutKey = Keys[0];
-	return true;
+	OutBinding = FInteractionKeyBinding();
+	return false;
 }
 
 void UInteractionPromptWidget::HandleOffersChanged(const TArray<FInteractionPrompt>& Prompts)

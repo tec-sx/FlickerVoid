@@ -10,7 +10,7 @@ class UTexture2D;
 
 /** Presentation data for a single interaction action tag. */
 USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FInteractionPromptStyle
+struct FVINTERACTIONSYSTEMUI_API FInteractionPromptStyle
 {
 	GENERATED_BODY()
 
@@ -27,7 +27,7 @@ struct FVINTERACTIONSYSTEM_API FInteractionPromptStyle
 
 /** Maps interaction action tags to their presentation data. Owned by the UI layer. */
 UCLASS(BlueprintType)
-class FVINTERACTIONSYSTEM_API UInteractionPromptStyleAsset : public UDataAsset
+class FVINTERACTIONSYSTEMUI_API UInteractionPromptStyleAsset : public UDataAsset
 {
 	GENERATED_BODY()
 

@@ -34,4 +34,25 @@ namespace InteractionBlueprintComponentUtils
 
 		return false;
 	}
+
+	void GetComponentTemplatesOfClass(const UBlueprint& Blueprint, const TSubclassOf<UActorComponent>& ComponentClass, TArray<const UActorComponent*>& OutTemplates)
+	{
+		OutTemplates.Reset();
+
+		if (!ComponentClass)
+		{
+			return;
+		}
+
+		if (const USimpleConstructionScript* ConstructionScript = Blueprint.SimpleConstructionScript)
+		{
+			for (const USCS_Node* Node : ConstructionScript->GetAllNodes())
+			{
+				if (Node && Node->ComponentClass && Node->ComponentClass->IsChildOf(ComponentClass) && Node->ComponentTemplate)
+				{
+					OutTemplates.Add(Node->ComponentTemplate);
+				}
+			}
+		}
+	}
 }

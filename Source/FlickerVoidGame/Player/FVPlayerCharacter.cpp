@@ -4,17 +4,15 @@
 #include "FVPlayerCharacter.h"
 
 #include "Abilities/FVAbilitySystemComponent.h"
-#include "Interactions/FVInteractionInstigatorComponent.h"
-#include "Interactions/FVInteractionOfferComponent.h"
+#include "Components/InteractorComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerCharacter)
 
 AFVPlayerCharacter::AFVPlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	InteractionInstigator = CreateDefaultSubobject<UFVInteractionInstigatorComponent>(TEXT("InteractionInstigator"));
-	InteractionOffers = CreateDefaultSubobject<UFVInteractionOfferComponent>(TEXT("InteractionOffers"));
 	AbilitySystemComponent = CreateDefaultSubobject<UFVAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	Interactor = CreateDefaultSubobject<UInteractorComponent>(TEXT("Interactor"));
 }
 
 UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const
@@ -22,12 +20,31 @@ UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const
 	return GetFVAbilitySystemComponent();
 }
 
-UFVInteractionInstigatorComponent* AFVPlayerCharacter::GetInteraction() const
+void AFVPlayerCharacter::BeginPlay()
 {
-	return InteractionInstigator;
-}
+	Super::BeginPlay();
 
-UFVInteractionOfferComponent* AFVPlayerCharacter::GetOffers() const
-{
-	return InteractionOffers;
+	Interactor->ResolveAction.BindWeakLambda(this, [this](const FGameplayTag& ActionTag)
+	{
+		FInteractionAvailabilityResult Result;
+
+		bool bAvailable = false;
+		FGameplayTag FailureTag;
+		FGameplayTag InputTag;
+
+		if (!AbilitySystemComponent->QueryAbilityAvailabilityByTag(ActionTag, bAvailable, FailureTag, InputTag))
+		{
+			Result.Availability = EInteractionAvailability::RequirementNotMet;
+			return Result;
+		}
+
+		Result.Availability = bAvailable ? EInteractionAvailability::Available : EInteractionAvailability::Blocked;
+		Result.FailureTag = FailureTag;
+		return Result;
+	});
+
+	Interactor->ExecuteAction.BindWeakLambda(this, [this](const FGameplayTag& ActionTag, const FInteractionContext&)
+	{
+		return AbilitySystemComponent->ExecuteInteractionAction(ActionTag);
+	});
 }

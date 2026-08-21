@@ -22,9 +22,10 @@ namespace FVCoreTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Sprint);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Jump);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Aim);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Action_Primary);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Action_Secondary);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Action_Ternary);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Primary);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Secondary);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Ternary);
 	
 	// ============================================================================
 	// CORE ACTOR TAGS

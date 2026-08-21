@@ -8,35 +8,30 @@
 #include "UObject/Object.h"
 #include "FVPlayerCharacter.generated.h"
 
-class UFVInteractionOfferComponent;
-class UFVInteractionInstigatorComponent;
 class UFVAbilitySystemComponent;
+class UInteractorComponent;
 
 UCLASS()
 class FLICKERVOID_API AFVPlayerCharacter : public AFVCharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-	
+
 public:
 	AFVPlayerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-	
+
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerState")
 	UFVAbilitySystemComponent* GetFVAbilitySystemComponent() const { return AbilitySystemComponent; }
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
-	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|Interaction")
-	UFVInteractionInstigatorComponent* GetInteraction() const;
-	
-	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|Interaction")
-	UFVInteractionOfferComponent* GetOffers() const;
-	
-private:
-	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
-	TObjectPtr<UFVInteractionInstigatorComponent> InteractionInstigator;
 
-	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
-	TObjectPtr<UFVInteractionOfferComponent> InteractionOffers;
-	
+	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|Interaction")
+	UInteractorComponent* GetInteractor() const { return Interactor; }
+
+	virtual void BeginPlay() override;
+
+private:
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
 	TObjectPtr<UFVAbilitySystemComponent> AbilitySystemComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
+	TObjectPtr<UInteractorComponent> Interactor;
 };

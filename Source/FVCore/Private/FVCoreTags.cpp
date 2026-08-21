@@ -10,9 +10,10 @@ namespace FVCoreTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Sprint, "InputTag.Sprint", "Sprint input.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Jump, "InputTag.Jump", "Jump input.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Aim, "InputTag.Aim", "Aim input.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Primary, "InputTag.Action.Primary", "Primary Action.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Secondary, "InputTag.Action.Secondary", "Secondary Action.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Ternary, "InputTag.Action.Ternary", "Ternary Action.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction, "InputTag.Interaction", "Root of interaction inputs.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Primary, "InputTag.Interaction.Primary", "Primary interaction.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Secondary, "InputTag.Interaction.Secondary", "Secondary interaction.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Ternary, "InputTag.Interaction.Ternary", "Ternary interaction.");
 	
 	UE_DEFINE_GAMEPLAY_TAG(Player_Pawn, "Player.Pawn");
 	
@@ -53,17 +54,17 @@ namespace FVCoreTags
 
 	EFVInteractionSlot InputTagToSlot(const FGameplayTag& InputTag)
 	{
-		if (InputTag.MatchesTagExact(InputTag_Action_Primary))
+		if (InputTag.MatchesTagExact(InputTag_Interaction_Primary))
 		{
 			return EFVInteractionSlot::Primary;
 		}
 
-		if (InputTag.MatchesTagExact(InputTag_Action_Secondary))
+		if (InputTag.MatchesTagExact(InputTag_Interaction_Secondary))
 		{
 			return EFVInteractionSlot::Secondary;
 		}
 
-		if (InputTag.MatchesTagExact(InputTag_Action_Ternary))
+		if (InputTag.MatchesTagExact(InputTag_Interaction_Ternary))
 		{
 			return EFVInteractionSlot::Ternary;
 		}

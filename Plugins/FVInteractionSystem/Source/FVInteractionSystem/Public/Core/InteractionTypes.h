@@ -1,7 +1,10 @@
 #pragma once
 #include "GameplayTagContainer.h"
+#include "InputCoreTypes.h"
 
 #include "InteractionTypes.generated.h"
+
+class UTexture2D;
 
 class UInteractableComponent;
 
@@ -52,9 +55,6 @@ struct FVINTERACTIONSYSTEM_API FInteractionFocusProfile
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FName Name;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
 	float DetectionRadius = 10.f;
 
@@ -83,6 +83,42 @@ struct FVINTERACTIONSYSTEM_API FInteractionOffer
 	bool IsValid() const { return bOffered && ActionTag.IsValid(); }
 };
 
+/** Outcome of asking the owning game whether an action can run right now. */
+USTRUCT(BlueprintType)
+struct FVINTERACTIONSYSTEM_API FInteractionAvailabilityResult
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	EInteractionAvailability Availability = EInteractionAvailability::RequirementNotMet;
+
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayTag FailureTag;
+
+	UPROPERTY(BlueprintReadOnly)
+	FText FailureText;
+
+	bool operator==(const FInteractionAvailabilityResult& Other) const
+	{
+		return Availability == Other.Availability && FailureTag == Other.FailureTag;
+	}
+
+	bool operator!=(const FInteractionAvailabilityResult& Other) const { return !(*this == Other); }
+};
+
+/** Presentation data for one interaction input, authored in project settings. */
+USTRUCT(BlueprintType)
+struct FVINTERACTIONSYSTEM_API FInteractionKeyBinding
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FKey Key;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSoftObjectPtr<UTexture2D> Glyph;
+};
+
 /** Runtime, resolved offer handed to UI. */
 USTRUCT(BlueprintType)
 struct FVINTERACTIONSYSTEM_API FInteractionPrompt
@@ -96,9 +132,16 @@ struct FVINTERACTIONSYSTEM_API FInteractionPrompt
 	FGameplayTag ActionTag;
 
 	UPROPERTY(BlueprintReadOnly)
-	EInteractionAvailability Availability = EInteractionAvailability::RequirementNotMet;
+	FInteractionAvailabilityResult Result;
 
-	bool IsEnabled() const { return Availability == EInteractionAvailability::Available; }
+	bool IsEnabled() const { return Result.Availability == EInteractionAvailability::Available; }
+
+	bool operator==(const FInteractionPrompt& Other) const
+	{
+		return InputTag == Other.InputTag && ActionTag == Other.ActionTag && Result == Other.Result;
+	}
+
+	bool operator!=(const FInteractionPrompt& Other) const { return !(*this == Other); }
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionFocusChanged, UInteractableComponent*, Target);

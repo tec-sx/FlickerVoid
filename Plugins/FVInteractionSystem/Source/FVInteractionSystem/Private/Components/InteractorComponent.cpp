@@ -1,8 +1,7 @@
 #include "Components/InteractorComponent.h"
 #include "Components/InteractableComponent.h"
 #include "FVInteractionSystemSettings.h"
-#include "AbilitySystemComponent.h"
-#include "AbilitySystemGlobals.h"
+#include "GameFramework/PlayerController.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(InteractorComponent)
 
@@ -42,6 +41,7 @@ void UInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 		{
 			TimeSinceLastUpdate = 0.f;
 			DetectInteractables();
+			RevalidatePrompts();
 		}
 	}
 }
@@ -55,36 +55,54 @@ EInteractionResult UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 		return EInteractionResult::NoInteractable;
 	}
 
-	const FInteractionOffer* Offer = Target->FindOffer(InputTag);
-	if (!Offer || !Offer->IsValid())
+	const FInteractionPrompt* Prompt = CachedPrompts.FindByPredicate(
+		[&InputTag](const FInteractionPrompt& Candidate) { return Candidate.InputTag.MatchesTagExact(InputTag); });
+
+	if (!Prompt)
 	{
 		return EInteractionResult::NoInteractable;
 	}
 
-	UAbilitySystemComponent* ASC = GetOwnerASC();
-	if (!ASC)
+	switch (Prompt->Result.Availability)
 	{
-		return EInteractionResult::NoInteractable;
-	}
-
-	if (!HasAbilityForAction(*ASC, Offer->ActionTag))
-	{
+	case EInteractionAvailability::RequirementNotMet:
 		return EInteractionResult::RequirementNotMet;
+	case EInteractionAvailability::Blocked:
+		return EInteractionResult::Blocked;
+	default:
+		break;
 	}
 
-	FGameplayEventData Payload;
-	Payload.EventTag = Offer->ActionTag;
-	Payload.Instigator = GetOwner();
-	Payload.Target = Target->GetOwner();
-	Payload.OptionalObject = Target;
+	const FGameplayTag ActionTag = Prompt->ActionTag;
 
-	if (ASC->HandleGameplayEvent(Offer->ActionTag, &Payload) == 0)
+	if (ExecuteAction.IsBound() && !ExecuteAction.Execute(ActionTag, MakeContext(*Target)))
 	{
 		return EInteractionResult::Blocked;
 	}
 
 	RefreshOffers();
 	return EInteractionResult::Success;
+}
+
+FInteractionContext UInteractorComponent::MakeContext(const UInteractableComponent& Target) const
+{
+	FInteractionContext Context;
+	Context.Interactor = GetOwner();
+	Context.Target = Target.GetOwner();
+	Context.InteractionPoint = Target.GetAimProbeLocation();
+	return Context;
+}
+
+FInteractionAvailabilityResult UInteractorComponent::ResolveAvailability(const FGameplayTag& ActionTag) const
+{
+	if (ResolveAction.IsBound())
+	{
+		return ResolveAction.Execute(ActionTag);
+	}
+
+	FInteractionAvailabilityResult Result;
+	Result.Availability = EInteractionAvailability::Available;
+	return Result;
 }
 
 void UInteractorComponent::DetectInteractables()
@@ -106,7 +124,7 @@ void UInteractorComponent::DetectInteractables()
 
 	for (UInteractableComponent* Candidate : Candidates)
 	{
-		const FInteractionFocusProfile Profile = Candidate->GetFocusProfile();
+		const FInteractionFocusProfile& Profile = Candidate->GetFocusProfile();
 		const FVector ToTarget = Candidate->GetAimProbeLocation() - ViewLocation;
 		const float Distance = ToTarget.Size();
 
@@ -147,43 +165,6 @@ void UInteractorComponent::DetectInteractables()
 	SetFocusedTarget(BestCandidate);
 }
 
-bool UInteractorComponent::HasAbilityForAction(const UAbilitySystemComponent& ASC, const FGameplayTag& ActionTag) const
-{
-	for (const FGameplayAbilitySpec& Spec : ASC.GetActivatableAbilities())
-	{
-		if (Spec.Ability && Spec.Ability->GetAssetTags().HasTag(ActionTag))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool UInteractorComponent::CanActivateAction(const UAbilitySystemComponent& ASC, const FGameplayTag& ActionTag) const
-{
-	for (const FGameplayAbilitySpec& Spec : ASC.GetActivatableAbilities())
-	{
-		if (!Spec.Ability || !Spec.Ability->GetAssetTags().HasTag(ActionTag))
-		{
-			continue;
-		}
-
-		const FGameplayAbilityActorInfo* ActorInfo = ASC.AbilityActorInfo.Get();
-		if (Spec.Ability->CanActivateAbility(Spec.Handle, ActorInfo))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-UAbilitySystemComponent* UInteractorComponent::GetOwnerASC() const
-{
-	return UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
-}
-
 void UInteractorComponent::SetFocusedTarget(UInteractableComponent* NewTarget)
 {
 	if (FocusedTarget.Get() == NewTarget)
@@ -211,10 +192,7 @@ void UInteractorComponent::RefreshOffers()
 {
 	CachedPrompts.Reset();
 
-	const UInteractableComponent* Target = FocusedTarget.Get();
-	const UAbilitySystemComponent* ASC = GetOwnerASC();
-
-	if (Target && ASC)
+	if (const UInteractableComponent* Target = FocusedTarget.Get())
 	{
 		for (const TPair<FGameplayTag, FInteractionOffer>& Pair : Target->GetOffers())
 		{
@@ -226,18 +204,7 @@ void UInteractorComponent::RefreshOffers()
 			FInteractionPrompt& Prompt = CachedPrompts.AddDefaulted_GetRef();
 			Prompt.InputTag = Pair.Key;
 			Prompt.ActionTag = Pair.Value.ActionTag;
-
-			if (!HasAbilityForAction(*ASC, Pair.Value.ActionTag))
-			{
-				Prompt.Availability = EInteractionAvailability::RequirementNotMet;
-			}
-			else
-			{
-				Prompt.Availability = CanActivateAction(*ASC, Pair.Value.ActionTag)
-					? EInteractionAvailability::Available
-					: EInteractionAvailability::Blocked;
-			}
-
+			Prompt.Result = ResolveAvailability(Pair.Value.ActionTag);
 		}
 
 		CachedPrompts.Sort([](const FInteractionPrompt& A, const FInteractionPrompt& B)
@@ -247,4 +214,30 @@ void UInteractorComponent::RefreshOffers()
 	}
 
 	OnOffersChanged.Broadcast(CachedPrompts);
+}
+
+void UInteractorComponent::RevalidatePrompts()
+{
+	if (CachedPrompts.IsEmpty())
+	{
+		return;
+	}
+
+	bool bChanged = false;
+
+	for (FInteractionPrompt& Prompt : CachedPrompts)
+	{
+		const FInteractionAvailabilityResult NewResult = ResolveAvailability(Prompt.ActionTag);
+
+		if (NewResult != Prompt.Result)
+		{
+			Prompt.Result = NewResult;
+			bChanged = true;
+		}
+	}
+
+	if (bChanged)
+	{
+		OnOffersChanged.Broadcast(CachedPrompts);
+	}
 }

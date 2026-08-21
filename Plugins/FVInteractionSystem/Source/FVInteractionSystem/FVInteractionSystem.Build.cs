@@ -26,8 +26,9 @@ public class FVInteractionSystem : ModuleRules
 			new string[]
 			{
 				"Core",
-                "GameplayTags",
-            }
+				"GameplayTags",
+				"InputCore",
+			}
 			);
 			
 		
@@ -35,14 +36,8 @@ public class FVInteractionSystem : ModuleRules
 			new string[]
 			{
 				"Projects",
-				"InputCore",
-				"EnhancedInput",
 				"CoreUObject",
 				"Engine",
-				"Slate",
-				"SlateCore",
-				"UMG",
-				"GameplayAbilities",
 				"DeveloperSettings",
 			}
 			);

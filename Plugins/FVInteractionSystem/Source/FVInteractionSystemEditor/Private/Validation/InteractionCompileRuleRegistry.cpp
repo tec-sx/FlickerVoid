@@ -1,5 +1,7 @@
 #include "Validation/InteractionCompileRuleRegistry.h"
 
+#include "Validation/Rules/ValidateInteractableSetupRule.h"
+
 FInteractionCompileRuleRegistry& FInteractionCompileRuleRegistry::Get()
 {
 	static FInteractionCompileRuleRegistry Instance;
@@ -8,6 +10,7 @@ FInteractionCompileRuleRegistry& FInteractionCompileRuleRegistry::Get()
 
 void FInteractionCompileRuleRegistry::RegisterDefaultRules()
 {
+	RegisterRule(MakeShared<FValidateInteractableSetupRule>());
 }
 
 void FInteractionCompileRuleRegistry::RegisterRule(TSharedRef<IInteractionCompileRule> Rule)

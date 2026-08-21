@@ -12,7 +12,14 @@
 #define UE_API FVINTERACTIONSYSTEM_API
 
 class UInteractableComponent;
-class UAbilitySystemComponent;
+
+/**
+ * Seam to the owning game's ability system. The plugin never talks to GAS directly:
+ * the game binds these on its pawn. While unbound every action reports Available and
+ * execution is a no-op, so the plugin stays usable standalone.
+ */
+DECLARE_DELEGATE_RetVal_OneParam(FInteractionAvailabilityResult, FResolveInteractionAction, const FGameplayTag& /*ActionTag*/);
+DECLARE_DELEGATE_RetVal_TwoParams(bool, FExecuteInteractionAction, const FGameplayTag& /*ActionTag*/, const FInteractionContext& /*Context*/);
 
 UCLASS(MinimalAPI, ClassGroup=(Interaction), meta=(BlueprintSpawnableComponent))
 class UInteractorComponent : public UActorComponent
@@ -40,6 +47,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UE_API EInteractionResult TryExecuteAction(FGameplayTag InputTag);
 
+	/** Bound by the game to validate an action against its ability system. */
+	FResolveInteractionAction ResolveAction;
+
+	/** Bound by the game to actually run an action through its ability system. */
+	FExecuteInteractionAction ExecuteAction;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
 	float MaxDetectionRadius = 600.f;
 
@@ -62,10 +75,10 @@ public:
 private:
 	void DetectInteractables();
 	void SetFocusedTarget(UInteractableComponent* NewTarget);
-	bool HasAbilityForAction(const UAbilitySystemComponent& ASC, const FGameplayTag& ActionTag) const;
-	bool CanActivateAction(const UAbilitySystemComponent& ASC, const FGameplayTag& ActionTag) const;
-	UAbilitySystemComponent* GetOwnerASC() const;
-	
+	void RevalidatePrompts();
+	FInteractionAvailabilityResult ResolveAvailability(const FGameplayTag& ActionTag) const;
+	FInteractionContext MakeContext(const UInteractableComponent& Target) const;
+
 	UPROPERTY(Transient)
 	TObjectPtr<APawn> Owner;
 

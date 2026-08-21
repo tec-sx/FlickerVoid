@@ -36,7 +36,7 @@ void AFVPlayerController::OnPossess(APawn* InPawn)
     Super::OnPossess(InPawn);
 
     CachedCharacter = Cast<AFVPlayerCharacter>(InPawn);
-    CachedInteractor = CachedCharacter.IsValid() ? CachedCharacter->FindComponentByClass<UInteractorComponent>() : nullptr;
+    CachedInteractor = CachedCharacter.IsValid() ? CachedCharacter->GetInteractor() : nullptr;
 
     if (CachedCharacter.IsValid())
     {
@@ -77,6 +77,7 @@ void AFVPlayerController::OnUnPossess()
     }
 
     CachedCharacter.Reset();
+    CachedInteractor.Reset();
 
     Super::OnUnPossess();
 }
@@ -301,13 +302,16 @@ void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
         return;
     }
 
-    if (UInteractorComponent* Interactor = CachedInteractor.Get())
+    if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
     {
-        const EInteractionResult Result = Interactor->TryExecuteAction(InputTag);
-
-        if (Result != EInteractionResult::NoInteractable)
+        if (UInteractorComponent* Interactor = CachedInteractor.Get())
         {
-            return;
+            const EInteractionResult Result = Interactor->TryExecuteAction(InputTag);
+
+            if (Result != EInteractionResult::NoInteractable)
+            {
+                return;
+            }
         }
     }
 	

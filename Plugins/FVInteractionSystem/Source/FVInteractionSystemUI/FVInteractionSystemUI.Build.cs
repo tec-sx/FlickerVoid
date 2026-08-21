@@ -1,8 +1,10 @@
+// Copyright Epic Games, Inc. All Rights Reserved.
+
 using UnrealBuildTool;
 
-public class FVInteractionSystemEditor : ModuleRules
+public class FVInteractionSystemUI : ModuleRules
 {
-    public FVInteractionSystemEditor(ReadOnlyTargetRules Target) : base(Target)
+    public FVInteractionSystemUI(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
@@ -10,6 +12,7 @@ public class FVInteractionSystemEditor : ModuleRules
             new string[]
             {
                 "Core",
+                "GameplayTags",
                 "FVInteractionSystem",
             }
             );
@@ -19,13 +22,11 @@ public class FVInteractionSystemEditor : ModuleRules
             {
                 "CoreUObject",
                 "Engine",
-                "GameplayTags",
-                "DeveloperSettings",
-                "UnrealEd",
-                "KismetCompiler",
-                "Kismet",
+                "InputCore",
                 "Slate",
                 "SlateCore",
+                "UMG",
+                "DeveloperSettings",
             }
             );
     }

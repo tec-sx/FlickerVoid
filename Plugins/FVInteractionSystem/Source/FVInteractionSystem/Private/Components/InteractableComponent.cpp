@@ -1,5 +1,6 @@
 #include "Components/InteractableComponent.h"
 #include "Components/InteractorComponent.h"
+#include "FVInteractionSystemSettings.h"
 #include <Subsystems/InteractionRegistrySubsystem.h>
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(InteractableComponent)
@@ -19,6 +20,8 @@ void UInteractableComponent::BeginPlay()
 	}
 
 	bIsInitialized = true;
+
+	ResolveFocusProfile();
 
 	UInteractionRegistrySubsystem* Registry = GetWorld()->GetSubsystem<UInteractionRegistrySubsystem>();
 
@@ -42,6 +45,29 @@ void UInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	bIsInitialized = false;
 
 	Super::EndPlay(EndPlayReason);
+}
+
+#if WITH_EDITOR
+void UInteractableComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	ResolveFocusProfile();
+}
+#endif
+
+const FInteractionFocusProfile& UInteractableComponent::GetFocusProfile() const
+{
+	if (CachedFocusProfile)
+	{
+		return *CachedFocusProfile;
+	}
+
+	return GetDefault<UFVInteractionSystemSettings>()->GetFocusProfile(FocusProfileName);
+}
+
+void UInteractableComponent::ResolveFocusProfile()
+{
+	CachedFocusProfile = &GetDefault<UFVInteractionSystemSettings>()->GetFocusProfile(FocusProfileName);
 }
 
 FVector UInteractableComponent::GetAimProbeLocation() const

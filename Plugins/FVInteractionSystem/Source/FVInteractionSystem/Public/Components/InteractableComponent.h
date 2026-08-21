@@ -23,8 +23,11 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 
-	FInteractionFocusProfile GetFocusProfile() const { return FocusProfile; }
+	UE_API const FInteractionFocusProfile& GetFocusProfile() const;
 	FVector GetAimProbeLocation() const;
 	void SetFocused(bool bFocused);
 	
@@ -36,7 +39,8 @@ public:
 
 	const FInteractionOffer* FindOffer(const FGameplayTag& InputTag) const { return Offers.Find(InputTag); }
 	const TMap<FGameplayTag, FInteractionOffer>& GetOffers() const { return Offers; }
-	
+	FName GetFocusProfileName() const { return FocusProfileName; }
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Detection")
 	FName AimProbeSocket = NAME_None;
 
@@ -44,15 +48,19 @@ public:
 	FVector AimProbeOffset = FVector::ZeroVector;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Detection", meta = ( AllowPrivateAcces = true))
-	FInteractionFocusProfile FocusProfile;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Actions", meta = (ForceInlineRow, Categories = "Input.Action"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Detection", meta = (GetOptions = "FVInteractionSystem.FVInteractionSystemSettings.GetFocusProfileNames"))
+	FName FocusProfileName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Actions", meta = (ForceInlineRow, Categories = "InputTag.Interaction"))
 	TMap<FGameplayTag, FInteractionOffer> Offers;
 
-	UShapeComponent* InteractionZone;
 	bool bIsInitialized = false;
 	bool bIsInFocus = false;
+
+private:
+	void ResolveFocusProfile();
+
+	const FInteractionFocusProfile* CachedFocusProfile = nullptr;
 };
 
 #undef UE_API
