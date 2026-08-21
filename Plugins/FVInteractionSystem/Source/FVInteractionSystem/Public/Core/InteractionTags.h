@@ -36,3 +36,5 @@ namespace InteractionTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Device);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Document);
 }
+
+#undef UE_API

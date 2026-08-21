@@ -5,6 +5,7 @@ class UFVTalkAbility : UFVInteractAbility
 	UFUNCTION(BlueprintOverride)
 	void ActivateInteraction(UFVInteractionOfferComponent Offers, AActor InteractableActor)
 	{
+		Print("Talk");
 		UFlowComponent FlowComponent = Offers.EngagedActor.GetComponentByClass(UFlowComponent);
 
 		if (IsValid(FlowComponent))
