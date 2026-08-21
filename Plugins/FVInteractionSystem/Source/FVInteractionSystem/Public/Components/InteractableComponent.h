@@ -49,7 +49,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Detection", meta = (GetOptions = "FVInteractionSystem.FVInteractionSystemSettings.GetFocusProfileNames"))
-	FName FocusProfileName;
+	FName FocusProfileName = TEXT("Loose");
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Actions", meta = (ForceInlineRow, Categories = "InputTag.Interaction"))
 	TMap<FGameplayTag, FInteractionOffer> Offers;

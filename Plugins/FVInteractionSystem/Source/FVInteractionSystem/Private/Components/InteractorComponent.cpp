@@ -2,6 +2,7 @@
 #include "Components/InteractableComponent.h"
 #include "Core/InteractionRequirement.h"
 #include "FVInteractionSystemSettings.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/PlayerController.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(InteractorComponent)
@@ -125,19 +126,50 @@ bool UInteractorComponent::ResolveAvailability(const FInteractionOffer& Offer, b
 	return Evaluate(GlobalRequirements) && Evaluate(Offer.Requirements);
 }
 
+void UInteractorComponent::GetAimPoint(FVector& OutOrigin, FVector& OutForward) const
+{
+	OutOrigin = Owner ? Owner->GetActorLocation() : FVector::ZeroVector;
+	OutForward = Owner ? Owner->GetActorForwardVector() : FVector::ForwardVector;
+
+	if (!Owner)
+	{
+		return;
+	}
+
+	bool bResolvedSocket = false;
+	if (AimSocket != NAME_None)
+	{
+		if (const USkeletalMeshComponent* Mesh = Owner->FindComponentByClass<USkeletalMeshComponent>())
+		{
+			if (Mesh->DoesSocketExist(AimSocket))
+			{
+				OutOrigin = Mesh->GetSocketLocation(AimSocket);
+				bResolvedSocket = true;
+			}
+		}
+	}
+
+	if (!bResolvedSocket)
+	{
+		OutOrigin += AimSocketFallbackOffset;
+	}
+
+	if (const APlayerController* PC = Cast<APlayerController>(Owner->GetController()))
+	{
+		FVector CameraLocation;
+		FRotator ViewRotation;
+		PC->GetPlayerViewPoint(CameraLocation, ViewRotation);
+		OutForward = ViewRotation.Vector();
+	}
+}
+
 void UInteractorComponent::DetectInteractables()
 {
 	const FVector PawnLocation = Owner->GetActorLocation();
 
-	FVector ViewLocation = PawnLocation;
-	FVector ViewForward = Owner->GetActorForwardVector();
-
-	if (const APlayerController* PC = Cast<APlayerController>(Owner->GetController()))
-	{
-		FRotator ViewRotation;
-		PC->GetPlayerViewPoint(ViewLocation, ViewRotation);
-		ViewForward = ViewRotation.Vector();
-	}
+	FVector AimOrigin;
+	FVector AimForward;
+	GetAimPoint(AimOrigin, AimForward);
 
 	Registry->QueryInRange(PawnLocation, MaxDetectionRadius, Candidates);
 
@@ -155,8 +187,8 @@ void UInteractorComponent::DetectInteractables()
 			continue;
 		}
 
-		const FVector ToTarget = ProbeLocation - ViewLocation;
-		const float Dot = FVector::DotProduct(ViewForward, ToTarget.GetSafeNormal());
+		const FVector ToTarget = ProbeLocation - AimOrigin;
+		const float Dot = FVector::DotProduct(AimForward, ToTarget.GetSafeNormal());
 		if (Dot < Profile.ConeCosine)
 		{
 			continue;

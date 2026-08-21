@@ -142,16 +142,23 @@ void UInteractionDebugComponent::DrawVisualizer() const
 	FVector ViewForward;
 	GetViewPoint(PawnLocation, ViewLocation, ViewForward);
 
+	FVector AimOrigin;
+	FVector AimForward;
+	InteractorPtr->GetAimPoint(AimOrigin, AimForward);
+
 	DrawDebugCircle(
 		World,
-		ViewLocation,
+		PawnLocation,
 		InteractorPtr->MaxDetectionRadius,
 		64,
 		FColor(0, 128, 255),
-		false, -1.f, 0, 1.5f,
+		false, -1.f, 0, 0.5f,
 		FVector::ForwardVector,
 		FVector::RightVector,
 		false);
+
+	float WidestConeRad = 0.f;
+	float WidestConeLength = 0.f;
 
 	for (const UInteractableComponent* Candidate : InteractorPtr->GetDebugCandidates())
 	{
@@ -163,40 +170,44 @@ void UInteractionDebugComponent::DrawVisualizer() const
 		const FInteractionFocusProfile& Profile = Candidate->GetFocusProfile();
 		const FVector ProbeLocation = Candidate->GetAimProbeLocation();
 		const bool bIsFocused = Candidate == FocusedTarget;
-		const bool bInRange = FVector::Dist(ProbeLocation, ViewLocation) <= Profile.DetectionRadius;
+		const bool bInRange = FVector::Dist(ProbeLocation, PawnLocation) <= Profile.DetectionRadius;
 
-		DrawDebugSphere(World, ProbeLocation, 4.f, 8, bIsFocused ? FColor::Yellow : FColor::Cyan, false, -1.f, 0, 1.f);
-		DrawDebugSphere(
-			World,
-			ProbeLocation,
-			Profile.DetectionRadius,
-			16,
-			bInRange ? FColor::Green : FColor(80, 80, 80),
-			false, -1.f, 0, 1.f);
+		WidestConeRad = FMath::Max(WidestConeRad, FMath::Acos(FMath::Clamp(Profile.ConeCosine, -1.f, 1.f)));
+		WidestConeLength = FMath::Max(WidestConeLength, Profile.DetectionRadius);
 
-		const float HalfAngleRad = FMath::Acos(FMath::Clamp(Profile.ConeCosine, -1.f, 1.f));
-		const FVector ToTarget = (ProbeLocation - ViewLocation).GetSafeNormal();
+		if (const AActor* TargetOwner = Candidate->GetOwner())
+		{
+			FVector BoundsOrigin;
+			FVector BoundsExtent;
+			TargetOwner->GetActorBounds(true, BoundsOrigin, BoundsExtent);
 
-		DrawDebugCone(
-			World,
-			ViewLocation,
-			ToTarget.IsNearlyZero() ? ViewForward : ToTarget,
-			Profile.DetectionRadius,
-			HalfAngleRad,
-			HalfAngleRad,
-			16,
-			bIsFocused ? FColor::Yellow : FColor::Silver,
-			false, -1.f, 0, 1.f);
+			const FColor BoxColor = bIsFocused
+				? FColor::Yellow
+				: (bInRange ? FColor::Green : FColor(80, 80, 80));
+
+			DrawDebugBox(World, BoundsOrigin, BoundsExtent, TargetOwner->GetActorQuat(), BoxColor, false, -1.f, 0, bIsFocused ? 1.f : 0.5f);
+		}
+
+		DrawDebugPoint(World, ProbeLocation, 6.f, bIsFocused ? FColor::Yellow : FColor::Cyan, false, -1.f, 0);
 
 		if (bIsFocused)
 		{
-			DrawDebugLine(World, ViewLocation, ProbeLocation, FColor::Yellow, false, -1.f, 0, 1.5f);
-
-			if (const AActor* TargetOwner = Candidate->GetOwner())
-			{
-				DrawDebugSphere(World, TargetOwner->GetActorLocation(), 24.f, 12, FColor::Magenta, false, -1.f, 0, 1.5f);
-			}
+			DrawDebugLine(World, AimOrigin, ProbeLocation, FColor::Yellow, false, -1.f, 0, 0.5f);
 		}
+	}
+
+	if (WidestConeRad > 0.f)
+	{
+		DrawDebugCone(
+			World,
+			AimOrigin,
+			AimForward,
+			WidestConeLength,
+			WidestConeRad,
+			WidestConeRad,
+			24,
+			FColor::Silver,
+			false, -1.f, 0, 0.5f);
 	}
 }
 
@@ -228,6 +239,10 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 	FVector ViewForward;
 	GetViewPoint(PawnLocation, ViewLocation, ViewForward);
 
+	FVector AimOrigin;
+	FVector AimForward;
+	InteractorPtr->GetAimPoint(AimOrigin, AimForward);
+
 	const UInteractableComponent* FocusedTarget = InteractorPtr->GetFocusedTarget();
 
 	const float X = 20.f;
@@ -255,7 +270,7 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 		const FInteractionFocusProfile& Profile = Candidate->GetFocusProfile();
 		const FVector ProbeLocation = Candidate->GetAimProbeLocation();
 		const float Distance = FVector::Dist(ProbeLocation, PawnLocation);
-		const float Dot = FVector::DotProduct(ViewForward, (ProbeLocation - ViewLocation).GetSafeNormal());
+		const float Dot = FVector::DotProduct(AimForward, (ProbeLocation - AimOrigin).GetSafeNormal());
 
 		const float AngularRange = 1.f - Profile.ConeCosine;
 		const float AngularQuality = AngularRange > KINDA_SMALL_NUMBER

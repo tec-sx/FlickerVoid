@@ -39,10 +39,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UE_API bool TryExecuteAction(FGameplayTag InputTag);
 
+	UE_API void GetAimPoint(FVector& OutOrigin, FVector& OutForward) const;
+
 	FExecuteInteractionAction ExecuteAction;
 
 	UPROPERTY(EditAnywhere, Instanced, Category = "Interaction")
 	TArray<TObjectPtr<UInteractionRequirement>> GlobalRequirements;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
+	FName AimSocket = TEXT("head");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
+	FVector AimSocketFallbackOffset = FVector(0.f, 0.f, 60.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
 	float MaxDetectionRadius = 600.f;
