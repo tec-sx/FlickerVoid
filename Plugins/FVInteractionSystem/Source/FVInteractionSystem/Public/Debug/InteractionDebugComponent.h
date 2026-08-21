@@ -24,7 +24,7 @@ public:
 
 private:
 	void RefreshCachedInteractor();
-	void GetViewPoint(FVector& OutLocation, FVector& OutForward) const;
+	void GetViewPoint(FVector& OutPawnLocation, FVector& OutViewLocation, FVector& OutForward) const;
 	void DrawVisualizer() const;
 	void DrawHUD(UCanvas* Canvas, APlayerController* PC);
 

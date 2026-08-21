@@ -127,7 +127,9 @@ bool UInteractorComponent::ResolveAvailability(const FInteractionOffer& Offer, b
 
 void UInteractorComponent::DetectInteractables()
 {
-	FVector ViewLocation = Owner->GetActorLocation();
+	const FVector PawnLocation = Owner->GetActorLocation();
+
+	FVector ViewLocation = PawnLocation;
 	FVector ViewForward = Owner->GetActorForwardVector();
 
 	if (const APlayerController* PC = Cast<APlayerController>(Owner->GetController()))
@@ -137,7 +139,7 @@ void UInteractorComponent::DetectInteractables()
 		ViewForward = ViewRotation.Vector();
 	}
 
-	Registry->QueryInRange(ViewLocation, MaxDetectionRadius, Candidates);
+	Registry->QueryInRange(PawnLocation, MaxDetectionRadius, Candidates);
 
 	UInteractableComponent* BestCandidate = nullptr;
 	float BestScore = -1.f;
@@ -145,14 +147,15 @@ void UInteractorComponent::DetectInteractables()
 	for (UInteractableComponent* Candidate : Candidates)
 	{
 		const FInteractionFocusProfile& Profile = Candidate->GetFocusProfile();
-		const FVector ToTarget = Candidate->GetAimProbeLocation() - ViewLocation;
-		const float Distance = ToTarget.Size();
+		const FVector ProbeLocation = Candidate->GetAimProbeLocation();
+		const float Distance = FVector::Dist(ProbeLocation, PawnLocation);
 
 		if (Distance > Profile.DetectionRadius)
 		{
 			continue;
 		}
 
+		const FVector ToTarget = ProbeLocation - ViewLocation;
 		const float Dot = FVector::DotProduct(ViewForward, ToTarget.GetSafeNormal());
 		if (Dot < Profile.ConeCosine)
 		{

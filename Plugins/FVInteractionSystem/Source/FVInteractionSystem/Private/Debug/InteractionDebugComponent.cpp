@@ -97,19 +97,21 @@ void UInteractionDebugComponent::RefreshCachedInteractor()
 	}
 }
 
-void UInteractionDebugComponent::GetViewPoint(FVector& OutLocation, FVector& OutForward) const
+void UInteractionDebugComponent::GetViewPoint(FVector& OutPawnLocation, FVector& OutViewLocation, FVector& OutForward) const
 {
 	const UInteractorComponent* InteractorPtr = Interactor.Get();
 	const AActor* InteractorOwner = InteractorPtr ? InteractorPtr->GetOwner() : nullptr;
 
 	if (!InteractorOwner)
 	{
-		OutLocation = FVector::ZeroVector;
+		OutPawnLocation = FVector::ZeroVector;
+		OutViewLocation = FVector::ZeroVector;
 		OutForward = FVector::ForwardVector;
 		return;
 	}
 
-	OutLocation = InteractorOwner->GetActorLocation();
+	OutPawnLocation = InteractorOwner->GetActorLocation();
+	OutViewLocation = OutPawnLocation;
 	OutForward = InteractorOwner->GetActorForwardVector();
 
 	if (const APawn* Pawn = Cast<APawn>(InteractorOwner))
@@ -117,7 +119,7 @@ void UInteractionDebugComponent::GetViewPoint(FVector& OutLocation, FVector& Out
 		if (const APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
 		{
 			FRotator ViewRotation;
-			PC->GetPlayerViewPoint(OutLocation, ViewRotation);
+			PC->GetPlayerViewPoint(OutViewLocation, ViewRotation);
 			OutForward = ViewRotation.Vector();
 		}
 	}
@@ -135,9 +137,10 @@ void UInteractionDebugComponent::DrawVisualizer() const
 
 	const UInteractableComponent* FocusedTarget = InteractorPtr->GetFocusedTarget();
 
+	FVector PawnLocation;
 	FVector ViewLocation;
 	FVector ViewForward;
-	GetViewPoint(ViewLocation, ViewForward);
+	GetViewPoint(PawnLocation, ViewLocation, ViewForward);
 
 	DrawDebugCircle(
 		World,
@@ -220,9 +223,10 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 		return;
 	}
 
+	FVector PawnLocation;
 	FVector ViewLocation;
 	FVector ViewForward;
-	GetViewPoint(ViewLocation, ViewForward);
+	GetViewPoint(PawnLocation, ViewLocation, ViewForward);
 
 	const UInteractableComponent* FocusedTarget = InteractorPtr->GetFocusedTarget();
 
@@ -249,9 +253,9 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 		}
 
 		const FInteractionFocusProfile& Profile = Candidate->GetFocusProfile();
-		const FVector ToTarget = Candidate->GetAimProbeLocation() - ViewLocation;
-		const float Distance = ToTarget.Size();
-		const float Dot = FVector::DotProduct(ViewForward, ToTarget.GetSafeNormal());
+		const FVector ProbeLocation = Candidate->GetAimProbeLocation();
+		const float Distance = FVector::Dist(ProbeLocation, PawnLocation);
+		const float Dot = FVector::DotProduct(ViewForward, (ProbeLocation - ViewLocation).GetSafeNormal());
 
 		const float AngularRange = 1.f - Profile.ConeCosine;
 		const float AngularQuality = AngularRange > KINDA_SMALL_NUMBER
