@@ -132,8 +132,11 @@ bool UInteractorComponent::GetAimPoint(FVector& OutOrigin, FVector& OutForward) 
 		return false;
 	}
 
+	FVector ViewLocation;
 	FRotator ViewRotation;
-	PC->GetPlayerViewPoint(OutOrigin, ViewRotation);
+	PC->GetPlayerViewPoint(ViewLocation, ViewRotation);
+
+	OutOrigin = Owner->GetActorLocation() + Owner->GetActorRotation().RotateVector(AimOriginOffset);
 	OutForward = ViewRotation.Vector();
 	return true;
 }
@@ -175,15 +178,13 @@ void UInteractorComponent::DetectInteractables()
 		return;
 	}
 
-	const float SweepLength = GateRadius + FVector::Dist(AimOrigin, PawnLocation);
-
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(FVInteractionSweep), false, Owner);
 
 	FHitResult Hit;
 	GetWorld()->SweepSingleByChannel(
 		Hit,
 		AimOrigin,
-		AimOrigin + AimForward * SweepLength,
+		AimOrigin + AimForward * GateRadius,
 		FQuat::Identity,
 		InteractionChannel,
 		FCollisionShape::MakeSphere(AimSweepRadius),

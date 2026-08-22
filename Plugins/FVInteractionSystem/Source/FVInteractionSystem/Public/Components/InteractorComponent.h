@@ -46,6 +46,9 @@ public:
 	UPROPERTY(EditAnywhere, Instanced, Category = "Interaction")
 	TArray<TObjectPtr<UInteractionRequirement>> GlobalRequirements;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
+	FVector AimOriginOffset = FVector(0.f, 0.f, 60.f);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
 	float MaxDetectionRadius = 600.f;
 
