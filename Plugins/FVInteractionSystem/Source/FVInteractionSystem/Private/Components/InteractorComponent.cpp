@@ -94,10 +94,14 @@ bool UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 
 FInteractionContext UInteractorComponent::MakeContext(const UInteractableComponent& Target) const
 {
+	FVector AimOrigin;
+	FVector AimForward;
+	GetAimPoint(AimOrigin, AimForward);
+
 	FInteractionContext Context;
 	Context.Interactor = GetOwner();
 	Context.Target = Target.GetOwner();
-	Context.InteractionPoint = Target.GetAimProbeLocation();
+	Context.InteractionPoint = Target.GetClosestFocusPoint(AimOrigin);
 	return Context;
 }
 
@@ -179,15 +183,15 @@ void UInteractorComponent::DetectInteractables()
 	for (UInteractableComponent* Candidate : Candidates)
 	{
 		const FInteractionFocusProfile& Profile = Candidate->GetFocusProfile();
-		const FVector ProbeLocation = Candidate->GetAimProbeLocation();
-		const float Distance = FVector::Dist(ProbeLocation, PawnLocation);
+		const FVector FocusPoint = Candidate->GetClosestFocusPoint(AimOrigin);
+		const float Distance = FVector::Dist(FocusPoint, PawnLocation);
 
 		if (Distance > Profile.DetectionRadius)
 		{
 			continue;
 		}
 
-		const FVector ToTarget = ProbeLocation - AimOrigin;
+		const FVector ToTarget = FocusPoint - AimOrigin;
 		const float Dot = FVector::DotProduct(AimForward, ToTarget.GetSafeNormal());
 		if (Dot < Profile.ConeCosine)
 		{

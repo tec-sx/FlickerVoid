@@ -23,6 +23,11 @@ static TAutoConsoleVariable<bool> CVarInteractionDebugHUD(
 	TEXT("FVCvar.Interaction.Debug.HUD"),
 	false,
 	TEXT("Show an on-screen readout of interaction candidates and resolved prompts"));
+
+static TAutoConsoleVariable<float> CVarInteractionDebugConeLength(
+	TEXT("FVCvar.Interaction.Debug.ConeLength"),
+	200.f,
+	TEXT("Display length of the interaction aim cone, visual only"));
 #endif
 
 UInteractionDebugComponent::UInteractionDebugComponent()
@@ -157,8 +162,7 @@ void UInteractionDebugComponent::DrawVisualizer() const
 		FVector::RightVector,
 		false);
 
-	float WidestConeRad = 0.f;
-	float WidestConeLength = 0.f;
+	float ConeHalfAngleRad = 0.f;
 
 	for (const UInteractableComponent* Candidate : InteractorPtr->GetDebugCandidates())
 	{
@@ -168,12 +172,24 @@ void UInteractionDebugComponent::DrawVisualizer() const
 		}
 
 		const FInteractionFocusProfile& Profile = Candidate->GetFocusProfile();
-		const FVector ProbeLocation = Candidate->GetAimProbeLocation();
+		const FVector FocusPoint = Candidate->GetFocusPoint();
+		const FVector ClosestPoint = Candidate->GetClosestFocusPoint(AimOrigin);
 		const bool bIsFocused = Candidate == FocusedTarget;
-		const bool bInRange = FVector::Dist(ProbeLocation, PawnLocation) <= Profile.DetectionRadius;
+		const bool bInRange = FVector::Dist(ClosestPoint, PawnLocation) <= Profile.DetectionRadius;
 
-		WidestConeRad = FMath::Max(WidestConeRad, FMath::Acos(FMath::Clamp(Profile.ConeCosine, -1.f, 1.f)));
-		WidestConeLength = FMath::Max(WidestConeLength, Profile.DetectionRadius);
+		const float HalfAngleRad = FMath::Acos(FMath::Clamp(Profile.ConeCosine, -1.f, 1.f));
+		if (bIsFocused)
+		{
+			ConeHalfAngleRad = HalfAngleRad;
+		}
+		else if (ConeHalfAngleRad <= 0.f || !FocusedTarget)
+		{
+			ConeHalfAngleRad = FMath::Max(ConeHalfAngleRad, HalfAngleRad);
+		}
+
+		const FColor CandidateColor = bIsFocused
+			? FColor::Yellow
+			: (bInRange ? FColor::Green : FColor(80, 80, 80));
 
 		if (const AActor* TargetOwner = Candidate->GetOwner())
 		{
@@ -181,30 +197,39 @@ void UInteractionDebugComponent::DrawVisualizer() const
 			FVector BoundsExtent;
 			TargetOwner->GetActorBounds(true, BoundsOrigin, BoundsExtent);
 
-			const FColor BoxColor = bIsFocused
-				? FColor::Yellow
-				: (bInRange ? FColor::Green : FColor(80, 80, 80));
-
-			DrawDebugBox(World, BoundsOrigin, BoundsExtent, TargetOwner->GetActorQuat(), BoxColor, false, -1.f, 0, bIsFocused ? 1.f : 0.5f);
+			DrawDebugBox(World, BoundsOrigin, BoundsExtent, TargetOwner->GetActorQuat(), CandidateColor, false, -1.f, 0, bIsFocused ? 1.f : 0.5f);
 		}
 
-		DrawDebugPoint(World, ProbeLocation, 6.f, bIsFocused ? FColor::Yellow : FColor::Cyan, false, -1.f, 0);
+		DrawDebugCircle(
+			World,
+			FocusPoint,
+			Profile.DetectionRadius,
+			48,
+			CandidateColor,
+			false, -1.f, 0, 0.5f,
+			FVector::ForwardVector,
+			FVector::RightVector,
+			false);
+
+		DrawDebugPoint(World, ClosestPoint, 8.f, bIsFocused ? FColor::Yellow : FColor::Cyan, false, -1.f, 0);
 
 		if (bIsFocused)
 		{
-			DrawDebugLine(World, AimOrigin, ProbeLocation, FColor::Yellow, false, -1.f, 0, 0.5f);
+			DrawDebugLine(World, AimOrigin, ClosestPoint, FColor::Yellow, false, -1.f, 0, 0.5f);
 		}
 	}
 
-	if (WidestConeRad > 0.f)
+	if (ConeHalfAngleRad > 0.f)
 	{
+		const float ConeLength = CVarInteractionDebugConeLength.GetValueOnGameThread();
+
 		DrawDebugCone(
 			World,
 			AimOrigin,
 			AimForward,
-			WidestConeLength,
-			WidestConeRad,
-			WidestConeRad,
+			ConeLength,
+			ConeHalfAngleRad,
+			ConeHalfAngleRad,
 			24,
 			FColor::Silver,
 			false, -1.f, 0, 0.5f);
@@ -268,9 +293,9 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 		}
 
 		const FInteractionFocusProfile& Profile = Candidate->GetFocusProfile();
-		const FVector ProbeLocation = Candidate->GetAimProbeLocation();
-		const float Distance = FVector::Dist(ProbeLocation, PawnLocation);
-		const float Dot = FVector::DotProduct(AimForward, (ProbeLocation - AimOrigin).GetSafeNormal());
+		const FVector ClosestPoint = Candidate->GetClosestFocusPoint(AimOrigin);
+		const float Distance = FVector::Dist(ClosestPoint, PawnLocation);
+		const float Dot = FVector::DotProduct(AimForward, (ClosestPoint - AimOrigin).GetSafeNormal());
 
 		const float AngularRange = 1.f - Profile.ConeCosine;
 		const float AngularQuality = AngularRange > KINDA_SMALL_NUMBER
@@ -290,9 +315,10 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 		}
 
 		const AActor* TargetOwner = Candidate->GetOwner();
-		DrawLine(FString::Printf(TEXT("%s%s: Ang=%.2f Dist=%.2f Score=%.2f"),
+		DrawLine(FString::Printf(TEXT("%s%s [%s]: Ang=%.2f Dist=%.2f Score=%.2f"),
 			bIsFocused ? TEXT("* ") : TEXT("  "),
 			TargetOwner ? *TargetOwner->GetName() : TEXT("?"),
+			*Candidate->GetFocusProfileName().ToString(),
 			AngularQuality, DistanceQuality, Score),
 			bIsFocused ? HeaderColor : TextColor);
 	}

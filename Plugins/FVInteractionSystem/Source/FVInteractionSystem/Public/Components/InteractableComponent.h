@@ -11,6 +11,7 @@
 #define UE_API FVINTERACTIONSYSTEM_API
 
 class UInteractorComponent;
+class UPrimitiveComponent;
 class UShapeComponent;
 
 UCLASS(MinimalAPI, ClassGroup=(Interaction), meta=(BlueprintSpawnableComponent))
@@ -28,7 +29,8 @@ public:
 #endif
 
 	UE_API const FInteractionFocusProfile& GetFocusProfile() const;
-	FVector GetAimProbeLocation() const;
+	UE_API FVector GetFocusPoint() const;
+	UE_API FVector GetClosestFocusPoint(const FVector& FromLocation) const;
 	void SetFocused(bool bFocused);
 	
 	UFUNCTION(BlueprintPure, Category = "Interaction")
@@ -40,12 +42,6 @@ public:
 	const FInteractionOffer* FindOffer(const FGameplayTag& InputTag) const { return Offers.Find(InputTag); }
 	const TMap<FGameplayTag, FInteractionOffer>& GetOffers() const { return Offers; }
 	FName GetFocusProfileName() const { return FocusProfileName; }
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Detection")
-	FName AimProbeSocket = NAME_None;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Detection")
-	FVector AimProbeOffset = FVector::ZeroVector;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Detection", meta = (GetOptions = "FVInteractionSystem.FVInteractionSystemSettings.GetFocusProfileNames"))
@@ -61,6 +57,7 @@ private:
 	void ResolveFocusProfile();
 
 	const FInteractionFocusProfile* CachedFocusProfile = nullptr;
+	TWeakObjectPtr<UPrimitiveComponent> FocusPrimitive;
 };
 
 #undef UE_API

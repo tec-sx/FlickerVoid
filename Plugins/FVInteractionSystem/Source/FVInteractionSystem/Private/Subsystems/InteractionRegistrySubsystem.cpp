@@ -39,7 +39,7 @@ void UInteractionRegistrySubsystem::QueryInRange(const FVector& Origin, float Ma
 
 	for (const TObjectPtr<UInteractableComponent>& Interactable : Interactables)
 	{
-		if (FVector::DistSquared(Origin, Interactable->GetAimProbeLocation()) <= MaxRadiusSq)
+		if (FVector::DistSquared(Origin, Interactable->GetFocusPoint()) <= MaxRadiusSq)
 		{
 			OutResults.Add(Interactable);
 		}

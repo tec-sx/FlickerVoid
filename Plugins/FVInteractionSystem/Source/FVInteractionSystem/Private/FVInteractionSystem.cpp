@@ -4,6 +4,8 @@
 
 #define LOCTEXT_NAMESPACE "FFVInteractionSystemModule"
 
+DEFINE_LOG_CATEGORY(LogFVInteraction);
+
 void FFVInteractionSystemModule::StartupModule()
 {
 }

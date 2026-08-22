@@ -1,9 +1,16 @@
 #include "Components/InteractableComponent.h"
 #include "Components/InteractorComponent.h"
+#include "Components/PrimitiveComponent.h"
+#include "FVInteractionSystem.h"
 #include "FVInteractionSystemSettings.h"
 #include <Subsystems/InteractionRegistrySubsystem.h>
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(InteractableComponent)
+
+namespace
+{
+	constexpr float MinFocusExtent = 10.f;
+}
 
 UInteractableComponent::UInteractableComponent()
 {
@@ -22,6 +29,16 @@ void UInteractableComponent::BeginPlay()
 	bIsInitialized = true;
 
 	ResolveFocusProfile();
+
+	FocusPrimitive = GetOwner()->FindComponentByClass<UPrimitiveComponent>();
+
+	if (!FocusPrimitive.IsValid())
+	{
+		UE_LOG(LogFVInteraction, Warning,
+			TEXT("'%s' has an InteractableComponent but no PrimitiveComponent to derive focus bounds from. It will not be registered as interactable."),
+			*GetOwner()->GetName());
+		return;
+	}
 
 	UInteractionRegistrySubsystem* Registry = GetWorld()->GetSubsystem<UInteractionRegistrySubsystem>();
 
@@ -70,20 +87,29 @@ void UInteractableComponent::ResolveFocusProfile()
 	CachedFocusProfile = &GetDefault<UFVInteractionSystemSettings>()->GetFocusProfile(FocusProfileName);
 }
 
-FVector UInteractableComponent::GetAimProbeLocation() const
+FVector UInteractableComponent::GetFocusPoint() const
 {
-	if (!AimProbeSocket.IsNone())
+	if (const UPrimitiveComponent* Primitive = FocusPrimitive.Get())
 	{
-		if (const USceneComponent* Mesh = GetOwner()->FindComponentByClass<USkeletalMeshComponent>())
-		{
-			if (Mesh->DoesSocketExist(AimProbeSocket))
-			{
-				return Mesh->GetSocketLocation(AimProbeSocket);
-			}
-		}
+		return Primitive->Bounds.Origin;
 	}
 
-	return GetOwner()->GetActorLocation() + AimProbeOffset;
+	return GetOwner() ? GetOwner()->GetActorLocation() : FVector::ZeroVector;
+}
+
+FVector UInteractableComponent::GetClosestFocusPoint(const FVector& FromLocation) const
+{
+	const UPrimitiveComponent* Primitive = FocusPrimitive.Get();
+
+	if (!Primitive)
+	{
+		return GetFocusPoint();
+	}
+
+	const FBoxSphereBounds& Bounds = Primitive->Bounds;
+	const FVector ClampedExtent = FVector::Max(Bounds.BoxExtent, FVector(MinFocusExtent));
+
+	return FBox(Bounds.Origin - ClampedExtent, Bounds.Origin + ClampedExtent).GetClosestPointTo(FromLocation);
 }
 
 void UInteractableComponent::SetFocused(bool bFocused)
