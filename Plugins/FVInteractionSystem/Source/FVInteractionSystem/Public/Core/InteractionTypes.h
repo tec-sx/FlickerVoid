@@ -35,25 +35,6 @@ struct FVINTERACTIONSYSTEM_API FInteractionContext
 };
 
 USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FInteractionFocusProfile
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
-	float DetectionRadius = 10.f;
-
-	// Cosine of the half-angle of the focus cone (0 = 90°, 0.5 = ~60°, 0.85 = ~32°).
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "-1", ClampMax = "1"))
-	float ConeCosine = 0.55f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
-	float AngularWeight = 0.8f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
-	float DistanceWeight = 0.4f;
-};
-
-USTRUCT(BlueprintType)
 struct FVINTERACTIONSYSTEM_API FInteractionOffer
 {
 	GENERATED_BODY()

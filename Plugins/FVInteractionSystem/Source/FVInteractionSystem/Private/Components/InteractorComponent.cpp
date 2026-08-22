@@ -1,8 +1,6 @@
 #include "Components/InteractorComponent.h"
 #include "Components/InteractableComponent.h"
 #include "Core/InteractionRequirement.h"
-#include "FVInteractionSystemSettings.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/PlayerController.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(InteractorComponent)
@@ -94,14 +92,10 @@ bool UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 
 FInteractionContext UInteractorComponent::MakeContext(const UInteractableComponent& Target) const
 {
-	FVector AimOrigin;
-	FVector AimForward;
-	GetAimPoint(AimOrigin, AimForward);
-
 	FInteractionContext Context;
 	Context.Interactor = GetOwner();
 	Context.Target = Target.GetOwner();
-	Context.InteractionPoint = Target.GetClosestFocusPoint(AimOrigin);
+	Context.InteractionPoint = LastFocusImpactPoint.IsNearlyZero() ? Target.GetFocusPoint() : LastFocusImpactPoint;
 	return Context;
 }
 
@@ -130,41 +124,18 @@ bool UInteractorComponent::ResolveAvailability(const FInteractionOffer& Offer, b
 	return Evaluate(GlobalRequirements) && Evaluate(Offer.Requirements);
 }
 
-void UInteractorComponent::GetAimPoint(FVector& OutOrigin, FVector& OutForward) const
+bool UInteractorComponent::GetAimPoint(FVector& OutOrigin, FVector& OutForward) const
 {
-	OutOrigin = Owner ? Owner->GetActorLocation() : FVector::ZeroVector;
-	OutForward = Owner ? Owner->GetActorForwardVector() : FVector::ForwardVector;
-
-	if (!Owner)
+	const APlayerController* PC = Owner ? Cast<APlayerController>(Owner->GetController()) : nullptr;
+	if (!PC)
 	{
-		return;
+		return false;
 	}
 
-	bool bResolvedSocket = false;
-	if (AimSocket != NAME_None)
-	{
-		if (const USkeletalMeshComponent* Mesh = Owner->FindComponentByClass<USkeletalMeshComponent>())
-		{
-			if (Mesh->DoesSocketExist(AimSocket))
-			{
-				OutOrigin = Mesh->GetSocketLocation(AimSocket);
-				bResolvedSocket = true;
-			}
-		}
-	}
-
-	if (!bResolvedSocket)
-	{
-		OutOrigin += AimSocketFallbackOffset;
-	}
-
-	if (const APlayerController* PC = Cast<APlayerController>(Owner->GetController()))
-	{
-		FVector CameraLocation;
-		FRotator ViewRotation;
-		PC->GetPlayerViewPoint(CameraLocation, ViewRotation);
-		OutForward = ViewRotation.Vector();
-	}
+	FRotator ViewRotation;
+	PC->GetPlayerViewPoint(OutOrigin, ViewRotation);
+	OutForward = ViewRotation.Vector();
+	return true;
 }
 
 void UInteractorComponent::DetectInteractables()
@@ -173,55 +144,73 @@ void UInteractorComponent::DetectInteractables()
 
 	FVector AimOrigin;
 	FVector AimForward;
-	GetAimPoint(AimOrigin, AimForward);
+	if (!GetAimPoint(AimOrigin, AimForward))
+	{
+		Candidates.Reset();
+		SetFocusedTarget(nullptr);
+		return;
+	}
 
 	Registry->QueryInRange(PawnLocation, MaxDetectionRadius, Candidates);
 
-	UInteractableComponent* BestCandidate = nullptr;
-	float BestScore = -1.f;
-
-	for (UInteractableComponent* Candidate : Candidates)
+	float GateRadius = 0.f;
+	for (const UInteractableComponent* Candidate : Candidates)
 	{
-		const FInteractionFocusProfile& Profile = Candidate->GetFocusProfile();
-		const FVector FocusPoint = Candidate->GetClosestFocusPoint(AimOrigin);
-		const float Distance = FVector::Dist(FocusPoint, PawnLocation);
-
-		if (Distance > Profile.DetectionRadius)
+		if (FVector::Dist(Candidate->GetFocusPoint(), PawnLocation) <= Candidate->DetectionRadius)
 		{
-			continue;
-		}
-
-		const FVector ToTarget = FocusPoint - AimOrigin;
-		const float Dot = FVector::DotProduct(AimForward, ToTarget.GetSafeNormal());
-		if (Dot < Profile.ConeCosine)
-		{
-			continue;
-		}
-
-		const float AngularRange = 1.f - Profile.ConeCosine;
-		const float AngularQuality = AngularRange > KINDA_SMALL_NUMBER
-			? FMath::Clamp((Dot - Profile.ConeCosine) / AngularRange, 0.f, 1.f)
-			: 1.f;
-
-		const float DistanceQuality = Profile.DetectionRadius > KINDA_SMALL_NUMBER
-			? FMath::Clamp(1.f - Distance / Profile.DetectionRadius, 0.f, 1.f)
-			: 0.f;
-
-		float Score = Profile.AngularWeight * AngularQuality + Profile.DistanceWeight * DistanceQuality;
-
-		if (Candidate == FocusedTarget.Get())
-		{
-			Score += StickyFocusBonus;
-		}
-
-		if (Score > BestScore)
-		{
-			BestScore = Score;
-			BestCandidate = Candidate;
+			GateRadius = FMath::Max(GateRadius, Candidate->DetectionRadius);
 		}
 	}
 
-	SetFocusedTarget(BestCandidate);
+#if !UE_BUILD_SHIPPING
+	DebugSweepDirection = AimForward;
+	bDebugGateOpen = GateRadius > 0.f;
+	bDebugHitOccluder = false;
+	bDebugHasImpact = false;
+#endif
+
+	if (GateRadius <= 0.f)
+	{
+		SetFocusedTarget(nullptr);
+		return;
+	}
+
+	const float SweepLength = GateRadius + FVector::Dist(AimOrigin, PawnLocation);
+
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(FVInteractionSweep), false, Owner);
+
+	FHitResult Hit;
+	GetWorld()->SweepSingleByChannel(
+		Hit,
+		AimOrigin,
+		AimOrigin + AimForward * SweepLength,
+		FQuat::Identity,
+		InteractionChannel,
+		FCollisionShape::MakeSphere(AimSweepRadius),
+		Params);
+
+	UInteractableComponent* HitInteractable = nullptr;
+	if (Hit.bBlockingHit)
+	{
+		if (const AActor* HitActor = Hit.GetActor())
+		{
+			HitInteractable = HitActor->FindComponentByClass<UInteractableComponent>();
+		}
+
+		if (HitInteractable && FVector::Dist(Hit.ImpactPoint, PawnLocation) > HitInteractable->DetectionRadius)
+		{
+			HitInteractable = nullptr;
+		}
+
+#if !UE_BUILD_SHIPPING
+		DebugImpactPoint = Hit.ImpactPoint;
+		bDebugHasImpact = true;
+		bDebugHitOccluder = HitInteractable == nullptr;
+#endif
+	}
+
+	LastFocusImpactPoint = Hit.bBlockingHit ? Hit.ImpactPoint : FVector::ZeroVector;
+	SetFocusedTarget(HitInteractable);
 }
 
 void UInteractorComponent::SetFocusedTarget(UInteractableComponent* NewTarget)

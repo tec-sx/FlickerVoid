@@ -24,13 +24,8 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-#if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
 
-	UE_API const FInteractionFocusProfile& GetFocusProfile() const;
 	UE_API FVector GetFocusPoint() const;
-	UE_API FVector GetClosestFocusPoint(const FVector& FromLocation) const;
 	void SetFocused(bool bFocused);
 	
 	UFUNCTION(BlueprintPure, Category = "Interaction")
@@ -41,12 +36,11 @@ public:
 
 	const FInteractionOffer* FindOffer(const FGameplayTag& InputTag) const { return Offers.Find(InputTag); }
 	const TMap<FGameplayTag, FInteractionOffer>& GetOffers() const { return Offers; }
-	FName GetFocusProfileName() const { return FocusProfileName; }
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Detection", meta = (ClampMin = "0"))
+	float DetectionRadius = 100.f;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Detection", meta = (GetOptions = "FVInteractionSystem.FVInteractionSystemSettings.GetFocusProfileNames"))
-	FName FocusProfileName = TEXT("Loose");
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Actions", meta = (ForceInlineRow, Categories = "InputTag.Interaction"))
 	TMap<FGameplayTag, FInteractionOffer> Offers;
 
@@ -54,9 +48,6 @@ protected:
 	bool bIsInFocus = false;
 
 private:
-	void ResolveFocusProfile();
-
-	const FInteractionFocusProfile* CachedFocusProfile = nullptr;
 	TWeakObjectPtr<UPrimitiveComponent> FocusPrimitive;
 };
 

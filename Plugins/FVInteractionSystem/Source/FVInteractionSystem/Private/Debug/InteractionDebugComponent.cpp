@@ -23,11 +23,6 @@ static TAutoConsoleVariable<bool> CVarInteractionDebugHUD(
 	TEXT("FVCvar.Interaction.Debug.HUD"),
 	false,
 	TEXT("Show an on-screen readout of interaction candidates and resolved prompts"));
-
-static TAutoConsoleVariable<float> CVarInteractionDebugConeLength(
-	TEXT("FVCvar.Interaction.Debug.ConeLength"),
-	200.f,
-	TEXT("Display length of the interaction aim cone, visual only"));
 #endif
 
 UInteractionDebugComponent::UInteractionDebugComponent()
@@ -149,7 +144,10 @@ void UInteractionDebugComponent::DrawVisualizer() const
 
 	FVector AimOrigin;
 	FVector AimForward;
-	InteractorPtr->GetAimPoint(AimOrigin, AimForward);
+	if (!InteractorPtr->GetAimPoint(AimOrigin, AimForward))
+	{
+		return;
+	}
 
 	DrawDebugCircle(
 		World,
@@ -162,77 +160,71 @@ void UInteractionDebugComponent::DrawVisualizer() const
 		FVector::RightVector,
 		false);
 
-	float ConeHalfAngleRad = 0.f;
-
-	for (const UInteractableComponent* Candidate : InteractorPtr->GetDebugCandidates())
+	const UInteractionRegistrySubsystem* Registry = World->GetSubsystem<UInteractionRegistrySubsystem>();
+	if (!Registry)
 	{
-		if (!Candidate)
+		return;
+	}
+
+	for (const UInteractableComponent* Interactable : Registry->GetAll())
+	{
+		if (!Interactable)
 		{
 			continue;
 		}
 
-		const FInteractionFocusProfile& Profile = Candidate->GetFocusProfile();
-		const FVector FocusPoint = Candidate->GetFocusPoint();
-		const FVector ClosestPoint = Candidate->GetClosestFocusPoint(AimOrigin);
-		const bool bIsFocused = Candidate == FocusedTarget;
-		const bool bInRange = FVector::Dist(ClosestPoint, PawnLocation) <= Profile.DetectionRadius;
-
-		const float HalfAngleRad = FMath::Acos(FMath::Clamp(Profile.ConeCosine, -1.f, 1.f));
-		if (bIsFocused)
-		{
-			ConeHalfAngleRad = HalfAngleRad;
-		}
-		else if (ConeHalfAngleRad <= 0.f || !FocusedTarget)
-		{
-			ConeHalfAngleRad = FMath::Max(ConeHalfAngleRad, HalfAngleRad);
-		}
+		const FVector FocusPoint = Interactable->GetFocusPoint();
+		const bool bIsFocused = Interactable == FocusedTarget;
+		const bool bInRange = FVector::Dist(FocusPoint, PawnLocation) <= Interactable->DetectionRadius;
 
 		const FColor CandidateColor = bIsFocused
-			? FColor::Yellow
-			: (bInRange ? FColor::Green : FColor(80, 80, 80));
-
-		if (const AActor* TargetOwner = Candidate->GetOwner())
-		{
-			FVector BoundsOrigin;
-			FVector BoundsExtent;
-			TargetOwner->GetActorBounds(true, BoundsOrigin, BoundsExtent);
-
-			DrawDebugBox(World, BoundsOrigin, BoundsExtent, TargetOwner->GetActorQuat(), CandidateColor, false, -1.f, 0, bIsFocused ? 1.f : 0.5f);
-		}
+			? FColor::Green
+			: (bInRange ? FColor::Yellow : FColor(80, 80, 80));
 
 		DrawDebugCircle(
 			World,
 			FocusPoint,
-			Profile.DetectionRadius,
+			Interactable->DetectionRadius,
 			48,
 			CandidateColor,
-			false, -1.f, 0, 0.5f,
+			false, -1.f, 0, bIsFocused ? 1.f : 0.5f,
 			FVector::ForwardVector,
 			FVector::RightVector,
 			false);
 
-		DrawDebugPoint(World, ClosestPoint, 8.f, bIsFocused ? FColor::Yellow : FColor::Cyan, false, -1.f, 0);
-
 		if (bIsFocused)
 		{
-			DrawDebugLine(World, AimOrigin, ClosestPoint, FColor::Yellow, false, -1.f, 0, 0.5f);
+			if (const AActor* TargetOwner = Interactable->GetOwner())
+			{
+				FVector BoundsOrigin;
+				FVector BoundsExtent;
+				TargetOwner->GetActorBounds(true, BoundsOrigin, BoundsExtent);
+
+				DrawDebugBox(World, BoundsOrigin, BoundsExtent, TargetOwner->GetActorQuat(), CandidateColor, false, -1.f, 0, 1.f);
+			}
 		}
 	}
 
-	if (ConeHalfAngleRad > 0.f)
+	if (InteractorPtr->HasDebugImpact())
 	{
-		const float ConeLength = CVarInteractionDebugConeLength.GetValueOnGameThread();
+		const FVector SweepDirection = InteractorPtr->GetDebugSweepDirection().GetSafeNormal();
+		FVector DiscX;
+		FVector DiscY;
+		SweepDirection.FindBestAxisVectors(DiscX, DiscY);
 
-		DrawDebugCone(
+		DrawDebugCircle(
 			World,
-			AimOrigin,
-			AimForward,
-			ConeLength,
-			ConeHalfAngleRad,
-			ConeHalfAngleRad,
+			InteractorPtr->GetDebugImpactPoint(),
+			InteractorPtr->AimSweepRadius,
 			24,
-			FColor::Silver,
-			false, -1.f, 0, 0.5f);
+			InteractorPtr->DidDebugHitOccluder() ? FColor::Red : FColor::Green,
+			false, -1.f, 0, 0.5f,
+			DiscX,
+			DiscY,
+			false);
+
+		DrawDebugLine(World, AimOrigin, InteractorPtr->GetDebugImpactPoint(),
+			InteractorPtr->DidDebugHitOccluder() ? FColor::Red : FColor::Green, false, -1.f, 0, 0.5f);
 	}
 }
 
@@ -264,10 +256,6 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 	FVector ViewForward;
 	GetViewPoint(PawnLocation, ViewLocation, ViewForward);
 
-	FVector AimOrigin;
-	FVector AimForward;
-	InteractorPtr->GetAimPoint(AimOrigin, AimForward);
-
 	const UInteractableComponent* FocusedTarget = InteractorPtr->GetFocusedTarget();
 
 	const float X = 20.f;
@@ -292,36 +280,27 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 			continue;
 		}
 
-		const FInteractionFocusProfile& Profile = Candidate->GetFocusProfile();
-		const FVector ClosestPoint = Candidate->GetClosestFocusPoint(AimOrigin);
-		const float Distance = FVector::Dist(ClosestPoint, PawnLocation);
-		const float Dot = FVector::DotProduct(AimForward, (ClosestPoint - AimOrigin).GetSafeNormal());
-
-		const float AngularRange = 1.f - Profile.ConeCosine;
-		const float AngularQuality = AngularRange > KINDA_SMALL_NUMBER
-			? FMath::Clamp((Dot - Profile.ConeCosine) / AngularRange, 0.f, 1.f)
-			: 1.f;
-
-		const float DistanceQuality = Profile.DetectionRadius > KINDA_SMALL_NUMBER
-			? FMath::Clamp(1.f - Distance / Profile.DetectionRadius, 0.f, 1.f)
-			: 0.f;
-
+		const float Distance = FVector::Dist(Candidate->GetFocusPoint(), PawnLocation);
 		const bool bIsFocused = Candidate == FocusedTarget;
-
-		float Score = Profile.AngularWeight * AngularQuality + Profile.DistanceWeight * DistanceQuality;
-		if (bIsFocused)
-		{
-			Score += InteractorPtr->StickyFocusBonus;
-		}
+		const bool bInRange = Distance <= Candidate->DetectionRadius;
 
 		const AActor* TargetOwner = Candidate->GetOwner();
-		DrawLine(FString::Printf(TEXT("%s%s [%s]: Ang=%.2f Dist=%.2f Score=%.2f"),
+		DrawLine(FString::Printf(TEXT("%s%s: Dist=%.0f/%.0f %s"),
 			bIsFocused ? TEXT("* ") : TEXT("  "),
 			TargetOwner ? *TargetOwner->GetName() : TEXT("?"),
-			*Candidate->GetFocusProfileName().ToString(),
-			AngularQuality, DistanceQuality, Score),
+			Distance,
+			Candidate->DetectionRadius,
+			bInRange ? TEXT("in-range") : TEXT("out-of-range")),
 			bIsFocused ? HeaderColor : TextColor);
 	}
+
+	Y += LineHeight * 0.5f;
+	DrawLine(FString::Printf(TEXT("Sweep: gate=%s %s"),
+		InteractorPtr->IsDebugGateOpen() ? TEXT("open") : TEXT("closed"),
+		!InteractorPtr->HasDebugImpact()
+			? TEXT("no hit")
+			: (InteractorPtr->DidDebugHitOccluder() ? TEXT("blocked by occluder") : TEXT("hit interactable"))),
+		TextColor);
 
 	Y += LineHeight * 0.5f;
 	DrawLine(TEXT("-- Prompts --"), HeaderColor);

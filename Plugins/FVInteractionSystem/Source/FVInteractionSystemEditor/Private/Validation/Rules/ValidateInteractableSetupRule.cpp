@@ -2,7 +2,6 @@
 
 #include "Components/InteractableComponent.h"
 #include "Core/InteractionGameplayTags.h"
-#include "FVInteractionSystemSettings.h"
 #include "Engine/Blueprint.h"
 #include "Kismet2/CompilerResultsLog.h"
 #include "Validation/InteractionBlueprintComponentUtils.h"
@@ -17,23 +16,12 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 	TArray<const UActorComponent*> Templates;
 	InteractionBlueprintComponentUtils::GetComponentTemplatesOfClass(Context.Blueprint, UInteractableComponent::StaticClass(), Templates);
 
-	const UFVInteractionSystemSettings* Settings = GetDefault<UFVInteractionSystemSettings>();
-
 	for (const UActorComponent* Template : Templates)
 	{
 		const UInteractableComponent* Interactable = Cast<UInteractableComponent>(Template);
 		if (!Interactable)
 		{
 			continue;
-		}
-
-		const FName ProfileName = Interactable->GetFocusProfileName();
-		if (ProfileName.IsNone() || !Settings->FocusProfiles.Contains(ProfileName))
-		{
-			Context.MessageLog.Error(*FString::Printf(
-				TEXT("Interactable component '%s' references focus profile '%s', which is not defined in the FV Interaction System settings."),
-				*Interactable->GetName(),
-				*ProfileName.ToString()));
 		}
 
 		for (const TPair<FGameplayTag, FInteractionOffer>& Pair : Interactable->GetOffers())

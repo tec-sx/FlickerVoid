@@ -39,18 +39,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UE_API bool TryExecuteAction(FGameplayTag InputTag);
 
-	UE_API void GetAimPoint(FVector& OutOrigin, FVector& OutForward) const;
+	UE_API bool GetAimPoint(FVector& OutOrigin, FVector& OutForward) const;
 
 	FExecuteInteractionAction ExecuteAction;
 
 	UPROPERTY(EditAnywhere, Instanced, Category = "Interaction")
 	TArray<TObjectPtr<UInteractionRequirement>> GlobalRequirements;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
-	FName AimSocket = TEXT("head");
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
-	FVector AimSocketFallbackOffset = FVector(0.f, 0.f, 60.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
 	float MaxDetectionRadius = 600.f;
@@ -58,8 +52,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
 	float DetectionUpdateInterval = 0.05f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
-	float StickyFocusBonus = 0.1f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection", meta = (ClampMin = "0"))
+	float AimSweepRadius = 15.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
+	TEnumAsByte<ECollisionChannel> InteractionChannel = ECC_GameTraceChannel1;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnInteractionFocusChanged OnFocusChanged;
@@ -81,6 +78,11 @@ public:
 	EDebugActionOutcome GetDebugLastOutcome() const { return DebugLastOutcome; }
 	FGameplayTag GetDebugLastInputTag() const { return DebugLastInputTag; }
 	double GetDebugLastActionTime() const { return DebugLastActionTime; }
+	bool IsDebugGateOpen() const { return bDebugGateOpen; }
+	bool DidDebugHitOccluder() const { return bDebugHitOccluder; }
+	bool HasDebugImpact() const { return bDebugHasImpact; }
+	FVector GetDebugImpactPoint() const { return DebugImpactPoint; }
+	FVector GetDebugSweepDirection() const { return DebugSweepDirection; }
 #endif
 
 private:
@@ -99,6 +101,7 @@ private:
 
 	UInteractionRegistrySubsystem* Registry;
 	TArray<UInteractableComponent*> Candidates;
+	FVector LastFocusImpactPoint = FVector::ZeroVector;
 
 	UPROPERTY(Transient)
 	TArray<FInteractionPrompt> CachedPrompts;
@@ -107,6 +110,11 @@ private:
 	EDebugActionOutcome DebugLastOutcome = EDebugActionOutcome::None;
 	FGameplayTag DebugLastInputTag;
 	double DebugLastActionTime = 0.0;
+	FVector DebugImpactPoint = FVector::ZeroVector;
+	FVector DebugSweepDirection = FVector::ForwardVector;
+	bool bDebugHitOccluder = false;
+	bool bDebugHasImpact = false;
+	bool bDebugGateOpen = false;
 #endif
 };
 
