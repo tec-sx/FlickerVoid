@@ -14,9 +14,6 @@ class APlayerCharacter : AFVPlayerCharacter
 
     UPROPERTY(DefaultComponent)
     UNavigationMarkerComponent NavigationMarker;
-
-    UPROPERTY(DefaultComponent)
-    UInteractorComponent InteractorComponent;
     
     UPROPERTY()
     UFVTraversalComponent Traversal;
