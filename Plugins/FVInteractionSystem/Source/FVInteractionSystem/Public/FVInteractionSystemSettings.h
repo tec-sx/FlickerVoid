@@ -7,7 +7,7 @@
 #include "Core/InteractionTypes.h"
 #include "FVInteractionSystemSettings.generated.h"
 
-UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "FV Interaction System"))
+UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Interaction System"))
 class FVINTERACTIONSYSTEM_API UFVInteractionSystemSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()

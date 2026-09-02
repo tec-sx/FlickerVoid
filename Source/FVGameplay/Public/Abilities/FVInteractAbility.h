@@ -1,14 +1,12 @@
 #pragma once
 
 #include "Abilities/FVGameplayAbility.h"
-#include "Interactions/FVInteractionTypes.h"
-#include "UI/FVInteractionInfo.h"
 #include "FVInteractAbility.generated.h"
 
 #define UE_API FLICKERVOIDGAMEPLAY_API
 
-class UFVInteractionOfferComponent;
-class UFVInteractionTargetComponent;
+class UInteractorComponent;
+class UInteractableComponent;
 
 UCLASS(MinimalAPI, Abstract)
 class UFVInteractAbility : public UFVGameplayAbility
@@ -17,36 +15,13 @@ class UFVInteractAbility : public UFVGameplayAbility
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Interaction")
-	UE_API UFVInteractionOfferComponent* GetOfferComponent() const;
+	UE_API UInteractorComponent* GetInteractor() const;
 
-	UE_API virtual bool CanActivateAbility(
-		const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayTagContainer* SourceTags = nullptr,
-		const FGameplayTagContainer* TargetTags = nullptr,
-		FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
-
-	UE_API virtual void ActivateAbility(
-		const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayAbilityActivationInfo ActivationInfo,
-		const FGameplayEventData* TriggerEventData) override;
-
-	UE_API virtual void EndAbility(
-		const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayAbilityActivationInfo ActivationInfo,
-		bool bReplicateEndAbility,
-		bool bWasCancelled) override;
-
-protected:
-	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
-	void ActivateInteraction(UFVInteractionOfferComponent* Offers, AActor* InteractableActor);
-
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	UE_API UInteractableComponent* GetInteractable() const;
+	
 private:
-	UE_API UFVInteractionOfferComponent* GetOfferComponentFromActorInfo(const FGameplayAbilityActorInfo* ActorInfo) const;
-
-	EFVInteractionSlot ResolveSlotFromSpec(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const;
+	UE_API UInteractorComponent* GetInteractor(const FGameplayAbilityActorInfo* ActorInfo) const;
 };
 
 #undef UE_API

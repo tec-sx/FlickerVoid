@@ -28,6 +28,7 @@ public class FlickerVoidGameplay : ModuleRules
             "GameplayMessageRuntime",
             "FlickerVoidCharacter",
             "Flow",
+            "FVInteractionSystem",
         });
 
 		if (Target.bBuildEditor)

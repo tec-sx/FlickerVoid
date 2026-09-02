@@ -35,17 +35,6 @@ void UInteractionPromptWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-bool UInteractionPromptWidget::ResolveStyle(FGameplayTag ActionTag, FInteractionPromptStyle& OutStyle) const
-{
-	if (StyleAsset)
-	{
-		return StyleAsset->FindStyle(ActionTag, OutStyle);
-	}
-
-	OutStyle = FInteractionPromptStyle();
-	return false;
-}
-
 bool UInteractionPromptWidget::ResolveKeyBinding(FGameplayTag InputTag, FInteractionKeyBinding& OutBinding) const
 {
 	if (const FInteractionKeyBinding* Binding = GetDefault<UFVInteractionSystemSettings>()->FindInputBinding(InputTag))

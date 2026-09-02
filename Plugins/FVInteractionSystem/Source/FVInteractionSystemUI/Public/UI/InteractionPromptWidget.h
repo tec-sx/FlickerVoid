@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Core/InteractionTypes.h"
-#include "UI/InteractionPromptStyle.h"
+#include "Core/InteractionUITypes.h"
 
 #include "InteractionPromptWidget.generated.h"
 
@@ -29,13 +29,7 @@ protected:
 	void OnPromptsUpdated(const TArray<FInteractionPrompt>& Prompts);
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|UI")
-	bool ResolveStyle(FGameplayTag ActionTag, FInteractionPromptStyle& OutStyle) const;
-
-	UFUNCTION(BlueprintPure, Category = "Interaction|UI")
 	bool ResolveKeyBinding(FGameplayTag InputTag, FInteractionKeyBinding& OutBinding) const;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Interaction|UI")
-	TObjectPtr<UInteractionPromptStyleAsset> StyleAsset;
 
 private:
 	UFUNCTION()

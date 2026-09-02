@@ -5,5 +5,5 @@ class UPlayerSettings : UDeveloperSettings
     TSoftClassPtr<UDialogueWidget> DialogueWidgetClass;
 
     UPROPERTY(Config, EditAnywhere, Category = UI)
-    TSoftClassPtr<UFVInteractionPromptWidget> InteractionPromptWidgetClass;
+    TSoftClassPtr<UInteractionOptionsWidget> InteractionOptionsWidgetClass;
 }

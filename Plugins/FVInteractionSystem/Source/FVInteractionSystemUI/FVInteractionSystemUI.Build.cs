@@ -27,6 +27,7 @@ public class FVInteractionSystemUI : ModuleRules
                 "SlateCore",
                 "UMG",
                 "DeveloperSettings",
+                "Slate"
             }
             );
     }

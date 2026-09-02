@@ -3,16 +3,18 @@ class UFVTalkAbility : UFVInteractAbility
 	default AbilityTags.AddTag(GameplayTags::Interaction_Action_Talk);
 
 	UFUNCTION(BlueprintOverride)
-	void ActivateInteraction(UFVInteractionOfferComponent Offers, AActor InteractableActor)
+	void ActivateAbility()
 	{
-		Print("Talk");
-		UFlowComponent FlowComponent = Offers.EngagedActor.GetComponentByClass(UFlowComponent);
-
-		if (IsValid(FlowComponent))
+		if (IsValid(Interactable))
 		{
-			FlowComponent.NotifyGraph(GameplayTags::Interaction_Action_Talk);
+			UFlowComponent FlowComponent = Interactable.GetOwner().GetComponentByClass(UFlowComponent);
+	
+			if (IsValid(FlowComponent))
+			{
+				FlowComponent.NotifyGraph(GameplayTags::Interaction_Action_Talk);
+			}
+	
+			EndAbility();
 		}
-
-		EndAbility();
 	}
 }

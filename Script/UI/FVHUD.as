@@ -15,9 +15,9 @@ class AFVHUD : AHUD
 	    {
 			UPlayerSettings PlayerSettings = UPlayerSettings.GetDefaultObject();
 
-			if (PlayerSettings.InteractionPromptWidgetClass.IsValid())
+			if (PlayerSettings.InteractionOptionsWidgetClass.IsValid())
 			{
-				InteractionPromptWidget = WidgetBlueprint::CreateWidget(PlayerSettings.InteractionPromptWidgetClass.Get(), PC);
+				InteractionPromptWidget = WidgetBlueprint::CreateWidget(PlayerSettings.InteractionOptionsWidgetClass.Get(), PC);
 				InteractionPromptWidget.AddToViewport(0);
 			}
 

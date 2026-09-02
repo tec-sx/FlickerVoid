@@ -60,10 +60,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "FlickerVoid|Item")
 	bool bIsFocused;
 
-	/** Interaction action data assets - configure in Blueprint or defaults */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FlickerVoid|Item|Interaction")
-	TObjectPtr<UFVInteractionSet> InteractionSet;
-
 	/** Blueprint event when focused */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlickerVoid|Item")
 	void BP_OnFocusGained();

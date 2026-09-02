@@ -1,4 +1,4 @@
-﻿class UFVPickupAbility : UFVGameplayAbility
+﻿class UFVPickupAbility : UFVInteractAbility
 {
 	UPROPERTY(EditDefaultsOnly, Category = "Pickup")
 	UAnimMontage PickupMontage;
@@ -8,7 +8,7 @@
 	{
 		if (PickupMontage == nullptr)
 		{
-			FinishPickup(ActorInfo);
+			FinishPickup();
 			return;
 		}
 
@@ -24,30 +24,19 @@
 	UFUNCTION()
 	void HandleMontageFinished()
 	{
-		FinishPickup(ActorInfo);
+		FinishPickup();
 	}
 
-	private void FinishPickup(FGameplayAbilityActorInfo InActorInfo)
+	private void FinishPickup()
 	{
-		AActor Instigator = InActorInfo.AvatarActor;
-
-		UFVInteractionOfferComponent Offers =
-			Cast<UFVInteractionOfferComponent>(Instigator.GetComponentByClass(UFVInteractionOfferComponent));
-
-		if (Offers != nullptr)
+		if (IsValid(Interactable) && IsValid(Interactor))
 		{
-			UFVInteractionTargetComponent Target = Offers.GetEngagedTarget();
+			AFVItemPickup Pickup = Cast<AFVItemPickup>(Interactable.GetOwner());
+			UFVInventoryComponent Inventory = Interactor.GetOwner().GetComponentByClass(UFVInventoryComponent);
 
-			if (Target != nullptr)
+			if (Pickup != nullptr && Inventory != nullptr)
 			{
-				AFVItemPickup Pickup = Cast<AFVItemPickup>(Target.GetOwner());
-				UFVInventoryComponent Inventory =
-					Cast<UFVInventoryComponent>(Instigator.GetComponentByClass(UFVInventoryComponent));
-
-				if (Pickup != nullptr && Inventory != nullptr)
-				{
-					Pickup.ExecutePickup(Inventory);
-				}
+				Pickup.ExecutePickup(Inventory);
 			}
 		}
 
