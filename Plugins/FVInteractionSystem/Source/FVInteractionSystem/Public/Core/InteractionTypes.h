@@ -38,7 +38,10 @@ USTRUCT(BlueprintType)
 struct FVINTERACTIONSYSTEM_API FInteractionOffer
 {
 	GENERATED_BODY()
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "InputTag.Interaction"))
+	FGameplayTag InputTag;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Interaction.Action"))
 	FGameplayTag ActionTag;
 
@@ -48,7 +51,7 @@ struct FVINTERACTIONSYSTEM_API FInteractionOffer
 	UPROPERTY(EditAnywhere, Instanced, Category = "Interaction")
 	TArray<TObjectPtr<UInteractionRequirement>> Requirements;
 
-	bool IsValid() const { return bOffered && ActionTag.IsValid(); }
+	bool IsValid() const { return InputTag.IsValid() && bOffered && ActionTag.IsValid(); }
 };
 
 USTRUCT(BlueprintType)
@@ -89,3 +92,4 @@ struct FVINTERACTIONSYSTEM_API FInteractionPrompt
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionFocusChanged, UInteractableComponent*, Target);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionOffersChanged, const TArray<FInteractionPrompt>&, Prompts);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionExecuted, const FGameplayTag&, ActionTag);

@@ -77,7 +77,8 @@ bool UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 #if !UE_BUILD_SHIPPING
 		DebugLastOutcome = bExecuted ? EDebugActionOutcome::Succeeded : EDebugActionOutcome::ExecuteFailed;
 #endif
-
+		
+		Target->OnInteractionExecuted.Broadcast(Prompt->ActionTag);
 		RefreshOffers();
 	}
 #if !UE_BUILD_SHIPPING
@@ -247,15 +248,15 @@ void UInteractorComponent::RefreshOffers(bool bForceBroadcast)
 
 	TArray<FInteractionPrompt> NewPrompts;
 
-	for (const TPair<FGameplayTag, FInteractionOffer>& Pair : Target->GetOffers())
+	for (const FInteractionOffer& Offer : Target->GetOffers())
 	{
-		if (!Pair.Value.IsValid())
+		if (!Offer.IsValid())
 		{
 			continue;
 		}
 
 		bool bHidden = false;
-		const bool bMet = ResolveAvailability(Pair.Value, bHidden);
+		const bool bMet = ResolveAvailability(Offer, bHidden);
 
 		if (!bMet && bHidden)
 		{
@@ -263,8 +264,8 @@ void UInteractorComponent::RefreshOffers(bool bForceBroadcast)
 		}
 
 		FInteractionPrompt& Prompt = NewPrompts.AddDefaulted_GetRef();
-		Prompt.InputTag = Pair.Key;
-		Prompt.ActionTag = Pair.Value.ActionTag;
+		Prompt.InputTag = Offer.InputTag;
+		Prompt.ActionTag = Offer.ActionTag;
 		Prompt.bEnabled = bMet;
 	}
 

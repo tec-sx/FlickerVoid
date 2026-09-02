@@ -22,12 +22,20 @@ void UInteractableComponent::BeginPlay()
 
 	bIsInitialized = true;
 
-	FocusPrimitive = GetOwner()->FindComponentByClass<UPrimitiveComponent>();
+	if (!FocusComponentTag.IsValid())
+	{
+		UE_LOG(LogFVInteraction, Warning,
+			TEXT("'%s' has an InteractableComponent but no FocusComponentTag value is set. It will not be registered as interactable."),
+			*GetOwner()->GetName());
+		return;
+	}
+	
+	FocusPrimitive = GetOwner()->FindComponentByTag<UPrimitiveComponent>(FocusComponentTag);
 
 	if (!FocusPrimitive.IsValid())
 	{
 		UE_LOG(LogFVInteraction, Warning,
-			TEXT("'%s' has an InteractableComponent but no PrimitiveComponent to derive focus bounds from. It will not be registered as interactable."),
+			TEXT("'%s' has an InteractableComponent but no PrimitiveComponent with the set tag value was found to derive focus bounds from. It will not be registered as interactable."),
 			*GetOwner()->GetName());
 		return;
 	}
@@ -74,4 +82,12 @@ void UInteractableComponent::SetFocused(bool bFocused)
 	{
 		bIsInFocus = bFocused;
 	}
+}
+
+const FInteractionOffer* UInteractableComponent::FindOffer(const FGameplayTag& InputTag) const
+{
+	return Offers.FindByPredicate([InputTag](const FInteractionOffer& Offer)
+	{
+		return Offer.InputTag == InputTag;
+	});
 }

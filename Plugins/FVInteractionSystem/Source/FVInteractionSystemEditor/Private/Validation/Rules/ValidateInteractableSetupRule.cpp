@@ -24,31 +24,31 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 			continue;
 		}
 
-		for (const TPair<FGameplayTag, FInteractionOffer>& Pair : Interactable->GetOffers())
+		for (const FInteractionOffer& Offer : Interactable->GetOffers())
 		{
-			if (!Pair.Value.ActionTag.IsValid())
+			if (!Offer.ActionTag.IsValid())
 			{
 				Context.MessageLog.Error(*FString::Printf(
 					TEXT("Interactable component '%s' has an offer for input '%s' with no action tag."),
 					*Interactable->GetName(),
-					*Pair.Key.ToString()));
+					*Offer.InputTag.ToString()));
 			}
-			else if (!Pair.Value.ActionTag.MatchesTag(InteractionTags::Interaction_Action))
+			else if (!Offer.ActionTag.MatchesTag(InteractionTags::Interaction_Action))
 			{
 				Context.MessageLog.Error(*FString::Printf(
 					TEXT("Interactable component '%s' offer '%s' uses action tag '%s', which is not under '%s'."),
 					*Interactable->GetName(),
-					*Pair.Key.ToString(),
-					*Pair.Value.ActionTag.ToString(),
+					*Offer.InputTag.ToString(),
+					*Offer.ActionTag.ToString(),
 					*InteractionTags::Interaction_Action.GetTag().ToString()));
 			}
 
-			if (Pair.Value.Requirements.Contains(nullptr))
+			if (Offer.Requirements.Contains(nullptr))
 			{
 				Context.MessageLog.Error(*FString::Printf(
 					TEXT("Interactable component '%s' offer '%s' has an empty requirement entry."),
 					*Interactable->GetName(),
-					*Pair.Key.ToString()));
+					*Offer.InputTag.ToString()));
 			}
 		}
 	}
