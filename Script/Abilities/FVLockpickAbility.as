@@ -7,7 +7,7 @@ class UFVLockpickAbility : UFVInteractAbility
 	UAnimMontage LockpickMontage;
 
 	private FGameplayMessageListenerHandle LockpickEndedHandle;
-
+	
 	UFUNCTION(BlueprintOverride)
 	void ActivateAbility()
 	{

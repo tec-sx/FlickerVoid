@@ -7,6 +7,7 @@
 class UTexture2D;
 
 class UInteractableComponent;
+class UInteractorComponent;
 class UInteractionRequirement;
 
 UENUM(BlueprintType)
@@ -17,6 +18,13 @@ enum class EInteractionStatus : uint8
 	Completed,
 	Failed,
 	Cancelled,
+};
+
+enum class EInteractionSlotVisibility : uint8
+{
+	Visible,
+	Hidden,
+	Disabled,
 };
 
 USTRUCT(BlueprintType)
@@ -45,13 +53,10 @@ struct FVINTERACTIONSYSTEM_API FInteractionOffer
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Interaction.Action"))
 	FGameplayTag ActionTag;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bOffered = true;
-
 	UPROPERTY(EditAnywhere, Instanced, Category = "Interaction")
 	TArray<TObjectPtr<UInteractionRequirement>> Requirements;
 
-	bool IsValid() const { return InputTag.IsValid() && bOffered && ActionTag.IsValid(); }
+	bool IsValid() const { return InputTag.IsValid() && ActionTag.IsValid(); }
 };
 
 USTRUCT(BlueprintType)
@@ -67,7 +72,7 @@ struct FVINTERACTIONSYSTEM_API FInteractionKeyBinding
 };
 
 USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FInteractionPrompt
+struct FVINTERACTIONSYSTEM_API FInteractionSlot
 {
 	GENERATED_BODY()
 
@@ -82,14 +87,14 @@ struct FVINTERACTIONSYSTEM_API FInteractionPrompt
 
 	bool IsEnabled() const { return bEnabled; }
 
-	bool operator==(const FInteractionPrompt& Other) const
+	bool operator==(const FInteractionSlot& Other) const
 	{
 		return InputTag == Other.InputTag && ActionTag == Other.ActionTag && bEnabled == Other.bEnabled;
 	}
 
-	bool operator!=(const FInteractionPrompt& Other) const { return !(*this == Other); }
+	bool operator!=(const FInteractionSlot& Other) const { return !(*this == Other); }
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionFocusChanged, UInteractableComponent*, Target);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionOffersChanged, const TArray<FInteractionPrompt>&, Prompts);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionExecuted, const FGameplayTag&, ActionTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionOffersChanged, const TArray<FInteractionSlot>&, Prompts);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractionExecuted, const FGameplayTag&, ActionTag, UInteractorComponent*,  Interactor);

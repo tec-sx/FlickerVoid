@@ -20,11 +20,6 @@
 		"LoadingPhase": "Default"
 	},
 	{
-		"Name": "FVInteractionSystemUI",
-		"Type": "Runtime",
-		"LoadingPhase": "Default"
-	},
-	{
 		"Name": "FVInteractionSystemEditor",
 		"Type": "Editor",
 		"LoadingPhase": "Default"

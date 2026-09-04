@@ -8,44 +8,44 @@
 
 #include "FVAbilitySet.generated.h"
 
+class UFVInteractAbility;
 class UAttributeSet;
 class UGameplayEffect;
 class UFVAbilitySystemComponent;
 class UFVGameplayAbility;
 class UObject;
 
-
-/**
- * FFVAbilitySet_GameplayAbility
- *
- *	Data used by the ability set to grant gameplay abilities.
- */
 USTRUCT(BlueprintType)
 struct FFVAbilitySet_GameplayAbility
 {
 	GENERATED_BODY()
-
-public:
-
-	// Gameplay ability to grant.
+	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UFVGameplayAbility> Ability;
 
-	// Level of ability to grant.
 	UPROPERTY(EditDefaultsOnly)
 	int32 AbilityLevel = 1;
 
-	// Tag used to process input for the ability.
 	UPROPERTY(EditDefaultsOnly, Meta = (Categories = "InputTag"))
 	FGameplayTag InputTag;
 };
 
+USTRUCT(BlueprintType)
+struct FFVAbilitySet_InteractAbility
+{
+	GENERATED_BODY()
 
-/**
- * FFVAbilitySet_GameplayEffect
- *
- *	Data used by the ability set to grant gameplay effects.
- */
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UFVInteractAbility> Ability;
+	
+	UPROPERTY(EditDefaultsOnly)
+	int32 AbilityLevel = 1;
+	
+	UPROPERTY(EditDefaultsOnly, Meta = (Categories = "Interaction.Action"))
+	FGameplayTag ActionTag;
+};
+
+
 USTRUCT(BlueprintType)
 struct FFVAbilitySet_GameplayEffect
 {
@@ -127,16 +127,15 @@ public:
 #endif
 
 protected:
-
-	// Gameplay abilities to grant when this ability set is granted.
 	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Abilities", meta = (TitleProperty = Ability))
 	TArray<FFVAbilitySet_GameplayAbility> GrantedGameplayAbilities;
-
-	// Gameplay effects to grant when this ability set is granted.
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction Abilities", meta = (TitleProperty = Ability))
+	TArray<FFVAbilitySet_InteractAbility> GrantedInteractionAbilities;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Effects", meta = (TitleProperty = GameplayEffect))
 	TArray<FFVAbilitySet_GameplayEffect> GrantedGameplayEffects;
 
-	// Attribute sets to grant when this ability set is granted.
 	UPROPERTY(EditDefaultsOnly, Category = "Attribute Sets", meta = (TitleProperty = AttributeSet))
 	TArray<FFVAbilitySet_AttributeSet> GrantedAttributes;
 };

@@ -17,7 +17,10 @@ class APlayerCharacter : AFVPlayerCharacter
     
     UPROPERTY()
     UFVTraversalComponent Traversal;
-
+    
+    UPROPERTY()
+    FIKGoal RightHandIKGoal;
+    
     bool bJustLanded = false;
     bool bIsRagdolling = false;
 
@@ -41,6 +44,8 @@ class APlayerCharacter : AFVPlayerCharacter
 
             GameplayCamera.ActivateCameraForPlayerController(PlayerController, true);
         }
+
+        FVAbilitySystemComponent.AddLooseGameplayTag(GameplayTags::Ability_Technical_LockPick);
     }
 
     APlayerCharacter()

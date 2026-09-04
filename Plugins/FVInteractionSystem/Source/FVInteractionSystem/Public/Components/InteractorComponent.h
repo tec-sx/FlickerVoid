@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Core/InteractionRequirement.h"
 #include "Core/InteractionTypes.h"
 
 #include "Subsystems/InteractionRegistrySubsystem.h"
@@ -34,7 +35,7 @@ public:
 	UE_API UInteractableComponent* GetFocusedTarget() const { return FocusedTarget.Get(); }
 	
 	UFUNCTION(BlueprintPure)
-	UE_API const TArray<FInteractionPrompt>& GetPrompts() const { return CachedPrompts; }
+	UE_API const TArray<FInteractionSlot>& GetPrompts() const { return CachedPrompts; }
 
 	UFUNCTION(BlueprintCallable)
 	UE_API bool TryExecuteAction(FGameplayTag InputTag);
@@ -92,8 +93,11 @@ private:
 	void RefreshOffers(bool bForceBroadcast = true);
 	void DetectInteractables();
 	void SetFocusedTarget(UInteractableComponent* NewTarget);
-	bool ResolveAvailability(const FInteractionOffer& Offer, bool& bOutHidden) const;
 	FInteractionContext MakeContext(const UInteractableComponent& Target) const;
+	bool EvaluateRequirements(
+		const FGameplayTag ActionTag, 
+		const TArray<TObjectPtr<UInteractionRequirement>>& Requirements,
+		bool& bOutHidden) const;
 
 	UPROPERTY(Transient)
 	TObjectPtr<APawn> Owner;
@@ -107,7 +111,7 @@ private:
 	FVector LastFocusImpactPoint = FVector::ZeroVector;
 
 	UPROPERTY(Transient)
-	TArray<FInteractionPrompt> CachedPrompts;
+	TArray<FInteractionSlot> CachedPrompts;
 
 #if !UE_BUILD_SHIPPING
 	EDebugActionOutcome DebugLastOutcome = EDebugActionOutcome::None;

@@ -305,7 +305,7 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 	Y += LineHeight * 0.5f;
 	DrawLine(TEXT("-- Prompts --"), HeaderColor);
 
-	const TArray<FInteractionPrompt>& Prompts = InteractorPtr->GetPrompts();
+	const TArray<FInteractionSlot>& Prompts = InteractorPtr->GetPrompts();
 
 	if (Prompts.IsEmpty())
 	{
@@ -313,7 +313,7 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 	}
 	else
 	{
-		for (const FInteractionPrompt& Prompt : Prompts)
+		for (const FInteractionSlot& Prompt : Prompts)
 		{
 			DrawLine(FString::Printf(TEXT("  [%s] %s Enabled=%s"),
 				*Prompt.InputTag.ToString(),

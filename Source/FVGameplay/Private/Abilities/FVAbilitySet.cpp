@@ -114,7 +114,32 @@ void UFVAbilitySet::PassToAbilitySystem(UFVAbilitySystemComponent* FVASC, FFVAbi
 			OutGrantedHandles->AddAbilitySpecHandle(AbilitySpecHandle);
 		}
 	}
+	
+	// Grant the interaction abilities
+	for (int32 AbilityIndex = 0; AbilityIndex < GrantedInteractionAbilities.Num(); ++AbilityIndex)
+	{
+		const FFVAbilitySet_InteractAbility& AbilityToGrant = GrantedInteractionAbilities[AbilityIndex];
 
+		if (!IsValid(AbilityToGrant.Ability))
+		{
+			UE_LOG(LogTemp, Error, TEXT("GrantedInteractionAbilities[%d] on ability set [%s] is not valid."), AbilityIndex, *GetNameSafe(this));
+			continue;
+		}
+
+		UFVGameplayAbility* AbilityCDO = AbilityToGrant.Ability->GetDefaultObject<UFVGameplayAbility>();
+
+		FGameplayAbilitySpec AbilitySpec(AbilityCDO, AbilityToGrant.AbilityLevel);
+		AbilitySpec.SourceObject = SourceObject;
+		AbilitySpec.GetDynamicSpecSourceTags().AddTag(AbilityToGrant.ActionTag);
+
+		const FGameplayAbilitySpecHandle AbilitySpecHandle = FVASC->GiveAbility(AbilitySpec);
+
+		if (OutGrantedHandles)
+		{
+			OutGrantedHandles->AddAbilitySpecHandle(AbilitySpecHandle);
+		}
+	}
+	
 	// Grant the gameplay effects.
 	for (int32 EffectIndex = 0; EffectIndex < GrantedGameplayEffects.Num(); ++EffectIndex)
 	{

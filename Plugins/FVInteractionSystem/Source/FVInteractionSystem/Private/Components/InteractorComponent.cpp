@@ -29,7 +29,8 @@ void UInteractorComponent::BeginPlay()
 }
 
 
-void UInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+                                         FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -61,8 +62,8 @@ bool UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 		return false;
 	}
 
-	const FInteractionPrompt* Prompt = CachedPrompts.FindByPredicate(
-		[&InputTag](const FInteractionPrompt& Candidate) { return Candidate.InputTag.MatchesTagExact(InputTag); });
+	const FInteractionSlot* Prompt = CachedPrompts.FindByPredicate(
+		[&InputTag](const FInteractionSlot& Candidate) { return Candidate.InputTag.MatchesTagExact(InputTag); });
 
 	if (!Prompt)
 	{
@@ -77,8 +78,8 @@ bool UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 #if !UE_BUILD_SHIPPING
 		DebugLastOutcome = bExecuted ? EDebugActionOutcome::Succeeded : EDebugActionOutcome::ExecuteFailed;
 #endif
-		
-		Target->OnInteractionExecuted.Broadcast(Prompt->ActionTag);
+
+		Target->OnInteractionExecuted.Broadcast(Prompt->ActionTag, this);
 		RefreshOffers();
 	}
 #if !UE_BUILD_SHIPPING
@@ -100,29 +101,21 @@ FInteractionContext UInteractorComponent::MakeContext(const UInteractableCompone
 	return Context;
 }
 
-bool UInteractorComponent::ResolveAvailability(const FInteractionOffer& Offer, bool& bOutHidden) const
+bool UInteractorComponent::EvaluateRequirements(
+	const FGameplayTag ActionTag, 
+	const TArray<TObjectPtr<UInteractionRequirement>>& Requirements,
+	bool& bOutHidden) const
 {
-	bOutHidden = false;
-
-	FInteractionResolveContext Context;
-	Context.Interactor = GetOwner();
-	Context.Interactable = FocusedTarget.Get();
-	Context.ActionTag = Offer.ActionTag;
-
-	auto Evaluate = [&Context, &bOutHidden](const TArray<TObjectPtr<UInteractionRequirement>>& Requirements)
+	for (const UInteractionRequirement* Requirement : Requirements)
 	{
-		for (const UInteractionRequirement* Requirement : Requirements)
+		if (Requirement && !Requirement->IsMet(ActionTag, this, FocusedTarget.Get()))
 		{
-			if (Requirement && !Requirement->IsMet(Context))
-			{
-				bOutHidden = Requirement->Gate == EInteractionGate::Hide;
-				return false;
-			}
+			bOutHidden = Requirement->Gate == EInteractionGate::Hide;
+			return false;
 		}
-		return true;
-	};
-
-	return Evaluate(GlobalRequirements) && Evaluate(Offer.Requirements);
+	}
+		
+	return true;
 }
 
 bool UInteractorComponent::GetAimPoint(FVector& OutOrigin, FVector& OutForward) const
@@ -241,35 +234,36 @@ void UInteractorComponent::SetFocusedTarget(UInteractableComponent* NewTarget)
 void UInteractorComponent::RefreshOffers(bool bForceBroadcast)
 {
 	const UInteractableComponent* Target = FocusedTarget.Get();
-	if (!Target)
+	TArray<FInteractionSlot> NewPrompts;
+
+	if (Target)
 	{
-		return;
+		for (const FInteractionOffer& Offer : Target->GetOffers())
+		{
+			if (!Offer.IsValid())
+			{
+				continue;
+			}
+			
+			bool bHidden = false;
+			const bool bRequirementsMet =  
+				EvaluateRequirements(Offer.ActionTag, GlobalRequirements, bHidden) &&
+				EvaluateRequirements(Offer.ActionTag, Offer.Requirements, bHidden);
+			
+			if (!bRequirementsMet && bHidden == true)
+			{
+				continue;
+			}
+
+			FInteractionSlot& Slot = NewPrompts.AddDefaulted_GetRef();
+			Slot.InputTag = Offer.InputTag;
+			Slot.ActionTag = Offer.ActionTag;
+			Slot.bEnabled = bRequirementsMet;
+		}
 	}
 
-	TArray<FInteractionPrompt> NewPrompts;
 
-	for (const FInteractionOffer& Offer : Target->GetOffers())
-	{
-		if (!Offer.IsValid())
-		{
-			continue;
-		}
-
-		bool bHidden = false;
-		const bool bMet = ResolveAvailability(Offer, bHidden);
-
-		if (!bMet && bHidden)
-		{
-			continue;
-		}
-
-		FInteractionPrompt& Prompt = NewPrompts.AddDefaulted_GetRef();
-		Prompt.InputTag = Offer.InputTag;
-		Prompt.ActionTag = Offer.ActionTag;
-		Prompt.bEnabled = bMet;
-	}
-
-	NewPrompts.Sort([](const FInteractionPrompt& A, const FInteractionPrompt& B)
+	NewPrompts.Sort([](const FInteractionSlot& A, const FInteractionSlot& B)
 	{
 		return A.InputTag.ToString() < B.InputTag.ToString();
 	});
