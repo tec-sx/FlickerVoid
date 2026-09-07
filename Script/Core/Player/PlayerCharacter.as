@@ -20,7 +20,7 @@ class APlayerCharacter : AFVPlayerCharacter
     
     UPROPERTY()
     FIKGoal RightHandIKGoal;
-    
+
     bool bJustLanded = false;
     bool bIsRagdolling = false;
 
@@ -111,5 +111,23 @@ class APlayerCharacter : AFVPlayerCharacter
         Settings.PlayerStance = EFVStance::Stand;
 
         return Settings;
+    }
+
+    UFUNCTION()
+    bool HasFocusedInteractable()
+    {
+        return Interactor.HasFocus();
+    }
+
+    UFUNCTION()
+    void EnableInteractions()
+    {
+        Interactor.SetEnabled(true);
+    }
+
+    UFUNCTION()
+    void DisableInteractions()
+    {
+        Interactor.SetEnabled(false);
     }
 }

@@ -72,7 +72,7 @@ struct FVINTERACTIONSYSTEM_API FInteractionKeyBinding
 };
 
 USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FInteractionSlot
+struct FVINTERACTIONSYSTEM_API FInteraction
 {
 	GENERATED_BODY()
 
@@ -83,18 +83,18 @@ struct FVINTERACTIONSYSTEM_API FInteractionSlot
 	FGameplayTag ActionTag;
 
 	UPROPERTY(BlueprintReadOnly)
-	bool bEnabled = false;
+	bool bCanExecute = false;
 
-	bool IsEnabled() const { return bEnabled; }
+	bool CanExecute() const { return bCanExecute; }
 
-	bool operator==(const FInteractionSlot& Other) const
+	bool operator==(const FInteraction& Other) const
 	{
-		return InputTag == Other.InputTag && ActionTag == Other.ActionTag && bEnabled == Other.bEnabled;
+		return InputTag == Other.InputTag && ActionTag == Other.ActionTag && bCanExecute == Other.bCanExecute;
 	}
 
-	bool operator!=(const FInteractionSlot& Other) const { return !(*this == Other); }
+	bool operator!=(const FInteraction& Other) const { return !(*this == Other); }
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionFocusChanged, UInteractableComponent*, Target);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionOffersChanged, const TArray<FInteractionSlot>&, Prompts);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionOffersChanged, const TArray<FInteraction>&, Prompts);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractionExecuted, const FGameplayTag&, ActionTag, UInteractorComponent*,  Interactor);

@@ -304,14 +304,13 @@ void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
     {
         if (UInteractorComponent* Interactor = CachedInteractor.Get())
         {
-            if (Interactor->TryExecuteAction(InputTag))
-            {
-                return;
-            }
+        	Interactor->TryExecuteInteraction(InputTag);
         }
     }
-	
-    FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(InputTag);
+	else
+	{
+		FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(InputTag);
+	}
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst

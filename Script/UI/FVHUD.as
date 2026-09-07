@@ -1,10 +1,10 @@
 class AFVHUD : AHUD
 {
 	UPROPERTY(EditAnywhere, Category = "Configuration")
-    TSoftClassPtr<UInteractionSetWidget> InteractionOptionsWidgetClass;
+    TSubclassOf<UInteractionSetWidget> InteractionOptionsWidgetClass;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Configuration")
-    TSoftClassPtr<UDialogueWidget> DialogueWidgetClass;
+    TSubclassOf<UDialogueWidget> DialogueWidgetClass;
     
 	UPROPERTY()
     private UInteractionSetWidget InteractionPromptWidget;
@@ -21,7 +21,7 @@ class AFVHUD : AHUD
 	    {
 			if (InteractionOptionsWidgetClass.IsValid())
 			{
-				InteractionPromptWidget = WidgetBlueprint::CreateWidget(InteractionOptionsWidgetClass.Get(), PC);
+				InteractionPromptWidget = WidgetBlueprint::CreateWidget(InteractionOptionsWidgetClass, PC);
 				InteractionPromptWidget.AddToViewport(0);
 
 				APlayerController PlayerController = GetOwningPlayerController();

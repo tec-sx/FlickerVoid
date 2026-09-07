@@ -34,7 +34,7 @@ void UInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (bIsInitialized)
+	if (bIsInitialized && bEnabled)
 	{
 		TimeSinceLastUpdate += DeltaTime;
 
@@ -47,7 +47,7 @@ void UInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 }
 
-bool UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
+bool UInteractorComponent::TryExecuteInteraction(FGameplayTag InputTag)
 {
 #if !UE_BUILD_SHIPPING
 	DebugLastInputTag = InputTag;
@@ -62,24 +62,26 @@ bool UInteractorComponent::TryExecuteAction(FGameplayTag InputTag)
 		return false;
 	}
 
-	const FInteractionSlot* Prompt = CachedPrompts.FindByPredicate(
-		[&InputTag](const FInteractionSlot& Candidate) { return Candidate.InputTag.MatchesTagExact(InputTag); });
+	const FInteraction* Interaction = CachedInteractions.FindByPredicate([&InputTag](const FInteraction& Candidate)
+	{
+		return Candidate.InputTag.MatchesTagExact(InputTag);
+	});
 
-	if (!Prompt)
+	if (!Interaction)
 	{
 		return false;
 	}
 
-	if (Prompt->IsEnabled())
+	if (Interaction->CanExecute())
 	{
-		const FGameplayTag ActionTag = Prompt->ActionTag;
+		const FGameplayTag ActionTag = Interaction->ActionTag;
 		const bool bExecuted = !ExecuteAction.IsBound() || ExecuteAction.Execute(ActionTag, MakeContext(*Target));
 
 #if !UE_BUILD_SHIPPING
 		DebugLastOutcome = bExecuted ? EDebugActionOutcome::Succeeded : EDebugActionOutcome::ExecuteFailed;
 #endif
 
-		Target->OnInteractionExecuted.Broadcast(Prompt->ActionTag, this);
+		Target->OnInteractionExecuted.Broadcast(Interaction->ActionTag, this);
 		RefreshOffers();
 	}
 #if !UE_BUILD_SHIPPING
@@ -102,7 +104,7 @@ FInteractionContext UInteractorComponent::MakeContext(const UInteractableCompone
 }
 
 bool UInteractorComponent::EvaluateRequirements(
-	const FGameplayTag ActionTag, 
+	const FGameplayTag ActionTag,
 	const TArray<TObjectPtr<UInteractionRequirement>>& Requirements,
 	bool& bOutHidden) const
 {
@@ -114,7 +116,7 @@ bool UInteractorComponent::EvaluateRequirements(
 			return false;
 		}
 	}
-		
+
 	return true;
 }
 
@@ -234,7 +236,7 @@ void UInteractorComponent::SetFocusedTarget(UInteractableComponent* NewTarget)
 void UInteractorComponent::RefreshOffers(bool bForceBroadcast)
 {
 	const UInteractableComponent* Target = FocusedTarget.Get();
-	TArray<FInteractionSlot> NewPrompts;
+	TArray<FInteraction> NewPrompts;
 
 	if (Target)
 	{
@@ -244,35 +246,35 @@ void UInteractorComponent::RefreshOffers(bool bForceBroadcast)
 			{
 				continue;
 			}
-			
+
 			bool bHidden = false;
-			const bool bRequirementsMet =  
+			const bool bRequirementsMet =
 				EvaluateRequirements(Offer.ActionTag, GlobalRequirements, bHidden) &&
 				EvaluateRequirements(Offer.ActionTag, Offer.Requirements, bHidden);
-			
+
 			if (!bRequirementsMet && bHidden == true)
 			{
 				continue;
 			}
 
-			FInteractionSlot& Slot = NewPrompts.AddDefaulted_GetRef();
+			FInteraction& Slot = NewPrompts.AddDefaulted_GetRef();
 			Slot.InputTag = Offer.InputTag;
 			Slot.ActionTag = Offer.ActionTag;
-			Slot.bEnabled = bRequirementsMet;
+			Slot.bCanExecute = bRequirementsMet;
 		}
 	}
 
 
-	NewPrompts.Sort([](const FInteractionSlot& A, const FInteractionSlot& B)
+	NewPrompts.Sort([](const FInteraction& A, const FInteraction& B)
 	{
 		return A.InputTag.ToString() < B.InputTag.ToString();
 	});
 
-	const bool bChanged = NewPrompts != CachedPrompts;
-	CachedPrompts = MoveTemp(NewPrompts);
+	const bool bChanged = NewPrompts != CachedInteractions;
+	CachedInteractions = MoveTemp(NewPrompts);
 
 	if (bChanged || bForceBroadcast)
 	{
-		OnOffersChanged.Broadcast(CachedPrompts);
+		OnOffersChanged.Broadcast(CachedInteractions);
 	}
 }

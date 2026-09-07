@@ -126,7 +126,7 @@ void UFVAbilitySet::PassToAbilitySystem(UFVAbilitySystemComponent* FVASC, FFVAbi
 			continue;
 		}
 
-		UFVGameplayAbility* AbilityCDO = AbilityToGrant.Ability->GetDefaultObject<UFVGameplayAbility>();
+		UFVInteractAbility* AbilityCDO = AbilityToGrant.Ability->GetDefaultObject<UFVInteractAbility>();
 
 		FGameplayAbilitySpec AbilitySpec(AbilityCDO, AbilityToGrant.AbilityLevel);
 		AbilitySpec.SourceObject = SourceObject;

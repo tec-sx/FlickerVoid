@@ -21,11 +21,6 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Landed(const FHitResult& Hit) override;
 	
-	//~=============================================================================
-	// Character Properties
-	//~=============================================================================
-
-	/** Get aim rotation (override for aim assist, target lock, etc.) */
 	virtual FRotator GetAimRotation() const;
 	
 	UFUNCTION(BlueprintPure, Category = "Character|Movement")

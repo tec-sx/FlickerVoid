@@ -123,8 +123,7 @@ void UFVAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& Input
 	{
 		return;
 	}
-
-	// Find and activate abilities with this input tag
+	
 	for (const FGameplayAbilitySpec& AbilitySpec : ActivatableAbilities.Items)
 	{
 		if (AbilitySpec.Ability && AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
@@ -133,18 +132,15 @@ void UFVAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& Input
 			
 			if (AbilitySpec.IsActive())
 			{
-				// Ability is already active, send input pressed event to it
 				AbilitySpecInputPressed(*const_cast<FGameplayAbilitySpec*>(&AbilitySpec));
 			}
 			else
 			{
-				// Try to activate based on activation policy
 				const EFVAbilityActivationPolicy ActivationPolicy = AbilityCDO->GetActivationPolicy();
 				
 				if (ActivationPolicy == EFVAbilityActivationPolicy::OnInputTriggered ||
 					ActivationPolicy == EFVAbilityActivationPolicy::WhileInputActive)
 				{
-					// Activate the ability immediately
 					TryActivateAbility(AbilitySpec.Handle);
 				}
 			}
@@ -158,8 +154,7 @@ void UFVAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& Inpu
 	{
 		return;
 	}
-
-	// Find abilities with this input tag and handle release
+	
 	for (const FGameplayAbilitySpec& AbilitySpec : ActivatableAbilities.Items)
 	{
 		if (AbilitySpec.Ability && AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
@@ -168,10 +163,8 @@ void UFVAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& Inpu
 			{
 				const UFVGameplayAbility* AbilityCDO = CastChecked<UFVGameplayAbility>(AbilitySpec.Ability);
 				
-				// Send input released event to active ability
 				AbilitySpecInputReleased(*const_cast<FGameplayAbilitySpec*>(&AbilitySpec));
 				
-				// Auto-cancel WhileInputActive abilities when input is released
 				if (AbilityCDO->GetActivationPolicy() == EFVAbilityActivationPolicy::WhileInputActive)
 				{
 					CancelAbilityHandle(AbilitySpec.Handle);

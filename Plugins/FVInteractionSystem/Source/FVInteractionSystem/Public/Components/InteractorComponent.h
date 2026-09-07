@@ -35,11 +35,14 @@ public:
 	UE_API UInteractableComponent* GetFocusedTarget() const { return FocusedTarget.Get(); }
 	
 	UFUNCTION(BlueprintPure)
-	UE_API const TArray<FInteractionSlot>& GetPrompts() const { return CachedPrompts; }
-
+	UE_API const TArray<FInteraction>& GetPrompts() const { return CachedInteractions; }
+	
 	UFUNCTION(BlueprintCallable)
-	UE_API bool TryExecuteAction(FGameplayTag InputTag);
-
+	UE_API bool TryExecuteInteraction(FGameplayTag InputTag);
+	
+	UFUNCTION(BlueprintCallable)
+	UE_API void SetEnabled(bool Value) { bEnabled = Value; }
+	
 	UE_API bool GetAimPoint(FVector& OutOrigin, FVector& OutForward) const;
 
 	FExecuteInteractionAction ExecuteAction;
@@ -103,6 +106,7 @@ private:
 	TObjectPtr<APawn> Owner;
 
 	bool bIsInitialized = false;
+	bool bEnabled = true;
 	mutable TWeakObjectPtr<UInteractableComponent> FocusedTarget;
 	float TimeSinceLastUpdate = 0.f;
 
@@ -111,7 +115,7 @@ private:
 	FVector LastFocusImpactPoint = FVector::ZeroVector;
 
 	UPROPERTY(Transient)
-	TArray<FInteractionSlot> CachedPrompts;
+	TArray<FInteraction> CachedInteractions;
 
 #if !UE_BUILD_SHIPPING
 	EDebugActionOutcome DebugLastOutcome = EDebugActionOutcome::None;
