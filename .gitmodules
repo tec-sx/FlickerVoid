@@ -13,3 +13,9 @@
 [submodule "Plugins/GameplayMessageRouter"]
 	path = Plugins/GameplayMessageRouter
 	url = https://github.com/IncantaUnreal/GameplayMessageRouter.git
+[submodule "Plugins/FVInventorySystem"]
+	path = Plugins/FVInventorySystem
+	url = git@github.com:tec-sx/InventoryPluginUE5.git
+[submodule "Plugins/FVDialogueSystem"]
+	path = Plugins/FVDialogueSystem
+	url = git@github.com:tec-sx/Yap.git
