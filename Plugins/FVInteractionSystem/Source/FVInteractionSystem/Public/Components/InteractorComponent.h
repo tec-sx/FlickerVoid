@@ -17,7 +17,7 @@ class UInteractionRequirement;
 
 DECLARE_DELEGATE_RetVal_TwoParams(bool, FExecuteInteractionAction, const FGameplayTag& /*ActionTag*/, const FInteractionContext& /*Context*/);
 
-UCLASS(MinimalAPI, ClassGroup=(Interaction), meta=(BlueprintSpawnableComponent))
+UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
 class UInteractorComponent : public UActorComponent
 {
 	GENERATED_BODY()

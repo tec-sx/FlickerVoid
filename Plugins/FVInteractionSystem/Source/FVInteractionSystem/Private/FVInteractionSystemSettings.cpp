@@ -9,9 +9,4 @@ UFVInteractionSystemSettings::UFVInteractionSystemSettings(const FObjectInitiali
 	SectionName = "Interaction System";
 }
 
-const FInteractionKeyBinding* UFVInteractionSystemSettings::FindInputBinding(const FGameplayTag& InputTag) const
-{
-	return InputBindings.Find(InputTag);
-}
-
 

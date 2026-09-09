@@ -566,10 +566,14 @@
 		},
 		{
 			"Name": "MounteaAdvancedInventorySystem",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "Yap",
+			"Enabled": true
+		},
+		{
+			"Name": "WebBrowserWidget",
 			"Enabled": true
 		}
 	]

@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "Core/InteractionTypes.h"
 #include "GameplayTags.h"
+#include "Interfaces/InteractableInterface.h"
 #include "InteractableComponent.generated.h"
 
 #define UE_API FVINTERACTIONSYSTEM_API
@@ -15,7 +16,7 @@ class UPrimitiveComponent;
 class UShapeComponent;
 
 UCLASS(MinimalAPI, ClassGroup=(Interaction), meta=(BlueprintSpawnableComponent))
-class UInteractableComponent : public UActorComponent
+class UInteractableComponent : public UActorComponent, public IInteractableInterface
 {
 	GENERATED_BODY()
 
