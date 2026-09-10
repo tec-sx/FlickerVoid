@@ -24,8 +24,60 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 			continue;
 		}
 
+		if (Interactable->GetOffers().IsEmpty())
+		{
+			Context.MessageLog.Warning(*FString::Printf(
+				TEXT("Interactable component '%s' declares no offers and can never be interacted with."),
+				*Interactable->GetName()));
+		}
+
+		TSet<FGameplayTag> SeenInputTags;
+
 		for (const FInteractionOffer& Offer : Interactable->GetOffers())
 		{
+			if (!Offer.InputTag.IsValid())
+			{
+				Context.MessageLog.Error(*FString::Printf(
+					TEXT("Interactable component '%s' has an offer with no input tag."),
+					*Interactable->GetName()));
+			}
+			else if (SeenInputTags.Contains(Offer.InputTag))
+			{
+				Context.MessageLog.Error(*FString::Printf(
+					TEXT("Interactable component '%s' declares more than one offer for input '%s'."),
+					*Interactable->GetName(),
+					*Offer.InputTag.ToString()));
+			}
+			else
+			{
+				SeenInputTags.Add(Offer.InputTag);
+			}
+
+			if (Offer.RemainingUses == 0)
+			{
+				Context.MessageLog.Warning(*FString::Printf(
+					TEXT("Interactable component '%s' offer '%s' is authored with zero remaining uses and can never execute."),
+					*Interactable->GetName(),
+					*Offer.InputTag.ToString()));
+			}
+
+			if (Offer.InputMode == EInteractionInputMode::Hold && Offer.InteractionPeriod == 0.f)
+			{
+				Context.MessageLog.Error(*FString::Printf(
+					TEXT("Interactable component '%s' offer '%s' uses Hold but has an interaction period of zero."),
+					*Interactable->GetName(),
+					*Offer.InputTag.ToString()));
+			}
+
+			if (Offer.InputMode == EInteractionInputMode::Mash && Offer.RequiredPresses <= 1)
+			{
+				Context.MessageLog.Warning(*FString::Printf(
+					TEXT("Interactable component '%s' offer '%s' uses Mash but requires %d presses."),
+					*Interactable->GetName(),
+					*Offer.InputTag.ToString(),
+					Offer.RequiredPresses));
+			}
+
 			if (!Offer.ActionTag.IsValid())
 			{
 				Context.MessageLog.Error(*FString::Printf(
@@ -43,10 +95,10 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 					*InteractionTags::Interaction_Action.GetTag().ToString()));
 			}
 
-			if (Offer.Requirements.Contains(nullptr))
+			if (Offer.RequiredTags.HasAny(Offer.BlockedTags))
 			{
 				Context.MessageLog.Error(*FString::Printf(
-					TEXT("Interactable component '%s' offer '%s' has an empty requirement entry."),
+					TEXT("Interactable component '%s' offer '%s' has a tag present in both RequiredTags and BlockedTags, so it can never be satisfied."),
 					*Interactable->GetName(),
 					*Offer.InputTag.ToString()));
 			}

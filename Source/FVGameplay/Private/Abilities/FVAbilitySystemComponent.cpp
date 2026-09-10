@@ -339,33 +339,6 @@ void UFVAbilitySystemComponent::HandleChangeAbilityCanBeCanceled(const FGameplay
 	//@TODO: Apply any special logic like blocking input or movement
 }
 
-bool UFVAbilitySystemComponent::ExecuteInteractionAction(const FGameplayTag& ActionTag)
-{
-	if (!ActionTag.IsValid())
-	{
-		return false;
-	}
-
-	for (const FGameplayAbilitySpec& AbilitySpec : ActivatableAbilities.Items)
-	{
-		const UFVGameplayAbility* AbilityCDO = Cast<UFVGameplayAbility>(AbilitySpec.Ability);
-		if (!AbilityCDO || !AbilityCDO->GetAssetTags().HasTagExact(ActionTag))
-		{
-			continue;
-		}
-
-		if (AbilitySpec.IsActive())
-		{
-			AbilitySpecInputPressed(*const_cast<FGameplayAbilitySpec*>(&AbilitySpec));
-			return true;
-		}
-
-		return TryActivateAbility(AbilitySpec.Handle);
-	}
-
-	return false;
-}
-
 bool UFVAbilitySystemComponent::CanActivateAbilityByTag(const FGameplayTag& AbilityTag) const
 {
 	if (!AbilityTag.IsValid())

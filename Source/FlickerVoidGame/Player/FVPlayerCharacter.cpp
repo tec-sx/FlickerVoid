@@ -4,7 +4,9 @@
 #include "FVPlayerCharacter.h"
 
 #include "Abilities/FVAbilitySystemComponent.h"
+#include "Components/InteractionResponseComponent.h"
 #include "Components/InteractorComponent.h"
+#include "Interaction/FVInteractionAbilityResponder.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerCharacter)
 
@@ -13,6 +15,8 @@ AFVPlayerCharacter::AFVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 {
 	AbilitySystemComponent = CreateDefaultSubobject<UFVAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	Interactor = CreateDefaultSubobject<UInteractorComponent>(TEXT("Interactor"));
+	InteractionResponse = CreateDefaultSubobject<UInteractionResponseComponent>(TEXT("InteractionResponse"));
+	InteractionAbilityResponder = CreateDefaultSubobject<UFVInteractionAbilityResponder>(TEXT("InteractionAbilityResponder"));
 }
 
 UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const
@@ -20,12 +24,3 @@ UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const
 	return GetFVAbilitySystemComponent();
 }
 
-void AFVPlayerCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
-	Interactor->ExecuteAction.BindWeakLambda(this, [this](const FGameplayTag& ActionTag, const FInteractionContext&)
-	{
-		return AbilitySystemComponent->ExecuteInteractionAction(ActionTag);
-	});
-}

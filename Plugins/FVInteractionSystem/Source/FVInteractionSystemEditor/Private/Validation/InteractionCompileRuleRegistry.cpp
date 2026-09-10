@@ -1,6 +1,7 @@
 #include "Validation/InteractionCompileRuleRegistry.h"
 
 #include "Validation/Rules/ValidateInteractableSetupRule.h"
+#include "Validation/Rules/ValidateResponderWiringRule.h"
 
 FInteractionCompileRuleRegistry& FInteractionCompileRuleRegistry::Get()
 {
@@ -11,6 +12,7 @@ FInteractionCompileRuleRegistry& FInteractionCompileRuleRegistry::Get()
 void FInteractionCompileRuleRegistry::RegisterDefaultRules()
 {
 	RegisterRule(MakeShared<FValidateInteractableSetupRule>());
+	RegisterRule(MakeShared<FValidateResponderWiringRule>());
 }
 
 void FInteractionCompileRuleRegistry::RegisterRule(TSharedRef<IInteractionCompileRule> Rule)

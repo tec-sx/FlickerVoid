@@ -1,4 +1,4 @@
 # Copilot Instructions
 
 ## Project Guidelines
-- Do not add explanatory comments in code changes unless absolutely necessary; at most two comments total.
+- Keep code clean and simple; do not add explanatory comments in code changes unless absolutely necessary; at most two comments total.

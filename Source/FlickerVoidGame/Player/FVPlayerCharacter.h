@@ -9,6 +9,8 @@
 #include "FVPlayerCharacter.generated.h"
 
 class UFVAbilitySystemComponent;
+class UFVInteractionAbilityResponder;
+class UInteractionResponseComponent;
 class UInteractorComponent;
 
 UCLASS()
@@ -26,7 +28,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|Interaction")
 	UInteractorComponent* GetInteractor() const { return Interactor; }
 
-	virtual void BeginPlay() override;
+	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|Interaction")
+	UInteractionResponseComponent* GetInteractionResponse() const { return InteractionResponse; }
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
@@ -34,4 +37,10 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
 	TObjectPtr<UInteractorComponent> Interactor;
+
+	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
+	TObjectPtr<UInteractionResponseComponent> InteractionResponse;
+
+	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
+	TObjectPtr<UFVInteractionAbilityResponder> InteractionAbilityResponder;
 };

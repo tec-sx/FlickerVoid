@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Core/InteractionRequirement.h"
 #include "Core/InteractionTypes.h"
+#include "FVInteractionSystemSettings.h"
 
 #include "Subsystems/InteractionRegistrySubsystem.h"
 #include "InteractorComponent.generated.h"
@@ -13,12 +13,11 @@
 #define UE_API FVINTERACTIONSYSTEM_API
 
 class UInteractableComponent;
-class UInteractionRequirement;
+class UInteractionResponseComponent;
 
-DECLARE_DELEGATE_RetVal_TwoParams(bool, FExecuteInteractionAction, const FGameplayTag& /*ActionTag*/, const FInteractionContext& /*Context*/);
 
-UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
-class UInteractorComponent : public UActorComponent
+UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), NotBlueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
+class UInteractorComponent final : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -26,8 +25,8 @@ public:
 	UInteractorComponent();
 
 	virtual void BeginPlay() override;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	UFUNCTION(BlueprintPure)
 	UE_API bool HasFocus() const { return FocusedTarget != nullptr; }
 
@@ -35,35 +34,65 @@ public:
 	UE_API UInteractableComponent* GetFocusedTarget() const { return FocusedTarget.Get(); }
 	
 	UFUNCTION(BlueprintPure)
-	UE_API const TArray<FInteraction>& GetPrompts() const { return CachedInteractions; }
+	UE_API const TArray<FInteractionOffer>& GetOffers() const { return CachedOffers; }
 	
+	UFUNCTION(BlueprintCallable)
+	UE_API bool PushInput(FGameplayTag InputTag, EInteractionInputPhase Phase);
+
 	UFUNCTION(BlueprintCallable)
 	UE_API bool TryExecuteInteraction(FGameplayTag InputTag);
-	
-	UFUNCTION(BlueprintCallable)
-	UE_API void SetEnabled(bool Value) { bEnabled = Value; }
-	
-	UE_API bool GetAimPoint(FVector& OutOrigin, FVector& OutForward) const;
 
-	FExecuteInteractionAction ExecuteAction;
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Detection")
+	UE_API void EnableTracing();
 
-	UPROPERTY(EditAnywhere, Instanced, Category = "Interaction")
-	TArray<TObjectPtr<UInteractionRequirement>> GlobalRequirements;
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Detection")
+	UE_API void DisableTracing();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
-	FVector AimOriginOffset = FVector(0.f, 0.f, 60.f);
+	UFUNCTION(BlueprintPure, Category = "Interaction|Detection")
+	UE_API bool IsTracing() const { return bIsTracing; }
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
-	float MaxDetectionRadius = 600.f;
+	UFUNCTION(BlueprintPure, Category = "Interaction|State")
+	UE_API EInteractorState GetState() const { return State; }
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
-	float DetectionUpdateInterval = 0.05f;
+	UFUNCTION(BlueprintCallable, Category = "Interaction|State")
+	UE_API void AddSuppression(FGameplayTag Reason);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection", meta = (ClampMin = "0"))
-	float AimSweepRadius = 15.f;
+	UFUNCTION(BlueprintCallable, Category = "Interaction|State")
+	UE_API void RemoveSuppression(FGameplayTag Reason);
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|State")
+	UE_API bool IsSuppressed() const { return !SuppressionReasons.IsEmpty(); }
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction|State")
+	FOnInteractorStateChanged OnStateChanged;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Identity", meta = (Tooltip = "Tags this interactor presents to offer requirement gates."))
+	FGameplayTagContainer InteractorTags;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Requirements", meta = (Tooltip = "Any offer whose ActionTag matches these is gated off entirely."))
+	FGameplayTagContainer BlockedActionTags;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
 	TEnumAsByte<ECollisionChannel> InteractionChannel = ECC_GameTraceChannel1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
+	EInteractorPrecision Precision = EInteractorPrecision::Default;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection", meta = (ShowOnlyInnerProperties))
+	FTracingSetup TracingSetup;
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|Detection")
+	UE_API FVector GetDetectionOrigin() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	UE_API void RequestOfferRefresh() { RefreshOffers(); }
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Identity")
+	UE_API void AddInteractorTag(FGameplayTag NewTag);
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Identity")
+	UE_API void RemoveInteractorTag(FGameplayTag OldTag);
 
 	UPROPERTY(BlueprintAssignable)
 	FOnInteractionFocusChanged OnFocusChanged;
@@ -78,10 +107,10 @@ public:
 		Succeeded,
 		NoPrompt,
 		Disabled,
-		ExecuteFailed,
 	};
 
 	const TArray<UInteractableComponent*>& GetDebugCandidates() const { return Candidates; }
+	float GetDebugTraceRange() const { return TracingSetup.TracingRange; }
 	EDebugActionOutcome GetDebugLastOutcome() const { return DebugLastOutcome; }
 	FGameplayTag GetDebugLastInputTag() const { return DebugLastInputTag; }
 	double GetDebugLastActionTime() const { return DebugLastActionTime; }
@@ -94,28 +123,60 @@ public:
 
 private:
 	void RefreshOffers(bool bForceBroadcast = true);
-	void DetectInteractables();
+	void ProcessTrace();
+	void ArmNextTrace();
+	bool GetTraceOrigin(FVector& OutOrigin, FVector& OutForward) const;
+	bool PerformSafetyTrace(const FVector& Origin, const UInteractableComponent& Candidate) const;
 	void SetFocusedTarget(UInteractableComponent* NewTarget);
-	FInteractionContext MakeContext(const UInteractableComponent& Target) const;
-	bool EvaluateRequirements(
-		const FGameplayTag ActionTag, 
-		const TArray<TObjectPtr<UInteractionRequirement>>& Requirements,
-		bool& bOutHidden) const;
+
+	bool BeginInteraction(const FInteractionOffer& Offer, UInteractableComponent& Target);
+	void TickInteraction();
+	void CommitInteraction();
+	void CancelInteraction(const FGameplayTag& Reason);
+	UInteractionResponseComponent* GetResponse() const;
+	const FInteractionOffer* FindActiveOffer() const;
+
+	UFUNCTION()
+	void HandleInRangeSetChanged(bool bHasAnyInRange);
+
+	UFUNCTION()
+	void HandleFocusedStateChanged(EInteractableState NewState);
+
+	bool IsOfferAvailable(const FInteractionOffer& Offer) const;
 
 	UPROPERTY(Transient)
 	TObjectPtr<APawn> Owner;
 
 	bool bIsInitialized = false;
-	bool bEnabled = true;
+	bool bIsTracing = false;
 	mutable TWeakObjectPtr<UInteractableComponent> FocusedTarget;
-	float TimeSinceLastUpdate = 0.f;
 
 	UInteractionRegistrySubsystem* Registry;
 	TArray<UInteractableComponent*> Candidates;
 	FVector LastFocusImpactPoint = FVector::ZeroVector;
+	FTimerHandle TraceTimer;
+
+	FTimerHandle InteractionTimer;
+	FInteractionCommit ActiveCommit;
+	EInteractionInputMode ActiveMode = EInteractionInputMode::Default;
+	float ActiveDuration = 0.f;
+	float ActiveElapsed = 0.f;
+	float LastProgressBroadcast = 0.f;
+	int32 ActivePresses = 0;
+	int32 ActiveRequiredPresses = 0;
+	bool bIsInteracting = false;
+
+	void SetState(EInteractorState NewState);
+	void UpdateState();
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Interaction|State", meta = (AllowPrivateAccess = "true"))
+	EInteractorState State = EInteractorState::Idle;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Interaction|State", meta = (AllowPrivateAccess = "true"))
+	FGameplayTagContainer SuppressionReasons;
 
 	UPROPERTY(Transient)
-	TArray<FInteraction> CachedInteractions;
+	TArray<FInteractionOffer> CachedOffers;
 
 #if !UE_BUILD_SHIPPING
 	EDebugActionOutcome DebugLastOutcome = EDebugActionOutcome::None;

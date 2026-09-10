@@ -67,15 +67,17 @@ void UInteractionDebugComponent::TickComponent(
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (!CVarInteractionDebugDraw.GetValueOnGameThread())
+	{
+		return;
+	}
+
 	if (!Interactor.IsValid())
 	{
 		RefreshCachedInteractor();
 	}
 
-	if (CVarInteractionDebugDraw.GetValueOnGameThread())
-	{
-		DrawVisualizer();
-	}
+	DrawVisualizer();
 }
 
 void UInteractionDebugComponent::RefreshCachedInteractor()
@@ -142,17 +144,12 @@ void UInteractionDebugComponent::DrawVisualizer() const
 	FVector ViewForward;
 	GetViewPoint(PawnLocation, ViewLocation, ViewForward);
 
-	FVector AimOrigin;
-	FVector AimForward;
-	if (!InteractorPtr->GetAimPoint(AimOrigin, AimForward))
-	{
-		return;
-	}
+	const FVector AimOrigin = InteractorPtr->GetDetectionOrigin();
 
 	DrawDebugCircle(
 		World,
 		PawnLocation,
-		InteractorPtr->MaxDetectionRadius,
+		InteractorPtr->GetDebugTraceRange(),
 		64,
 		FColor(0, 128, 255),
 		false, -1.f, 0, 0.5f,
@@ -215,7 +212,7 @@ void UInteractionDebugComponent::DrawVisualizer() const
 		DrawDebugCircle(
 			World,
 			InteractorPtr->GetDebugImpactPoint(),
-			InteractorPtr->AimSweepRadius,
+			InteractorPtr->TracingSetup.TracingShapeHalfSize,
 			24,
 			InteractorPtr->DidDebugHitOccluder() ? FColor::Red : FColor::Green,
 			false, -1.f, 0, 0.5f,
@@ -285,12 +282,14 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 		const bool bInRange = Distance <= Candidate->DetectionRadius;
 
 		const AActor* TargetOwner = Candidate->GetOwner();
-		DrawLine(FString::Printf(TEXT("%s%s: Dist=%.0f/%.0f %s"),
+		DrawLine(FString::Printf(TEXT("%s%s: Dist=%.0f/%.0f %s State=%s Weight=%d"),
 			bIsFocused ? TEXT("* ") : TEXT("  "),
 			TargetOwner ? *TargetOwner->GetName() : TEXT("?"),
 			Distance,
 			Candidate->DetectionRadius,
-			bInRange ? TEXT("in-range") : TEXT("out-of-range")),
+			bInRange ? TEXT("in-range") : TEXT("out-of-range"),
+			*UEnum::GetDisplayValueAsText(Candidate->GetState()).ToString(),
+			Candidate->InteractionWeight),
 			bIsFocused ? HeaderColor : TextColor);
 	}
 
@@ -305,7 +304,7 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 	Y += LineHeight * 0.5f;
 	DrawLine(TEXT("-- Prompts --"), HeaderColor);
 
-	const TArray<FInteraction>& Prompts = InteractorPtr->GetPrompts();
+	const TArray<FInteractionOffer>& Prompts = InteractorPtr->GetOffers();
 
 	if (Prompts.IsEmpty())
 	{
@@ -313,12 +312,13 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 	}
 	else
 	{
-		for (const FInteraction& Prompt : Prompts)
+		for (const FInteractionOffer& Prompt : Prompts)
 		{
-			DrawLine(FString::Printf(TEXT("  [%s] %s Enabled=%s"),
+			DrawLine(FString::Printf(TEXT("  [%s] %s Enabled=%s Uses=%d"),
 				*Prompt.InputTag.ToString(),
 				*Prompt.ActionTag.ToString(),
-				Prompt.bCanExecute ? TEXT("true") : TEXT("false")),
+				Prompt.CanExecute() ? TEXT("true") : TEXT("false"),
+				Prompt.RemainingUses),
 				TextColor);
 		}
 	}
@@ -339,7 +339,13 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 		FocusedOwner ? *FocusedOwner->GetName() : TEXT("none"),
 		InteractorPtr->GetDebugCandidates().Num(),
 		RegisteredCount,
-		InteractorPtr->MaxDetectionRadius),
+		InteractorPtr->GetDebugTraceRange()),
+		HeaderColor);
+
+	DrawLine(FString::Printf(TEXT("Interactor=%s Tracing=%s Suppressed=%s"),
+		*UEnum::GetDisplayValueAsText(InteractorPtr->GetState()).ToString(),
+		InteractorPtr->IsTracing() ? TEXT("yes") : TEXT("no"),
+		InteractorPtr->IsSuppressed() ? TEXT("yes") : TEXT("no")),
 		HeaderColor);
 
 	const UInteractorComponent::EDebugActionOutcome Outcome = InteractorPtr->GetDebugLastOutcome();
@@ -357,10 +363,6 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 			break;
 		case UInteractorComponent::EDebugActionOutcome::Disabled:
 			OutcomeText = TEXT("FAILED (requirement not met)");
-			OutcomeColor = FLinearColor::Red;
-			break;
-		case UInteractorComponent::EDebugActionOutcome::ExecuteFailed:
-			OutcomeText = TEXT("FAILED (execute rejected)");
 			OutcomeColor = FLinearColor::Red;
 			break;
 		default:

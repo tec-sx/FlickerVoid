@@ -300,24 +300,37 @@ void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
         return;
     }
 
-    if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
-    {
-        if (UInteractorComponent* Interactor = CachedInteractor.Get())
-        {
-        	Interactor->TryExecuteInteraction(InputTag);
-        }
-    }
-	else
+	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
 	{
-		FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(InputTag);
+		if (UInteractorComponent* Interactor = CachedInteractor.Get())
+		{
+			Interactor->PushInput(InputTag, EInteractionInputPhase::Pressed);
+		}
+
+		return;
 	}
+
+	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(InputTag);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 {
-	if (const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
-    {
-        FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagReleased(InputTag);
-    }
+	const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
+	if (!FVPlayer)
+	{
+		return;
+	}
+
+	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
+	{
+		if (UInteractorComponent* Interactor = CachedInteractor.Get())
+		{
+			Interactor->PushInput(InputTag, EInteractionInputPhase::Released);
+		}
+
+		return;
+	}
+
+	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagReleased(InputTag);
 }

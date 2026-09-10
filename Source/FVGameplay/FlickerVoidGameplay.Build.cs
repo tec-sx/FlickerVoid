@@ -16,19 +16,20 @@ public class FlickerVoidGameplay : ModuleRules
 			"GameplayTags",
 			"GameplayTasks",
 			"GameplayAbilities",
+			"InputCore",
 			"PhysicsCore",
 			"FlickerVoidCore",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
+			"FVInteractionSystem",
 		});
 
-        PrivateDependencyModuleNames.AddRange(new string[] {
-            "UMG",
-            "GameplayMessageRuntime",
-            "FlickerVoidCharacter",
-            "Flow",
-            "FVInteractionSystem",
-        });
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			"UMG",
+			"GameplayMessageRuntime",
+			"FlickerVoidCharacter",
+			"Flow",
+		});
 
 		if (Target.bBuildEditor)
 		{
