@@ -1,17 +1,25 @@
 #include "Components/Response_InteractionPrompt.h"
 
 #include "Components/InteractionResponseComponent.h"
+#include "Components/InteractionSignalComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(Response_InteractionPrompt)
 
-void UResponse_InteractionPrompt::BindResponses_Implementation(UInteractionResponseComponent* Response)
+void UResponse_InteractionPrompt::BindSignals_Implementation(UInteractionSignalComponent* Signal)
 {
-	Response->OnFocusChanged.AddDynamic(this, &UResponse_InteractionPrompt::HandleFocusChanged);
-	Response->OnOffersChanged.AddDynamic(this, &UResponse_InteractionPrompt::HandleOffersChanged);
-	Response->OnInteractionProgress.AddDynamic(this, &UResponse_InteractionPrompt::HandleInteractionProgress);
+	Signal->FocusChanged.AddDynamic(this, &UResponse_InteractionPrompt::OnFocusChanged);
+	Signal->OffersChanged.AddDynamic(this, &UResponse_InteractionPrompt::OnOffersChanged);
+	Signal->InteractionProgress.AddDynamic(this, &UResponse_InteractionPrompt::OnInteractionProgress);
 }
 
-void UResponse_InteractionPrompt::HandleFocusChanged(UInteractableComponent* NewTarget)
+void UResponse_InteractionPrompt::UnbindSignals_Implementation(UInteractionSignalComponent* Signal)
+{
+	Signal->FocusChanged.RemoveDynamic(this, &UResponse_InteractionPrompt::OnFocusChanged);
+	Signal->OffersChanged.RemoveDynamic(this, &UResponse_InteractionPrompt::OnOffersChanged);
+	Signal->InteractionProgress.RemoveDynamic(this, &UResponse_InteractionPrompt::OnInteractionProgress);
+}
+
+void UResponse_InteractionPrompt::OnFocusChanged(UInteractableComponent* NewTarget)
 {
 	FocusedTarget = NewTarget;
 
@@ -22,13 +30,13 @@ void UResponse_InteractionPrompt::HandleFocusChanged(UInteractableComponent* New
 	}
 }
 
-void UResponse_InteractionPrompt::HandleOffersChanged(const TArray<FInteractionOffer>& Offers)
+void UResponse_InteractionPrompt::OnOffersChanged(const TArray<FInteractionOffer>& Offers)
 {
 	Prompts = Offers;
 	OnPromptsChanged.Broadcast(Prompts);
 }
 
-void UResponse_InteractionPrompt::HandleInteractionProgress(const FInteractionCommit& Commit, float Progress)
+void UResponse_InteractionPrompt::OnInteractionProgress(const FInteractionCommit& Commit, float Progress)
 {
 	OnPromptProgress.Broadcast(Commit.ActionTag, Progress);
 }

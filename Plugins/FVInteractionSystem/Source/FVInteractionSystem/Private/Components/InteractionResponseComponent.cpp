@@ -21,13 +21,22 @@ void UInteractionResponseComponent::BeginPlay()
 	{
 		return;
 	}
-	
-	Interactable = OwningActor->FindComponentByClass<UInteractableComponent>();
+	// TODO: Iterate through all the Interactors in the Interaction Registry Subsystem and bind to the Signals on those actors
+	Signal = UInteractionSignalComponent::Get(GetOwner());
 
 	if (!Interactable.IsValid())
 	{
 		UE_LOG(LogFVInteraction, Warning,
-			TEXT("'%s' on '%s' can not find an interactable to bind to."),
+			TEXT("'%s' on '%s' can not find an signal component to bind to."),
 			*GetName(), *OwningActor->GetName());
 	}
+}
+
+void UInteractionResponseComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+}
+
+TArray<UInteractionSignalComponent*> UInteractionResponseComponent::GetSignals() const
+{
 }

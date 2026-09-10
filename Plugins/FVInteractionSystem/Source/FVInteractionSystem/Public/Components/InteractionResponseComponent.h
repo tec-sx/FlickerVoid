@@ -7,6 +7,7 @@
 
 #define UE_API FVINTERACTIONSYSTEM_API
 
+class UInteractionSignalComponent;
 class UInteractorComponent;
 class UInteractableComponent;
 
@@ -19,26 +20,23 @@ public:
 	UE_API UInteractionResponseComponent();
 
 	UE_API virtual void BeginPlay() override;
+	UE_API virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "Interaction|Responder")
-	void BindInteractions(UInteractorComponent* Interactor);
+	void BindSignals(UInteractionSignalComponent* Signal);
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "Interaction|Responder")
-	void UnbindInteractions(UInteractorComponent* Interactor);
+	void UnbindSignals(UInteractionSignalComponent* Signal);
 	
 protected:
-	virtual void BindInteractions_Implementation(UInteractorComponent* Interactor) {}
-	virtual void UnbindInteractions_Implementation(UInteractorComponent* Interactor) {}
+	virtual void BindSignals_Implementation(UInteractionSignalComponent* Signal) {}
+	virtual void UnbindSignals_Implementation(UInteractionSignalComponent* Signal) {}
 
-	UFUNCTION(BlueprintPure, Category = "Interaction|Responder")
-	UE_API UInteractorComponent* GetInteractor() const { return Interactor.Get(); }
-
-	UFUNCTION(BlueprintPure, Category = "Interaction|Responder")
-	UE_API UInteractableComponent* GetInteractable() const { return Interactable.Get(); }
+	UFUNCTION(BlueprintPure, Category = "Interaction|Signal")
+	UE_API TArray<UInteractionSignalComponent*> GetSignals() const;
 
 private:
-	TWeakObjectPtr<UInteractorComponent> Interactor;
-	TWeakObjectPtr<UInteractableComponent> Interactable;
+	TArray<TWeakObjectPtr<UInteractionSignalComponent>> Signals;
 };
 
 #undef UE_API

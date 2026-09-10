@@ -4,18 +4,14 @@
 #include "CoreMinimal.h"
 #include "InteractableComponent.h"
 
-#include "InteractableToggleComponent.generated.h"
+#include "Response_Toggle.generated.h"
 
 UCLASS(ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
-class FVINTERACTIONSYSTEM_API UInteractableToggleComponent final : public UInteractionResponseComponent
+class FVINTERACTIONSYSTEM_API UResponse_Toggle final : public UInteractionResponseComponent
 {
 	GENERATED_BODY()
 
 public:
-	virtual void BeginPlay() override;
-	virtual void BindInteractions_Implementation(UInteractorComponent* Interactor) override;
-	virtual void UnbindInteractions_Implementation(UInteractorComponent* Interactor) override;
-	
 	UFUNCTION(BlueprintPure, Category = "Interaction|Toggle")
 	bool IsOn() const { return bIsOn; }
 
@@ -26,6 +22,9 @@ public:
 	void SetLocked(bool bLocked);
 
 protected:
+	virtual void BindSignals_Implementation(UInteractionSignalComponent* Signal) override;
+	virtual void UnbindSignals_Implementation(UInteractionSignalComponent* Signal) override;
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
 	void OnToggled(bool bOn);
 
@@ -46,7 +45,7 @@ protected:
 
 private:
 	UFUNCTION()
-	void HandleInteractionEnded(const FInteractionCommit& Commit, bool bSuccess);
+	void OnInteractionRequested(const FInteractionCommit& Commit);
 
 	bool bIsOn = false;
 	bool bIsLocked = false;

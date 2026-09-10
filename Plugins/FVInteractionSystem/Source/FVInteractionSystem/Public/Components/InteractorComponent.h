@@ -15,8 +15,6 @@
 class UInteractableComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractorStateChanged, EInteractorState, NewState);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorFocusChanged, UInteractableComponent*, Target);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionOffersChanged, const TArray<FInteractionOffer>&, Offers);
 
 UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), NotBlueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
 class UInteractorComponent final : public UActorComponent
@@ -101,24 +99,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Events")
 	UE_API void ReportInteractionCancelled(const FInteractionCommit& Commit, const FGameplayTag& Reason);
-	
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FInteractorFocusChanged FocusChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FInteractionOffersChanged OffersChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FInteractionStarted InteractionStarted;
-
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FInteractionProgress InteractionProgress;
-
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FInteractionRequested InteractionRequested;
-
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FInteractionCancelled InteractionCancelled;
 
 #if !UE_BUILD_SHIPPING
 	enum class EDebugActionOutcome : uint8

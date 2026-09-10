@@ -200,9 +200,3 @@ struct FVINTERACTIONSYSTEM_API FInteractionOffer
 
 	bool operator!=(const FInteractionOffer& Other) const { return !(*this == Other); }
 };
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionRequested, const FInteractionCommit&, Commit);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionStarted, const FInteractionCommit&, Commit);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionProgress, const FInteractionCommit&, Commit, float, Progress);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCancelled, const FInteractionCommit&, Commit, const FGameplayTag&, Reason);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCommited, const FInteractionCommit&, Commit, bool, bSuccess);

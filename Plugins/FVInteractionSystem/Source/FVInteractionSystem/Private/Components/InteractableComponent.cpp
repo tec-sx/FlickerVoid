@@ -104,7 +104,6 @@ void UInteractableComponent::SetFocused(bool bFocused, UInteractorComponent* Int
 	}
 
 	bIsInFocus = bFocused;
-	FocusStateChanged.Broadcast(bIsInFocus, Interactor);
 }
 
 bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInteractableState To)

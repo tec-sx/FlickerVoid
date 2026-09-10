@@ -12,7 +12,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPromptsChanged, const TArray<FInt
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPromptProgress, const FGameplayTag&, ActionTag, float, Progress);
 
 UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
-class UResponse_InteractionPrompt final : public UInteractionResponceComponent
+class UResponse_InteractionPrompt final : public UInteractionResponseComponent
 {
 	GENERATED_BODY()
 
@@ -30,17 +30,18 @@ public:
 	FOnPromptProgress OnPromptProgress;
 
 protected:
-	virtual void BindResponses_Implementation(UInteractionResponseComponent* Response) override;
+	virtual void BindSignals_Implementation(UInteractionSignalComponent* Signal) override;
+	virtual void UnbindSignals_Implementation(UInteractionSignalComponent* Signal) override;
 
 private:
 	UFUNCTION()
-	void HandleFocusChanged(UInteractableComponent* NewTarget);
+	void OnFocusChanged(UInteractableComponent* NewTarget);
 
 	UFUNCTION()
-	void HandleOffersChanged(const TArray<FInteractionOffer>& Offers);
+	void OnOffersChanged(const TArray<FInteractionOffer>& Offers);
 
 	UFUNCTION()
-	void HandleInteractionProgress(const FInteractionCommit& Commit, float Progress);
+	void OnInteractionProgress(const FInteractionCommit& Commit, float Progress);
 
 	UPROPERTY(Transient)
 	TArray<FInteractionOffer> Prompts;

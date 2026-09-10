@@ -15,7 +15,6 @@ class UPrimitiveComponent;
 class UShapeComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableStateChanged, EInteractableState, NewState);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractableFocusChanged, bool, bInFocus, UInteractorComponent*, Interactor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCollisionChanged, const TEnumAsByte<ECollisionChannel>&, NewCollisionChannel);
 
 UCLASS(MinimalAPI, ClassGroup=(Interaction), Abstract, Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
@@ -67,24 +66,6 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
 	FInteractableStateChanged StateChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
-	FInteractableFocusChanged FocusStateChanged;
-	
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FInteractionStarted InteractionStarted;
-
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FInteractionProgress InteractionProgress;
-
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FInteractionRequested InteractionRequested;
-
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FInteractionCancelled InteractionCancelled;
-	
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FInteractionCommited InteractionCommited;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Interactable|Identity", meta = (Categories = "Interactable"))
 	FGameplayTag Type;

@@ -14,7 +14,8 @@ class FVINTERACTIONSYSTEM_API UResponse_Highlight final : public UInteractionRes
 	GENERATED_BODY()
 
 protected:
-	virtual void BindInteractableResponses_Implementation(UInteractableComponent* Interactable) override;
+	virtual void BindSignals_Implementation(UInteractionSignalComponent* Signal) override;
+	virtual void UnbindSignals_Implementation(UInteractionSignalComponent* Signal) override;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction|Highlight")
 	EHighlightSetupType SetupType = EHighlightSetupType::Default;
@@ -24,10 +25,7 @@ protected:
 
 private:
 	UFUNCTION()
-	void HandleFocusStateChanged(bool bInFocus, UInteractorComponent* Interactor);
-
-	void CollectTargets();
-	void ApplyHighlight(bool bEnabled);
+	void OnFocusStateChanged(UInteractableComponent* Interactable);
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UPrimitiveComponent>> HighlightTargets;

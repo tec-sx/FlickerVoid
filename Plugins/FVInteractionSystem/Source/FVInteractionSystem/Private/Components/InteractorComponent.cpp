@@ -9,6 +9,7 @@
 #include "Misc/ScopeExit.h"
 #include "Subsystems/InteractionRegistrySubsystem.h"
 #include "TimerManager.h"
+#include "Components/InteractionSignalComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(InteractorComponent)
 
@@ -293,8 +294,11 @@ bool UInteractorComponent::BeginInteraction(const FInteractionOffer& Offer, UInt
 	ActiveRequiredPresses = FMath::Max(Offer.RequiredPresses, 1);
 	bIsInteracting = true;
 	UpdateState();
-
-	InteractionStarted.Broadcast(ActiveCommit);
+	
+	if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
+	{
+		Signal->InteractionStarted.Broadcast(ActiveCommit);
+	}
 
 	if (ActiveMode == EInteractionInputMode::Press || ActiveDuration <= 0.f)
 	{
@@ -353,14 +357,20 @@ void UInteractorComponent::TickInteraction()
 			return;
 		}
 		
-		InteractionProgress.Broadcast(ActiveCommit, ActivePresses / static_cast<float>(ActiveRequiredPresses));
+		if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
+		{
+			Signal->InteractionProgress.Broadcast(ActiveCommit, ActivePresses / static_cast<float>(ActiveRequiredPresses))
+		}
 
 		return;
 	}
 
 	const float Progress = FMath::Clamp(ActiveElapsed / ActiveDuration, 0.f, 1.f);
 
-	InteractionProgress.Broadcast(ActiveCommit, Progress);
+	if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
+	{
+		Signal->InteractionProgress.Broadcast(ActiveCommit, Progress);
+	}
 
 	if (Progress >= 1.f)
 	{
@@ -379,7 +389,10 @@ void UInteractorComponent::CommitInteraction()
 	bIsInteracting = false;
 	UpdateState();
 
-	InteractionRequested.Broadcast(ActiveCommit);
+	if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
+	{
+		Signal->InteractionRequested.Broadcast(ActiveCommit);
+	}
 
 #if !UE_BUILD_SHIPPING
 	DebugLastOutcome = EDebugActionOutcome::Succeeded;
@@ -389,7 +402,6 @@ void UInteractorComponent::CommitInteraction()
 	{
 		Target->ConsumeOffer(ActiveCommit.ActionTag);
 		Target->SetState(EInteractableState::Awake);
-		Target->InteractionCommited.Broadcast(ActiveCommit, true);
 	}
 	
 	RefreshOffers();
@@ -406,12 +418,14 @@ void UInteractorComponent::CancelInteraction(const FGameplayTag& Reason)
 	bIsInteracting = false;
 	UpdateState();
 
-	InteractionCancelled.Broadcast(ActiveCommit, Reason);
+	if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
+	{
+		Signal->InteractionCancelled.Broadcast(ActiveCommit, Reason);
+	}
 
 	if (UInteractableComponent* Target = ActiveCommit.Interactable)
 	{
 		Target->SetState(EInteractableState::Awake);
-		Target->InteractionCommited.Broadcast(ActiveCommit, false);
 	}
 
 	RefreshOffers();
@@ -641,7 +655,10 @@ void UInteractorComponent::SetFocusedTarget(UInteractableComponent* NewTarget)
 		NewTarget->StateChanged.AddDynamic(this, &UInteractorComponent::HandleFocusedStateChanged);
 	}
 
-	FocusChanged.Broadcast(NewTarget);
+	if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
+	{
+		Signal->FocusChanged.Broadcast(NewTarget);
+	}
 
 	RefreshOffers();
 }
@@ -693,6 +710,9 @@ void UInteractorComponent::RefreshOffers(bool bForceBroadcast)
 
 	if (bChanged || bForceBroadcast)
 	{
-		OffersChanged.Broadcast(CachedOffers);
+		if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
+		{
+			Signal->OffersChanged.Broadcast(CachedOffers);
+		}
 	}
 }

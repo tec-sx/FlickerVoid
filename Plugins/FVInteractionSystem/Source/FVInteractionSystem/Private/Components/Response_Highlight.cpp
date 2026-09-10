@@ -4,11 +4,12 @@
 #include "Components/MeshComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "FVInteractionSystemSettings.h"
+#include "Components/InteractionSignalComponent.h"
 #include "GameFramework/Actor.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(Response_Highlight)
 
-void UResponse_Highlight::BindInteractableResponses_Implementation(UInteractableComponent* Interactable)
+void UResponse_Highlight::BindSignals_Implementation(UInteractionSignalComponent* Signal)
 {
 	const FInteractableSettings& Defaults = UFVInteractionSystemSettings::Get().InteractableBaseSettings;
 
@@ -22,16 +23,9 @@ void UResponse_Highlight::BindInteractableResponses_Implementation(UInteractable
 		HighlightSetup = Defaults.DefaultHighlightSetup;
 	}
 
-	CollectTargets();
-
-	Interactable->FocusStateChanged.AddDynamic(this, &UResponse_Highlight::HandleFocusStateChanged);
-}
-
-void UResponse_Highlight::CollectTargets()
-{
 	HighlightTargets.Reset();
 
-	AActor* OwningActor = GetOwner();
+	const AActor* OwningActor = GetOwner();
 	if (!OwningActor)
 	{
 		return;
@@ -54,14 +48,20 @@ void UResponse_Highlight::CollectTargets()
 		CachedRenderCustomDepth.Add(Target->bRenderCustomDepth);
 		CachedStencilValues.Add(Target->CustomDepthStencilValue);
 	}
+
+	Signal->FocusChanged.AddDynamic(this, &UResponse_Highlight::OnFocusStateChanged);
 }
 
-void UResponse_Highlight::HandleFocusStateChanged(bool bInFocus, UInteractorComponent* Interactor)
+void UResponse_Highlight::UnbindSignals_Implementation(UInteractionSignalComponent* Signal)
 {
-	ApplyHighlight(bInFocus);
+	Signal->FocusChanged.RemoveDynamic(this, &UResponse_Highlight::OnFocusStateChanged);
+	
+	CachedRenderCustomDepth.Reset();
+	CachedStencilValues.Reset();
+	HighlightTargets.Reset();
 }
 
-void UResponse_Highlight::ApplyHighlight(bool bEnabled)
+void UResponse_Highlight::OnFocusStateChanged(UInteractableComponent* Interactable)
 {
 	for (int32 Index = 0; Index < HighlightTargets.Num(); ++Index)
 	{
@@ -73,12 +73,12 @@ void UResponse_Highlight::ApplyHighlight(bool bEnabled)
 
 		if (HighlightSetup.HighlightType == EHighlightType::PostProcessing)
 		{
-			Target->SetRenderCustomDepth(bEnabled ? true : CachedRenderCustomDepth[Index]);
-			Target->SetCustomDepthStencilValue(bEnabled ? HighlightSetup.StencilID : CachedStencilValues[Index]);
+			Target->SetRenderCustomDepth(Interactable->IsInFocus() ? true : CachedRenderCustomDepth[Index]);
+			Target->SetCustomDepthStencilValue(Interactable->IsInFocus() ? HighlightSetup.StencilID : CachedStencilValues[Index]);
 		}
 		else if (UMeshComponent* Mesh = Cast<UMeshComponent>(Target))
 		{
-			Mesh->SetOverlayMaterial(bEnabled ? HighlightSetup.HighlightMaterial.Get() : nullptr);
+			Mesh->SetOverlayMaterial(Interactable->IsInFocus() ? HighlightSetup.HighlightMaterial.Get() : nullptr);
 		}
 	}
 }
