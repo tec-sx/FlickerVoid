@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Components/InteractionResponderComponent.h"
+#include "Components/InteractionResponseComponent.h"
 #include "Core/InteractionTypes.h"
 #include "CoreMinimal.h"
 
-#include "InteractionPromptResponder.generated.h"
+#include "Response_InteractionPrompt.generated.h"
 
 #define UE_API FVINTERACTIONSYSTEM_API
 
@@ -12,7 +12,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPromptsChanged, const TArray<FInt
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPromptProgress, const FGameplayTag&, ActionTag, float, Progress);
 
 UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
-class UInteractionPromptResponder final : public UInteractionResponderComponent
+class UResponse_InteractionPrompt final : public UInteractionResponceComponent
 {
 	GENERATED_BODY()
 

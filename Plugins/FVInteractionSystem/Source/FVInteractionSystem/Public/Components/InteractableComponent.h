@@ -14,8 +14,12 @@ class UInteractorComponent;
 class UPrimitiveComponent;
 class UShapeComponent;
 
-UCLASS(MinimalAPI, ClassGroup=(Interaction), NotBlueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
-class UInteractableComponent final : public UActorComponent
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableStateChanged, EInteractableState, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractableFocusChanged, bool, bInFocus, UInteractorComponent*, Interactor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCollisionChanged, const TEnumAsByte<ECollisionChannel>&, NewCollisionChannel);
+
+UCLASS(MinimalAPI, ClassGroup=(Interaction), Abstract, Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
+class UInteractableComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -24,11 +28,12 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
+	
 	UE_API FVector GetFocusPoint() const;
 
 	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
 	UE_API float GetDetectionRadius() const { return DetectionRadius; }
+	
 	UE_API void SetFocused(bool bFocused, UInteractorComponent* Interactor);
 
 	UFUNCTION(BlueprintPure, Category = "Interaction")
@@ -38,7 +43,7 @@ public:
 	UE_API EInteractableState GetState() const { return State; }
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable|State")
-	UE_API bool TrySetState(EInteractableState NewState);
+	UE_API bool SetState(EInteractableState NewState);
 
 	UE_API static bool IsTransitionAllowed(EInteractableState From, EInteractableState To);
 
@@ -60,21 +65,27 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interactable|State")
 	UE_API bool CanBeInteractedWith() const { return State == EInteractableState::Awake || State == EInteractableState::Paused; }
 
-	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FOnInteractionExecuted OnInteractionExecuted;
+	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
+	FInteractableStateChanged StateChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
-	FOnInteractableStateChanged OnStateChanged;
+	FInteractableFocusChanged FocusStateChanged;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
+	FInteractionStarted InteractionStarted;
 
-	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
-	FOnInteractableFocusChanged OnFocusStateChanged;
+	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
+	FInteractionProgress InteractionProgress;
 
-	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
-	FOnInteractableInteractionBegan OnInteractionBegan;
+	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
+	FInteractionRequested InteractionRequested;
 
-	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
-	FOnInteractableInteractionEnded OnInteractionEnded;
-
+	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
+	FInteractionCancelled InteractionCancelled;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
+	FInteractionCommited InteractionCommited;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Interactable|Identity", meta = (Categories = "Interactable"))
 	FGameplayTag Type;
 
@@ -107,9 +118,11 @@ protected:
 	FGameplayTagContainer SuppressionReasons;
 
 private:
-	void ApplyStateTag(EInteractableState OldState, EInteractableState NewState);
+	void ApplyStateTag(EInteractableState OldState, EInteractableState NewState) const;
+	void StartCooldown();
 
 	TWeakObjectPtr<UPrimitiveComponent> FocusPrimitive;
+	FTimerHandle CooldownTimer;
 };
 
 #undef UE_API

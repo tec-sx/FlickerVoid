@@ -63,9 +63,7 @@ void UInteractableComponent::BeginPlay()
 
 	FocusPrimitive->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
 
-	UInteractionRegistrySubsystem* Registry = GetWorld()->GetSubsystem<UInteractionRegistrySubsystem>();
-
-	if (Registry)
+	if (UInteractionRegistrySubsystem* Registry = GetWorld()->GetSubsystem<UInteractionRegistrySubsystem>())
 	{
 		Registry->Register(this);
 	}
@@ -73,15 +71,16 @@ void UInteractableComponent::BeginPlay()
 
 void UInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	UInteractionRegistrySubsystem* Registry = GetWorld() 
-		? GetWorld()->GetSubsystem<UInteractionRegistrySubsystem>() 
-		: nullptr;
-
-	if (Registry)
+	if (const UWorld* World = GetWorld())
 	{
-		Registry->Unregister(this);
-	}
+		World->GetTimerManager().ClearTimer(CooldownTimer);
 
+		if (UInteractionRegistrySubsystem* Registry = World->GetSubsystem<UInteractionRegistrySubsystem>())
+		{
+			Registry->Unregister(this);
+		}
+	}
+	
 	bIsInitialized = false;
 
 	Super::EndPlay(EndPlayReason);
@@ -105,37 +104,34 @@ void UInteractableComponent::SetFocused(bool bFocused, UInteractorComponent* Int
 	}
 
 	bIsInFocus = bFocused;
-	OnFocusStateChanged.Broadcast(bIsInFocus, Interactor);
+	FocusStateChanged.Broadcast(bIsInFocus, Interactor);
 }
 
-namespace
+bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInteractableState To)
 {
-	void LogRejectedTransition(EInteractableState From, EInteractableState To, const TCHAR* Reason)
+	auto LogRejection = [&From, &To](const TCHAR* Reason)
 	{
 		UE_LOG(LogFVInteraction, Verbose, TEXT("Rejected %s -> %s: %s"),
 			*UEnum::GetValueAsString(From),
 			*UEnum::GetValueAsString(To),
 			Reason);
-	}
-}
-
-bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInteractableState To)
-{
+	};
+	
 	if (To == EInteractableState::Default)
 	{
-		LogRejectedTransition(From, To, TEXT("Default is not a valid target state."));
+		LogRejection(TEXT("Default is not a valid target state."));
 		return false;
 	}
 
 	if (From == To)
 	{
-		LogRejectedTransition(From, To, TEXT("Already in the requested state."));
+		LogRejection(TEXT("Already in the requested state."));
 		return false;
 	}
 
 	if (From == EInteractableState::Completed)
 	{
-		LogRejectedTransition(From, To, TEXT("Completed is terminal."));
+		LogRejection(TEXT("Completed is terminal."));
 		return false;
 	}
 
@@ -144,7 +140,7 @@ bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInter
 	case EInteractableState::Awake:
 		if (From == EInteractableState::Interacting)
 		{
-			LogRejectedTransition(From, To, TEXT("Finish or cancel the interaction before waking."));
+			LogRejection(TEXT("Finish or cancel the interaction before waking."));
 			return false;
 		}
 		break;
@@ -152,7 +148,7 @@ bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInter
 	case EInteractableState::Interacting:
 		if (From != EInteractableState::Awake && From != EInteractableState::Paused)
 		{
-			LogRejectedTransition(From, To, TEXT("Only an Awake or Paused interactable can start interacting."));
+			LogRejection(TEXT("Only an Awake or Paused interactable can start interacting."));
 			return false;
 		}
 		break;
@@ -160,7 +156,7 @@ bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInter
 	case EInteractableState::Paused:
 		if (From != EInteractableState::Interacting)
 		{
-			LogRejectedTransition(From, To, TEXT("Only an interacting interactable can be paused."));
+			LogRejection(TEXT("Only an interacting interactable can be paused."));
 			return false;
 		}
 		break;
@@ -169,7 +165,7 @@ bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInter
 	case EInteractableState::Completed:
 		if (From != EInteractableState::Interacting && From != EInteractableState::Awake)
 		{
-			LogRejectedTransition(From, To, TEXT("Only an interacting or awake interactable can finish."));
+			LogRejection(TEXT("Only an interacting or awake interactable can finish."));
 			return false;
 		}
 		break;
@@ -181,7 +177,7 @@ bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInter
 	return true;
 }
 
-bool UInteractableComponent::TrySetState(EInteractableState NewState)
+bool UInteractableComponent::SetState(EInteractableState NewState)
 {
 	if (!IsTransitionAllowed(State, NewState))
 	{
@@ -192,13 +188,13 @@ bool UInteractableComponent::TrySetState(EInteractableState NewState)
 	State = NewState;
 
 	ApplyStateTag(OldState, NewState);
-	OnStateChanged.Broadcast(NewState);
+	StateChanged.Broadcast(NewState);
 	ProcessDependencies();
 
 	return true;
 }
 
-void UInteractableComponent::ApplyStateTag(EInteractableState OldState, EInteractableState NewState)
+void UInteractableComponent::ApplyStateTag(const EInteractableState OldState, const EInteractableState NewState) const
 {
 	AActor* OwningActor = GetOwner();
 	if (!OwningActor)
@@ -244,8 +240,35 @@ void UInteractableComponent::ConsumeOffer(const FGameplayTag& ActionTag)
 
 	if (bAllExhausted)
 	{
-		TrySetState(EInteractableState::Completed);
+		SetState(EInteractableState::Completed);
 	}
+	else
+	{
+		StartCooldown();
+	}
+}
+
+void UInteractableComponent::StartCooldown()
+{
+	if (CooldownPeriod <= 0.f)
+	{
+		return;
+	}
+
+	if (!SetState(EInteractableState::Cooldown))
+	{
+		return;
+	}
+	
+	if (const UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(
+			CooldownTimer,
+			[this]() { SetState(EInteractableState::Idle); },
+			CooldownPeriod,
+			false);
+	}
+	
 }
 
 void UInteractableComponent::ProcessDependencies()
@@ -277,7 +300,7 @@ void UInteractableComponent::AddSuppression(FGameplayTag Reason)
 
 	SuppressionReasons.AddTag(Reason);
 
-	TrySetState(EInteractableState::Suppressed);
+	SetState(EInteractableState::Suppressed);
 }
 
 void UInteractableComponent::RemoveSuppression(FGameplayTag Reason)
@@ -291,7 +314,7 @@ void UInteractableComponent::RemoveSuppression(FGameplayTag Reason)
 
 	if (SuppressionReasons.IsEmpty() && State == EInteractableState::Suppressed)
 	{
-		TrySetState(EInteractableState::Idle);
+		SetState(EInteractableState::Idle);
 	}
 }
 

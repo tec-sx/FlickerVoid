@@ -49,8 +49,7 @@ public:
 private:
 	void RunBroadPhase();
 	void StartBroadPhase();
-	bool IsInRangeOfAnyInteractor(const UInteractableComponent* Interactable) const;
-	void ApplyRangeState(UInteractableComponent* Interactable, bool bInRange) const;
+	bool IsInRange(const UInteractableComponent* Interactable) const;
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UInteractableComponent>> Interactables;

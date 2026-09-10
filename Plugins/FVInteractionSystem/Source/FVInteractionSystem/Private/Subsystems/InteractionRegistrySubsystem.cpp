@@ -16,7 +16,7 @@ bool UInteractionRegistrySubsystem::ShouldCreateSubsystem(UObject* Outer) const
 
 void UInteractionRegistrySubsystem::Deinitialize()
 {
-	if (UWorld* World = GetWorld())
+	if (const UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(BroadPhaseTimer);
 	}
@@ -81,9 +81,9 @@ void UInteractionRegistrySubsystem::UnregisterInteractor(UInteractorComponent* I
 
 	for (const TObjectPtr<UInteractableComponent>& Interactable : Orphaned)
 	{
-		if (IsValid(Interactable) && !IsInRangeOfAnyInteractor(Interactable))
+		if (IsValid(Interactable) && !IsInRange(Interactable))
 		{
-			ApplyRangeState(Interactable, false);
+			Interactable->SetState(EInteractableState::Idle);
 		}
 	}
 
@@ -166,14 +166,14 @@ void UInteractionRegistrySubsystem::RunBroadPhase()
 
 		for (const TObjectPtr<UInteractableComponent>& Interactable : Entered)
 		{
-			ApplyRangeState(Interactable, true);
+			Interactable->SetState(EInteractableState::Awake);
 		}
 
 		for (const TObjectPtr<UInteractableComponent>& Interactable : Left)
 		{
-			if (IsValid(Interactable) && !IsInRangeOfAnyInteractor(Interactable))
+			if (IsValid(Interactable) && !IsInRange(Interactable))
 			{
-				ApplyRangeState(Interactable, false);
+				Interactable->SetState(EInteractableState::Idle);
 			}
 		}
 
@@ -184,7 +184,7 @@ void UInteractionRegistrySubsystem::RunBroadPhase()
 	}
 }
 
-bool UInteractionRegistrySubsystem::IsInRangeOfAnyInteractor(const UInteractableComponent* Interactable) const
+bool UInteractionRegistrySubsystem::IsInRange(const UInteractableComponent* Interactable) const
 {
 	for (const FInteractorRangeSet& RangeSet : InteractorRanges)
 	{
@@ -195,18 +195,6 @@ bool UInteractionRegistrySubsystem::IsInRangeOfAnyInteractor(const UInteractable
 	}
 
 	return false;
-}
-
-void UInteractionRegistrySubsystem::ApplyRangeState(UInteractableComponent* Interactable, bool bInRange) const
-{
-	const EInteractableState Desired = bInRange ? EInteractableState::Awake : EInteractableState::Idle;
-
-	if (Interactable->GetState() == Desired)
-	{
-		return;
-	}
-
-	Interactable->TrySetState(Desired);
 }
 
 const TArray<TObjectPtr<UInteractableComponent>>& UInteractionRegistrySubsystem::GetInRangeSet(const UInteractorComponent* Interactor) const

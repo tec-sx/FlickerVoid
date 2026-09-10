@@ -1,17 +1,21 @@
 #pragma once
 
-#include "Components/InteractionResponderComponent.h"
-#include "Core/InteractionTypes.h"
+#include "Components/InteractionResponseComponent.h"
 #include "CoreMinimal.h"
+#include "InteractableComponent.h"
 
-#include "ToggleStateResponder.generated.h"
+#include "InteractableToggleComponent.generated.h"
 
 UCLASS(ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
-class FVINTERACTIONSYSTEM_API UToggleStateResponder final : public UInteractionResponderComponent
+class FVINTERACTIONSYSTEM_API UInteractableToggleComponent final : public UInteractionResponseComponent
 {
 	GENERATED_BODY()
 
 public:
+	virtual void BeginPlay() override;
+	virtual void BindInteractions_Implementation(UInteractorComponent* Interactor) override;
+	virtual void UnbindInteractions_Implementation(UInteractorComponent* Interactor) override;
+	
 	UFUNCTION(BlueprintPure, Category = "Interaction|Toggle")
 	bool IsOn() const { return bIsOn; }
 
@@ -22,8 +26,6 @@ public:
 	void SetLocked(bool bLocked);
 
 protected:
-	virtual void BindInteractableResponses_Implementation(UInteractableComponent* Interactable) override;
-
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
 	void OnToggled(bool bOn);
 
@@ -37,14 +39,14 @@ protected:
 	FGameplayTag ToggleActionTag;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction|Toggle")
-	bool bStartsOn = false;
+	bool bInitialState = false;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction|Toggle")
 	bool bStartsLocked = false;
 
 private:
 	UFUNCTION()
-	void HandleInteractionEnded(const FGameplayTag& ActionTag, UInteractorComponent* Interactor, bool bSucceeded);
+	void HandleInteractionEnded(const FInteractionCommit& Commit, bool bSuccess);
 
 	bool bIsOn = false;
 	bool bIsLocked = false;

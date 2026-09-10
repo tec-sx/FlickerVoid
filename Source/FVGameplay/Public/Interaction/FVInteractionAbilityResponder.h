@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Components/InteractionResponderComponent.h"
+#include "Components/InteractionResponseComponent.h"
 #include "CoreMinimal.h"
 
 #include "FVInteractionAbilityResponder.generated.h"
@@ -8,7 +8,7 @@
 #define UE_API FLICKERVOIDGAMEPLAY_API
 
 UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
-class UFVInteractionAbilityResponder final : public UInteractionResponderComponent
+class UFVInteractionAbilityResponder final : public UInteractionResponceComponent
 {
 	GENERATED_BODY()
 

@@ -1,7 +1,7 @@
 #include "Validation/Rules/ValidateResponderWiringRule.h"
 
 #include "Components/InteractableComponent.h"
-#include "Components/InteractionResponderComponent.h"
+#include "Components/InteractionResponseComponent.h"
 #include "Components/InteractionResponseComponent.h"
 #include "Engine/Blueprint.h"
 #include "Kismet2/CompilerResultsLog.h"
@@ -9,7 +9,7 @@
 
 bool FValidateResponderWiringRule::ShouldRun(const FInteractionCompileContext& Context) const
 {
-	return InteractionBlueprintComponentUtils::HasComponentOfClass(Context.Blueprint, UInteractionResponderComponent::StaticClass());
+	return InteractionBlueprintComponentUtils::HasComponentOfClass(Context.Blueprint, UInteractionResponceComponent::StaticClass());
 }
 
 void FValidateResponderWiringRule::Validate(const FInteractionCompileContext& Context) const
@@ -23,7 +23,7 @@ void FValidateResponderWiringRule::Validate(const FInteractionCompileContext& Co
 	}
 
 	TArray<const UActorComponent*> Templates;
-	InteractionBlueprintComponentUtils::GetComponentTemplatesOfClass(Context.Blueprint, UInteractionResponderComponent::StaticClass(), Templates);
+	InteractionBlueprintComponentUtils::GetComponentTemplatesOfClass(Context.Blueprint, UInteractionResponceComponent::StaticClass(), Templates);
 
 	for (const UActorComponent* Template : Templates)
 	{

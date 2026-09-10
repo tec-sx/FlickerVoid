@@ -1,4 +1,4 @@
-#include "Components/InteractableHighlightResponder.h"
+#include "Components/Response_Highlight.h"
 
 #include "Components/InteractableComponent.h"
 #include "Components/MeshComponent.h"
@@ -6,9 +6,9 @@
 #include "FVInteractionSystemSettings.h"
 #include "GameFramework/Actor.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(InteractableHighlightResponder)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(Response_Highlight)
 
-void UInteractableHighlightResponder::BindInteractableResponses_Implementation(UInteractableComponent* Interactable)
+void UResponse_Highlight::BindInteractableResponses_Implementation(UInteractableComponent* Interactable)
 {
 	const FInteractableSettings& Defaults = UFVInteractionSystemSettings::Get().InteractableBaseSettings;
 
@@ -24,10 +24,10 @@ void UInteractableHighlightResponder::BindInteractableResponses_Implementation(U
 
 	CollectTargets();
 
-	Interactable->OnFocusStateChanged.AddDynamic(this, &UInteractableHighlightResponder::HandleFocusStateChanged);
+	Interactable->FocusStateChanged.AddDynamic(this, &UResponse_Highlight::HandleFocusStateChanged);
 }
 
-void UInteractableHighlightResponder::CollectTargets()
+void UResponse_Highlight::CollectTargets()
 {
 	HighlightTargets.Reset();
 
@@ -56,12 +56,12 @@ void UInteractableHighlightResponder::CollectTargets()
 	}
 }
 
-void UInteractableHighlightResponder::HandleFocusStateChanged(bool bInFocus, UInteractorComponent* Interactor)
+void UResponse_Highlight::HandleFocusStateChanged(bool bInFocus, UInteractorComponent* Interactor)
 {
 	ApplyHighlight(bInFocus);
 }
 
-void UInteractableHighlightResponder::ApplyHighlight(bool bEnabled)
+void UResponse_Highlight::ApplyHighlight(bool bEnabled)
 {
 	for (int32 Index = 0; Index < HighlightTargets.Num(); ++Index)
 	{

@@ -119,13 +119,10 @@ struct FVINTERACTIONSYSTEM_API FInteractionCommit
 	FGameplayTag InputTag;
 
 	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<UInteractorComponent> Interactor;
+	
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UInteractableComponent> Interactable;
-
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<AActor> Interactor;
-
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<AActor> Target;
 
 	UPROPERTY(BlueprintReadOnly)
 	FVector InteractionPoint = FVector::ZeroVector;
@@ -204,18 +201,8 @@ struct FVINTERACTIONSYSTEM_API FInteractionOffer
 	bool operator!=(const FInteractionOffer& Other) const { return !(*this == Other); }
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionFocusChanged, UInteractableComponent*, Target);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionOffersChanged, const TArray<FInteractionOffer>&, Offers);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractionExecuted, const FGameplayTag&, ActionTag, UInteractorComponent*,  Interactor);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FIgnoredActorAdded,	const AActor*, AddedActor);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FIgnoredActorRemoved, const AActor*, RemovedActor);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractorStateChanged, EInteractorState, NewState);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractableStateChanged, EInteractableState, NewState);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractableFocusChanged, bool, bInFocus, UInteractorComponent*, Interactor);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractableInteractionBegan, const FGameplayTag&, ActionTag, UInteractorComponent*, Interactor);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnInteractableInteractionEnded, const FGameplayTag&, ActionTag, UInteractorComponent*, Interactor, bool, bSucceeded);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCollisionChanged, const TEnumAsByte<ECollisionChannel>&, NewCollisionChannel);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorTagChanged, const FGameplayTag&, NewTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionRequested, const FInteractionCommit&, Commit);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionStarted, const FInteractionCommit&, Commit);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionProgress, const FInteractionCommit&, Commit, float, Progress);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCancelled, const FInteractionCommit&, Commit, const FGameplayTag&, Reason);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCommited, const FInteractionCommit&, Commit, bool, bSuccess);

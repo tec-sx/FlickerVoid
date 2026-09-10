@@ -1,16 +1,16 @@
-#include "Components/InteractableStateVFXResponder.h"
+#include "Components/Response_InteractableStateVFX.h"
 
 #include "Components/InteractableComponent.h"
 #include "Kismet/GameplayStatics.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(InteractableStateVFXResponder)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(Response_InteractableStateVFX)
 
-void UInteractableStateVFXResponder::BindInteractableResponses_Implementation(UInteractableComponent* Interactable)
+void UResponse_InteractableStateVFX::BindInteractableResponses_Implementation(UInteractableComponent* Interactable)
 {
-	Interactable->OnStateChanged.AddDynamic(this, &UInteractableStateVFXResponder::HandleStateChanged);
+	Interactable->StateChanged.AddDynamic(this, &UResponse_InteractableStateVFX::HandleStateChanged);
 }
 
-void UInteractableStateVFXResponder::HandleStateChanged(EInteractableState NewState)
+void UResponse_InteractableStateVFX::HandleStateChanged(EInteractableState NewState)
 {
 	const FInteractableStateEffect* Entry = StateEffects.FindByPredicate([NewState](const FInteractableStateEffect& Candidate)
 	{

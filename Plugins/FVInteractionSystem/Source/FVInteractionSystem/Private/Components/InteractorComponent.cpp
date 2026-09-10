@@ -1,6 +1,5 @@
 #include "Components/InteractorComponent.h"
 #include "Components/InteractableComponent.h"
-#include "Components/InteractionResponseComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/InteractionTags.h"
 #include "Engine/World.h"
@@ -183,11 +182,6 @@ void UInteractorComponent::ArmNextTrace()
 		false);
 }
 
-UInteractionResponseComponent* UInteractorComponent::GetResponse() const
-{
-	return UInteractionResponseComponent::Get(GetOwner());
-}
-
 const FInteractionOffer* UInteractorComponent::FindActiveOffer() const
 {
 	const UInteractableComponent* Target = ActiveCommit.Interactable;
@@ -271,7 +265,7 @@ bool UInteractorComponent::PushInput(FGameplayTag InputTag, EInteractionInputPha
 
 bool UInteractorComponent::BeginInteraction(const FInteractionOffer& Offer, UInteractableComponent& Target)
 {
-	if (!Target.TrySetState(EInteractableState::Interacting))
+	if (!Target.SetState(EInteractableState::Interacting))
 	{
 		return false;
 	}
@@ -280,8 +274,7 @@ bool UInteractorComponent::BeginInteraction(const FInteractionOffer& Offer, UInt
 	ActiveCommit.ActionTag = Offer.ActionTag;
 	ActiveCommit.InputTag = Offer.InputTag;
 	ActiveCommit.Interactable = &Target;
-	ActiveCommit.Interactor = GetOwner();
-	ActiveCommit.Target = Target.GetOwner();
+	ActiveCommit.Interactor = this;
 	ActiveCommit.InteractionPoint = LastFocusImpactPoint.IsNearlyZero()
 		? Target.GetFocusPoint()
 		: LastFocusImpactPoint;
@@ -301,12 +294,7 @@ bool UInteractorComponent::BeginInteraction(const FInteractionOffer& Offer, UInt
 	bIsInteracting = true;
 	UpdateState();
 
-	if (UInteractionResponseComponent* Response = GetResponse())
-	{
-		Response->OnInteractionStarted.Broadcast(ActiveCommit);
-	}
-
-	Target.OnInteractionBegan.Broadcast(ActiveCommit.ActionTag, this);
+	InteractionStarted.Broadcast(ActiveCommit);
 
 	if (ActiveMode == EInteractionInputMode::Press || ActiveDuration <= 0.f)
 	{
@@ -364,21 +352,15 @@ void UInteractorComponent::TickInteraction()
 			CancelInteraction(InteractionTags::Interaction_Cancel_Timeout);
 			return;
 		}
-
-		if (UInteractionResponseComponent* Response = GetResponse())
-		{
-			Response->OnInteractionProgress.Broadcast(ActiveCommit, ActivePresses / static_cast<float>(ActiveRequiredPresses));
-		}
+		
+		InteractionProgress.Broadcast(ActiveCommit, ActivePresses / static_cast<float>(ActiveRequiredPresses));
 
 		return;
 	}
 
 	const float Progress = FMath::Clamp(ActiveElapsed / ActiveDuration, 0.f, 1.f);
 
-	if (UInteractionResponseComponent* Response = GetResponse())
-	{
-		Response->OnInteractionProgress.Broadcast(ActiveCommit, Progress);
-	}
+	InteractionProgress.Broadcast(ActiveCommit, Progress);
 
 	if (Progress >= 1.f)
 	{
@@ -397,10 +379,7 @@ void UInteractorComponent::CommitInteraction()
 	bIsInteracting = false;
 	UpdateState();
 
-	if (UInteractionResponseComponent* Response = GetResponse())
-	{
-		Response->OnInteractionRequested.Broadcast(ActiveCommit);
-	}
+	InteractionRequested.Broadcast(ActiveCommit);
 
 #if !UE_BUILD_SHIPPING
 	DebugLastOutcome = EDebugActionOutcome::Succeeded;
@@ -408,11 +387,11 @@ void UInteractorComponent::CommitInteraction()
 
 	if (UInteractableComponent* Target = ActiveCommit.Interactable)
 	{
-		Target->TrySetState(EInteractableState::Awake);
-		Target->OnInteractionEnded.Broadcast(ActiveCommit.ActionTag, this, true);
-		Target->OnInteractionExecuted.Broadcast(ActiveCommit.ActionTag, this);
+		Target->ConsumeOffer(ActiveCommit.ActionTag);
+		Target->SetState(EInteractableState::Awake);
+		Target->InteractionCommited.Broadcast(ActiveCommit, true);
 	}
-
+	
 	RefreshOffers();
 }
 
@@ -427,15 +406,12 @@ void UInteractorComponent::CancelInteraction(const FGameplayTag& Reason)
 	bIsInteracting = false;
 	UpdateState();
 
-	if (UInteractionResponseComponent* Response = GetResponse())
-	{
-		Response->OnInteractionCancelled.Broadcast(ActiveCommit, Reason);
-	}
+	InteractionCancelled.Broadcast(ActiveCommit, Reason);
 
 	if (UInteractableComponent* Target = ActiveCommit.Interactable)
 	{
-		Target->TrySetState(EInteractableState::Awake);
-		Target->OnInteractionEnded.Broadcast(ActiveCommit.ActionTag, this, false);
+		Target->SetState(EInteractableState::Awake);
+		Target->InteractionCommited.Broadcast(ActiveCommit, false);
 	}
 
 	RefreshOffers();
@@ -653,7 +629,7 @@ void UInteractorComponent::SetFocusedTarget(UInteractableComponent* NewTarget)
 
 	if (UInteractableComponent* Previous = FocusedTarget.Get())
 	{
-		Previous->OnStateChanged.RemoveDynamic(this, &UInteractorComponent::HandleFocusedStateChanged);
+		Previous->StateChanged.RemoveDynamic(this, &UInteractorComponent::HandleFocusedStateChanged);
 		Previous->SetFocused(false, this);
 	}
 
@@ -662,15 +638,10 @@ void UInteractorComponent::SetFocusedTarget(UInteractableComponent* NewTarget)
 	if (NewTarget)
 	{
 		NewTarget->SetFocused(true, this);
-		NewTarget->OnStateChanged.AddDynamic(this, &UInteractorComponent::HandleFocusedStateChanged);
+		NewTarget->StateChanged.AddDynamic(this, &UInteractorComponent::HandleFocusedStateChanged);
 	}
 
-	OnFocusChanged.Broadcast(NewTarget);
-
-	if (UInteractionResponseComponent* Response = GetResponse())
-	{
-		Response->OnFocusChanged.Broadcast(NewTarget);
-	}
+	FocusChanged.Broadcast(NewTarget);
 
 	RefreshOffers();
 }
@@ -722,11 +693,6 @@ void UInteractorComponent::RefreshOffers(bool bForceBroadcast)
 
 	if (bChanged || bForceBroadcast)
 	{
-		OnOffersChanged.Broadcast(CachedOffers);
-
-		if (UInteractionResponseComponent* Response = GetResponse())
-		{
-			Response->OnOffersChanged.Broadcast(CachedOffers);
-		}
+		OffersChanged.Broadcast(CachedOffers);
 	}
 }

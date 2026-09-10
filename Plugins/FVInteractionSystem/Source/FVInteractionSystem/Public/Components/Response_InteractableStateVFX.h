@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Components/InteractionResponderComponent.h"
+#include "Components/InteractionResponseComponent.h"
 #include "Core/InteractionTypes.h"
 #include "CoreMinimal.h"
 
-#include "InteractableStateVFXResponder.generated.h"
+#include "Response_InteractableStateVFX.generated.h"
 
 class UFXSystemAsset;
 class USoundBase;
@@ -25,7 +25,7 @@ struct FInteractableStateEffect
 };
 
 UCLASS(ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
-class FVINTERACTIONSYSTEM_API UInteractableStateVFXResponder final : public UInteractionResponderComponent
+class FVINTERACTIONSYSTEM_API UResponse_InteractableStateVFX final : public UInteractionResponceComponent
 {
 	GENERATED_BODY()
 

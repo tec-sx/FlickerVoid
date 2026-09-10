@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AttributeSet.h"
-#include "Components/InteractionResponderComponent.h"
+#include "Components/InteractionResponseComponent.h"
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 
@@ -10,7 +10,7 @@
 class UInteractorComponent;
 
 UCLASS(ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
-class UFVInteractionRequirementWatcher final : public UInteractionResponderComponent
+class UFVInteractionRequirementWatcher final : public UInteractionResponceComponent
 {
 	GENERATED_BODY()
 

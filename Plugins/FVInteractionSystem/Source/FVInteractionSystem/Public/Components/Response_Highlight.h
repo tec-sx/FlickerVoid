@@ -1,15 +1,15 @@
 #pragma once
 
-#include "Components/InteractionResponderComponent.h"
+#include "Components/InteractionResponseComponent.h"
 #include "Core/InteractionTypes.h"
 #include "CoreMinimal.h"
 
-#include "InteractableHighlightResponder.generated.h"
+#include "Response_Highlight.generated.h"
 
 class UPrimitiveComponent;
 
 UCLASS(ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
-class FVINTERACTIONSYSTEM_API UInteractableHighlightResponder final : public UInteractionResponderComponent
+class FVINTERACTIONSYSTEM_API UResponse_Highlight final : public UInteractionResponseComponent
 {
 	GENERATED_BODY()
 
