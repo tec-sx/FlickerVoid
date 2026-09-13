@@ -15,8 +15,8 @@ AFVPlayerCharacter::AFVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	: Super(ObjectInitializer)
 {
 	AbilitySystemComponent = CreateDefaultSubobject<UFVAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	Interactor = CreateDefaultSubobject<UFVInteractorComponent>(TEXT("Interactor"));
-	ActivateAbilityResponse = CreateDefaultSubobject<UFVInteractorResponseComponent_ActivateAbility>(TEXT("ActivateAbilityResponse"));
+	InteractorComponent = CreateDefaultSubobject<UFVInteractorComponent>(TEXT("InteractorComponent"));
+	ActivateAbilityResponseComponent = CreateDefaultSubobject<UFVInteractorResponseComponent_ActivateAbility>(TEXT("ActivateAbilityResponseComponent"));
 }
 
 UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const
@@ -26,12 +26,12 @@ UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const
 
 UFVInteractableComponent* AFVPlayerCharacter::GetFocusedInteractable() const
 {
-	return Interactor->GetFocusedTarget();
+	return InteractorComponent->GetFocusedTarget();
 }
 
 AActor* AFVPlayerCharacter::GetFocusedActor() const
 {
-	if (const UFVInteractableComponent* Interactable = Interactor->GetFocusedTarget())
+	if (const UFVInteractableComponent* Interactable = InteractorComponent->GetFocusedTarget())
 	{
 		return  Interactable->GetOwner();
 	}

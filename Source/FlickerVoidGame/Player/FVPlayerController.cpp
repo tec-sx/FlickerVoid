@@ -34,7 +34,7 @@ void AFVPlayerController::OnPossess(APawn* InPawn)
     Super::OnPossess(InPawn);
 
     CachedCharacter = Cast<AFVPlayerCharacter>(InPawn);
-    CachedInteractor = CachedCharacter.IsValid() ? CachedCharacter->GetInteractor() : nullptr;
+    CachedInteractor = CachedCharacter.IsValid() ? CachedCharacter->GetInteractorComponent() : nullptr;
 
     if (CachedCharacter.IsValid())
     {

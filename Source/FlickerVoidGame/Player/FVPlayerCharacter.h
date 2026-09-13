@@ -27,7 +27,7 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|Interaction")
-	UFVInteractorComponent* GetInteractor() const { return Interactor; }
+	UFVInteractorComponent* GetInteractorComponent() const { return InteractorComponent; }
 	
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|Interaction")
 	UFVInteractableComponent* GetFocusedInteractable() const;
@@ -40,8 +40,8 @@ private:
 	TObjectPtr<UFVAbilitySystemComponent> AbilitySystemComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
-	TObjectPtr<UFVInteractorComponent> Interactor;
+	TObjectPtr<UFVInteractorComponent> InteractorComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
-	TObjectPtr<UFVInteractorResponseComponent_ActivateAbility> ActivateAbilityResponse;
+	TObjectPtr<UFVInteractorResponseComponent_ActivateAbility> ActivateAbilityResponseComponent;
 };

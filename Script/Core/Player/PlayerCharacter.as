@@ -116,6 +116,6 @@ class APlayerCharacter : AFVPlayerCharacter
     UFUNCTION()
     bool HasFocusedInteractable()
     {
-        return Interactor.HasFocus();
+        return InteractorComponent.HasFocus();
     }
 }
