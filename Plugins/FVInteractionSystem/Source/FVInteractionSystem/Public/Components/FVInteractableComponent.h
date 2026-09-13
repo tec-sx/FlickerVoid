@@ -20,7 +20,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionStarted, const FGamepla
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInteractionProgress, const FGameplayTag&, ActionTag, UFVInteractorComponent*, Interactor, float, Progress);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInteractionEnded, const FGameplayTag&, ActionTag, UFVInteractorComponent*, Interactor, const bool, bSuccess);
 
-UCLASS(MinimalAPI, ClassGroup=(Interaction), Abstract, Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
+UCLASS(MinimalAPI, ClassGroup=(Interaction), NotBlueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
 class UFVInteractableComponent : public UActorComponent
 {
 	GENERATED_BODY()
