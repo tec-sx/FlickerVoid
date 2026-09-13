@@ -1,24 +1,24 @@
 #include "Validation/Rules/ValidateInteractableSetupRule.h"
 
-#include "Components/InteractableComponent.h"
-#include "Core/InteractionGameplayTags.h"
+#include "Components/FVInteractableComponent.h"
+#include "Core/FVInteractionGameplayTags.h"
 #include "Engine/Blueprint.h"
 #include "Kismet2/CompilerResultsLog.h"
 #include "Validation/InteractionBlueprintComponentUtils.h"
 
 bool FValidateInteractableSetupRule::ShouldRun(const FInteractionCompileContext& Context) const
 {
-	return InteractionBlueprintComponentUtils::HasComponentOfClass(Context.Blueprint, UInteractableComponent::StaticClass());
+	return InteractionBlueprintComponentUtils::HasComponentOfClass(Context.Blueprint, UFVInteractableComponent::StaticClass());
 }
 
 void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& Context) const
 {
 	TArray<const UActorComponent*> Templates;
-	InteractionBlueprintComponentUtils::GetComponentTemplatesOfClass(Context.Blueprint, UInteractableComponent::StaticClass(), Templates);
+	InteractionBlueprintComponentUtils::GetComponentTemplatesOfClass(Context.Blueprint, UFVInteractableComponent::StaticClass(), Templates);
 
 	for (const UActorComponent* Template : Templates)
 	{
-		const UInteractableComponent* Interactable = Cast<UInteractableComponent>(Template);
+		const UFVInteractableComponent* Interactable = Cast<UFVInteractableComponent>(Template);
 		if (!Interactable)
 		{
 			continue;
@@ -33,7 +33,7 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 
 		TSet<FGameplayTag> SeenInputTags;
 
-		for (const FInteractionOffer& Offer : Interactable->GetOffers())
+		for (const FFVInteractionOffer& Offer : Interactable->GetOffers())
 		{
 			if (!Offer.InputTag.IsValid())
 			{
@@ -61,7 +61,7 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 					*Offer.InputTag.ToString()));
 			}
 
-			if (Offer.InputMode == EInteractionInputMode::Hold && Offer.InteractionPeriod == 0.f)
+			if (Offer.InputMode == EFVInteractionInputMode::Hold && Offer.InteractionPeriod == 0.f)
 			{
 				Context.MessageLog.Error(*FString::Printf(
 					TEXT("Interactable component '%s' offer '%s' uses Hold but has an interaction period of zero."),
@@ -69,7 +69,7 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 					*Offer.InputTag.ToString()));
 			}
 
-			if (Offer.InputMode == EInteractionInputMode::Mash && Offer.RequiredPresses <= 1)
+			if (Offer.InputMode == EFVInteractionInputMode::Mash && Offer.RequiredPresses <= 1)
 			{
 				Context.MessageLog.Warning(*FString::Printf(
 					TEXT("Interactable component '%s' offer '%s' uses Mash but requires %d presses."),
@@ -85,14 +85,14 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 					*Interactable->GetName(),
 					*Offer.InputTag.ToString()));
 			}
-			else if (!Offer.ActionTag.MatchesTag(InteractionTags::Interaction_Action))
+			else if (!Offer.ActionTag.MatchesTag(FVInteractionGameplayTags::Interaction_Action))
 			{
 				Context.MessageLog.Error(*FString::Printf(
 					TEXT("Interactable component '%s' offer '%s' uses action tag '%s', which is not under '%s'."),
 					*Interactable->GetName(),
 					*Offer.InputTag.ToString(),
 					*Offer.ActionTag.ToString(),
-					*InteractionTags::Interaction_Action.GetTag().ToString()));
+					*FVInteractionGameplayTags::Interaction_Action.GetTag().ToString()));
 			}
 
 			if (Offer.RequiredTags.HasAny(Offer.BlockedTags))

@@ -1,22 +1,31 @@
 #pragma once
 #include "GameplayTagContainer.h"
 
-#include "InteractionTypes.generated.h"
+#include "FVInteractionTypes.generated.h"
 
-class UInteractableComponent;
-class UInteractorComponent;
+class UFVInteractableComponent;
+class UFVInteractorComponent;
 class UMaterialInterface;
 
 UENUM(BlueprintType)
-enum class EInteractorPrecision : uint8
+enum class EFVInteractableDetectionMode : uint8
 {
 	Trace		UMETA(DisplayName = "Trace", Tooltip = "Using Line Tracing to find Interactables."),
 	Overlap		UMETA(DisplayName = "Overlap", Tooltip = "Using Box Overlap to find Interactables."),
 	Default		UMETA(Hidden)
 };
 
+UENUM(BlueprintType, meta=(ScriptName="SafetyTracingMode"))
+enum class EFVOcclusionDetectionMode : uint8
+{
+	None		UMETA(DisplayName="None", Tooltip="No occlusion validation is performed."),
+	Location	UMETA(DisplayName="Location", Tooltip="Validate against the interactable's focus point."),
+	Socket		UMETA(DisplayName="Socket", Tooltip="Validate against a named socket on the target mesh."),
+	Default		UMETA(Hidden)
+};
+
 UENUM(BlueprintType, meta=(ScriptName="InteractorState"))
-enum class EInteractorState : uint8
+enum class EFVInteractorState : uint8
 {
 	Idle		UMETA(DisplayName = "Idle", Tooltip = "Default state. No Interactables in range."),
 	Awake		UMETA(DisplayName = "Awake", Tooltip = "Interactor is looking for Interactables."),
@@ -26,7 +35,7 @@ enum class EInteractorState : uint8
 };
 
 UENUM(BlueprintType, meta=(ScriptName="InteractableState"))
-enum class EInteractableState : uint8
+enum class EFVInteractableState : uint8
 {
 	Idle		UMETA(DisplayName = "Idle", Tooltip = "Default state. Interactable is not in player range."),
 	Awake		UMETA(DisplayName = "Awake", Tooltip = "Interactable can react to Interactor."),
@@ -39,7 +48,7 @@ enum class EInteractableState : uint8
 };
 
 UENUM(BlueprintType, meta=(ScriptName="HighlightType"))
-enum class EHighlightType : uint8
+enum class EFVHighlightType : uint8
 {
 	PostProcessing	UMETA(DisplayName="Post Processing", Tooltip="Highly optimised, requires Project setup."),
 	OverlayMaterial	UMETA(DisplayName="Overlay Material", Tooltip="For very complex meshes might cause performance issues."),
@@ -47,7 +56,7 @@ enum class EHighlightType : uint8
 };
 
 UENUM(BlueprintType, meta=(ScriptName="HighlightSetupType"))
-enum class EHighlightSetupType : uint8
+enum class EFVHighlightSetupType : uint8
 {
 	FullAll		UMETA(DisplayName="Full Auto Setup", Tooltip="Add all components from Owning Actor to Highlightable and Collision Components."),
 	AllParent	UMETA(DisplayName="All Parents Auto Setup", Tooltip="Add all parent components to Highlightable and Collision Components."),
@@ -57,7 +66,7 @@ enum class EHighlightSetupType : uint8
 };
 
 UENUM(BlueprintType, meta=(ScriptName="InteractionInputPhase"))
-enum class EInteractionInputPhase : uint8
+enum class EFVInteractionInputPhase : uint8
 {
 	Pressed		UMETA(DisplayName="Pressed", Tooltip="Input key was pressed this frame."),
 	Released	UMETA(DisplayName="Released", Tooltip="Input key was released this frame."),
@@ -66,7 +75,7 @@ enum class EInteractionInputPhase : uint8
 };
 
 UENUM(BlueprintType, meta=(ScriptName="InteractionInputMode"))
-enum class EInteractionInputMode : uint8
+enum class EFVInteractionInputMode : uint8
 {
 	Press		UMETA(DisplayName="Press", Tooltip="Commits immediately on press."),
 	Hold		UMETA(DisplayName="Hold", Tooltip="Commits after the key is held for InteractionPeriod."),
@@ -76,39 +85,15 @@ enum class EInteractionInputMode : uint8
 	Default		UMETA(Hidden)
 };
 
-UENUM(BlueprintType, meta=(ScriptName="SafetyTracingMode"))
-enum class ESafetyTracingMode : uint8
-{
-	None		UMETA(DisplayName="None", Tooltip="No occlusion validation is performed."),
-	Location	UMETA(DisplayName="Location", Tooltip="Validate against the interactable's focus point."),
-	Socket		UMETA(DisplayName="Socket", Tooltip="Validate against a named socket on the target mesh."),
-	Default		UMETA(Hidden)
-};
-
 UENUM(BlueprintType, meta=(ScriptName="InteractionGate"))
-enum class EInteractionGate : uint8
+enum class EFVInteractionGate : uint8
 {
 	Disable	UMETA(DisplayName="Disable", Tooltip="Offer stays visible but cannot be executed."),
 	Hide	UMETA(DisplayName="Hide", Tooltip="Offer is not shown at all while unmet.")
 };
 
 USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FInteractionHighlightSetup
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Highlight Setup")
-	EHighlightType HighlightType = EHighlightType::OverlayMaterial;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Highlight Setup", meta=(EditCondition="HighlightType==EHighlightType::PostProcessing"))
-	int32 StencilID = 133;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Highlight Setup", meta=(EditCondition="HighlightType==EHighlightType::OverlayMaterial"))
-	TObjectPtr<UMaterialInterface> HighlightMaterial = nullptr;
-};
-
-USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FInteractionCommit
+struct FVINTERACTIONSYSTEM_API FFVInteractionCommit
 {
 	GENERATED_BODY()
 
@@ -119,17 +104,17 @@ struct FVINTERACTIONSYSTEM_API FInteractionCommit
 	FGameplayTag InputTag;
 
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<UInteractorComponent> Interactor;
+	TObjectPtr<UFVInteractorComponent> Interactor;
 	
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<UInteractableComponent> Interactable;
+	TObjectPtr<UFVInteractableComponent> Interactable;
 
 	UPROPERTY(BlueprintReadOnly)
 	FVector InteractionPoint = FVector::ZeroVector;
 };
 
 USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FInteractionOffer
+struct FVINTERACTIONSYSTEM_API FFVInteractionOffer
 {
 	GENERATED_BODY()
 	
@@ -149,15 +134,15 @@ struct FVINTERACTIONSYSTEM_API FInteractionOffer
 	bool bRequireAllTags = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Requirements")
-	EInteractionGate RequirementGate = EInteractionGate::Disable;
+	EFVInteractionGate RequirementGate = EFVInteractionGate::Disable;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	EInteractionInputMode InputMode = EInteractionInputMode::Default;
+	EFVInteractionInputMode InputMode = EFVInteractionInputMode::Default;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "-1", Units = "s"))
 	float InteractionPeriod = -1.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "InputMode==EInteractionInputMode::Mash", ClampMin = "1"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "InputMode==EFVInteractionInputMode::Mash", ClampMin = "1"))
 	int32 RequiredPresses = 5;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "0"))
@@ -188,7 +173,7 @@ struct FVINTERACTIONSYSTEM_API FInteractionOffer
 		return bRequireAllTags ? SourceTags.HasAll(RequiredTags) : SourceTags.HasAny(RequiredTags);
 	}
 
-	bool operator==(const FInteractionOffer& Other) const
+	bool operator==(const FFVInteractionOffer& Other) const
 	{
 		return InputTag == Other.InputTag &&
 			ActionTag == Other.ActionTag &&
@@ -198,5 +183,5 @@ struct FVINTERACTIONSYSTEM_API FInteractionOffer
 			Weight == Other.Weight;
 	}
 
-	bool operator!=(const FInteractionOffer& Other) const { return !(*this == Other); }
+	bool operator!=(const FFVInteractionOffer& Other) const { return !(*this == Other); }
 };

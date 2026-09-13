@@ -1,20 +1,20 @@
-#include "Subsystems/InteractionRegistrySubsystem.h"
-#include "Components/InteractableComponent.h"
-#include "Components/InteractorComponent.h"
+#include "Subsystems/FVInteractionRegistrySubsystem.h"
+#include "Components/FVInteractableComponent.h"
+#include "Components/FVInteractorComponent.h"
 #include "Engine/World.h"
 #include "FVInteractionSystem.h"
 #include "FVInteractionSystemSettings.h"
 #include "TimerManager.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(InteractionRegistrySubsystem)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionRegistrySubsystem)
 
-bool UInteractionRegistrySubsystem::ShouldCreateSubsystem(UObject* Outer) const
+bool UFVInteractionRegistrySubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	const UWorld* World = Cast<UWorld>(Outer);
 	return World && World->IsGameWorld();
 }
 
-void UInteractionRegistrySubsystem::Deinitialize()
+void UFVInteractionRegistrySubsystem::Deinitialize()
 {
 	if (const UWorld* World = GetWorld())
 	{
@@ -27,7 +27,7 @@ void UInteractionRegistrySubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-void UInteractionRegistrySubsystem::Register(UInteractableComponent* Interactable)
+void UFVInteractionRegistrySubsystem::Register(UFVInteractableComponent* Interactable)
 {
 	if (IsValid(Interactable))
 	{
@@ -35,7 +35,7 @@ void UInteractionRegistrySubsystem::Register(UInteractableComponent* Interactabl
 	}
 }
 
-void UInteractionRegistrySubsystem::Unregister(UInteractableComponent* Interactable)
+void UFVInteractionRegistrySubsystem::Unregister(UFVInteractableComponent* Interactable)
 {
 	Interactables.RemoveSingleSwap(Interactable, EAllowShrinking::No);
 
@@ -45,7 +45,7 @@ void UInteractionRegistrySubsystem::Unregister(UInteractableComponent* Interacta
 	}
 }
 
-void UInteractionRegistrySubsystem::RegisterInteractor(UInteractorComponent* Interactor)
+void UFVInteractionRegistrySubsystem::RegisterInteractor(UFVInteractorComponent* Interactor)
 {
 	if (!IsValid(Interactor))
 	{
@@ -66,7 +66,7 @@ void UInteractionRegistrySubsystem::RegisterInteractor(UInteractorComponent* Int
 	StartBroadPhase();
 }
 
-void UInteractionRegistrySubsystem::UnregisterInteractor(UInteractorComponent* Interactor)
+void UFVInteractionRegistrySubsystem::UnregisterInteractor(UFVInteractorComponent* Interactor)
 {
 	const int32 Index = InteractorRanges.IndexOfByPredicate(
 		[Interactor](const FInteractorRangeSet& RangeSet) { return RangeSet.Interactor == Interactor; });
@@ -76,14 +76,14 @@ void UInteractionRegistrySubsystem::UnregisterInteractor(UInteractorComponent* I
 		return;
 	}
 
-	TArray<TObjectPtr<UInteractableComponent>> Orphaned = MoveTemp(InteractorRanges[Index].InRange);
+	TArray<TObjectPtr<UFVInteractableComponent>> Orphaned = MoveTemp(InteractorRanges[Index].InRange);
 	InteractorRanges.RemoveAtSwap(Index, EAllowShrinking::No);
 
-	for (const TObjectPtr<UInteractableComponent>& Interactable : Orphaned)
+	for (const TObjectPtr<UFVInteractableComponent>& Interactable : Orphaned)
 	{
 		if (IsValid(Interactable) && !IsInRange(Interactable))
 		{
-			Interactable->SetState(EInteractableState::Idle);
+			Interactable->SetState(EFVInteractableState::Idle);
 		}
 	}
 
@@ -96,7 +96,7 @@ void UInteractionRegistrySubsystem::UnregisterInteractor(UInteractorComponent* I
 	}
 }
 
-void UInteractionRegistrySubsystem::StartBroadPhase()
+void UFVInteractionRegistrySubsystem::StartBroadPhase()
 {
 	UWorld* World = GetWorld();
 	if (!World || World->GetTimerManager().IsTimerActive(BroadPhaseTimer))
@@ -108,22 +108,22 @@ void UInteractionRegistrySubsystem::StartBroadPhase()
 
 	World->GetTimerManager().SetTimer(
 		BroadPhaseTimer,
-		FTimerDelegate::CreateUObject(this, &UInteractionRegistrySubsystem::RunBroadPhase),
+		FTimerDelegate::CreateUObject(this, &UFVInteractionRegistrySubsystem::RunBroadPhase),
 		FMath::Max(Interval, 0.01f),
 		true);
 
 	RunBroadPhase();
 }
 
-void UInteractionRegistrySubsystem::RunBroadPhase()
+void UFVInteractionRegistrySubsystem::RunBroadPhase()
 {
-	TArray<TObjectPtr<UInteractableComponent>> Entered;
-	TArray<TObjectPtr<UInteractableComponent>> Left;
+	TArray<TObjectPtr<UFVInteractableComponent>> Entered;
+	TArray<TObjectPtr<UFVInteractableComponent>> Left;
 
 	for (int32 Index = InteractorRanges.Num() - 1; Index >= 0; --Index)
 	{
 		FInteractorRangeSet& RangeSet = InteractorRanges[Index];
-		UInteractorComponent* Interactor = RangeSet.Interactor.Get();
+		UFVInteractorComponent* Interactor = RangeSet.Interactor.Get();
 
 		if (!IsValid(Interactor))
 		{
@@ -135,7 +135,7 @@ void UInteractionRegistrySubsystem::RunBroadPhase()
 
 		Entered.Reset();
 
-		for (const TObjectPtr<UInteractableComponent>& Interactable : Interactables)
+		for (const TObjectPtr<UFVInteractableComponent>& Interactable : Interactables)
 		{
 			if (!IsValid(Interactable))
 			{
@@ -152,7 +152,7 @@ void UInteractionRegistrySubsystem::RunBroadPhase()
 
 		Left.Reset();
 
-		for (const TObjectPtr<UInteractableComponent>& Previous : RangeSet.InRange)
+		for (const TObjectPtr<UFVInteractableComponent>& Previous : RangeSet.InRange)
 		{
 			if (!Entered.Contains(Previous))
 			{
@@ -164,16 +164,16 @@ void UInteractionRegistrySubsystem::RunBroadPhase()
 		RangeSet.InRange = Entered;
 		const bool bHasAny = !RangeSet.InRange.IsEmpty();
 
-		for (const TObjectPtr<UInteractableComponent>& Interactable : Entered)
+		for (const TObjectPtr<UFVInteractableComponent>& Interactable : Entered)
 		{
-			Interactable->SetState(EInteractableState::Awake);
+			Interactable->SetState(EFVInteractableState::Awake);
 		}
 
-		for (const TObjectPtr<UInteractableComponent>& Interactable : Left)
+		for (const TObjectPtr<UFVInteractableComponent>& Interactable : Left)
 		{
 			if (IsValid(Interactable) && !IsInRange(Interactable))
 			{
-				Interactable->SetState(EInteractableState::Idle);
+				Interactable->SetState(EFVInteractableState::Idle);
 			}
 		}
 
@@ -184,7 +184,7 @@ void UInteractionRegistrySubsystem::RunBroadPhase()
 	}
 }
 
-bool UInteractionRegistrySubsystem::IsInRange(const UInteractableComponent* Interactable) const
+bool UFVInteractionRegistrySubsystem::IsInRange(const UFVInteractableComponent* Interactable) const
 {
 	for (const FInteractorRangeSet& RangeSet : InteractorRanges)
 	{
@@ -197,7 +197,7 @@ bool UInteractionRegistrySubsystem::IsInRange(const UInteractableComponent* Inte
 	return false;
 }
 
-const TArray<TObjectPtr<UInteractableComponent>>& UInteractionRegistrySubsystem::GetInRangeSet(const UInteractorComponent* Interactor) const
+const TArray<TObjectPtr<UFVInteractableComponent>>& UFVInteractionRegistrySubsystem::GetInRangeSet(const UFVInteractorComponent* Interactor) const
 {
 	for (const FInteractorRangeSet& RangeSet : InteractorRanges)
 	{
@@ -207,18 +207,18 @@ const TArray<TObjectPtr<UInteractableComponent>>& UInteractionRegistrySubsystem:
 		}
 	}
 
-	static const TArray<TObjectPtr<UInteractableComponent>> Empty;
+	static const TArray<TObjectPtr<UFVInteractableComponent>> Empty;
 	return Empty;
 }
 
-void UInteractionRegistrySubsystem::QueryInRange(const FVector& Origin, float MaxRadius, TArray<UInteractableComponent*>& OutResults) const
+void UFVInteractionRegistrySubsystem::QueryInRange(const FVector& Origin, float MaxRadius, TArray<UFVInteractableComponent*>& OutResults) const
 {
 	const float MaxRadiusSq = FMath::Square(MaxRadius);
 
 	OutResults.Reset();
 	OutResults.Reserve(Interactables.Num());
 
-	for (const TObjectPtr<UInteractableComponent>& Interactable : Interactables)
+	for (const TObjectPtr<UFVInteractableComponent>& Interactable : Interactables)
 	{
 		if (FVector::DistSquared(Origin, Interactable->GetFocusPoint()) <= MaxRadiusSq)
 		{

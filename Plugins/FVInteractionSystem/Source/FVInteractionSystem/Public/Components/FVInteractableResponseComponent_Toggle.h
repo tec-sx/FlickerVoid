@@ -1,19 +1,22 @@
 #pragma once
 
-#include "Components/InteractionResponseComponent.h"
 #include "CoreMinimal.h"
-#include "InteractableComponent.h"
+#include "FVInteractableComponent.h"
+#include "FVInteractableResponseComponent.h"
+#include "Core/FVInteractionGameplayTags.h"
 
-#include "Response_Toggle.generated.h"
+#include "FVInteractableResponseComponent_Toggle.generated.h"
+
+
 
 UCLASS(ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
-class FVINTERACTIONSYSTEM_API UResponse_Toggle final : public UInteractionResponseComponent
+class FVINTERACTIONSYSTEM_API UFVInteractableResponseComponent_Toggle final : public UFVInteractableResponseComponent
 {
 	GENERATED_BODY()
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Interaction|Toggle")
-	bool IsOn() const { return bIsOn; }
+	bool IsOpen() const { return bIsOpen; }
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Toggle")
 	bool IsLocked() const { return bIsLocked; }
@@ -22,31 +25,31 @@ public:
 	void SetLocked(bool bLocked);
 
 protected:
-	virtual void BindSignals_Implementation(UInteractionSignalComponent* Signal) override;
-	virtual void UnbindSignals_Implementation(UInteractionSignalComponent* Signal) override;
+	virtual void BindEvents_Implementation(UFVInteractableComponent* Interactable) override;
+	virtual void UnbindEvents_Implementation(UFVInteractableComponent* Interactable) override;
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
-	void OnToggled(bool bOn);
+	void OnToggled(bool bOpen);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
-	void OnToggleBlocked(bool bOn);
+	void OnToggleBlocked(bool bOpen);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
 	void OnLockChanged(bool bLocked);
 
 	UPROPERTY(EditAnywhere, Category = "Interaction|Toggle", meta = (Categories = "Interaction.Action"))
-	FGameplayTag ToggleActionTag;
+	FGameplayTag ToggleActionTag = FVInteractionGameplayTags::Interaction_Action_Open;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction|Toggle")
-	bool bInitialState = false;
+	bool bStartOpen = false;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction|Toggle")
-	bool bStartsLocked = false;
+	bool bStartLocked = false;
 
 private:
 	UFUNCTION()
-	void OnInteractionRequested(const FInteractionCommit& Commit);
+	void OnInteractionEnded(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const bool bSuccess);
 
-	bool bIsOn = false;
+	bool bIsOpen = false;
 	bool bIsLocked = false;
 };

@@ -1,7 +1,10 @@
-#include "Core/InteractionTags.h"
+#include "Core/FVInteractionGameplayTags.h"
 
-namespace InteractionTags
+namespace FVInteractionGameplayTags
 {
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Action, "Interaction.Action", "Root of interaction action tags.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction, "InputTag.Interaction", "Root of interaction input tags.");
+	
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_OfferChanged, "Interaction.OfferChanged", "Broadcast when the player's active interaction offer changes.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Event_ExamineStarted, "Interaction.Event.ExamineStarted", "Fired when an examine overlay should open.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Event_LockpickStarted, "Interaction.Event.LockpickStarted", "Fired when a lockpick mini-game should open.");
@@ -58,17 +61,17 @@ namespace InteractionTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable_Device, "Interactable.Device", "A device that can be activated.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable_Document, "Interactable.Document", "A readable document.");
 
-	FGameplayTag StateToTag(EInteractableState State)
+	FGameplayTag StateToTag(EFVInteractableState State)
 	{
 		switch (State)
 		{
-		case EInteractableState::Idle:			return Interaction_State_Idle;
-		case EInteractableState::Awake:			return Interaction_State_Awake;
-		case EInteractableState::Suppressed:	return Interaction_State_Suppressed;
-		case EInteractableState::Interacting:	return Interaction_State_Interacting;
-		case EInteractableState::Paused:		return Interaction_State_Paused;
-		case EInteractableState::Cooldown:		return Interaction_State_Cooldown;
-		case EInteractableState::Completed:		return Interaction_State_Completed;
+		case EFVInteractableState::Idle:			return Interaction_State_Idle;
+		case EFVInteractableState::Awake:			return Interaction_State_Awake;
+		case EFVInteractableState::Suppressed:	return Interaction_State_Suppressed;
+		case EFVInteractableState::Interacting:	return Interaction_State_Interacting;
+		case EFVInteractableState::Paused:		return Interaction_State_Paused;
+		case EFVInteractableState::Cooldown:		return Interaction_State_Cooldown;
+		case EFVInteractableState::Completed:		return Interaction_State_Completed;
 		default:								return FGameplayTag();
 		}
 	}

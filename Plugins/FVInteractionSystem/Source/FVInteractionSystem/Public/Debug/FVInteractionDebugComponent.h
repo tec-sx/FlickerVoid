@@ -3,19 +3,19 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 
-#include "InteractionDebugComponent.generated.h"
+#include "FVInteractionDebugComponent.generated.h"
 
 class APlayerController;
 class UCanvas;
-class UInteractorComponent;
+class UFVInteractorComponent;
 
 UCLASS(MinimalAPI, ClassGroup=(Interaction), meta=(BlueprintSpawnableComponent))
-class UInteractionDebugComponent : public UActorComponent
+class UFVInteractionDebugComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UInteractionDebugComponent();
+	UFVInteractionDebugComponent();
 
 #if !UE_BUILD_SHIPPING
 	virtual void BeginPlay() override;
@@ -28,7 +28,7 @@ private:
 	void DrawVisualizer() const;
 	void DrawHUD(UCanvas* Canvas, APlayerController* PC);
 
-	TWeakObjectPtr<UInteractorComponent> Interactor;
+	TWeakObjectPtr<UFVInteractorComponent> Interactor;
 	FDelegateHandle HUDDrawHandle;
 #endif
 };

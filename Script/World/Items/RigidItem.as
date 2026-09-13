@@ -1,7 +1,7 @@
 class ARigidItem : AActor
 {
     UPROPERTY(DefaultComponent)
-    UInteractableComponent Interactable;
+    UFVInteractableComponent Interactable;
     default Interactable.Type = GameplayTags::Interactable_Item;
     default Interactable.DetectionRadius = 120.f;
     default Interactable.FocusComponentTag = n"Interactable";
@@ -16,11 +16,11 @@ class ARigidItem : AActor
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
-        Interactable.OnInteractionExecuted.AddUFunction(this, n"OnInteractionExecuted");
+        Interactable.InteractionEnded.AddUFunction(this, n"OnInteractionExecuted");
     }
 
     UFUNCTION()
-    private void OnInteractionExecuted(const FGameplayTag&in ActionTag, UInteractorComponent Interactor)
+    void OnInteractionExecuted(const FGameplayTag&in ActionTag, UFVInteractorComponent Interactor, bool bSuccess)
     {
         Mesh.SimulatePhysics = true;
         Mesh.AddForce(FVector::ForwardVector);

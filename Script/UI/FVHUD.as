@@ -40,18 +40,16 @@ class AFVHUD : AHUD
     UFUNCTION()
     private void UpdatePawn(APawn OldPawn, APawn NewPawn)
     {
+		if (IsValid(OldPawn))
+		{
+			UFVInteractorResponseComponent_ShowPrompt ShowPromptResponse = OldPawn.GetComponentByClass(UFVInteractorResponseComponent_ShowPrompt);
+			InteractionPromptWidget.UnbindResponse(ShowPromptResponse);
+		}
+
 		if (IsValid(NewPawn))
 		{
-			UInteractorComponent Interactor = NewPawn.GetComponentByClass(UInteractorComponent);
-
-			if (IsValid(Interactor))
-			{
-				InteractionPromptWidget.BindToInteractor(Interactor);
-			}
-		}
-		else
-		{
-			InteractionPromptWidget.UnbindFromInteractor();
+			UFVInteractorResponseComponent_ShowPrompt ShowPromptResponse = NewPawn.GetComponentByClass(UFVInteractorResponseComponent_ShowPrompt);
+			InteractionPromptWidget.BindResponse(ShowPromptResponse);
 		}
     }
 

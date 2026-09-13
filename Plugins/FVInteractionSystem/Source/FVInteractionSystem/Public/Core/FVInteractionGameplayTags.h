@@ -1,12 +1,15 @@
 #pragma once
 
 #include "NativeGameplayTags.h"
-#include "Core/InteractionTypes.h"
+#include "Core/FVInteractionTypes.h"
 
 #define UE_API FVINTERACTIONSYSTEM_API
 
-namespace InteractionTags
+namespace FVInteractionGameplayTags
 {
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction);
+	
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_OfferChanged);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_ExamineStarted);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_LockpickStarted);
@@ -63,7 +66,7 @@ namespace InteractionTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Device);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Document);
 
-	UE_API FGameplayTag StateToTag(EInteractableState State);
+	UE_API FGameplayTag StateToTag(EFVInteractableState State);
 }
 
 #undef UE_API

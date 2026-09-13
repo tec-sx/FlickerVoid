@@ -2,26 +2,26 @@
 
 #include "AbilitySystemComponent.h"
 #include "GameFramework/Actor.h"
-#include "Components/InteractorComponent.h"
-#include "Components/InteractableComponent.h"
+#include "Components/FVInteractorComponent.h"
+#include "Components/FVInteractableComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractAbility)
 
-UInteractorComponent* UFVInteractAbility::GetInteractor(const FGameplayAbilityActorInfo* ActorInfo) const
+UFVInteractorComponent* UFVInteractAbility::GetInteractor(const FGameplayAbilityActorInfo* ActorInfo) const
 {
 	const AActor* Avatar = ActorInfo ? ActorInfo->AvatarActor.Get() : GetAvatarActorFromActorInfo();
 
-	return Avatar ? Avatar->FindComponentByClass<UInteractorComponent>() : nullptr;
+	return Avatar ? Avatar->FindComponentByClass<UFVInteractorComponent>() : nullptr;
 }
 
-UInteractorComponent* UFVInteractAbility::GetInteractor() const
+UFVInteractorComponent* UFVInteractAbility::GetInteractor() const
 {
 	return GetInteractor(CurrentActorInfo);
 }
 
-UInteractableComponent* UFVInteractAbility::GetInteractable() const
+UFVInteractableComponent* UFVInteractAbility::GetInteractable() const
 {
-	const UInteractorComponent* Interactor = GetInteractor(CurrentActorInfo);
+	const UFVInteractorComponent* Interactor = GetInteractor(CurrentActorInfo);
 
 	return Interactor ? Interactor->GetFocusedTarget() : nullptr;
 }

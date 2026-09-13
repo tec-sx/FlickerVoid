@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/InteractionTypes.h"
+#include "Core/FVInteractionTypes.h"
 #include "CoreMinimal.h"
 #include "InputCoreTypes.h"
 #include "Subsystems/LocalPlayerSubsystem.h"

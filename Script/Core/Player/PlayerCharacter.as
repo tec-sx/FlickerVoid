@@ -118,16 +118,4 @@ class APlayerCharacter : AFVPlayerCharacter
     {
         return Interactor.HasFocus();
     }
-
-    UFUNCTION()
-    void EnableInteractions()
-    {
-        Interactor.SetEnabled(true);
-    }
-
-    UFUNCTION()
-    void DisableInteractions()
-    {
-        Interactor.SetEnabled(false);
-    }
 }

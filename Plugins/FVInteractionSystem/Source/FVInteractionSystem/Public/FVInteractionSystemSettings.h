@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
-#include "Core/InteractionTypes.h"
+#include "Core/FVInteractionTypes.h"
 #include "FVInteractionSystemSettings.generated.h"
 
 USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FTracingSetup
+struct FVINTERACTIONSYSTEM_API FFVDetectionSetup
 {
 	GENERATED_BODY()
 
@@ -16,7 +16,7 @@ struct FVINTERACTIONSYSTEM_API FTracingSetup
 	TEnumAsByte<ECollisionChannel> ValidationCollisionChannel = ECC_Camera;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup")
-	ESafetyTracingMode SafetyTracingMode = ESafetyTracingMode::Socket;
+	EFVOcclusionDetectionMode SafetyTracingMode = EFVOcclusionDetectionMode::Socket;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup")
 	FName ActorMeshName = FName("CharacterMesh0");
@@ -33,30 +33,45 @@ struct FVINTERACTIONSYSTEM_API FTracingSetup
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup", meta=(UIMin=0, ClampMin=0, Units="cm"))
 	float TracingShapeHalfSize = 15.f;
 
-	bool operator==(const FTracingSetup& Other) const
+	bool operator==(const FFVDetectionSetup& Other) const
 	{
 		return ActorMeshName == Other.ActorMeshName && StartSocketName == Other.StartSocketName;
 	}
 
-	bool operator!=(const FTracingSetup& Other) const { return !(*this == Other); }
+	bool operator!=(const FFVDetectionSetup& Other) const { return !(*this == Other); }
 };
 
 USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FInteractorSettings
+struct FVINTERACTIONSYSTEM_API FFVInteractionHighlightSetup
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Highlight Setup")
+	EFVHighlightType HighlightType = EFVHighlightType::OverlayMaterial;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Highlight Setup", meta=(EditCondition="HighlightType==EFVHighlightType::PostProcessing"))
+	int32 StencilID = 133;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Highlight Setup", meta=(EditCondition="HighlightType==EFVHighlightType::OverlayMaterial"))
+	TObjectPtr<UMaterialInterface> HighlightMaterial = nullptr;
+};
+
+USTRUCT(BlueprintType)
+struct FVINTERACTIONSYSTEM_API FFVInteractorSettings
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings")
-	EInteractorState DefaultInteractorState = EInteractorState::Idle;
+	EFVInteractorState DefaultInteractorState = EFVInteractorState::Idle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings")
-	EInteractorPrecision DefaultPrecision = EInteractorPrecision::Trace;
+	EFVInteractableDetectionMode DefaultPrecision = EFVInteractableDetectionMode::Trace;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings")
 	TEnumAsByte<ECollisionChannel> InteractorCollisionChannel = ECC_Visibility;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings")
-	FTracingSetup TracingSetup;
+	FFVDetectionSetup DetectionSetup;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings")
 	FGameplayTag InteractorTag;
@@ -66,7 +81,7 @@ struct FVINTERACTIONSYSTEM_API FInteractorSettings
 };
 
 USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FInteractableSettings
+struct FVINTERACTIONSYSTEM_API FFVInteractableSettings
 {
 	GENERATED_BODY()
 
@@ -74,13 +89,13 @@ struct FVINTERACTIONSYSTEM_API FInteractableSettings
 	float DefaultInteractionPeriod = 3.f;
 
 	UPROPERTY(EditAnywhere, Category="InteractableSettings", meta=(NoResetToDefault))
-	EInteractableState DefaultInteractableState = EInteractableState::Idle;
+	EFVInteractableState DefaultInteractableState = EFVInteractableState::Idle;
 
 	UPROPERTY(EditAnywhere, Category="InteractableSettings", meta=(NoResetToDefault))
 	TEnumAsByte<ECollisionChannel> DefaultCollisionChannel = ECC_Camera;
 
 	UPROPERTY(EditAnywhere, Category="InteractableSettings")
-	EHighlightSetupType DefaultHighlightSetupType = EHighlightSetupType::Quick;
+	EFVHighlightSetupType DefaultHighlightSetupType = EFVHighlightSetupType::Quick;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractableSettings", meta=(NoResetToDefault))
 	uint8 DefaultInteractionHighlight : 1;
@@ -89,7 +104,7 @@ struct FVINTERACTIONSYSTEM_API FInteractableSettings
 	FGameplayTag InteractableMainTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractableSettings", meta=(NoResetToDefault))
-	FInteractionHighlightSetup DefaultHighlightSetup;
+	FFVInteractionHighlightSetup DefaultHighlightSetup;
 
 	UPROPERTY(EditAnywhere, Category="InteractableSettings", meta=(NoResetToDefault, UIMin=0.1, ClampMin=0.1, Units="s"))
 	float DefaultCooldownPeriod = 3.f;
@@ -100,7 +115,7 @@ struct FVINTERACTIONSYSTEM_API FInteractableSettings
 	UPROPERTY(EditAnywhere, Category="InteractableSettings", meta=(UIMin=0, ClampMin=0, Units="cm"))
 	float DefaultDetectionRadius = 150.f;
 
-	FInteractableSettings()
+	FFVInteractableSettings()
 		: DefaultInteractionHighlight(true)
 	{
 	}
@@ -117,10 +132,10 @@ public:
 	static const UFVInteractionSystemSettings& Get() { return *GetDefault<UFVInteractionSystemSettings>(); }
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Interactor")
-	FInteractorSettings InteractorDefaultSettings;
+	FFVInteractorSettings InteractorDefaultSettings;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Interactable")
-	FInteractableSettings InteractableBaseSettings;
+	FFVInteractableSettings InteractableBaseSettings;
 	
 	UPROPERTY(config, BlueprintReadOnly, EditAnywhere, Category = "Widgets", meta=(Units="s", UIMin=0.001, ClampMin=0.001))
 	float WidgetUpdateFrequency = 0.05f;

@@ -1,11 +1,11 @@
-#include "Debug/InteractionDebugComponent.h"
+#include "Debug/FVInteractionDebugComponent.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(InteractionDebugComponent)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionDebugComponent)
 
 #if !UE_BUILD_SHIPPING
-#include "Components/InteractableComponent.h"
-#include "Components/InteractorComponent.h"
-#include "Subsystems/InteractionRegistrySubsystem.h"
+#include "Components/FVInteractableComponent.h"
+#include "Components/FVInteractorComponent.h"
+#include "Subsystems/FVInteractionRegistrySubsystem.h"
 #include "Debug/DebugDrawService.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/Canvas.h"
@@ -25,7 +25,7 @@ static TAutoConsoleVariable<bool> CVarInteractionDebugHUD(
 	TEXT("Show an on-screen readout of interaction candidates and resolved prompts"));
 #endif
 
-UInteractionDebugComponent::UInteractionDebugComponent()
+UFVInteractionDebugComponent::UFVInteractionDebugComponent()
 {
 #if !UE_BUILD_SHIPPING
 	PrimaryComponentTick.bCanEverTick = true;
@@ -36,7 +36,7 @@ UInteractionDebugComponent::UInteractionDebugComponent()
 
 #if !UE_BUILD_SHIPPING
 
-void UInteractionDebugComponent::BeginPlay()
+void UFVInteractionDebugComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -44,10 +44,10 @@ void UInteractionDebugComponent::BeginPlay()
 
 	HUDDrawHandle = UDebugDrawService::Register(
 		TEXT("Game"),
-		FDebugDrawDelegate::CreateUObject(this, &UInteractionDebugComponent::DrawHUD));
+		FDebugDrawDelegate::CreateUObject(this, &UFVInteractionDebugComponent::DrawHUD));
 }
 
-void UInteractionDebugComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void UFVInteractionDebugComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (HUDDrawHandle.IsValid())
 	{
@@ -60,7 +60,7 @@ void UInteractionDebugComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 	Super::EndPlay(EndPlayReason);
 }
 
-void UInteractionDebugComponent::TickComponent(
+void UFVInteractionDebugComponent::TickComponent(
 	float DeltaTime,
 	ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
@@ -80,7 +80,7 @@ void UInteractionDebugComponent::TickComponent(
 	DrawVisualizer();
 }
 
-void UInteractionDebugComponent::RefreshCachedInteractor()
+void UFVInteractionDebugComponent::RefreshCachedInteractor()
 {
 	AActor* Owner = GetOwner();
 	if (!Owner)
@@ -95,13 +95,13 @@ void UInteractionDebugComponent::RefreshCachedInteractor()
 
 	if (Owner)
 	{
-		Interactor = Owner->FindComponentByClass<UInteractorComponent>();
+		Interactor = Owner->FindComponentByClass<UFVInteractorComponent>();
 	}
 }
 
-void UInteractionDebugComponent::GetViewPoint(FVector& OutPawnLocation, FVector& OutViewLocation, FVector& OutForward) const
+void UFVInteractionDebugComponent::GetViewPoint(FVector& OutPawnLocation, FVector& OutViewLocation, FVector& OutForward) const
 {
-	const UInteractorComponent* InteractorPtr = Interactor.Get();
+	const UFVInteractorComponent* InteractorPtr = Interactor.Get();
 	const AActor* InteractorOwner = InteractorPtr ? InteractorPtr->GetOwner() : nullptr;
 
 	if (!InteractorOwner)
@@ -127,9 +127,9 @@ void UInteractionDebugComponent::GetViewPoint(FVector& OutPawnLocation, FVector&
 	}
 }
 
-void UInteractionDebugComponent::DrawVisualizer() const
+void UFVInteractionDebugComponent::DrawVisualizer() const
 {
-	const UInteractorComponent* InteractorPtr = Interactor.Get();
+	const UFVInteractorComponent* InteractorPtr = Interactor.Get();
 	const UWorld* World = GetWorld();
 
 	if (!InteractorPtr || !World)
@@ -137,7 +137,7 @@ void UInteractionDebugComponent::DrawVisualizer() const
 		return;
 	}
 
-	const UInteractableComponent* FocusedTarget = InteractorPtr->GetFocusedTarget();
+	const UFVInteractableComponent* FocusedTarget = InteractorPtr->GetFocusedTarget();
 
 	FVector PawnLocation;
 	FVector ViewLocation;
@@ -157,13 +157,13 @@ void UInteractionDebugComponent::DrawVisualizer() const
 		FVector::RightVector,
 		false);
 
-	const UInteractionRegistrySubsystem* Registry = World->GetSubsystem<UInteractionRegistrySubsystem>();
+	const UFVInteractionRegistrySubsystem* Registry = World->GetSubsystem<UFVInteractionRegistrySubsystem>();
 	if (!Registry)
 	{
 		return;
 	}
 
-	for (const UInteractableComponent* Interactable : Registry->GetAll())
+	for (const UFVInteractableComponent* Interactable : Registry->GetAll())
 	{
 		if (!Interactable)
 		{
@@ -225,14 +225,14 @@ void UInteractionDebugComponent::DrawVisualizer() const
 	}
 }
 
-void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
+void UFVInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 {
 	if (!Canvas || !CVarInteractionDebugHUD.GetValueOnGameThread())
 	{
 		return;
 	}
 
-	const UInteractorComponent* InteractorPtr = Interactor.Get();
+	const UFVInteractorComponent* InteractorPtr = Interactor.Get();
 	const AActor* InteractorOwner = InteractorPtr ? InteractorPtr->GetOwner() : nullptr;
 
 	if (!InteractorOwner)
@@ -253,7 +253,7 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 	FVector ViewForward;
 	GetViewPoint(PawnLocation, ViewLocation, ViewForward);
 
-	const UInteractableComponent* FocusedTarget = InteractorPtr->GetFocusedTarget();
+	const UFVInteractableComponent* FocusedTarget = InteractorPtr->GetFocusedTarget();
 
 	const float X = 20.f;
 	float Y = 20.f;
@@ -270,7 +270,7 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 
 	DrawLine(TEXT("-- Interaction Candidates --"), HeaderColor);
 
-	for (const UInteractableComponent* Candidate : InteractorPtr->GetDebugCandidates())
+	for (const UFVInteractableComponent* Candidate : InteractorPtr->GetDebugCandidates())
 	{
 		if (!Candidate)
 		{
@@ -304,7 +304,7 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 	Y += LineHeight * 0.5f;
 	DrawLine(TEXT("-- Prompts --"), HeaderColor);
 
-	const TArray<FInteractionOffer>& Prompts = InteractorPtr->GetOffers();
+	const TArray<FFVInteractionOffer>& Prompts = InteractorPtr->GetOffers();
 
 	if (Prompts.IsEmpty())
 	{
@@ -312,7 +312,7 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 	}
 	else
 	{
-		for (const FInteractionOffer& Prompt : Prompts)
+		for (const FFVInteractionOffer& Prompt : Prompts)
 		{
 			DrawLine(FString::Printf(TEXT("  [%s] %s Enabled=%s Uses=%d"),
 				*Prompt.InputTag.ToString(),
@@ -328,7 +328,7 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 	int32 RegisteredCount = 0;
 	if (const UWorld* World = GetWorld())
 	{
-		if (const UInteractionRegistrySubsystem* Registry = World->GetSubsystem<UInteractionRegistrySubsystem>())
+		if (const UFVInteractionRegistrySubsystem* Registry = World->GetSubsystem<UFVInteractionRegistrySubsystem>())
 		{
 			RegisteredCount = Registry->GetAll().Num();
 		}
@@ -348,20 +348,20 @@ void UInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 		InteractorPtr->IsSuppressed() ? TEXT("yes") : TEXT("no")),
 		HeaderColor);
 
-	const UInteractorComponent::EDebugActionOutcome Outcome = InteractorPtr->GetDebugLastOutcome();
+	const UFVInteractorComponent::EDebugActionOutcome Outcome = InteractorPtr->GetDebugLastOutcome();
 
-	if (Outcome != UInteractorComponent::EDebugActionOutcome::None)
+	if (Outcome != UFVInteractorComponent::EDebugActionOutcome::None)
 	{
 		const TCHAR* OutcomeText = TEXT("");
 		FLinearColor OutcomeColor = TextColor;
 
 		switch (Outcome)
 		{
-		case UInteractorComponent::EDebugActionOutcome::Succeeded:
+		case UFVInteractorComponent::EDebugActionOutcome::Succeeded:
 			OutcomeText = TEXT("SUCCESS");
 			OutcomeColor = FLinearColor::Green;
 			break;
-		case UInteractorComponent::EDebugActionOutcome::Disabled:
+		case UFVInteractorComponent::EDebugActionOutcome::Disabled:
 			OutcomeText = TEXT("FAILED (requirement not met)");
 			OutcomeColor = FLinearColor::Red;
 			break;

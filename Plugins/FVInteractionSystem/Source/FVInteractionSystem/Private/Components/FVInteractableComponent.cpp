@@ -1,19 +1,19 @@
-#include "Components/InteractableComponent.h"
-#include "Components/InteractorComponent.h"
+#include "Components/FVInteractableComponent.h"
+#include "Components/FVInteractorComponent.h"
 #include "Components/PrimitiveComponent.h"
-#include "Core/InteractionTags.h"
+#include "Core/FVInteractionGameplayTags.h"
 #include "FVInteractionSystem.h"
 #include "FVInteractionSystemSettings.h"
-#include <Subsystems/InteractionRegistrySubsystem.h>
+#include "Subsystems/FVInteractionRegistrySubsystem.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(InteractableComponent)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractableComponent)
 
-UInteractableComponent::UInteractableComponent()
+UFVInteractableComponent::UFVInteractableComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UInteractableComponent::BeginPlay()
+void UFVInteractableComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -22,7 +22,7 @@ void UInteractableComponent::BeginPlay()
 		return;
 	}
 
-	const FInteractableSettings& Defaults = UFVInteractionSystemSettings::Get().InteractableBaseSettings;
+	const FFVInteractableSettings& Defaults = UFVInteractionSystemSettings::Get().InteractableBaseSettings;
 
 	if (DetectionRadius < 0.f)
 	{
@@ -63,19 +63,19 @@ void UInteractableComponent::BeginPlay()
 
 	FocusPrimitive->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
 
-	if (UInteractionRegistrySubsystem* Registry = GetWorld()->GetSubsystem<UInteractionRegistrySubsystem>())
+	if (UFVInteractionRegistrySubsystem* Registry = GetWorld()->GetSubsystem<UFVInteractionRegistrySubsystem>())
 	{
 		Registry->Register(this);
 	}
 }
 
-void UInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (const UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(CooldownTimer);
 
-		if (UInteractionRegistrySubsystem* Registry = World->GetSubsystem<UInteractionRegistrySubsystem>())
+		if (UFVInteractionRegistrySubsystem* Registry = World->GetSubsystem<UFVInteractionRegistrySubsystem>())
 		{
 			Registry->Unregister(this);
 		}
@@ -86,7 +86,7 @@ void UInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-FVector UInteractableComponent::GetFocusPoint() const
+FVector UFVInteractableComponent::GetFocusPoint() const
 {
 	if (const UPrimitiveComponent* Primitive = FocusPrimitive.Get())
 	{
@@ -96,7 +96,7 @@ FVector UInteractableComponent::GetFocusPoint() const
 	return GetOwner() ? GetOwner()->GetActorLocation() : FVector::ZeroVector;
 }
 
-void UInteractableComponent::SetFocused(bool bFocused, UInteractorComponent* Interactor)
+void UFVInteractableComponent::SetFocused(bool bFocused, UFVInteractorComponent* Interactor)
 {
 	if (!bIsInitialized || bFocused == bIsInFocus)
 	{
@@ -106,7 +106,7 @@ void UInteractableComponent::SetFocused(bool bFocused, UInteractorComponent* Int
 	bIsInFocus = bFocused;
 }
 
-bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInteractableState To)
+bool UFVInteractableComponent::IsTransitionAllowed(EFVInteractableState From, EFVInteractableState To)
 {
 	auto LogRejection = [&From, &To](const TCHAR* Reason)
 	{
@@ -116,7 +116,7 @@ bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInter
 			Reason);
 	};
 	
-	if (To == EInteractableState::Default)
+	if (To == EFVInteractableState::Default)
 	{
 		LogRejection(TEXT("Default is not a valid target state."));
 		return false;
@@ -128,7 +128,7 @@ bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInter
 		return false;
 	}
 
-	if (From == EInteractableState::Completed)
+	if (From == EFVInteractableState::Completed)
 	{
 		LogRejection(TEXT("Completed is terminal."));
 		return false;
@@ -136,33 +136,33 @@ bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInter
 
 	switch (To)
 	{
-	case EInteractableState::Awake:
-		if (From == EInteractableState::Interacting)
+	case EFVInteractableState::Awake:
+		if (From == EFVInteractableState::Interacting)
 		{
 			LogRejection(TEXT("Finish or cancel the interaction before waking."));
 			return false;
 		}
 		break;
 
-	case EInteractableState::Interacting:
-		if (From != EInteractableState::Awake && From != EInteractableState::Paused)
+	case EFVInteractableState::Interacting:
+		if (From != EFVInteractableState::Awake && From != EFVInteractableState::Paused)
 		{
 			LogRejection(TEXT("Only an Awake or Paused interactable can start interacting."));
 			return false;
 		}
 		break;
 
-	case EInteractableState::Paused:
-		if (From != EInteractableState::Interacting)
+	case EFVInteractableState::Paused:
+		if (From != EFVInteractableState::Interacting)
 		{
 			LogRejection(TEXT("Only an interacting interactable can be paused."));
 			return false;
 		}
 		break;
 
-	case EInteractableState::Cooldown:
-	case EInteractableState::Completed:
-		if (From != EInteractableState::Interacting && From != EInteractableState::Awake)
+	case EFVInteractableState::Cooldown:
+	case EFVInteractableState::Completed:
+		if (From != EFVInteractableState::Interacting && From != EFVInteractableState::Awake)
 		{
 			LogRejection(TEXT("Only an interacting or awake interactable can finish."));
 			return false;
@@ -176,14 +176,14 @@ bool UInteractableComponent::IsTransitionAllowed(EInteractableState From, EInter
 	return true;
 }
 
-bool UInteractableComponent::SetState(EInteractableState NewState)
+bool UFVInteractableComponent::SetState(EFVInteractableState NewState)
 {
 	if (!IsTransitionAllowed(State, NewState))
 	{
 		return false;
 	}
 
-	const EInteractableState OldState = State;
+	const EFVInteractableState OldState = State;
 	State = NewState;
 
 	ApplyStateTag(OldState, NewState);
@@ -193,7 +193,7 @@ bool UInteractableComponent::SetState(EInteractableState NewState)
 	return true;
 }
 
-void UInteractableComponent::ApplyStateTag(const EInteractableState OldState, const EInteractableState NewState) const
+void UFVInteractableComponent::ApplyStateTag(const EFVInteractableState OldState, const EFVInteractableState NewState) const
 {
 	AActor* OwningActor = GetOwner();
 	if (!OwningActor)
@@ -201,8 +201,8 @@ void UInteractableComponent::ApplyStateTag(const EInteractableState OldState, co
 		return;
 	}
 
-	const FGameplayTag OldTag = InteractionTags::StateToTag(OldState);
-	const FGameplayTag NewTag = InteractionTags::StateToTag(NewState);
+	const FGameplayTag OldTag = FVInteractionGameplayTags::StateToTag(OldState);
+	const FGameplayTag NewTag = FVInteractionGameplayTags::StateToTag(NewState);
 
 	if (OldTag.IsValid())
 	{
@@ -215,9 +215,9 @@ void UInteractableComponent::ApplyStateTag(const EInteractableState OldState, co
 	}
 }
 
-void UInteractableComponent::ConsumeOffer(const FGameplayTag& ActionTag)
+void UFVInteractableComponent::ConsumeOffer(const FGameplayTag& ActionTag)
 {
-	FInteractionOffer* Offer = Offers.FindByPredicate([&ActionTag](const FInteractionOffer& Candidate)
+	FFVInteractionOffer* Offer = Offers.FindByPredicate([&ActionTag](const FFVInteractionOffer& Candidate)
 	{
 		return Candidate.ActionTag.MatchesTagExact(ActionTag);
 	});
@@ -232,14 +232,14 @@ void UInteractableComponent::ConsumeOffer(const FGameplayTag& ActionTag)
 		--Offer->RemainingUses;
 	}
 
-	const bool bAllExhausted = !Offers.ContainsByPredicate([](const FInteractionOffer& Candidate)
+	const bool bAllExhausted = !Offers.ContainsByPredicate([](const FFVInteractionOffer& Candidate)
 	{
 		return Candidate.IsValid() && !Candidate.IsExhausted();
 	});
 
 	if (bAllExhausted)
 	{
-		SetState(EInteractableState::Completed);
+		SetState(EFVInteractableState::Completed);
 	}
 	else
 	{
@@ -247,14 +247,14 @@ void UInteractableComponent::ConsumeOffer(const FGameplayTag& ActionTag)
 	}
 }
 
-void UInteractableComponent::StartCooldown()
+void UFVInteractableComponent::StartCooldown()
 {
 	if (CooldownPeriod <= 0.f)
 	{
 		return;
 	}
 
-	if (!SetState(EInteractableState::Cooldown))
+	if (!SetState(EFVInteractableState::Cooldown))
 	{
 		return;
 	}
@@ -263,34 +263,34 @@ void UInteractableComponent::StartCooldown()
 	{
 		World->GetTimerManager().SetTimer(
 			CooldownTimer,
-			[this]() { SetState(EInteractableState::Idle); },
+			[this]() { SetState(EFVInteractableState::Idle); },
 			CooldownPeriod,
 			false);
 	}
 	
 }
 
-void UInteractableComponent::ProcessDependencies()
+void UFVInteractableComponent::ProcessDependencies()
 {
-	for (UInteractableComponent* Dependency : Dependencies)
+	for (UFVInteractableComponent* Dependency : Dependencies)
 	{
 		if (!IsValid(Dependency))
 		{
 			continue;
 		}
 
-		if (State == EInteractableState::Completed)
+		if (State == EFVInteractableState::Completed)
 		{
-			Dependency->RemoveSuppression(InteractionTags::Interaction_Suppression_Dependency);
+			Dependency->RemoveSuppression(FVInteractionGameplayTags::Interaction_Suppression_Dependency);
 		}
 		else
 		{
-			Dependency->AddSuppression(InteractionTags::Interaction_Suppression_Dependency);
+			Dependency->AddSuppression(FVInteractionGameplayTags::Interaction_Suppression_Dependency);
 		}
 	}
 }
 
-void UInteractableComponent::AddSuppression(FGameplayTag Reason)
+void UFVInteractableComponent::AddSuppression(FGameplayTag Reason)
 {
 	if (!Reason.IsValid() || SuppressionReasons.HasTagExact(Reason))
 	{
@@ -299,10 +299,10 @@ void UInteractableComponent::AddSuppression(FGameplayTag Reason)
 
 	SuppressionReasons.AddTag(Reason);
 
-	SetState(EInteractableState::Suppressed);
+	SetState(EFVInteractableState::Suppressed);
 }
 
-void UInteractableComponent::RemoveSuppression(FGameplayTag Reason)
+void UFVInteractableComponent::RemoveSuppression(FGameplayTag Reason)
 {
 	if (!SuppressionReasons.HasTagExact(Reason))
 	{
@@ -311,15 +311,41 @@ void UInteractableComponent::RemoveSuppression(FGameplayTag Reason)
 
 	SuppressionReasons.RemoveTag(Reason);
 
-	if (SuppressionReasons.IsEmpty() && State == EInteractableState::Suppressed)
+	if (SuppressionReasons.IsEmpty() && State == EFVInteractableState::Suppressed)
 	{
-		SetState(EInteractableState::Idle);
+		SetState(EFVInteractableState::Idle);
 	}
 }
 
-const FInteractionOffer* UInteractableComponent::FindOffer(const FGameplayTag& InputTag) const
+void UFVInteractableComponent::StartInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor)
 {
-	return Offers.FindByPredicate([InputTag](const FInteractionOffer& Offer)
+	SetState(EFVInteractableState::Interacting);
+	InteractionStarted.Broadcast(ActionTag, Interactor);
+}
+
+void UFVInteractableComponent::ProgressInteraction(
+	const FGameplayTag& ActionTag, 
+	UFVInteractorComponent* Interactor,
+	float Progress)
+{
+	InteractionProgressed.Broadcast(ActionTag, Interactor, Progress);
+}
+
+void UFVInteractableComponent::EndInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const bool bSuccess)
+{
+	SetState(EFVInteractableState::Awake);
+	
+	if (bSuccess)
+	{
+		ConsumeOffer(ActionTag);
+	}
+	
+	InteractionEnded.Broadcast(ActionTag, Interactor, bSuccess);
+}
+
+const FFVInteractionOffer* UFVInteractableComponent::FindOffer(const FGameplayTag& InputTag) const
+{
+	return Offers.FindByPredicate([InputTag](const FFVInteractionOffer& Offer)
 	{
 		return Offer.InputTag == InputTag;
 	});

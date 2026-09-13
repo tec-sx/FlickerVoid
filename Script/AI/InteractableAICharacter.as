@@ -11,7 +11,7 @@ class AInteractableAICharacter : AFVAICharacter
     default FlowComponent.bAutoStartRootFlow = false;
 
     UPROPERTY(DefaultComponent, Category = "Interaction")
-    UInteractableComponent InteractableComponent;
+    UFVInteractableComponent InteractableComponent;
     default InteractableComponent.Type = GameplayTags::Interactable_Character;
     default InteractableComponent.FocusComponentTag = FName("Character");
     

@@ -14,10 +14,10 @@
 #include "Logging/FVLogSystem.h"
 #include "Player/FVInventoryUIRouterComponent.h"
 #include "Player/FVDialogueUIRouterComponent.h"
-#include "Debug/InteractionDebugComponent.h"
+#include "Debug/FVInteractionDebugComponent.h"
 #include "Systems/FVAssetManager.h"
-#include "Core/InteractionTypes.h"
-#include "Components/InteractorComponent.h"
+#include "Core/FVInteractionTypes.h"
+#include "Components/FVInteractorComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
 
@@ -26,7 +26,7 @@ AFVPlayerController::AFVPlayerController(const FObjectInitializer& ObjectInitial
 {
 	InventoryUIRouterComponent = CreateDefaultSubobject<UFVInventoryUIRouterComponent>(TEXT("InventoryUIRouterComponent"));
 	DialogueUIRouterComponent = CreateDefaultSubobject<UFVDialogueUIRouterComponent>(TEXT("DialogueUIRouterComponent"));
-	InteractionDebugComponent = CreateDefaultSubobject<UInteractionDebugComponent>(TEXT("InteractionDebugComponent"));
+	InteractionDebugComponent = CreateDefaultSubobject<UFVInteractionDebugComponent>(TEXT("InteractionDebugComponent"));
 }
 
 void AFVPlayerController::OnPossess(APawn* InPawn)
@@ -302,9 +302,9 @@ void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
 
 	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
 	{
-		if (UInteractorComponent* Interactor = CachedInteractor.Get())
+		if (UFVInteractorComponent* Interactor = CachedInteractor.Get())
 		{
-			Interactor->PushInput(InputTag, EInteractionInputPhase::Pressed);
+			Interactor->PushInput(InputTag, EFVInteractionInputPhase::Pressed);
 		}
 
 		return;
@@ -324,9 +324,9 @@ void AFVPlayerController::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 
 	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
 	{
-		if (UInteractorComponent* Interactor = CachedInteractor.Get())
+		if (UFVInteractorComponent* Interactor = CachedInteractor.Get())
 		{
-			Interactor->PushInput(InputTag, EInteractionInputPhase::Released);
+			Interactor->PushInput(InputTag, EFVInteractionInputPhase::Released);
 		}
 
 		return;

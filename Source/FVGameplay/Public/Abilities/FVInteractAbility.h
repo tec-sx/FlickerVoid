@@ -5,8 +5,8 @@
 
 #define UE_API FLICKERVOIDGAMEPLAY_API
 
-class UInteractorComponent;
-class UInteractableComponent;
+class UFVInteractorComponent;
+class UFVInteractableComponent;
 
 UCLASS(MinimalAPI, Abstract)
 class UFVInteractAbility : public UFVGameplayAbility
@@ -15,13 +15,13 @@ class UFVInteractAbility : public UFVGameplayAbility
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Interaction")
-	UE_API UInteractorComponent* GetInteractor() const;
+	UE_API UFVInteractorComponent* GetInteractor() const;
 
 	UFUNCTION(BlueprintPure, Category = "Interaction")
-	UE_API UInteractableComponent* GetInteractable() const;
+	UE_API UFVInteractableComponent* GetInteractable() const;
 	
 private:
-	UE_API UInteractorComponent* GetInteractor(const FGameplayAbilityActorInfo* ActorInfo) const;
+	UE_API UFVInteractorComponent* GetInteractor(const FGameplayAbilityActorInfo* ActorInfo) const;
 };
 
 #undef UE_API

@@ -1,31 +1,30 @@
-#include "Components/InteractorComponent.h"
-#include "Components/InteractableComponent.h"
+#include "Components/FVInteractorComponent.h"
+#include "Components/FVInteractableComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Core/InteractionTags.h"
+#include "Core/FVInteractionGameplayTags.h"
 #include "Engine/World.h"
 #include "FVInteractionSystem.h"
 #include "FVInteractionSystemSettings.h"
 #include "GameFramework/PlayerController.h"
 #include "Misc/ScopeExit.h"
-#include "Subsystems/InteractionRegistrySubsystem.h"
+#include "Subsystems/FVInteractionRegistrySubsystem.h"
 #include "TimerManager.h"
-#include "Components/InteractionSignalComponent.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(InteractorComponent)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractorComponent)
 
-UInteractorComponent::UInteractorComponent()
+UFVInteractorComponent::UFVInteractorComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
-void UInteractorComponent::BeginPlay()
+void UFVInteractorComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	const FInteractorSettings& Defaults = UFVInteractionSystemSettings::Get().InteractorDefaultSettings;
+	const FFVInteractorSettings& Defaults = UFVInteractionSystemSettings::Get().InteractorDefaultSettings;
 
-	if (Precision == EInteractorPrecision::Default)
+	if (Precision == EFVInteractableDetectionMode::Default)
 	{
 		Precision = Defaults.DefaultPrecision;
 	}
@@ -35,9 +34,9 @@ void UInteractorComponent::BeginPlay()
 		InteractorTags.AddTag(Defaults.InteractorTag);
 	}
 
-	if (TracingSetup.SafetyTracingMode == ESafetyTracingMode::Default)
+	if (TracingSetup.SafetyTracingMode == EFVOcclusionDetectionMode::Default)
 	{
-		TracingSetup = Defaults.TracingSetup;
+		TracingSetup = Defaults.DetectionSetup;
 	}
 
 	Owner = Cast<APawn>(GetOwner());
@@ -47,24 +46,24 @@ void UInteractorComponent::BeginPlay()
 		return;
 	}
 
-	Registry = GetWorld()->GetSubsystem<UInteractionRegistrySubsystem>();
+	Registry = GetWorld()->GetSubsystem<UFVInteractionRegistrySubsystem>();
 
 	if (Registry)
 	{
-		Registry->OnInRangeSetChanged.AddDynamic(this, &UInteractorComponent::HandleInRangeSetChanged);
+		Registry->OnInRangeSetChanged.AddDynamic(this, &UFVInteractorComponent::HandleInRangeSetChanged);
 		Registry->RegisterInteractor(this);
 	}
 
 	bIsInitialized = Registry != nullptr;
 }
 
-void UInteractorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void UFVInteractorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	DisableTracing();
 
 	if (Registry)
 	{
-		Registry->OnInRangeSetChanged.RemoveDynamic(this, &UInteractorComponent::HandleInRangeSetChanged);
+		Registry->OnInRangeSetChanged.RemoveDynamic(this, &UFVInteractorComponent::HandleInRangeSetChanged);
 		Registry->UnregisterInteractor(this);
 	}
 
@@ -73,7 +72,7 @@ void UInteractorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void UInteractorComponent::HandleInRangeSetChanged(bool bHasAnyInRange)
+void UFVInteractorComponent::HandleInRangeSetChanged(bool bHasAnyInRange)
 {
 	if (bHasAnyInRange)
 	{
@@ -85,7 +84,7 @@ void UInteractorComponent::HandleInRangeSetChanged(bool bHasAnyInRange)
 	}
 }
 
-void UInteractorComponent::EnableTracing()
+void UFVInteractorComponent::EnableTracing()
 {
 	if (!bIsInitialized || bIsTracing || IsSuppressed())
 	{
@@ -97,7 +96,7 @@ void UInteractorComponent::EnableTracing()
 	UpdateState();
 }
 
-void UInteractorComponent::DisableTracing()
+void UFVInteractorComponent::DisableTracing()
 {
 	if (UWorld* World = GetWorld())
 	{
@@ -110,7 +109,7 @@ void UInteractorComponent::DisableTracing()
 	UpdateState();
 }
 
-void UInteractorComponent::AddSuppression(FGameplayTag Reason)
+void UFVInteractorComponent::AddSuppression(FGameplayTag Reason)
 {
 	if (!Reason.IsValid() || SuppressionReasons.HasTagExact(Reason))
 	{
@@ -119,11 +118,11 @@ void UInteractorComponent::AddSuppression(FGameplayTag Reason)
 
 	SuppressionReasons.AddTag(Reason);
 
-	CancelInteraction(InteractionTags::Interaction_Cancel_Suppressed);
+	CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_Suppressed);
 	DisableTracing();
 }
 
-void UInteractorComponent::RemoveSuppression(FGameplayTag Reason)
+void UFVInteractorComponent::RemoveSuppression(FGameplayTag Reason)
 {
 	if (!SuppressionReasons.HasTagExact(Reason))
 	{
@@ -140,24 +139,24 @@ void UInteractorComponent::RemoveSuppression(FGameplayTag Reason)
 	UpdateState();
 }
 
-void UInteractorComponent::UpdateState()
+void UFVInteractorComponent::UpdateState()
 {
 	if (IsSuppressed())
 	{
-		SetState(EInteractorState::Suppressed);
+		SetState(EFVInteractorState::Suppressed);
 		return;
 	}
 
 	if (bIsInteracting)
 	{
-		SetState(EInteractorState::Interacting);
+		SetState(EFVInteractorState::Interacting);
 		return;
 	}
 
-	SetState(bIsTracing ? EInteractorState::Awake : EInteractorState::Idle);
+	SetState(bIsTracing ? EFVInteractorState::Awake : EFVInteractorState::Idle);
 }
 
-void UInteractorComponent::SetState(EInteractorState NewState)
+void UFVInteractorComponent::SetState(EFVInteractorState NewState)
 {
 	if (State == NewState)
 	{
@@ -165,10 +164,10 @@ void UInteractorComponent::SetState(EInteractorState NewState)
 	}
 
 	State = NewState;
-	OnStateChanged.Broadcast(State);
+	StateChanged.Broadcast(State);
 }
 
-void UInteractorComponent::ArmNextTrace()
+void UFVInteractorComponent::ArmNextTrace()
 {
 	UWorld* World = GetWorld();
 	if (!World || !bIsTracing)
@@ -178,18 +177,18 @@ void UInteractorComponent::ArmNextTrace()
 
 	World->GetTimerManager().SetTimer(
 		TraceTimer,
-		FTimerDelegate::CreateUObject(this, &UInteractorComponent::ProcessTrace),
+		FTimerDelegate::CreateUObject(this, &UFVInteractorComponent::ProcessTrace),
 		FMath::Max(TracingSetup.TracingInterval, 0.01f),
 		false);
 }
 
-const FInteractionOffer* UInteractorComponent::FindActiveOffer() const
+const FFVInteractionOffer* UFVInteractorComponent::FindActiveOffer() const
 {
-	const UInteractableComponent* Target = ActiveCommit.Interactable;
+	const UFVInteractableComponent* Target = ActiveCommit.Interactable;
 	return Target ? Target->FindOffer(ActiveCommit.InputTag) : nullptr;
 }
 
-bool UInteractorComponent::PushInput(FGameplayTag InputTag, EInteractionInputPhase Phase)
+bool UFVInteractorComponent::PushInput(FGameplayTag InputTag, EFVInteractionInputPhase Phase)
 {
 #if !UE_BUILD_SHIPPING
 	DebugLastInputTag = InputTag;
@@ -199,19 +198,19 @@ bool UInteractorComponent::PushInput(FGameplayTag InputTag, EInteractionInputPha
 
 	if (bIsInteracting && ActiveCommit.InputTag.MatchesTagExact(InputTag))
 	{
-		if (Phase == EInteractionInputPhase::Cancelled)
+		if (Phase == EFVInteractionInputPhase::Cancelled)
 		{
-			CancelInteraction(InteractionTags::Interaction_Cancel_Player);
+			CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_Player);
 			return true;
 		}
 
-		if (Phase == EInteractionInputPhase::Released && ActiveMode == EInteractionInputMode::Hold)
+		if (Phase == EFVInteractionInputPhase::Released && ActiveMode == EFVInteractionInputMode::Hold)
 		{
-			CancelInteraction(InteractionTags::Interaction_Cancel_Released);
+			CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_Released);
 			return true;
 		}
 
-		if (Phase == EInteractionInputPhase::Pressed && ActiveMode == EInteractionInputMode::Mash)
+		if (Phase == EFVInteractionInputPhase::Pressed && ActiveMode == EFVInteractionInputMode::Mash)
 		{
 			++ActivePresses;
 
@@ -226,18 +225,18 @@ bool UInteractorComponent::PushInput(FGameplayTag InputTag, EInteractionInputPha
 		return true;
 	}
 
-	if (Phase != EInteractionInputPhase::Pressed)
+	if (Phase != EFVInteractionInputPhase::Pressed)
 	{
 		return false;
 	}
 
-	UInteractableComponent* Target = FocusedTarget.Get();
+	UFVInteractableComponent* Target = FocusedTarget.Get();
 	if (!Target)
 	{
 		return false;
 	}
 
-	const FInteractionOffer* Interaction = CachedOffers.FindByPredicate([&InputTag](const FInteractionOffer& Candidate)
+	const FFVInteractionOffer* Interaction = CachedOffers.FindByPredicate([&InputTag](const FFVInteractionOffer& Candidate)
 	{
 		return Candidate.InputTag.MatchesTagExact(InputTag);
 	});
@@ -255,7 +254,7 @@ bool UInteractorComponent::PushInput(FGameplayTag InputTag, EInteractionInputPha
 		return true;
 	}
 
-	const FInteractionOffer* Offer = Target->FindOffer(InputTag);
+	const FFVInteractionOffer* Offer = Target->FindOffer(InputTag);
 	if (!Offer || Offer->IsExhausted())
 	{
 		return false;
@@ -264,14 +263,14 @@ bool UInteractorComponent::PushInput(FGameplayTag InputTag, EInteractionInputPha
 	return BeginInteraction(*Offer, *Target);
 }
 
-bool UInteractorComponent::BeginInteraction(const FInteractionOffer& Offer, UInteractableComponent& Target)
+bool UFVInteractorComponent::BeginInteraction(const FFVInteractionOffer& Offer, UFVInteractableComponent& Target)
 {
-	if (!Target.SetState(EInteractableState::Interacting))
+	if (!Target.SetState(EFVInteractableState::Interacting))
 	{
 		return false;
 	}
 
-	ActiveCommit = FInteractionCommit();
+	ActiveCommit = FFVInteractionCommit();
 	ActiveCommit.ActionTag = Offer.ActionTag;
 	ActiveCommit.InputTag = Offer.InputTag;
 	ActiveCommit.Interactable = &Target;
@@ -280,8 +279,8 @@ bool UInteractorComponent::BeginInteraction(const FInteractionOffer& Offer, UInt
 		? Target.GetFocusPoint()
 		: LastFocusImpactPoint;
 
-	ActiveMode = Offer.InputMode == EInteractionInputMode::Default
-		? EInteractionInputMode::Press
+	ActiveMode = Offer.InputMode == EFVInteractionInputMode::Default
+		? EFVInteractionInputMode::Press
 		: Offer.InputMode;
 
 	ActiveDuration = Offer.InteractionPeriod < 0.f
@@ -295,12 +294,10 @@ bool UInteractorComponent::BeginInteraction(const FInteractionOffer& Offer, UInt
 	bIsInteracting = true;
 	UpdateState();
 	
-	if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
-	{
-		Signal->InteractionStarted.Broadcast(ActiveCommit);
-	}
-
-	if (ActiveMode == EInteractionInputMode::Press || ActiveDuration <= 0.f)
+	InteractionCommitStarted.Broadcast(ActiveCommit);
+	Target.StartInteraction(ActiveCommit.ActionTag, this);
+	
+	if (ActiveMode == EFVInteractionInputMode::Press || ActiveDuration <= 0.f)
 	{
 		CommitInteraction();
 		return true;
@@ -310,38 +307,38 @@ bool UInteractorComponent::BeginInteraction(const FInteractionOffer& Offer, UInt
 
 	GetWorld()->GetTimerManager().SetTimer(
 		InteractionTimer,
-		FTimerDelegate::CreateUObject(this, &UInteractorComponent::TickInteraction),
+		FTimerDelegate::CreateUObject(this, &UFVInteractorComponent::TickInteraction),
 		UpdateRate,
 		true);
 
 	return true;
 }
 
-void UInteractorComponent::TickInteraction()
+void UFVInteractorComponent::TickInteraction()
 {
 	if (!bIsInteracting)
 	{
 		return;
 	}
 
-	UInteractableComponent* Target = ActiveCommit.Interactable;
+	UFVInteractableComponent* Target = ActiveCommit.Interactable;
 	if (!IsValid(Target) || Target != FocusedTarget.Get())
 	{
-		CancelInteraction(InteractionTags::Interaction_Cancel_FocusLost);
+		CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_FocusLost);
 		return;
 	}
 
-	if (Target->GetState() == EInteractableState::Suppressed)
+	if (Target->GetState() == EFVInteractableState::Suppressed)
 	{
-		CancelInteraction(InteractionTags::Interaction_Cancel_Suppressed);
+		CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_Suppressed);
 		return;
 	}
 
-	if (const FInteractionOffer* Offer = FindActiveOffer())
+	if (const FFVInteractionOffer* Offer = FindActiveOffer())
 	{
 		if (!IsOfferAvailable(*Offer))
 		{
-			CancelInteraction(InteractionTags::Interaction_Cancel_RequirementFailed);
+			CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_RequirementFailed);
 			return;
 		}
 	}
@@ -349,28 +346,22 @@ void UInteractorComponent::TickInteraction()
 	const float UpdateRate = FMath::Max(UFVInteractionSystemSettings::Get().WidgetUpdateFrequency, 0.01f);
 	ActiveElapsed += UpdateRate;
 
-	if (ActiveMode == EInteractionInputMode::Mash)
+	if (ActiveMode == EFVInteractionInputMode::Mash)
 	{
 		if (ActiveElapsed >= ActiveDuration)
 		{
-			CancelInteraction(InteractionTags::Interaction_Cancel_Timeout);
+			CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_Timeout);
 			return;
 		}
 		
-		if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
-		{
-			Signal->InteractionProgress.Broadcast(ActiveCommit, ActivePresses / static_cast<float>(ActiveRequiredPresses))
-		}
+		const float Progress = ActivePresses / static_cast<float>(ActiveRequiredPresses);
+		ProgressInteraction(Progress);
 
 		return;
 	}
 
 	const float Progress = FMath::Clamp(ActiveElapsed / ActiveDuration, 0.f, 1.f);
-
-	if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
-	{
-		Signal->InteractionProgress.Broadcast(ActiveCommit, Progress);
-	}
+	ProgressInteraction(Progress);
 
 	if (Progress >= 1.f)
 	{
@@ -378,7 +369,7 @@ void UInteractorComponent::TickInteraction()
 	}
 }
 
-void UInteractorComponent::CommitInteraction()
+void UFVInteractorComponent::CommitInteraction()
 {
 	if (!bIsInteracting)
 	{
@@ -389,25 +380,32 @@ void UInteractorComponent::CommitInteraction()
 	bIsInteracting = false;
 	UpdateState();
 
-	if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
-	{
-		Signal->InteractionRequested.Broadcast(ActiveCommit);
-	}
-
+	
 #if !UE_BUILD_SHIPPING
 	DebugLastOutcome = EDebugActionOutcome::Succeeded;
 #endif
 
-	if (UInteractableComponent* Target = ActiveCommit.Interactable)
+	InteractionCommitEnded.Broadcast(ActiveCommit, true);
+	
+	if (UFVInteractableComponent* Target = ActiveCommit.Interactable)
 	{
-		Target->ConsumeOffer(ActiveCommit.ActionTag);
-		Target->SetState(EInteractableState::Awake);
+		Target->EndInteraction(ActiveCommit.ActionTag, this, true);
 	}
 	
 	RefreshOffers();
 }
 
-void UInteractorComponent::CancelInteraction(const FGameplayTag& Reason)
+void UFVInteractorComponent::ProgressInteraction(const float Progress)
+{
+	InteractionCommitProgress.Broadcast(ActiveCommit, Progress);
+	
+	if (UFVInteractableComponent* Target = ActiveCommit.Interactable)
+	{
+		Target->ProgressInteraction(ActiveCommit.ActionTag, this, Progress);
+	}
+}
+
+void UFVInteractorComponent::CancelInteraction(const FGameplayTag& Reason)
 {
 	if (!bIsInteracting)
 	{
@@ -417,26 +415,18 @@ void UInteractorComponent::CancelInteraction(const FGameplayTag& Reason)
 	GetWorld()->GetTimerManager().ClearTimer(InteractionTimer);
 	bIsInteracting = false;
 	UpdateState();
-
-	if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
+	
+	InteractionCommitEnded.Broadcast(ActiveCommit, false);
+	
+	if (UFVInteractableComponent* Target = ActiveCommit.Interactable)
 	{
-		Signal->InteractionCancelled.Broadcast(ActiveCommit, Reason);
-	}
-
-	if (UInteractableComponent* Target = ActiveCommit.Interactable)
-	{
-		Target->SetState(EInteractableState::Awake);
+		Target->EndInteraction(ActiveCommit.ActionTag, this, false);
 	}
 
 	RefreshOffers();
 }
 
-bool UInteractorComponent::TryExecuteInteraction(FGameplayTag InputTag)
-{
-	return PushInput(InputTag, EInteractionInputPhase::Pressed);
-}
-
-bool UInteractorComponent::IsOfferAvailable(const FInteractionOffer& Offer) const
+bool UFVInteractorComponent::IsOfferAvailable(const FFVInteractionOffer& Offer) const
 {
 	if (BlockedActionTags.HasTag(Offer.ActionTag))
 	{
@@ -446,12 +436,12 @@ bool UInteractorComponent::IsOfferAvailable(const FInteractionOffer& Offer) cons
 	return Offer.AreTagsSatisfied(InteractorTags);
 }
 
-FVector UInteractorComponent::GetDetectionOrigin() const
+FVector UFVInteractorComponent::GetDetectionOrigin() const
 {
 	return Owner ? Owner->GetActorLocation() : FVector::ZeroVector;
 }
 
-void UInteractorComponent::AddInteractorTag(FGameplayTag NewTag)
+void UFVInteractorComponent::AddInteractorTag(FGameplayTag NewTag)
 {
 	if (!NewTag.IsValid() || InteractorTags.HasTagExact(NewTag))
 	{
@@ -462,7 +452,7 @@ void UInteractorComponent::AddInteractorTag(FGameplayTag NewTag)
 	RefreshOffers();
 }
 
-void UInteractorComponent::RemoveInteractorTag(FGameplayTag OldTag)
+void UFVInteractorComponent::RemoveInteractorTag(FGameplayTag OldTag)
 {
 	if (!InteractorTags.HasTagExact(OldTag))
 	{
@@ -473,7 +463,7 @@ void UInteractorComponent::RemoveInteractorTag(FGameplayTag OldTag)
 	RefreshOffers();
 }
 
-bool UInteractorComponent::GetTraceOrigin(FVector& OutOrigin, FVector& OutForward) const
+bool UFVInteractorComponent::GetTraceOrigin(FVector& OutOrigin, FVector& OutForward) const
 {
 	if (!Owner)
 	{
@@ -495,7 +485,7 @@ bool UInteractorComponent::GetTraceOrigin(FVector& OutOrigin, FVector& OutForwar
 	OutOrigin = ViewLocation;
 	OutForward = ViewRotation.Vector();
 
-	if (TracingSetup.SafetyTracingMode == ESafetyTracingMode::Socket && !TracingSetup.StartSocketName.IsNone())
+	if (TracingSetup.SafetyTracingMode == EFVOcclusionDetectionMode::Socket && !TracingSetup.StartSocketName.IsNone())
 	{
 		const USkeletalMeshComponent* Mesh = Cast<USkeletalMeshComponent>(
 			Owner->GetDefaultSubobjectByName(TracingSetup.ActorMeshName));
@@ -509,9 +499,9 @@ bool UInteractorComponent::GetTraceOrigin(FVector& OutOrigin, FVector& OutForwar
 	return true;
 }
 
-bool UInteractorComponent::PerformSafetyTrace(const FVector& Origin, const UInteractableComponent& Candidate) const
+bool UFVInteractorComponent::PerformSafetyTrace(const FVector& Origin, const UFVInteractableComponent& Candidate) const
 {
-	if (TracingSetup.SafetyTracingMode == ESafetyTracingMode::None)
+	if (TracingSetup.SafetyTracingMode == EFVOcclusionDetectionMode::None)
 	{
 		return true;
 	}
@@ -536,7 +526,7 @@ bool UInteractorComponent::PerformSafetyTrace(const FVector& Origin, const UInte
 	return !bBlocked;
 }
 
-void UInteractorComponent::ProcessTrace()
+void UFVInteractorComponent::ProcessTrace()
 {
 	ON_SCOPE_EXIT
 	{
@@ -558,7 +548,7 @@ void UInteractorComponent::ProcessTrace()
 
 	TArray<FHitResult> Hits;
 
-	if (Precision == EInteractorPrecision::Trace)
+	if (Precision == EFVInteractableDetectionMode::Trace)
 	{
 		GetWorld()->LineTraceMultiByChannel(Hits, Origin, End, InteractionChannel, Params);
 	}
@@ -585,7 +575,7 @@ void UInteractorComponent::ProcessTrace()
 
 	struct FRankedCandidate
 	{
-		UInteractableComponent* Interactable;
+		UFVInteractableComponent* Interactable;
 		FVector ImpactPoint;
 	};
 
@@ -594,8 +584,8 @@ void UInteractorComponent::ProcessTrace()
 	for (const FHitResult& Hit : Hits)
 	{
 		const AActor* HitActor = Hit.GetActor();
-		UInteractableComponent* Interactable = HitActor
-			? HitActor->FindComponentByClass<UInteractableComponent>()
+		UFVInteractableComponent* Interactable = HitActor
+			? HitActor->FindComponentByClass<UFVInteractableComponent>()
 			: nullptr;
 
 		if (Interactable && Interactable->CanBeInteractedWith())
@@ -634,16 +624,16 @@ void UInteractorComponent::ProcessTrace()
 	SetFocusedTarget(nullptr);
 }
 
-void UInteractorComponent::SetFocusedTarget(UInteractableComponent* NewTarget)
+void UFVInteractorComponent::SetFocusedTarget(UFVInteractableComponent* NewTarget)
 {
 	if (FocusedTarget.Get() == NewTarget)
 	{
 		return;
 	}
-
-	if (UInteractableComponent* Previous = FocusedTarget.Get())
+	
+	if (UFVInteractableComponent* Previous = FocusedTarget.Get())
 	{
-		Previous->StateChanged.RemoveDynamic(this, &UInteractorComponent::HandleFocusedStateChanged);
+		Previous->StateChanged.RemoveDynamic(this, &UFVInteractorComponent::HandleFocusedStateChanged);
 		Previous->SetFocused(false, this);
 	}
 
@@ -652,30 +642,27 @@ void UInteractorComponent::SetFocusedTarget(UInteractableComponent* NewTarget)
 	if (NewTarget)
 	{
 		NewTarget->SetFocused(true, this);
-		NewTarget->StateChanged.AddDynamic(this, &UInteractorComponent::HandleFocusedStateChanged);
+		NewTarget->StateChanged.AddDynamic(this, &UFVInteractorComponent::HandleFocusedStateChanged);
 	}
 
-	if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
-	{
-		Signal->FocusChanged.Broadcast(NewTarget);
-	}
+	FocusChanged.Broadcast(NewTarget);
 
 	RefreshOffers();
 }
 
-void UInteractorComponent::HandleFocusedStateChanged(EInteractableState NewState)
+void UFVInteractorComponent::HandleFocusedStateChanged(EFVInteractableState NewState)
 {
 	RefreshOffers();
 }
 
-void UInteractorComponent::RefreshOffers(bool bForceBroadcast)
+void UFVInteractorComponent::RefreshOffers(bool bForceBroadcast)
 {
-	const UInteractableComponent* Target = FocusedTarget.Get();
-	TArray<FInteractionOffer> NewOffers;
+	const UFVInteractableComponent* Target = FocusedTarget.Get();
+	TArray<FFVInteractionOffer> NewOffers;
 
 	if (Target)
 	{
-		for (const FInteractionOffer& Offer : Target->GetOffers())
+		for (const FFVInteractionOffer& Offer : Target->GetOffers())
 		{
 			if (!Offer.IsValid())
 			{
@@ -684,18 +671,18 @@ void UInteractorComponent::RefreshOffers(bool bForceBroadcast)
 
 			const bool bRequirementsMet = IsOfferAvailable(Offer);
 
-			if (!bRequirementsMet && Offer.RequirementGate == EInteractionGate::Hide)
+			if (!bRequirementsMet && Offer.RequirementGate == EFVInteractionGate::Hide)
 			{
 				continue;
 			}
-
-			FInteractionOffer& Slot = NewOffers.Add_GetRef(Offer);
+			
+			FFVInteractionOffer& Slot = NewOffers.Add_GetRef(Offer);
 			Slot.bRequirementsMet = bRequirementsMet;
 		}
 	}
 
 
-	NewOffers.Sort([](const FInteractionOffer& A, const FInteractionOffer& B)
+	NewOffers.Sort([](const FFVInteractionOffer& A, const FFVInteractionOffer& B)
 	{
 		if (A.Weight != B.Weight)
 		{
@@ -710,9 +697,6 @@ void UInteractorComponent::RefreshOffers(bool bForceBroadcast)
 
 	if (bChanged || bForceBroadcast)
 	{
-		if (const UInteractionSignalComponent* Signal = UInteractionSignalComponent::Get(GetOwner()))
-		{
-			Signal->OffersChanged.Broadcast(CachedOffers);
-		}
+		OffersChanged.Broadcast(CachedOffers);
 	}
 }
