@@ -4,6 +4,7 @@
 #include "FVPlayerCharacter.h"
 
 #include "Abilities/FVAbilitySystemComponent.h"
+#include "Components/FVInteractableComponent.h"
 #include "Components/FVInteractorResponseComponent.h"
 #include "Components/FVInteractorComponent.h"
 #include "Interaction/FVInteractorResponseComponent_ActivateAbility.h"
@@ -15,12 +16,26 @@ AFVPlayerCharacter::AFVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 {
 	AbilitySystemComponent = CreateDefaultSubobject<UFVAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	Interactor = CreateDefaultSubobject<UFVInteractorComponent>(TEXT("Interactor"));
-	InteractionResponse = CreateDefaultSubobject<UFVInteractorResponseComponent>(TEXT("InteractionResponse"));
-	InteractionAbilityResponder = CreateDefaultSubobject<UFVInteractorResponseComponent_ActivateAbility>(TEXT("InteractionAbilityResponder"));
+	ActivateAbilityResponse = CreateDefaultSubobject<UFVInteractorResponseComponent_ActivateAbility>(TEXT("ActivateAbilityResponse"));
 }
 
 UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const
 {
 	return GetFVAbilitySystemComponent();
+}
+
+UFVInteractableComponent* AFVPlayerCharacter::GetFocusedInteractable() const
+{
+	return Interactor->GetFocusedTarget();
+}
+
+AActor* AFVPlayerCharacter::GetFocusedActor() const
+{
+	if (const UFVInteractableComponent* Interactable = Interactor->GetFocusedTarget())
+	{
+		return  Interactable->GetOwner();
+	}
+	
+	return nullptr;
 }
 
