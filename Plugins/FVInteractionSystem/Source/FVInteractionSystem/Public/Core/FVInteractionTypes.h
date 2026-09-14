@@ -7,7 +7,7 @@ class UFVInteractableComponent;
 class UFVInteractorComponent;
 class UMaterialInterface;
 
-UENUM(BlueprintType)
+UENUM(BlueprintType, meta=(ScriptName="InteractableDetectionMode"))
 enum class EFVInteractableDetectionMode : uint8
 {
 	Trace		UMETA(DisplayName = "Trace", Tooltip = "Using Line Tracing to find Interactables."),
@@ -15,7 +15,7 @@ enum class EFVInteractableDetectionMode : uint8
 	Default		UMETA(Hidden)
 };
 
-UENUM(BlueprintType, meta=(ScriptName="SafetyTracingMode"))
+UENUM(BlueprintType, meta=(ScriptName="OcclusionDetectionMode"))
 enum class EFVOcclusionDetectionMode : uint8
 {
 	None		UMETA(DisplayName="None", Tooltip="No occlusion validation is performed."),

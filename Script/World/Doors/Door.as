@@ -12,7 +12,6 @@ class ADoor : AActor
     UPROPERTY(DefaultComponent)
     UFVInteractableComponent Interactable;
     default Interactable.Type = GameplayTags::Interactable_Door;
-    default Interactable.DetectionRadius = 160.f;
     default Interactable.FocusComponentTag = n"Interactable";
 
     UPROPERTY(DefaultComponent)
@@ -30,5 +29,7 @@ class ADoor : AActor
     {
         DoorToggleComponent.Doors.Empty();
         DoorToggleComponent.Doors = GetComponentsByClass(UDoorRootComponent);
+
+        Interactable.BindResponse(GameplayTags::Interaction_Action_Open, DoorToggleComponent);
     }
 }

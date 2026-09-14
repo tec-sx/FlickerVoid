@@ -8,9 +8,6 @@ class APlayerCharacter : AFVPlayerCharacter
 
     UPROPERTY(DefaultComponent, Category = Camera)
     UGameplayCameraComponent GameplayCamera;
-    
-    UPROPERTY(DefaultComponent, Category = Logic)
-    UStateTreeComponent StateTree;
 
     UPROPERTY(DefaultComponent)
     UNavigationMarkerComponent NavigationMarker;
