@@ -3,11 +3,8 @@
 #include "CoreMinimal.h"
 #include "FVInteractableComponent.h"
 #include "FVInteractableResponseComponent.h"
-#include "Core/FVInteractionGameplayTags.h"
 
 #include "FVInteractableResponseComponent_Toggle.generated.h"
-
-
 
 UCLASS(ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
 class FVINTERACTIONSYSTEM_API UFVInteractableResponseComponent_Toggle final : public UFVInteractableResponseComponent
@@ -36,9 +33,6 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
 	void OnLockChanged(bool bLocked);
-
-	UPROPERTY(EditAnywhere, Category = "Interaction|Toggle", meta = (Categories = "Interaction.Action"))
-	FGameplayTag ToggleActionTag = FVInteractionGameplayTags::Interaction_Action_Open;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction|Toggle")
 	bool bStartOpen = false;

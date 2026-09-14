@@ -15,6 +15,7 @@ class UFVInteractorResponseComponent_ActivateAbility final : public UFVInteracto
 
 protected:
 	virtual void BindEvents_Implementation(UFVInteractorComponent* Interactor) override;
+	virtual void UnbindEvents_Implementation(UFVInteractorComponent* Interactor) override;
 
 private:
 	UFUNCTION()

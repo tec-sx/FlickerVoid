@@ -1,4 +1,5 @@
 #include "Components/FVInteractableComponent.h"
+#include "Components/FVInteractableResponseComponent.h"
 #include "Components/FVInteractorComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Core/FVInteractionGameplayTags.h"
@@ -338,4 +339,42 @@ const FFVInteractionOffer* UFVInteractableComponent::FindOffer(const FGameplayTa
 	{
 		return Offer.InputTag == InputTag;
 	});
+}
+
+void UFVInteractableComponent::BindResponse(FGameplayTag ActionTag, UFVInteractableResponseComponent* Response)
+{
+	if (!IsValid(Response))
+	{
+		return;
+	}
+
+	if (!bIsInitialized)
+	{
+		UE_LOG(LogFVInteraction, Error,
+			TEXT("'%s' cannot bind response '%s': the interactable is not initialised yet. Bind after BeginPlay."),
+			*GetNameSafe(GetOwner()), *Response->GetName());
+		return;
+	}
+
+	if (!ActionTag.IsValid())
+	{
+		UE_LOG(LogFVInteraction, Error,
+			TEXT("'%s' cannot bind response '%s': the supplied ActionTag is invalid."),
+			*GetNameSafe(GetOwner()), *Response->GetName());
+		return;
+	}
+
+	Response->SetBoundActionTag(ActionTag);
+	Response->BindEvents(this);
+}
+
+void UFVInteractableComponent::UnbindResponse(UFVInteractableResponseComponent* Response)
+{
+	if (!IsValid(Response))
+	{
+		return;
+	}
+
+	Response->UnbindEvents(this);
+	Response->SetBoundActionTag(FGameplayTag());
 }

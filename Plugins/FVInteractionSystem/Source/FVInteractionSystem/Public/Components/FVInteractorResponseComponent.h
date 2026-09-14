@@ -16,11 +16,8 @@ class UFVInteractorResponseComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	UE_API UFVInteractorResponseComponent();
+	UFVInteractorResponseComponent() { PrimaryComponentTick.bCanEverTick = false; }
 
-	UE_API virtual void BeginPlay() override;
-	UE_API virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	
 	UFUNCTION(BlueprintNativeEvent, Category = "Interaction|Responder")
 	void BindEvents(UFVInteractorComponent* Interactor);
 	

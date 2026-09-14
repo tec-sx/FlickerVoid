@@ -25,15 +25,17 @@ void UFVInteractableResponseComponent_Toggle::SetLocked(const bool bLocked)
 
 void UFVInteractableResponseComponent_Toggle::OnInteractionEnded(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const bool bSuccess)
 {
-	if (bSuccess && ActionTag.MatchesTagExact(ToggleActionTag))
+	if (!bSuccess || !MatchesBoundAction(ActionTag))
 	{
-		if (bIsLocked)
-		{
-			OnToggleBlocked(!bIsOpen);
-			return;
-		}
-
-		bIsOpen = !bIsOpen;
-		OnToggled(bIsOpen);
+		return;
 	}
+
+	if (bIsLocked)
+	{
+		OnToggleBlocked(!bIsOpen);
+		return;
+	}
+
+	bIsOpen = !bIsOpen;
+	OnToggled(bIsOpen);
 }

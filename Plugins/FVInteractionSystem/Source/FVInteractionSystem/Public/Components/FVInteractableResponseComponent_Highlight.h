@@ -15,7 +15,7 @@ class FVINTERACTIONSYSTEM_API UFVInteractableResponseComponent_Highlight final :
 	GENERATED_BODY()
 
 protected:
-	virtual void BindEvents_Implementation(UFVInteractableComponent* Ineractable) override;
+	virtual void BindEvents_Implementation(UFVInteractableComponent* Interactable) override;
 	virtual void UnbindEvents_Implementation(UFVInteractableComponent* Interactable) override;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction|Highlight")

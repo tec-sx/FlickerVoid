@@ -13,6 +13,7 @@
 #define UE_API FVINTERACTIONSYSTEM_API
 
 class UFVInteractableComponent;
+class UFVInteractorResponseComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorStateChanged, EFVInteractorState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionFocusChanged, UFVInteractableComponent*, Target);
@@ -105,13 +106,19 @@ public:
 	EFVInteractableDetectionMode DetectionMode = EFVInteractableDetectionMode::Default;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection", meta = (ShowOnlyInnerProperties))
-	FFVDetectionSetup TracingSetup;
+	FFVDetectionSetup DetectionSetup;
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Detection")
 	UE_API FVector GetDetectionOrigin() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	UE_API void RequestOfferRefresh() { RefreshOffers(); }
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Responses")
+	UE_API void BindResponse(UFVInteractorResponseComponent* Response);
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Responses")
+	UE_API void UnbindResponse(UFVInteractorResponseComponent* Response);
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Identity")
 	UE_API void AddInteractorTag(FGameplayTag NewTag);
@@ -129,7 +136,11 @@ public:
 	};
 
 	const TArray<TObjectPtr<UFVInteractableComponent>>& GetDebugCandidates() const { return Candidates; }
-	float GetDebugTraceRange() const { return TracingSetup.TracingRange; }
+	float GetDebugTraceRange() const { return DetectionSetup.TracingRange; }
+	bool IsDebugInteracting() const { return bIsInteracting; }
+	float GetDebugProgress() const { return ActiveDuration > 0.f ? FMath::Clamp(ActiveElapsed / ActiveDuration, 0.f, 1.f) : 0.f; }
+	FGameplayTag GetDebugActiveActionTag() const { return ActiveCommit.ActionTag; }
+	FGameplayTag GetDebugLastCancelReason() const { return DebugLastCancelReason; }
 	EDebugActionOutcome GetDebugLastOutcome() const { return DebugLastOutcome; }
 	FGameplayTag GetDebugLastInputTag() const { return DebugLastInputTag; }
 	double GetDebugLastActionTime() const { return DebugLastActionTime; }
@@ -145,7 +156,7 @@ private:
 	void ProcessTrace();
 	void ArmNextTrace();
 	bool GetTraceOrigin(FVector& OutOrigin, FVector& OutForward) const;
-	bool PerformSafetyTrace(const FVector& Origin, const UFVInteractableComponent& Candidate) const;
+	bool HasLineOfSight(const FVector& Origin, const UFVInteractableComponent& Candidate) const;
 	void SetFocusedTarget(UFVInteractableComponent* NewTarget);
 
 	bool BeginInteraction(const FFVInteractionOffer& Offer, UFVInteractableComponent& Target);
@@ -170,8 +181,10 @@ private:
 	bool bIsTracing = false;
 	TWeakObjectPtr<UFVInteractableComponent> FocusedTarget;
 
+	UPROPERTY(Transient)
 	TObjectPtr<UFVInteractionRegistrySubsystem> Registry;
-	TArray< TObjectPtr<UFVInteractableComponent>> Candidates;
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UFVInteractableComponent>> Candidates;
 	FVector LastFocusImpactPoint = FVector::ZeroVector;
 	FTimerHandle TraceTimer;
 
@@ -200,6 +213,7 @@ private:
 #if !UE_BUILD_SHIPPING
 	EDebugActionOutcome DebugLastOutcome = EDebugActionOutcome::None;
 	FGameplayTag DebugLastInputTag;
+	FGameplayTag DebugLastCancelReason;
 	double DebugLastActionTime = 0.0;
 	FVector DebugImpactPoint = FVector::ZeroVector;
 	FVector DebugSweepDirection = FVector::ForwardVector;

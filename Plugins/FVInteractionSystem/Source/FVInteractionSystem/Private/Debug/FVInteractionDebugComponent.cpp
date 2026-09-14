@@ -149,6 +149,17 @@ void UFVInteractionDebugComponent::DrawVisualizer() const
 	DrawDebugCircle(
 		World,
 		PawnLocation,
+		InteractorPtr->GetDetectionRadius(),
+		64,
+		FColor(255, 128, 0),
+		false, -1.f, 0, 0.5f,
+		FVector::ForwardVector,
+		FVector::RightVector,
+		false);
+
+	DrawDebugCircle(
+		World,
+		PawnLocation,
 		InteractorPtr->GetDebugTraceRange(),
 		64,
 		FColor(0, 128, 255),
@@ -205,7 +216,7 @@ void UFVInteractionDebugComponent::DrawVisualizer() const
 		DrawDebugCircle(
 			World,
 			InteractorPtr->GetDebugImpactPoint(),
-			InteractorPtr->TracingSetup.TracingShapeHalfSize,
+			InteractorPtr->DetectionSetup.TracingShapeHalfSize,
 			24,
 			InteractorPtr->DidDebugHitOccluder() ? FColor::Red : FColor::Green,
 			false, -1.f, 0, 0.5f,
@@ -291,6 +302,19 @@ void UFVInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* P
 			: (InteractorPtr->DidDebugHitOccluder() ? TEXT("blocked by occluder") : TEXT("hit interactable"))),
 		TextColor);
 
+	if (InteractorPtr->IsDebugInteracting())
+	{
+		DrawLine(FString::Printf(TEXT("Active: %s %.0f%%"),
+			*InteractorPtr->GetDebugActiveActionTag().ToString(),
+			InteractorPtr->GetDebugProgress() * 100.f),
+			HeaderColor);
+	}
+
+	if (const FGameplayTag CancelReason = InteractorPtr->GetDebugLastCancelReason(); CancelReason.IsValid())
+	{
+		DrawLine(FString::Printf(TEXT("Last cancel: %s"), *CancelReason.ToString()), TextColor);
+	}
+
 	Y += LineHeight * 0.5f;
 	DrawLine(TEXT("-- Prompts --"), HeaderColor);
 
@@ -304,10 +328,20 @@ void UFVInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* P
 	{
 		for (const FFVInteractionOffer& Prompt : Prompts)
 		{
-			DrawLine(FString::Printf(TEXT("  [%s] %s Enabled=%s Uses=%d"),
+			const TCHAR* Status = TEXT("OK");
+			if (Prompt.IsExhausted())
+			{
+				Status = TEXT("SPENT");
+			}
+			else if (!Prompt.bRequirementsMet)
+			{
+				Status = Prompt.RequirementGate == EFVInteractionGate::Hide ? TEXT("HIDDEN") : TEXT("GATED");
+			}
+
+			DrawLine(FString::Printf(TEXT("  [%s] %s %s Uses=%d"),
 				*Prompt.InputTag.ToString(),
 				*Prompt.ActionTag.ToString(),
-				Prompt.CanExecute() ? TEXT("true") : TEXT("false"),
+				Status,
 				Prompt.RemainingUses),
 				TextColor);
 		}

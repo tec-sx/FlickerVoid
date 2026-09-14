@@ -13,10 +13,15 @@ void UFVInteractorResponseComponent_ActivateAbility::BindEvents_Implementation(U
 	Interactor->InteractionCommitEnded.AddDynamic(this, &UFVInteractorResponseComponent_ActivateAbility::OnInteractionRequested);
 }
 
+void UFVInteractorResponseComponent_ActivateAbility::UnbindEvents_Implementation(UFVInteractorComponent* Interactor)
+{
+	Interactor->InteractionCommitEnded.RemoveDynamic(this, &UFVInteractorResponseComponent_ActivateAbility::OnInteractionRequested);
+}
+
 void UFVInteractorResponseComponent_ActivateAbility::OnInteractionRequested(const FFVInteractionCommit& Commit, bool bSuccess) const
 {
 	AActor* Instigator = GetOwner();
-	if (!Instigator || !Commit.ActionTag.IsValid())
+	if (!bSuccess || !Instigator || !Commit.ActionTag.IsValid() || !Commit.Interactable)
 	{
 		return;
 	}

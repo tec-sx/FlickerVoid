@@ -2,6 +2,7 @@
 
 #include "Components/ActorComponent.h"
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 
 #include "FVInteractableResponseComponent.generated.h"
 
@@ -15,20 +16,31 @@ class UFVInteractableResponseComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	UE_API UFVInteractableResponseComponent();
+	UFVInteractableResponseComponent() { PrimaryComponentTick.bCanEverTick = false; }
 
-	UE_API virtual void BeginPlay() override;
-	UE_API virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	
 	UFUNCTION(BlueprintNativeEvent, Category = "Interaction|Responder")
-	void BindEvents(UFVInteractableComponent* Signal);
-	
+	void BindEvents(UFVInteractableComponent* Interactable);
+
 	UFUNCTION(BlueprintNativeEvent, Category = "Interaction|Responder")
-	void UnbindEvents(UFVInteractableComponent* Signal);
-	
+	void UnbindEvents(UFVInteractableComponent* Interactable);
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|Responder")
+	UE_API FGameplayTag GetBoundActionTag() const { return BoundActionTag; }
+
 protected:
-	virtual void BindEvents_Implementation(UFVInteractableComponent* Signal) {}
-	virtual void UnbindEvents_Implementation(UFVInteractableComponent* Signal) {}
+	virtual void BindEvents_Implementation(UFVInteractableComponent* Interactable) {}
+	virtual void UnbindEvents_Implementation(UFVInteractableComponent* Interactable) {}
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|Responder")
+	UE_API bool MatchesBoundAction(const FGameplayTag& ActionTag) const { return ActionTag.MatchesTagExact(BoundActionTag); }
+
+private:
+	friend class UFVInteractableComponent;
+
+	void SetBoundActionTag(const FGameplayTag& ActionTag) { BoundActionTag = ActionTag; }
+
+	UPROPERTY(Transient)
+	FGameplayTag BoundActionTag;
 };
 
 #undef UE_API

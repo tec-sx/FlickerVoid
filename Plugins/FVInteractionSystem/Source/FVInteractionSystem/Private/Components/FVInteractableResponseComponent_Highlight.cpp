@@ -8,7 +8,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractableResponseComponent_Highlight)
 
-void UFVInteractableResponseComponent_Highlight::BindEvents_Implementation(UFVInteractableComponent* Ineractable)
+void UFVInteractableResponseComponent_Highlight::BindEvents_Implementation(UFVInteractableComponent* Interactable)
 {
 	const FFVInteractableSettings& Defaults = UFVInteractionSystemSettings::Get().InteractableBaseSettings;
 
@@ -48,7 +48,7 @@ void UFVInteractableResponseComponent_Highlight::BindEvents_Implementation(UFVIn
 		CachedStencilValues.Add(Target->CustomDepthStencilValue);
 	}
 
-	Ineractable->FocusChanged.AddDynamic(this, &UFVInteractableResponseComponent_Highlight::OnFocusStateChanged);
+	Interactable->FocusChanged.AddDynamic(this, &UFVInteractableResponseComponent_Highlight::OnFocusStateChanged);
 }
 
 void UFVInteractableResponseComponent_Highlight::UnbindEvents_Implementation(UFVInteractableComponent* Interactable)

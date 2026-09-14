@@ -1,5 +1,6 @@
 #include "Components/FVInteractorComponent.h"
 #include "Components/FVInteractableComponent.h"
+#include "Components/FVInteractorResponseComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/FVInteractionGameplayTags.h"
 #include "Engine/World.h"
@@ -34,9 +35,9 @@ void UFVInteractorComponent::BeginPlay()
 		InteractorTags.AddTag(Defaults.InteractorTag);
 	}
 
-	if (TracingSetup.OcclusionMode == EFVOcclusionDetectionMode::Default)
+	if (DetectionSetup.OcclusionMode == EFVOcclusionDetectionMode::Default)
 	{
-		TracingSetup = Defaults.DetectionSetup;
+		DetectionSetup = Defaults.DetectionSetup;
 	}
 
 	if (DetectionRadius < 0.f)
@@ -75,6 +76,34 @@ void UFVInteractorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	bIsInitialized = false;
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void UFVInteractorComponent::BindResponse(UFVInteractorResponseComponent* Response)
+{
+	if (!IsValid(Response))
+	{
+		return;
+	}
+
+	if (!bIsInitialized)
+	{
+		UE_LOG(LogFVInteraction, Error,
+			TEXT("'%s' cannot bind response '%s': the interactor is not initialised yet. Bind after BeginPlay."),
+			*GetNameSafe(GetOwner()), *Response->GetName());
+		return;
+	}
+
+	Response->BindEvents(this);
+}
+
+void UFVInteractorComponent::UnbindResponse(UFVInteractorResponseComponent* Response)
+{
+	if (!IsValid(Response))
+	{
+		return;
+	}
+
+	Response->UnbindEvents(this);
 }
 
 void UFVInteractorComponent::SetDetectionRadius(float NewRadius)
@@ -188,7 +217,7 @@ void UFVInteractorComponent::ArmNextTrace()
 	World->GetTimerManager().SetTimer(
 		TraceTimer,
 		FTimerDelegate::CreateUObject(this, &UFVInteractorComponent::ProcessTrace),
-		FMath::Max(TracingSetup.TracingInterval, 0.01f),
+		FMath::Max(DetectionSetup.TracingInterval, 0.01f),
 		false);
 }
 
@@ -423,6 +452,10 @@ void UFVInteractorComponent::CancelInteraction(const FGameplayTag& Reason)
 		return;
 	}
 
+#if !UE_BUILD_SHIPPING
+	DebugLastCancelReason = Reason;
+#endif
+
 	GetWorld()->GetTimerManager().ClearTimer(InteractionTimer);
 	bIsInteracting = false;
 	UpdateState();
@@ -496,23 +529,23 @@ bool UFVInteractorComponent::GetTraceOrigin(FVector& OutOrigin, FVector& OutForw
 	OutOrigin = ViewLocation;
 	OutForward = ViewRotation.Vector();
 
-	if (TracingSetup.OcclusionMode == EFVOcclusionDetectionMode::Socket && !TracingSetup.StartSocketName.IsNone())
+	if (DetectionSetup.OcclusionMode == EFVOcclusionDetectionMode::Socket && !DetectionSetup.StartSocketName.IsNone())
 	{
 		const USkeletalMeshComponent* Mesh = Cast<USkeletalMeshComponent>(
-			Owner->GetDefaultSubobjectByName(TracingSetup.ActorMeshName));
+			Owner->GetDefaultSubobjectByName(DetectionSetup.ActorMeshName));
 
-		if (Mesh && Mesh->DoesSocketExist(TracingSetup.StartSocketName))
+		if (Mesh && Mesh->DoesSocketExist(DetectionSetup.StartSocketName))
 		{
-			OutOrigin = Mesh->GetSocketLocation(TracingSetup.StartSocketName);
+			OutOrigin = Mesh->GetSocketLocation(DetectionSetup.StartSocketName);
 		}
 	}
 
 	return true;
 }
 
-bool UFVInteractorComponent::PerformSafetyTrace(const FVector& Origin, const UFVInteractableComponent& Candidate) const
+bool UFVInteractorComponent::HasLineOfSight(const FVector& Origin, const UFVInteractableComponent& Candidate) const
 {
-	if (TracingSetup.OcclusionMode == EFVOcclusionDetectionMode::None)
+	if (DetectionSetup.OcclusionMode == EFVOcclusionDetectionMode::None)
 	{
 		return true;
 	}
@@ -531,7 +564,7 @@ bool UFVInteractorComponent::PerformSafetyTrace(const FVector& Origin, const UFV
 		Hit,
 		Origin,
 		Candidate.GetFocusPoint(),
-		TracingSetup.OcclusionChannel,
+		DetectionSetup.OcclusionChannel,
 		Params);
 
 	return !bBlocked;
@@ -553,7 +586,7 @@ void UFVInteractorComponent::ProcessTrace()
 		return;
 	}
 
-	const FVector End = Origin + Forward * TracingSetup.TracingRange;
+	const FVector End = Origin + Forward * DetectionSetup.TracingRange;
 
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(FVInteractionTrace), false, Owner);
 
@@ -571,7 +604,7 @@ void UFVInteractorComponent::ProcessTrace()
 			End,
 			FQuat::Identity,
 			InteractionChannel,
-			FCollisionShape::MakeBox(FVector(TracingSetup.TracingShapeHalfSize)),
+			FCollisionShape::MakeBox(FVector(DetectionSetup.TracingShapeHalfSize)),
 			Params);
 	}
 
@@ -613,7 +646,7 @@ void UFVInteractorComponent::ProcessTrace()
 
 	for (const FRankedCandidate& Candidate : Ranked)
 	{
-		if (!PerformSafetyTrace(Origin, *Candidate.Interactable))
+		if (!HasLineOfSight(Origin, *Candidate.Interactable))
 		{
 #if !UE_BUILD_SHIPPING
 			bDebugHitOccluder = true;

@@ -12,6 +12,7 @@
 
 class UPrimitiveComponent;
 class UShapeComponent;
+class UFVInteractableResponseComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractableFocusChanged, bool, bIsInFocus, UFVInteractorComponent*, Interactor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableStateChanged, EFVInteractableState, NewState);
@@ -47,6 +48,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
 	UE_API void ConsumeOffer(const FGameplayTag& InputTag);
+
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Responses")
+	UE_API void BindResponse(FGameplayTag ActionTag, UFVInteractableResponseComponent* Response);
+
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Responses")
+	UE_API void UnbindResponse(UFVInteractableResponseComponent* Response);
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Dependencies")
 	UE_API void ProcessDependencies();
