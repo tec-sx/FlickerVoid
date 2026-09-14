@@ -15,7 +15,6 @@ class UShapeComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractableFocusChanged, bool, bIsInFocus, UFVInteractorComponent*, Interactor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableStateChanged, EFVInteractableState, NewState);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCollisionChanged, const TEnumAsByte<ECollisionChannel>&, NewCollisionChannel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionStarted, const FGameplayTag&, ActionTag, UFVInteractorComponent*, Interactor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInteractionProgress, const FGameplayTag&, ActionTag, UFVInteractorComponent*, Interactor, float, Progress);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInteractionEnded, const FGameplayTag&, ActionTag, UFVInteractorComponent*, Interactor, const bool, bSuccess);
@@ -50,7 +49,7 @@ public:
 	UE_API static bool IsTransitionAllowed(EFVInteractableState From, EFVInteractableState To);
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
-	UE_API void ConsumeOffer(const FGameplayTag& ActionTag);
+	UE_API void ConsumeOffer(const FGameplayTag& InputTag);
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Dependencies")
 	UE_API void ProcessDependencies();
@@ -65,16 +64,7 @@ public:
 	UE_API void RemoveSuppression(FGameplayTag Reason);
 
 	UFUNCTION(BlueprintPure, Category = "Interactable|State")
-	UE_API bool CanBeInteractedWith() const { return State == EFVInteractableState::Awake || State == EFVInteractableState::Paused; }
-	
-	UFUNCTION(BlueprintCallable, Category = "Interactable|Events")
-	UE_API void StartInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor);
-	
-	UFUNCTION(BlueprintCallable, Category = "Interactable|Events")
-	UE_API void ProgressInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, float Progress);
-	
-	UFUNCTION(BlueprintCallable, Category = "Interactable|Events")
-	UE_API void EndInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const bool bSuccess);
+	UE_API bool CanInteract() const { return State == EFVInteractableState::Awake || State == EFVInteractableState::Paused; }
 	
 	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
 	FInteractableFocusChanged FocusChanged;
@@ -123,6 +113,12 @@ protected:
 	FGameplayTagContainer SuppressionReasons;
 
 private:
+	friend class UFVInteractorComponent;
+
+	void StartInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor);
+	void ProgressInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, float Progress);
+	void EndInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const bool bSuccess);
+	
 	void ApplyStateTag(EFVInteractableState OldState, EFVInteractableState NewState) const;
 	void StartCooldown();
 

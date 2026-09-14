@@ -93,7 +93,7 @@ public:
 	TEnumAsByte<ECollisionChannel> InteractionChannel = ECC_GameTraceChannel1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
-	EFVInteractableDetectionMode Precision = EFVInteractableDetectionMode::Default;
+	EFVInteractableDetectionMode DetectionMode = EFVInteractableDetectionMode::Default;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection", meta = (ShowOnlyInnerProperties))
 	FFVDetectionSetup TracingSetup;
@@ -119,7 +119,7 @@ public:
 		Disabled,
 	};
 
-	const TArray<UFVInteractableComponent*>& GetDebugCandidates() const { return Candidates; }
+	const TArray<TObjectPtr<UFVInteractableComponent>>& GetDebugCandidates() const { return Candidates; }
 	float GetDebugTraceRange() const { return TracingSetup.TracingRange; }
 	EDebugActionOutcome GetDebugLastOutcome() const { return DebugLastOutcome; }
 	FGameplayTag GetDebugLastInputTag() const { return DebugLastInputTag; }
@@ -159,10 +159,10 @@ private:
 
 	bool bIsInitialized = false;
 	bool bIsTracing = false;
-	mutable TWeakObjectPtr<UFVInteractableComponent> FocusedTarget;
+	TWeakObjectPtr<UFVInteractableComponent> FocusedTarget;
 
-	UFVInteractionRegistrySubsystem* Registry;
-	TArray<UFVInteractableComponent*> Candidates;
+	TObjectPtr<UFVInteractionRegistrySubsystem> Registry;
+	TArray< TObjectPtr<UFVInteractableComponent>> Candidates;
 	FVector LastFocusImpactPoint = FVector::ZeroVector;
 	FTimerHandle TraceTimer;
 

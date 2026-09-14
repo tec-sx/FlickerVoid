@@ -215,22 +215,19 @@ void UFVInteractableComponent::ApplyStateTag(const EFVInteractableState OldState
 	}
 }
 
-void UFVInteractableComponent::ConsumeOffer(const FGameplayTag& ActionTag)
+void UFVInteractableComponent::ConsumeOffer(const FGameplayTag& InputTag)
 {
-	FFVInteractionOffer* Offer = Offers.FindByPredicate([&ActionTag](const FFVInteractionOffer& Candidate)
+	FFVInteractionOffer* Offer = Offers.FindByPredicate([&InputTag](const FFVInteractionOffer& Candidate)
 	{
-		return Candidate.ActionTag.MatchesTagExact(ActionTag);
+		return Candidate.InputTag.MatchesTagExact(InputTag);
 	});
 
-	if (!Offer || Offer->RemainingUses < 0)
+	if (!Offer || Offer->RemainingUses <= 0)
 	{
 		return;
 	}
 
-	if (Offer->RemainingUses > 0)
-	{
-		--Offer->RemainingUses;
-	}
+	--Offer->RemainingUses;
 
 	const bool bAllExhausted = !Offers.ContainsByPredicate([](const FFVInteractionOffer& Candidate)
 	{
@@ -240,11 +237,10 @@ void UFVInteractableComponent::ConsumeOffer(const FGameplayTag& ActionTag)
 	if (bAllExhausted)
 	{
 		SetState(EFVInteractableState::Completed);
+		return;
 	}
-	else
-	{
-		StartCooldown();
-	}
+
+	StartCooldown();
 }
 
 void UFVInteractableComponent::StartCooldown()
@@ -333,11 +329,9 @@ void UFVInteractableComponent::ProgressInteraction(
 
 void UFVInteractableComponent::EndInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const bool bSuccess)
 {
-	SetState(EFVInteractableState::Awake);
-	
-	if (bSuccess)
+	if (State == EFVInteractableState::Interacting)
 	{
-		ConsumeOffer(ActionTag);
+		SetState(EFVInteractableState::Awake);
 	}
 	
 	InteractionEnded.Broadcast(ActionTag, Interactor, bSuccess);

@@ -24,9 +24,9 @@ void UFVInteractorComponent::BeginPlay()
 
 	const FFVInteractorSettings& Defaults = UFVInteractionSystemSettings::Get().InteractorDefaultSettings;
 
-	if (Precision == EFVInteractableDetectionMode::Default)
+	if (DetectionMode == EFVInteractableDetectionMode::Default)
 	{
-		Precision = Defaults.DefaultPrecision;
+		DetectionMode = Defaults.DefaultDetectionMode;
 	}
 
 	if (InteractorTags.IsEmpty() && Defaults.InteractorTag.IsValid())
@@ -34,7 +34,7 @@ void UFVInteractorComponent::BeginPlay()
 		InteractorTags.AddTag(Defaults.InteractorTag);
 	}
 
-	if (TracingSetup.SafetyTracingMode == EFVOcclusionDetectionMode::Default)
+	if (TracingSetup.OcclusionMode == EFVOcclusionDetectionMode::Default)
 	{
 		TracingSetup = Defaults.DetectionSetup;
 	}
@@ -265,7 +265,7 @@ bool UFVInteractorComponent::PushInput(FGameplayTag InputTag, EFVInteractionInpu
 
 bool UFVInteractorComponent::BeginInteraction(const FFVInteractionOffer& Offer, UFVInteractableComponent& Target)
 {
-	if (!Target.SetState(EFVInteractableState::Interacting))
+	if (!Target.CanInteract())
 	{
 		return false;
 	}
@@ -294,8 +294,8 @@ bool UFVInteractorComponent::BeginInteraction(const FFVInteractionOffer& Offer, 
 	bIsInteracting = true;
 	UpdateState();
 	
-	InteractionCommitStarted.Broadcast(ActiveCommit);
 	Target.StartInteraction(ActiveCommit.ActionTag, this);
+	InteractionCommitStarted.Broadcast(ActiveCommit);
 	
 	if (ActiveMode == EFVInteractionInputMode::Press || ActiveDuration <= 0.f)
 	{
@@ -389,6 +389,7 @@ void UFVInteractorComponent::CommitInteraction()
 	
 	if (UFVInteractableComponent* Target = ActiveCommit.Interactable)
 	{
+		Target->ConsumeOffer(ActiveCommit.InputTag);
 		Target->EndInteraction(ActiveCommit.ActionTag, this, true);
 	}
 	
@@ -485,7 +486,7 @@ bool UFVInteractorComponent::GetTraceOrigin(FVector& OutOrigin, FVector& OutForw
 	OutOrigin = ViewLocation;
 	OutForward = ViewRotation.Vector();
 
-	if (TracingSetup.SafetyTracingMode == EFVOcclusionDetectionMode::Socket && !TracingSetup.StartSocketName.IsNone())
+	if (TracingSetup.OcclusionMode == EFVOcclusionDetectionMode::Socket && !TracingSetup.StartSocketName.IsNone())
 	{
 		const USkeletalMeshComponent* Mesh = Cast<USkeletalMeshComponent>(
 			Owner->GetDefaultSubobjectByName(TracingSetup.ActorMeshName));
@@ -501,7 +502,7 @@ bool UFVInteractorComponent::GetTraceOrigin(FVector& OutOrigin, FVector& OutForw
 
 bool UFVInteractorComponent::PerformSafetyTrace(const FVector& Origin, const UFVInteractableComponent& Candidate) const
 {
-	if (TracingSetup.SafetyTracingMode == EFVOcclusionDetectionMode::None)
+	if (TracingSetup.OcclusionMode == EFVOcclusionDetectionMode::None)
 	{
 		return true;
 	}
@@ -520,7 +521,7 @@ bool UFVInteractorComponent::PerformSafetyTrace(const FVector& Origin, const UFV
 		Hit,
 		Origin,
 		Candidate.GetFocusPoint(),
-		TracingSetup.ValidationCollisionChannel,
+		TracingSetup.OcclusionChannel,
 		Params);
 
 	return !bBlocked;
@@ -548,7 +549,7 @@ void UFVInteractorComponent::ProcessTrace()
 
 	TArray<FHitResult> Hits;
 
-	if (Precision == EFVInteractableDetectionMode::Trace)
+	if (DetectionMode == EFVInteractableDetectionMode::Trace)
 	{
 		GetWorld()->LineTraceMultiByChannel(Hits, Origin, End, InteractionChannel, Params);
 	}
@@ -588,7 +589,7 @@ void UFVInteractorComponent::ProcessTrace()
 			? HitActor->FindComponentByClass<UFVInteractableComponent>()
 			: nullptr;
 
-		if (Interactable && Interactable->CanBeInteractedWith())
+		if (Interactable && Interactable->CanInteract())
 		{
 			Candidates.AddUnique(Interactable);
 			Ranked.Add({ Interactable, Hit.ImpactPoint });

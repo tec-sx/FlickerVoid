@@ -13,10 +13,10 @@ struct FVINTERACTIONSYSTEM_API FFVDetectionSetup
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup")
-	TEnumAsByte<ECollisionChannel> ValidationCollisionChannel = ECC_Camera;
+	TEnumAsByte<ECollisionChannel> OcclusionChannel = ECC_Camera;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup")
-	EFVOcclusionDetectionMode SafetyTracingMode = EFVOcclusionDetectionMode::Socket;
+	EFVOcclusionDetectionMode OcclusionMode = EFVOcclusionDetectionMode::Socket;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup")
 	FName ActorMeshName = FName("CharacterMesh0");
@@ -32,13 +32,6 @@ struct FVINTERACTIONSYSTEM_API FFVDetectionSetup
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup", meta=(UIMin=0, ClampMin=0, Units="cm"))
 	float TracingShapeHalfSize = 15.f;
-
-	bool operator==(const FFVDetectionSetup& Other) const
-	{
-		return ActorMeshName == Other.ActorMeshName && StartSocketName == Other.StartSocketName;
-	}
-
-	bool operator!=(const FFVDetectionSetup& Other) const { return !(*this == Other); }
 };
 
 USTRUCT(BlueprintType)
@@ -65,7 +58,7 @@ struct FVINTERACTIONSYSTEM_API FFVInteractorSettings
 	EFVInteractorState DefaultInteractorState = EFVInteractorState::Idle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings")
-	EFVInteractableDetectionMode DefaultPrecision = EFVInteractableDetectionMode::Trace;
+	EFVInteractableDetectionMode DefaultDetectionMode = EFVInteractableDetectionMode::Trace;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings")
 	TEnumAsByte<ECollisionChannel> InteractorCollisionChannel = ECC_Visibility;

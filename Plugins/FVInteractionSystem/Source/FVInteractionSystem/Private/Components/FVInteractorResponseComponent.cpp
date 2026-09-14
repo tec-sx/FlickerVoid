@@ -16,31 +16,32 @@ void UFVInteractorResponseComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	const AActor* OwningActor = GetOwner();
-	if (!OwningActor)
+	AActor* OwningActor = GetOwner();
+	UFVInteractorComponent* Interactor = OwningActor ? OwningActor->FindComponentByClass<UFVInteractorComponent>() : nullptr;
+
+	if (!Interactor)
 	{
+		UE_LOG(
+			LogFVInteraction, 
+			Error,
+			TEXT("'%s' requires a UFVInteractorComponent on '%s' but none was found."),
+			*GetName(), *GetNameSafe(OwningActor));
+
 		return;
 	}
 
-	if (UFVInteractorComponent* Interactor = GetOwner()->GetComponentByClass<UFVInteractorComponent>())
-	{
-		BindEvents(Interactor);
-	}
-	else
-	{
-		UE_LOG(LogFVInteraction, Warning,
-			TEXT("'%s' on '%s' can not find an signal component to bind to."),
-			*GetName(), 
-			*OwningActor->GetName());
-	}
+	BindEvents(Interactor);
 }
 
 void UFVInteractorResponseComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (UFVInteractorComponent* Interactor = GetOwner()->GetComponentByClass<UFVInteractorComponent>())
+	if (const AActor* OwningActor = GetOwner())
 	{
-		UnbindEvents(Interactor);	
+		if (UFVInteractorComponent* Interactor = OwningActor->FindComponentByClass<UFVInteractorComponent>())
+		{
+			UnbindEvents(Interactor);
+		}
 	}
-	
+
 	Super::EndPlay(EndPlayReason);
 }

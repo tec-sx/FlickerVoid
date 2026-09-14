@@ -156,7 +156,7 @@ struct FVINTERACTIONSYSTEM_API FFVInteractionOffer
 
 	bool IsValid() const { return InputTag.IsValid() && ActionTag.IsValid(); }
 	bool IsExhausted() const { return RemainingUses == 0; }
-	bool CanExecute() const { return bRequirementsMet && !IsExhausted(); }
+	bool CanExecute() const { return bRequirementsMet && RemainingUses != 0; }
 
 	bool AreTagsSatisfied(const FGameplayTagContainer& SourceTags) const
 	{
@@ -178,6 +178,7 @@ struct FVINTERACTIONSYSTEM_API FFVInteractionOffer
 		return InputTag == Other.InputTag &&
 			ActionTag == Other.ActionTag &&
 			bRequirementsMet == Other.bRequirementsMet &&
+			RequirementGate == Other.RequirementGate &&
 			RemainingUses == Other.RemainingUses &&
 			InputMode == Other.InputMode &&
 			Weight == Other.Weight;
