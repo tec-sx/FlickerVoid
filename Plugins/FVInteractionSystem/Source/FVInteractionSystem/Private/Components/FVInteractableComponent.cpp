@@ -24,11 +24,6 @@ void UFVInteractableComponent::BeginPlay()
 
 	const FFVInteractableSettings& Defaults = UFVInteractionSystemSettings::Get().InteractableBaseSettings;
 
-	if (DetectionRadius < 0.f)
-	{
-		DetectionRadius = Defaults.DefaultDetectionRadius;
-	}
-
 	if (!Type.IsValid())
 	{
 		Type = Defaults.InteractableMainTag;

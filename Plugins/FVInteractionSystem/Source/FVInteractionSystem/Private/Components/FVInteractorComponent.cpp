@@ -39,6 +39,11 @@ void UFVInteractorComponent::BeginPlay()
 		TracingSetup = Defaults.DetectionSetup;
 	}
 
+	if (DetectionRadius < 0.f)
+	{
+		DetectionRadius = Defaults.DefaultDetectionRadius;
+	}
+
 	Owner = Cast<APawn>(GetOwner());
 	if (!Owner)
 	{
@@ -70,6 +75,11 @@ void UFVInteractorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	bIsInitialized = false;
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void UFVInteractorComponent::SetDetectionRadius(float NewRadius)
+{
+	
 }
 
 void UFVInteractorComponent::HandleInRangeSetChanged(bool bHasAnyInRange)

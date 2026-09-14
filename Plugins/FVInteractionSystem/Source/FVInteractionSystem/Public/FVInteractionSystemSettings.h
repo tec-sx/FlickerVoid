@@ -71,6 +71,9 @@ struct FVINTERACTIONSYSTEM_API FFVInteractorSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings", meta=(UIMin=0.05, ClampMin=0.05, Units="s"))
 	float BroadPhaseInterval = 0.2f;
+
+	UPROPERTY(EditAnywhere, Category = "InteractableSettings", meta = (UIMin = 0, ClampMin = 0, Units = "cm"))
+	float DefaultDetectionRadius = 150.f;
 };
 
 USTRUCT(BlueprintType)
@@ -104,9 +107,6 @@ struct FVINTERACTIONSYSTEM_API FFVInteractableSettings
 
 	UPROPERTY(EditAnywhere, Category="InteractableSettings", meta=(UIMin=-1, ClampMin=-1, NoResetToDefault))
 	int32 DefaultInteractableWeight = 1;
-
-	UPROPERTY(EditAnywhere, Category="InteractableSettings", meta=(UIMin=0, ClampMin=0, Units="cm"))
-	float DefaultDetectionRadius = 150.f;
 
 	FFVInteractableSettings()
 		: DefaultInteractionHighlight(true)

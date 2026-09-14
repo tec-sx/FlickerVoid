@@ -32,15 +32,12 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	UFUNCTION(BlueprintPure)
-	UE_API bool HasFocus() const { return FocusedTarget != nullptr; }
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Detection")
+	UE_API void SetDetectionRadius(float NewRadius);
 
-	UFUNCTION(BlueprintPure)
-	UE_API UFVInteractableComponent* GetFocusedTarget() const { return FocusedTarget.Get(); }
-	
-	UFUNCTION(BlueprintPure)
-	UE_API const TArray<FFVInteractionOffer>& GetOffers() const { return CachedOffers; }
-	
+	UFUNCTION(BlueprintPure, Category = "Interaction|Detection")
+	UE_API float GetDetectionRadius() const { return DetectionRadius; }
+
 	UFUNCTION(BlueprintCallable)
 	UE_API bool PushInput(FGameplayTag InputTag, EFVInteractionInputPhase Phase);
 
@@ -53,6 +50,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interaction|Detection")
 	UE_API bool IsTracing() const { return bIsTracing; }
 
+	UFUNCTION(BlueprintPure, Category = "Interaction|Detection")
+	UE_API bool HasFocus() const { return FocusedTarget != nullptr; }
+
+	UFUNCTION(BlueprintPure)
+	UE_API UFVInteractableComponent* GetFocusedTarget() const { return FocusedTarget.Get(); }
+	
+	UFUNCTION(BlueprintPure)
+	UE_API const TArray<FFVInteractionOffer>& GetOffers() const { return CachedOffers; }
+
 	UFUNCTION(BlueprintPure, Category = "Interaction|State")
 	UE_API EFVInteractorState GetState() const { return State; }
 
@@ -64,6 +70,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|State")
 	UE_API bool IsSuppressed() const { return !SuppressionReasons.IsEmpty(); }
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection", meta = (ClampMin = "0", Units = "cm"))
+	float DetectionRadius = -1.f;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|State")
 	FInteractorStateChanged StateChanged;

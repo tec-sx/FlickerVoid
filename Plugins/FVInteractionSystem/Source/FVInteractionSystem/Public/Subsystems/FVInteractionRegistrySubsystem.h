@@ -37,8 +37,6 @@ public:
 	UE_API void Unregister(UFVInteractableComponent* Interactable);
 	UE_API void RegisterInteractor(UFVInteractorComponent* Interactor);
 	UE_API void UnregisterInteractor(UFVInteractorComponent* Interactor);
-
-	UE_API void QueryInRange(const FVector& Origin, float MaxRadius, TArray<UFVInteractableComponent*>& OutResults) const;
 	UE_API const TArray<TObjectPtr<UFVInteractableComponent>>& GetInRangeSet(const UFVInteractorComponent* Interactor) const;
 
 	const TArray<TObjectPtr<UFVInteractableComponent>>& GetAll() const { return Interactables; }

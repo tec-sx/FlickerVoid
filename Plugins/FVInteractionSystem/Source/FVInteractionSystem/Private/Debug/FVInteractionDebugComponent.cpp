@@ -163,6 +163,8 @@ void UFVInteractionDebugComponent::DrawVisualizer() const
 		return;
 	}
 
+	const TArray<TObjectPtr<UFVInteractableComponent>>& Candidates = InteractorPtr->GetDebugCandidates();
+
 	for (const UFVInteractableComponent* Interactable : Registry->GetAll())
 	{
 		if (!Interactable)
@@ -172,22 +174,13 @@ void UFVInteractionDebugComponent::DrawVisualizer() const
 
 		const FVector FocusPoint = Interactable->GetFocusPoint();
 		const bool bIsFocused = Interactable == FocusedTarget;
-		const bool bInRange = FVector::Dist(FocusPoint, PawnLocation) <= Interactable->DetectionRadius;
+		const bool bInRange = Candidates.Contains(Interactable);
 
 		const FColor CandidateColor = bIsFocused
 			? FColor::Green
 			: (bInRange ? FColor::Yellow : FColor(80, 80, 80));
 
-		DrawDebugCircle(
-			World,
-			FocusPoint,
-			Interactable->DetectionRadius,
-			48,
-			CandidateColor,
-			false, -1.f, 0, bIsFocused ? 1.f : 0.5f,
-			FVector::ForwardVector,
-			FVector::RightVector,
-			false);
+		DrawDebugPoint(World, FocusPoint, bIsFocused ? 16.f : 8.f, CandidateColor, false, -1.f);
 
 		if (bIsFocused)
 		{
@@ -279,15 +272,12 @@ void UFVInteractionDebugComponent::DrawHUD(UCanvas* Canvas, APlayerController* P
 
 		const float Distance = FVector::Dist(Candidate->GetFocusPoint(), PawnLocation);
 		const bool bIsFocused = Candidate == FocusedTarget;
-		const bool bInRange = Distance <= Candidate->DetectionRadius;
 
 		const AActor* TargetOwner = Candidate->GetOwner();
-		DrawLine(FString::Printf(TEXT("%s%s: Dist=%.0f/%.0f %s State=%s Weight=%d"),
+		DrawLine(FString::Printf(TEXT("%s%s: Dist=%.0f State=%s Weight=%d"),
 			bIsFocused ? TEXT("* ") : TEXT("  "),
 			TargetOwner ? *TargetOwner->GetName() : TEXT("?"),
 			Distance,
-			Candidate->DetectionRadius,
-			bInRange ? TEXT("in-range") : TEXT("out-of-range"),
 			*UEnum::GetDisplayValueAsText(Candidate->GetState()).ToString(),
 			Candidate->InteractionWeight),
 			bIsFocused ? HeaderColor : TextColor);

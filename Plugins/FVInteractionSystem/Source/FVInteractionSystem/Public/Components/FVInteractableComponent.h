@@ -31,9 +31,6 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 	UE_API FVector GetFocusPoint() const;
-
-	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
-	UE_API float GetDetectionRadius() const { return DetectionRadius; }
 	
 	UE_API void SetFocused(bool bFocused, UFVInteractorComponent* Interactor);
 
@@ -87,8 +84,6 @@ public:
 	const FFVInteractionOffer* FindOffer(const FGameplayTag& InputTag) const;
 	const TArray<FFVInteractionOffer>& GetOffers() const { return Offers; }
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Detection", meta = (ClampMin = "-1"))
-	float DetectionRadius = -1.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Detection")
 	FName FocusComponentTag;

@@ -132,6 +132,7 @@ void UFVInteractionRegistrySubsystem::RunBroadPhase()
 		}
 
 		const FVector Origin = Interactor->GetDetectionOrigin();
+		const float RadiusSq = FMath::Square(Interactor->GetDetectionRadius());
 
 		Entered.Reset();
 
@@ -141,8 +142,6 @@ void UFVInteractionRegistrySubsystem::RunBroadPhase()
 			{
 				continue;
 			}
-
-			const float RadiusSq = FMath::Square(Interactable->GetDetectionRadius());
 
 			if (FVector::DistSquared(Origin, Interactable->GetFocusPoint()) <= RadiusSq)
 			{
@@ -209,20 +208,4 @@ const TArray<TObjectPtr<UFVInteractableComponent>>& UFVInteractionRegistrySubsys
 
 	static const TArray<TObjectPtr<UFVInteractableComponent>> Empty;
 	return Empty;
-}
-
-void UFVInteractionRegistrySubsystem::QueryInRange(const FVector& Origin, float MaxRadius, TArray<UFVInteractableComponent*>& OutResults) const
-{
-	const float MaxRadiusSq = FMath::Square(MaxRadius);
-
-	OutResults.Reset();
-	OutResults.Reserve(Interactables.Num());
-
-	for (const TObjectPtr<UFVInteractableComponent>& Interactable : Interactables)
-	{
-		if (FVector::DistSquared(Origin, Interactable->GetFocusPoint()) <= MaxRadiusSq)
-		{
-			OutResults.Add(Interactable);
-		}
-	}
 }
