@@ -13,7 +13,6 @@ class AInteractableAICharacter : AFVAICharacter
     UPROPERTY(DefaultComponent, Category = "Interaction")
     UFVInteractableComponent InteractableComponent;
     default InteractableComponent.Type = GameplayTags::Interactable_Character;
-    default InteractableComponent.FocusComponentTag = FName("Character");
     
     UPROPERTY(DefaultComponent, Category="UI")
     UWidgetComponent FloatingTextBarComponent;

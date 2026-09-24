@@ -14,7 +14,8 @@ class UPrimitiveComponent;
 class UShapeComponent;
 class UFVInteractableResponseComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractableFocusChanged, bool, bIsInFocus, UFVInteractorComponent*, Interactor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableFoundInteractor, UFVInteractorComponent*, Interactor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableLostInteractor, UFVInteractorComponent*, Interactor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableStateChanged, EFVInteractableState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionStarted, const FGameplayTag&, ActionTag, UFVInteractorComponent*, Interactor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInteractionProgress, const FGameplayTag&, ActionTag, UFVInteractorComponent*, Interactor, float, Progress);
@@ -32,11 +33,6 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 	UE_API FVector GetFocusPoint() const;
-	
-	UE_API void SetFocused(bool bFocused, UFVInteractorComponent* Interactor);
-
-	UFUNCTION(BlueprintPure, Category = "Interaction")
-	UE_API bool IsInFocus() const { return bIsInFocus; }
 
 	UFUNCTION(BlueprintPure, Category = "Interactable|State")
 	UE_API EFVInteractableState GetState() const { return State; }
@@ -46,6 +42,15 @@ public:
 
 	UE_API static bool IsTransitionAllowed(EFVInteractableState From, EFVInteractableState To);
 
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
+	void ActivateInteractions();
+	
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
+	void DeactivateInteractions();
+    	
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
+	UE_API bool IsInteractionActive() const { return State != EFVInteractableState::Idle; }
+	
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
 	UE_API void ConsumeOffer(const FGameplayTag& InputTag);
 
@@ -70,8 +75,30 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interactable|State")
 	UE_API bool CanInteract() const { return State == EFVInteractableState::Awake || State == EFVInteractableState::Paused; }
 	
+#pragma region Detection
+	
+	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
+	ECollisionChannel GetCollisionChannel() const { return CollisionChannel; }
+	
+	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
+	FGameplayTagContainer GetCompatibleInteractorTags() const { return CompatibleInteractorTags; }
+	
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Detection")
+	void AddCompatibleInteractorTag(const FGameplayTag Tag) { CompatibleInteractorTags.AddTag(Tag); }
+	
+	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
+	TArray<UPrimitiveComponent*> GetDetectablePrimitives() const { return DetectablePrimitives; }
+	
+	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
+	int32 GetDetectionWeight() const {return DetectionWeight; }
+	
+#pragma endregion 
+	
 	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
-	FInteractableFocusChanged FocusChanged;
+	FInteractableFoundInteractor InteractorFound;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
+	FInteractableLostInteractor InteractorLost;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
 	FInteractableStateChanged StateChanged;
@@ -90,23 +117,35 @@ public:
 
 	const FFVInteractionOffer* FindOffer(const FGameplayTag& InputTag) const;
 	const TArray<FFVInteractionOffer>& GetOffers() const { return Offers; }
-
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Detection")
-	FName FocusComponentTag;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Arbitration", meta = (ClampMin = "-1"))
-	int32 InteractionWeight = 1;
+	FName DetectablePrimitiveTag = TEXT("Detectable");
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Lifecycle", meta = (ClampMin = "0", Units = "s"))
-	float CooldownPeriod = -1.f;
+	float CooldownPeriod = 0.f;
 
 protected:
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="MounteaInteraction|Read Only")
+	TArray<TObjectPtr<UMeshComponent>> HighlightableComponents;
+
+#pragma region Detection
+	
+	UPROPERTY(SaveGame, EditAnywhere, Category="Interactable|Detection", meta=(NoResetToDefault))
+	TEnumAsByte<ECollisionChannel> CollisionChannel = ECC_GameTraceChannel1;
+	
+	UPROPERTY(SaveGame, EditAnywhere, Category="Interactable|Detection")
+	FGameplayTagContainer CompatibleInteractorTags;
+	
+	UPROPERTY(SaveGame, VisibleAnywhere, Category="Interactable|Detection")
+	TArray<TObjectPtr<UPrimitiveComponent>>	DetectablePrimitives;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Detection", meta = (ClampMin = "-1"))
+	int32 DetectionWeight = 1;
+
+#pragma endregion
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Actions", meta = (ForceInlineRow))
 	TArray<FFVInteractionOffer> Offers;
-
-	bool bIsInitialized = false;
-	bool bIsInFocus = false;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Interactable|State")
 	EFVInteractableState State = EFVInteractableState::Idle;
@@ -123,9 +162,15 @@ private:
 	
 	void ApplyStateTag(EFVInteractableState OldState, EFVInteractableState NewState) const;
 	void StartCooldown();
-
-	TWeakObjectPtr<UPrimitiveComponent> FocusPrimitive;
-	FTimerHandle CooldownTimer;
+	
+	UPROPERTY()
+	FTimerHandle Timer_Interaction;
+	
+	UPROPERTY()
+	FTimerHandle Timer_Cooldown;
+	
+	UPROPERTY()
+	FTimerHandle Timer_ProgressExpiration;
 };
 
 #undef UE_API

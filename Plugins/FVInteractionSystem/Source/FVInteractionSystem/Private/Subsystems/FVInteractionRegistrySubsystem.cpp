@@ -2,9 +2,10 @@
 #include "Components/FVInteractableComponent.h"
 #include "Components/FVInteractorComponent.h"
 #include "Engine/World.h"
-#include "FVInteractionSystem.h"
 #include "FVInteractionSystemSettings.h"
 #include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "Subsystems//FVInteractionDebugSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionRegistrySubsystem)
 
@@ -14,198 +15,160 @@ bool UFVInteractionRegistrySubsystem::ShouldCreateSubsystem(UObject* Outer) cons
 	return World && World->IsGameWorld();
 }
 
+void UFVInteractionRegistrySubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+	
+	TickInterval = FMath::Max(UFVInteractionSystemSettings::Get().RegistrySettings.RefreshInterval, 0.01f);
+	
+	if (const UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
+	{
+		DebugSubsystem = GameInstance->GetSubsystem<UFVInteractionDebugSubsystem>();
+	}
+}
+
 void UFVInteractionRegistrySubsystem::Deinitialize()
 {
-	if (const UWorld* World = GetWorld())
+#if !UE_BUILD_SHIPPING
+	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
 	{
-		World->GetTimerManager().ClearTimer(BroadPhaseTimer);
+		Debug->Unregister();
 	}
-
-	InteractorRanges.Reset();
-	Interactables.Reset();
+#endif
+	
+	ActiveInteractables.Reset();
+	RegisteredInteractables.Reset();
 
 	Super::Deinitialize();
+}
+
+void UFVInteractionRegistrySubsystem::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+	TimeSinceLastTick += DeltaTime;
+	
+	if (TimeSinceLastTick >= TickInterval)
+	{
+		Update();
+		TimeSinceLastTick = 0.f;
+	}
+}
+
+TStatId UFVInteractionRegistrySubsystem::GetStatId() const
+{
+	RETURN_QUICK_DECLARE_CYCLE_STAT(ULoadingScreenManager, STATGROUP_Tickables);
 }
 
 void UFVInteractionRegistrySubsystem::Register(UFVInteractableComponent* Interactable)
 {
 	if (IsValid(Interactable))
 	{
-		Interactables.AddUnique(Interactable);
+		RegisteredInteractables.AddUnique(Interactable);
 	}
 }
 
 void UFVInteractionRegistrySubsystem::Unregister(UFVInteractableComponent* Interactable)
 {
-	Interactables.RemoveSingleSwap(Interactable, EAllowShrinking::No);
-
-	for (FInteractorRangeSet& RangeSet : InteractorRanges)
-	{
-		RangeSet.InRange.RemoveSingleSwap(Interactable, EAllowShrinking::No);
-	}
+	ActiveInteractables.RemoveSingleSwap(Interactable, EAllowShrinking::No);
+	RegisteredInteractables.RemoveSingleSwap(Interactable, EAllowShrinking::No);
 }
 
-void UFVInteractionRegistrySubsystem::RegisterInteractor(UFVInteractorComponent* Interactor)
+void UFVInteractionRegistrySubsystem::RegisterInteractor(UFVInteractorComponent* InInteractor)
 {
-	if (!IsValid(Interactor))
+	if (!IsValid(InInteractor))
 	{
 		return;
 	}
-
-	const bool bAlreadyTracked = InteractorRanges.ContainsByPredicate(
-		[Interactor](const FInteractorRangeSet& RangeSet) { return RangeSet.Interactor == Interactor; });
-
-	if (bAlreadyTracked)
+	if (InInteractor == InteractorPtr)
 	{
 		return;
 	}
-
-	FInteractorRangeSet& RangeSet = InteractorRanges.AddDefaulted_GetRef();
-	RangeSet.Interactor = Interactor;
-
-	StartBroadPhase();
+	
+	InteractorPtr = InInteractor;
+	InteractorPtr->EnableTracing();
+	
+#if !UE_BUILD_SHIPPING
+	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
+	{
+		Debug->Register(InteractorPtr);
+	}
+#endif
 }
 
-void UFVInteractionRegistrySubsystem::UnregisterInteractor(UFVInteractorComponent* Interactor)
+void UFVInteractionRegistrySubsystem::UnregisterInteractor()
 {
-	const int32 Index = InteractorRanges.IndexOfByPredicate(
-		[Interactor](const FInteractorRangeSet& RangeSet) { return RangeSet.Interactor == Interactor; });
-
-	if (Index == INDEX_NONE)
-	{
-		return;
-	}
-
-	TArray<TObjectPtr<UFVInteractableComponent>> Orphaned = MoveTemp(InteractorRanges[Index].InRange);
-	InteractorRanges.RemoveAtSwap(Index, EAllowShrinking::No);
+	TArray<TObjectPtr<UFVInteractableComponent>> Orphaned = MoveTemp(ActiveInteractables);
 
 	for (const TObjectPtr<UFVInteractableComponent>& Interactable : Orphaned)
 	{
-		if (IsValid(Interactable) && !IsInRange(Interactable))
+		if (IsValid(Interactable) && !IsActive(Interactable))
 		{
 			Interactable->SetState(EFVInteractableState::Idle);
 		}
 	}
-
-	if (InteractorRanges.IsEmpty())
-	{
-		if (UWorld* World = GetWorld())
-		{
-			World->GetTimerManager().ClearTimer(BroadPhaseTimer);
-		}
-	}
 }
 
-void UFVInteractionRegistrySubsystem::StartBroadPhase()
+bool UFVInteractionRegistrySubsystem::IsActive(const UFVInteractableComponent* Interactable)
 {
-	UWorld* World = GetWorld();
-	if (!World || World->GetTimerManager().IsTimerActive(BroadPhaseTimer))
+	if (ActiveInteractables.Contains(Interactable))
 	{
-		return;
+		return true;
 	}
-
-	const float Interval = UFVInteractionSystemSettings::Get().InteractorDefaultSettings.BroadPhaseInterval;
-
-	World->GetTimerManager().SetTimer(
-		BroadPhaseTimer,
-		FTimerDelegate::CreateUObject(this, &UFVInteractionRegistrySubsystem::RunBroadPhase),
-		FMath::Max(Interval, 0.01f),
-		true);
-
-	RunBroadPhase();
-}
-
-void UFVInteractionRegistrySubsystem::RunBroadPhase()
-{
-	TArray<TObjectPtr<UFVInteractableComponent>> Entered;
-	TArray<TObjectPtr<UFVInteractableComponent>> Left;
-
-	for (int32 Index = InteractorRanges.Num() - 1; Index >= 0; --Index)
-	{
-		FInteractorRangeSet& RangeSet = InteractorRanges[Index];
-		UFVInteractorComponent* Interactor = RangeSet.Interactor.Get();
-
-		if (!IsValid(Interactor))
-		{
-			InteractorRanges.RemoveAtSwap(Index, EAllowShrinking::No);
-			continue;
-		}
-
-		const FVector Origin = Interactor->GetDetectionOrigin();
-		const float RadiusSq = FMath::Square(Interactor->GetDetectionRadius());
-
-		Entered.Reset();
-
-		for (const TObjectPtr<UFVInteractableComponent>& Interactable : Interactables)
-		{
-			if (!IsValid(Interactable))
-			{
-				continue;
-			}
-
-			if (FVector::DistSquared(Origin, Interactable->GetFocusPoint()) <= RadiusSq)
-			{
-				Entered.Add(Interactable);
-			}
-		}
-
-		Left.Reset();
-
-		for (const TObjectPtr<UFVInteractableComponent>& Previous : RangeSet.InRange)
-		{
-			if (!Entered.Contains(Previous))
-			{
-				Left.Add(Previous);
-			}
-		}
-
-		const bool bHadAny = !RangeSet.InRange.IsEmpty();
-		RangeSet.InRange = Entered;
-		const bool bHasAny = !RangeSet.InRange.IsEmpty();
-
-		for (const TObjectPtr<UFVInteractableComponent>& Interactable : Entered)
-		{
-			Interactable->SetState(EFVInteractableState::Awake);
-		}
-
-		for (const TObjectPtr<UFVInteractableComponent>& Interactable : Left)
-		{
-			if (IsValid(Interactable) && !IsInRange(Interactable))
-			{
-				Interactable->SetState(EFVInteractableState::Idle);
-			}
-		}
-
-		if (bHadAny != bHasAny)
-		{
-			OnInRangeSetChanged.Broadcast(bHasAny);
-		}
-	}
-}
-
-bool UFVInteractionRegistrySubsystem::IsInRange(const UFVInteractableComponent* Interactable) const
-{
-	for (const FInteractorRangeSet& RangeSet : InteractorRanges)
-	{
-		if (RangeSet.InRange.Contains(Interactable))
-		{
-			return true;
-		}
-	}
-
+	
 	return false;
 }
 
-const TArray<TObjectPtr<UFVInteractableComponent>>& UFVInteractionRegistrySubsystem::GetInRangeSet(const UFVInteractorComponent* Interactor) const
+void UFVInteractionRegistrySubsystem::Update()
 {
-	for (const FInteractorRangeSet& RangeSet : InteractorRanges)
+	UFVInteractorComponent* Interactor = InteractorPtr.Get();
+	
+	if (!IsValid(Interactor))
 	{
-		if (RangeSet.Interactor == Interactor)
+		ActiveInteractables.Reset();
+		return;
+	}
+	
+	const FVector Origin = Interactor->GetOwner() ? Interactor->GetOwner()->GetActorLocation() : FVector::ZeroVector;
+		
+	const FFVInteractionRegistrySettings& Settings = UFVInteractionSystemSettings::Get().RegistrySettings;
+	const float RadiusSq = FMath::Square(Settings.DefaultActivationRadius);
+	
+	for (const TObjectPtr<UFVInteractableComponent>& Interactable : RegisteredInteractables)
+	{
+		if (!IsValid(Interactable))
+			continue;	
+		
+		const AActor* InteractableActor = Interactable->GetOwner();
+		
+		if (!IsValid(InteractableActor))
+			continue;
+		
+		const bool bIsInRange = FVector::DistSquared(Origin, InteractableActor->GetActorLocation()) <= RadiusSq;
+		const bool bIsActive = ActiveInteractables.Contains(Interactable);
+			
+		if (bIsInRange)
 		{
-			return RangeSet.InRange;
+			if (!bIsActive)
+			{
+				Interactable->ActivateInteractions();
+				ActiveInteractables.Add(Interactable);
+			}
+		}
+		else
+		{
+			if (bIsActive)
+			{
+				Interactable->DeactivateInteractions();
+				ActiveInteractables.Remove(Interactable);
+			}
 		}
 	}
-
-	static const TArray<TObjectPtr<UFVInteractableComponent>> Empty;
-	return Empty;
+	
+#if !UE_BUILD_SHIPPING
+	if (const UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
+	{
+		Debug->VisualizeRange(GetWorld(), Interactor, Settings.DefaultActivationRadius, ActiveInteractables, TickInterval);
+	}
+#endif
 }

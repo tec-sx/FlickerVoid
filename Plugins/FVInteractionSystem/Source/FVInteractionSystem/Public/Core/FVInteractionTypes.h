@@ -108,9 +108,6 @@ struct FVINTERACTIONSYSTEM_API FFVInteractionCommit
 	
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UFVInteractableComponent> Interactable;
-
-	UPROPERTY(BlueprintReadOnly)
-	FVector InteractionPoint = FVector::ZeroVector;
 };
 
 USTRUCT(BlueprintType)

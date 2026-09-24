@@ -48,27 +48,32 @@ void UFVInteractableResponseComponent_Highlight::BindEvents_Implementation(UFVIn
 		CachedStencilValues.Add(Target->CustomDepthStencilValue);
 	}
 
-	Interactable->FocusChanged.AddDynamic(this, &UFVInteractableResponseComponent_Highlight::OnFocusStateChanged);
+	Interactable->InteractorFound.AddDynamic(this, &UFVInteractableResponseComponent_Highlight::OnInteractorFound);
+	Interactable->InteractorLost.AddDynamic(this, &UFVInteractableResponseComponent_Highlight::OnInteractorLost);
 }
 
 void UFVInteractableResponseComponent_Highlight::UnbindEvents_Implementation(UFVInteractableComponent* Interactable)
 {
-	Interactable->FocusChanged.RemoveDynamic(this, &UFVInteractableResponseComponent_Highlight::OnFocusStateChanged);
+	Interactable->InteractorFound.RemoveDynamic(this, &UFVInteractableResponseComponent_Highlight::OnInteractorFound);
+	Interactable->InteractorLost.RemoveDynamic(this, &UFVInteractableResponseComponent_Highlight::OnInteractorLost);
 	
 	CachedRenderCustomDepth.Reset();
 	CachedStencilValues.Reset();
 	HighlightTargets.Reset();
 }
 
-void UFVInteractableResponseComponent_Highlight::OnFocusStateChanged(bool bIsInFocus, UFVInteractorComponent* Interactor)
+void UFVInteractableResponseComponent_Highlight::OnInteractorFound(UFVInteractorComponent* Interactor)
 {
-	const UFVInteractableComponent* Interactable = GetOwner()->GetComponentByClass<UFVInteractableComponent>();
-	
-	if (!IsValid(Interactable))
-	{
-		return;
-	}
-	
+	RenderHighlight(true);
+}
+
+void UFVInteractableResponseComponent_Highlight::OnInteractorLost(UFVInteractorComponent* Interactor)
+{
+	RenderHighlight(false);
+}
+
+void UFVInteractableResponseComponent_Highlight::RenderHighlight(const bool bIsInFocus)
+{
 	for (int32 Index = 0; Index < HighlightTargets.Num(); ++Index)
 	{
 		UPrimitiveComponent* Target = HighlightTargets[Index];

@@ -23,5 +23,5 @@ UFVInteractableComponent* UFVInteractAbility::GetInteractable() const
 {
 	const UFVInteractorComponent* Interactor = GetInteractor(CurrentActorInfo);
 
-	return Interactor ? Interactor->GetFocusedTarget() : nullptr;
+	return Interactor ? Interactor->GetFocusedInteractable() : nullptr;
 }

@@ -14,7 +14,6 @@
 #include "Logging/FVLogSystem.h"
 #include "Player/FVInventoryUIRouterComponent.h"
 #include "Player/FVDialogueUIRouterComponent.h"
-#include "Debug/FVInteractionDebugComponent.h"
 #include "Systems/FVAssetManager.h"
 #include "Core/FVInteractionTypes.h"
 #include "Components/FVInteractorComponent.h"
@@ -26,7 +25,6 @@ AFVPlayerController::AFVPlayerController(const FObjectInitializer& ObjectInitial
 {
 	InventoryUIRouterComponent = CreateDefaultSubobject<UFVInventoryUIRouterComponent>(TEXT("InventoryUIRouterComponent"));
 	DialogueUIRouterComponent = CreateDefaultSubobject<UFVDialogueUIRouterComponent>(TEXT("DialogueUIRouterComponent"));
-	InteractionDebugComponent = CreateDefaultSubobject<UFVInteractionDebugComponent>(TEXT("InteractionDebugComponent"));
 }
 
 void AFVPlayerController::OnPossess(APawn* InPawn)
@@ -34,7 +32,6 @@ void AFVPlayerController::OnPossess(APawn* InPawn)
     Super::OnPossess(InPawn);
 
     CachedCharacter = Cast<AFVPlayerCharacter>(InPawn);
-    CachedInteractor = CachedCharacter.IsValid() ? CachedCharacter->GetInteractorComponent() : nullptr;
 
     if (CachedCharacter.IsValid())
     {
@@ -75,7 +72,6 @@ void AFVPlayerController::OnUnPossess()
     }
 
     CachedCharacter.Reset();
-    CachedInteractor.Reset();
 
     Super::OnUnPossess();
 }
@@ -302,7 +298,7 @@ void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
 
 	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
 	{
-		if (UFVInteractorComponent* Interactor = CachedInteractor.Get())
+		if (UFVInteractorComponent* Interactor = FVPlayer->GetInteractorComponent())
 		{
 			Interactor->PushInput(InputTag, EFVInteractionInputPhase::Pressed);
 		}
@@ -324,7 +320,7 @@ void AFVPlayerController::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 
 	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
 	{
-		if (UFVInteractorComponent* Interactor = CachedInteractor.Get())
+		if (UFVInteractorComponent* Interactor = FVPlayer->GetInteractorComponent())
 		{
 			Interactor->PushInput(InputTag, EFVInteractionInputPhase::Released);
 		}

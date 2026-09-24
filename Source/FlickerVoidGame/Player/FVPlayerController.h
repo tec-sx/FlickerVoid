@@ -13,7 +13,6 @@ class UFVInputConfig;
 class UInputMappingContext;
 class UFVInventoryUIRouterComponent;
 class UFVDialogueUIRouterComponent;
-class UFVInteractionDebugComponent;
 class UFVInteractorComponent;
 struct FInputActionValue;
 
@@ -83,11 +82,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
 	TObjectPtr<UFVDialogueUIRouterComponent> DialogueUIRouterComponent;
 
-	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
-	TObjectPtr<UFVInteractionDebugComponent> InteractionDebugComponent;
-
 	TWeakObjectPtr<AFVPlayerCharacter> CachedCharacter;
-    TWeakObjectPtr<UFVInteractorComponent> CachedInteractor;
 
     TArray<uint32> AbilityBindHandles;
     

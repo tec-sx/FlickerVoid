@@ -3,7 +3,6 @@ class ARigidItem : AActor
     UPROPERTY(DefaultComponent)
     UFVInteractableComponent Interactable;
     default Interactable.Type = GameplayTags::Interactable_Item;
-    default Interactable.FocusComponentTag = n"Interactable";
     
     UPROPERTY(DefaultComponent, RootComponent)
     USceneComponent SceneRoot;

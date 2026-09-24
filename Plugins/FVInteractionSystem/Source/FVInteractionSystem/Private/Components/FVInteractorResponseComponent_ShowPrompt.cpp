@@ -7,16 +7,16 @@
 
 void UFVInteractorResponseComponent_ShowPrompt::BindEvents_Implementation(UFVInteractorComponent* Interactor)
 {
-	Interactor->FocusChanged.AddDynamic(this, &UFVInteractorResponseComponent_ShowPrompt::OnFocusChanged);
+	Interactor->InteractableFound.AddDynamic(this, &UFVInteractorResponseComponent_ShowPrompt::OnFocusChanged);
 	Interactor->OffersChanged.AddDynamic(this, &UFVInteractorResponseComponent_ShowPrompt::OnOffersChanged);
-	Interactor->InteractionCommitProgress.AddDynamic(this, &UFVInteractorResponseComponent_ShowPrompt::OnInteractionProgress);
+	Interactor->InteractionCommitProgressed.AddDynamic(this, &UFVInteractorResponseComponent_ShowPrompt::OnInteractionProgress);
 }
 
 void UFVInteractorResponseComponent_ShowPrompt::UnbindEvents_Implementation(UFVInteractorComponent* Interactor)
 {
-	Interactor->FocusChanged.RemoveDynamic(this, &UFVInteractorResponseComponent_ShowPrompt::OnFocusChanged);
+	Interactor->InteractableFound.RemoveDynamic(this, &UFVInteractorResponseComponent_ShowPrompt::OnFocusChanged);
 	Interactor->OffersChanged.RemoveDynamic(this, &UFVInteractorResponseComponent_ShowPrompt::OnOffersChanged);
-	Interactor->InteractionCommitProgress.RemoveDynamic(this, &UFVInteractorResponseComponent_ShowPrompt::OnInteractionProgress);
+	Interactor->InteractionCommitProgressed.RemoveDynamic(this, &UFVInteractorResponseComponent_ShowPrompt::OnInteractionProgress);
 }
 
 void UFVInteractorResponseComponent_ShowPrompt::OnFocusChanged(UFVInteractableComponent* NewTarget)

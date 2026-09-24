@@ -12,6 +12,8 @@
 UFVInteractableComponent::UFVInteractableComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	
+	ComponentTags.Add(TEXT("InteractableComponent"));
 }
 
 void UFVInteractableComponent::BeginPlay()
@@ -29,35 +31,19 @@ void UFVInteractableComponent::BeginPlay()
 	{
 		Type = Defaults.InteractableMainTag;
 	}
-
-	if (CooldownPeriod < 0.f)
-	{
-		CooldownPeriod = Defaults.DefaultCooldownPeriod;
-	}
-
-	State = Defaults.DefaultInteractableState;
-
-	bIsInitialized = true;
-
-	if (!FocusComponentTag.IsValid())
-	{
-		UE_LOG(LogFVInteraction, Warning,
-			TEXT("'%s' has an InteractableComponent but no FocusComponentTag value is set. It will not be registered as interactable."),
-			*GetOwner()->GetName());
-		return;
-	}
 	
-	FocusPrimitive = GetOwner()->FindComponentByTag<UPrimitiveComponent>(FocusComponentTag);
-
-	if (!FocusPrimitive.IsValid())
+	State = Defaults.DefaultInteractableState;
+	
+	TArray<UActorComponent*> DetectableComponents = GetOwner()->GetComponentsByTag(UPrimitiveComponent::StaticClass(), DetectablePrimitiveTag);
+	
+	for (UActorComponent* Component : DetectableComponents)
 	{
-		UE_LOG(LogFVInteraction, Warning,
-			TEXT("'%s' has an InteractableComponent but no PrimitiveComponent with the set tag value was found to derive focus bounds from. It will not be registered as interactable."),
-			*GetOwner()->GetName());
-		return;
+		if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(Component))
+		{
+			Primitive->SetCollisionResponseToChannel(CollisionChannel, ECR_Block);
+			DetectablePrimitives.Add(Primitive);
+		}
 	}
-
-	FocusPrimitive->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
 
 	if (UFVInteractionRegistrySubsystem* Registry = GetWorld()->GetSubsystem<UFVInteractionRegistrySubsystem>())
 	{
@@ -69,37 +55,15 @@ void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (const UWorld* World = GetWorld())
 	{
-		World->GetTimerManager().ClearTimer(CooldownTimer);
+		World->GetTimerManager().ClearTimer(Timer_Cooldown);
 
 		if (UFVInteractionRegistrySubsystem* Registry = World->GetSubsystem<UFVInteractionRegistrySubsystem>())
 		{
 			Registry->Unregister(this);
 		}
 	}
-	
-	bIsInitialized = false;
 
 	Super::EndPlay(EndPlayReason);
-}
-
-FVector UFVInteractableComponent::GetFocusPoint() const
-{
-	if (const UPrimitiveComponent* Primitive = FocusPrimitive.Get())
-	{
-		return Primitive->Bounds.Origin;
-	}
-
-	return GetOwner() ? GetOwner()->GetActorLocation() : FVector::ZeroVector;
-}
-
-void UFVInteractableComponent::SetFocused(bool bFocused, UFVInteractorComponent* Interactor)
-{
-	if (!bIsInitialized || bFocused == bIsInFocus)
-	{
-		return;
-	}
-
-	bIsInFocus = bFocused;
 }
 
 bool UFVInteractableComponent::IsTransitionAllowed(EFVInteractableState From, EFVInteractableState To)
@@ -172,6 +136,29 @@ bool UFVInteractableComponent::IsTransitionAllowed(EFVInteractableState From, EF
 	return true;
 }
 
+void UFVInteractableComponent::ActivateInteractions()
+{
+	if (State == EFVInteractableState::Idle)
+	{
+		SetState(EFVInteractableState::Awake);
+	}
+}
+
+void UFVInteractableComponent::DeactivateInteractions()
+{
+	if (State == EFVInteractableState::Idle)
+	{
+		return;
+	}
+	
+	if (const UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(Timer_Cooldown);
+	}
+	
+	SetState(EFVInteractableState::Idle);
+}
+
 bool UFVInteractableComponent::SetState(EFVInteractableState NewState)
 {
 	if (!IsTransitionAllowed(State, NewState))
@@ -241,12 +228,7 @@ void UFVInteractableComponent::ConsumeOffer(const FGameplayTag& InputTag)
 
 void UFVInteractableComponent::StartCooldown()
 {
-	if (CooldownPeriod <= 0.f)
-	{
-		return;
-	}
-
-	if (!SetState(EFVInteractableState::Cooldown))
+	if (CooldownPeriod <= 0.f || !SetState(EFVInteractableState::Cooldown))
 	{
 		return;
 	}
@@ -254,8 +236,8 @@ void UFVInteractableComponent::StartCooldown()
 	if (const UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().SetTimer(
-			CooldownTimer,
-			[this]() { SetState(EFVInteractableState::Idle); },
+			Timer_Cooldown,
+			[this]() { SetState(EFVInteractableState::Awake); },
 			CooldownPeriod,
 			false);
 	}
@@ -345,14 +327,6 @@ void UFVInteractableComponent::BindResponse(FGameplayTag ActionTag, UFVInteracta
 {
 	if (!IsValid(Response))
 	{
-		return;
-	}
-
-	if (!bIsInitialized)
-	{
-		UE_LOG(LogFVInteraction, Error,
-			TEXT("'%s' cannot bind response '%s': the interactable is not initialised yet. Bind after BeginPlay."),
-			*GetNameSafe(GetOwner()), *Response->GetName());
 		return;
 	}
 

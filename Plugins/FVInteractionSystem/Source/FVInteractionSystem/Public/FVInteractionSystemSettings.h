@@ -8,33 +8,6 @@
 #include "FVInteractionSystemSettings.generated.h"
 
 USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FFVDetectionSetup
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup")
-	TEnumAsByte<ECollisionChannel> OcclusionChannel = ECC_Camera;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup")
-	EFVOcclusionDetectionMode OcclusionMode = EFVOcclusionDetectionMode::Socket;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup")
-	FName ActorMeshName = FName("CharacterMesh0");
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup")
-	FName StartSocketName = FName("head");
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup", meta=(UIMin=0.01, ClampMin=0.01, Units="s"))
-	float TracingInterval = 0.05f;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup", meta=(UIMin=0, ClampMin=0, Units="cm"))
-	float TracingRange = 600.f;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Setup", meta=(UIMin=0, ClampMin=0, Units="cm"))
-	float TracingShapeHalfSize = 15.f;
-};
-
-USTRUCT(BlueprintType)
 struct FVINTERACTIONSYSTEM_API FFVInteractionHighlightSetup
 {
 	GENERATED_BODY()
@@ -62,18 +35,6 @@ struct FVINTERACTIONSYSTEM_API FFVInteractorSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings")
 	TEnumAsByte<ECollisionChannel> InteractorCollisionChannel = ECC_Visibility;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings")
-	FFVDetectionSetup DetectionSetup;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings")
-	FGameplayTag InteractorTag;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractorSettings", meta=(UIMin=0.05, ClampMin=0.05, Units="s"))
-	float BroadPhaseInterval = 0.2f;
-
-	UPROPERTY(EditAnywhere, Category = "InteractableSettings", meta = (UIMin = 0, ClampMin = 0, Units = "cm"))
-	float DefaultDetectionRadius = 150.f;
 };
 
 USTRUCT(BlueprintType)
@@ -102,16 +63,24 @@ struct FVINTERACTIONSYSTEM_API FFVInteractableSettings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractableSettings", meta=(NoResetToDefault))
 	FFVInteractionHighlightSetup DefaultHighlightSetup;
 
-	UPROPERTY(EditAnywhere, Category="InteractableSettings", meta=(NoResetToDefault, UIMin=0.1, ClampMin=0.1, Units="s"))
-	float DefaultCooldownPeriod = 3.f;
-
 	UPROPERTY(EditAnywhere, Category="InteractableSettings", meta=(UIMin=-1, ClampMin=-1, NoResetToDefault))
 	int32 DefaultInteractableWeight = 1;
 
 	FFVInteractableSettings()
 		: DefaultInteractionHighlight(true)
-	{
-	}
+	{ }
+};
+
+USTRUCT(BlueprintType)
+struct FVINTERACTIONSYSTEM_API FFVInteractionRegistrySettings
+{
+	GENERATED_BODY()
+		
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractionRegistrySettings", meta=(ClampMin="0", Units="cm"))
+	float DefaultActivationRadius = 600.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractionRegistrySettings", meta=(UIMin=0.05, Units="s"))
+	float RefreshInterval = 0.6f;
 };
 
 UCLASS(Config = Game, DefaultConfig, NotBlueprintable, meta = (DisplayName = "Interaction System"))
@@ -124,11 +93,14 @@ public:
 
 	static const UFVInteractionSystemSettings& Get() { return *GetDefault<UFVInteractionSystemSettings>(); }
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Interactor")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Interaction")
 	FFVInteractorSettings InteractorDefaultSettings;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Interactable")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Interaction")
 	FFVInteractableSettings InteractableBaseSettings;
+	
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "registry")
+	FFVInteractionRegistrySettings RegistrySettings;
 	
 	UPROPERTY(config, BlueprintReadOnly, EditAnywhere, Category = "Widgets", meta=(Units="s", UIMin=0.001, ClampMin=0.001))
 	float WidgetUpdateFrequency = 0.05f;

@@ -26,8 +26,13 @@ protected:
 
 private:
 	UFUNCTION()
-	void OnFocusStateChanged(bool bIsInFocus, UFVInteractorComponent* Interactor);
-
+	void OnInteractorFound(UFVInteractorComponent* Interactor);
+	
+	UFUNCTION()
+	void OnInteractorLost(UFVInteractorComponent* Interactor);
+	
+	void RenderHighlight(const bool bIsInFocus);
+	
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UPrimitiveComponent>> HighlightTargets;
 
