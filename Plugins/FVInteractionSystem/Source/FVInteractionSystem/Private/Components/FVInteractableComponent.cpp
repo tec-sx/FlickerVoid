@@ -10,8 +10,13 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractableComponent)
 
 UFVInteractableComponent::UFVInteractableComponent()
+	: InteractableType(FVInteractionGameplayTags::Interactable)
+	, State(EFVInteractableState::Idle)
+	, CooldownPeriod(0.f)
+	, CollisionChannel(ECC_Camera)
+	, DetectionWeight(1)
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 	
 	ComponentTags.Add(TEXT("InteractableComponent"));
 }
@@ -24,15 +29,6 @@ void UFVInteractableComponent::BeginPlay()
 	{
 		return;
 	}
-
-	const FFVInteractableSettings& Defaults = UFVInteractionSystemSettings::Get().InteractableBaseSettings;
-
-	if (!Type.IsValid())
-	{
-		Type = Defaults.InteractableMainTag;
-	}
-	
-	State = Defaults.DefaultInteractableState;
 	
 	TArray<UActorComponent*> DetectableComponents = GetOwner()->GetComponentsByTag(UPrimitiveComponent::StaticClass(), DetectablePrimitiveTag);
 	
@@ -45,7 +41,9 @@ void UFVInteractableComponent::BeginPlay()
 		}
 	}
 
-	if (UFVInteractionRegistrySubsystem* Registry = GetWorld()->GetSubsystem<UFVInteractionRegistrySubsystem>())
+	Registry = GetWorld()->GetSubsystem<UFVInteractionRegistrySubsystem>();
+
+	if (IsValid(Registry))
 	{
 		Registry->Register(this);
 	}
@@ -57,7 +55,7 @@ void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		World->GetTimerManager().ClearTimer(Timer_Cooldown);
 
-		if (UFVInteractionRegistrySubsystem* Registry = World->GetSubsystem<UFVInteractionRegistrySubsystem>())
+		if (IsValid(Registry))
 		{
 			Registry->Unregister(this);
 		}
@@ -272,7 +270,6 @@ void UFVInteractableComponent::AddSuppression(FGameplayTag Reason)
 	}
 
 	SuppressionReasons.AddTag(Reason);
-
 	SetState(EFVInteractableState::Suppressed);
 }
 
@@ -287,7 +284,14 @@ void UFVInteractableComponent::RemoveSuppression(FGameplayTag Reason)
 
 	if (SuppressionReasons.IsEmpty() && State == EFVInteractableState::Suppressed)
 	{
-		SetState(EFVInteractableState::Idle);
+		EFVInteractableState NewState = EFVInteractableState::Idle;
+
+		if (IsValid(Registry) && Registry->GetActiveInteractables().Contains(this))
+		{
+			NewState = EFVInteractableState::Awake;
+		}
+
+		SetState(NewState);
 	}
 }
 

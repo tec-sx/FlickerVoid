@@ -53,6 +53,7 @@ namespace FVInteractionGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Tag_Player, "Interactor.Tag.Player", "Interactor driven by a human player.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Tag_AI, "Interactor.Tag.AI", "Interactor driven by AI.");
 
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable, "Interactable", "Base interactable tag.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable_Item, "Interactable.Item", "An item that can be interacted with.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable_Item_Pickup, "Interactable.Item.Pickup", "An item pickup in the world.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable_Door, "Interactable.Door", "A door that can be opened/closed.");

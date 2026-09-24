@@ -286,7 +286,7 @@ void UFVInteractionDebugSubsystem::DrawHUD(UCanvas* Canvas, APlayerController* P
 	
 	// Interaction
 	{
-		if (Interactor->GetCurrentState() == EFVInteractorState::Interacting && ActiveCommit.ActionTag.IsValid())
+		if (Interactor->GetState() == EFVInteractorState::Interacting && ActiveCommit.ActionTag.IsValid())
 		{
 			DrawLine(
 				FString::Printf(TEXT("Active: %s %.0f%%"), *ActiveCommit.ActionTag.ToString(), InteractionProgress * 100.f),
@@ -343,7 +343,7 @@ void UFVInteractionDebugSubsystem::DrawHUD(UCanvas* Canvas, APlayerController* P
 
 		
 		DrawLine(FString::Printf(TEXT("Interactor=%s"),
-			*UEnum::GetDisplayValueAsText(Interactor->GetCurrentState()).ToString()),
+			*UEnum::GetDisplayValueAsText(Interactor->GetState()).ToString()),
 			HeaderColor);
 		
 		if (LastInteractionOutcome != EFVDebugInteractionOutcome::None)

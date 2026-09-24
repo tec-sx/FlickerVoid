@@ -7,14 +7,6 @@ class UFVInteractableComponent;
 class UFVInteractorComponent;
 class UMaterialInterface;
 
-UENUM(BlueprintType, meta=(ScriptName="InteractableDetectionMode"))
-enum class EFVInteractableDetectionMode : uint8
-{
-	Trace		UMETA(DisplayName = "Trace", Tooltip = "Using Line Tracing to find Interactables."),
-	Overlap		UMETA(DisplayName = "Overlap", Tooltip = "Using Box Overlap to find Interactables."),
-	Default		UMETA(Hidden)
-};
-
 UENUM(BlueprintType, meta=(ScriptName="OcclusionDetectionMode"))
 enum class EFVOcclusionDetectionMode : uint8
 {

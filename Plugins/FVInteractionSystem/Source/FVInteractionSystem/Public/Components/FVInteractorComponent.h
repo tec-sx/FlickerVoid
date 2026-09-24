@@ -65,7 +65,7 @@ public:
 	UE_API const TArray<FFVInteractionOffer>& GetOffers() const { return CachedOffers; }
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|State")
-	UE_API EFVInteractorState GetCurrentState() const { return CurrentState; }
+	UE_API EFVInteractorState GetState() const { return State; }
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|State")
 	UE_API void AddSuppression(FGameplayTag Reason);
@@ -116,41 +116,34 @@ public:
 	FGameplayTagContainer BlockedActionTags;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
-	TEnumAsByte<ECollisionChannel> CollisionResponseChannel = ECC_GameTraceChannel1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
-	EFVInteractableDetectionMode DetectionMode = EFVInteractableDetectionMode::Default;
+	TEnumAsByte<ECollisionChannel> CollisionChannel;
 
 	UPROPERTY(EditAnywhere, Category="InteractorSettings")
 	FGameplayTag InteractorTag;
 	
 	UPROPERTY(EditAnywhere, Category="DetectionSetup")
-	TEnumAsByte<ECollisionChannel> OcclusionChannel = ECC_Camera;
-
-	UPROPERTY(EditAnywhere, Category="DetectionSetup")
-	FName TraceSocketName = FName("head");
+	TEnumAsByte<ECollisionChannel> OcclusionChannel;
 
 	UPROPERTY(EditAnywhere, Category="DetectionSetup", meta=(UIMin=0, ClampMin=0, Units="cm"))
-	float TraceRadius = 15.f;
+	float TraceRadius;
 	
 	UPROPERTY(EditAnywhere, Category="DetectionSetup", meta=(UIMin=0.01, ClampMin=0.01, Units="s"))
-	float TickInterval = 0.1f;
+	float TickInterval;
 	
 	UPROPERTY(EditAnywhere, Category="DetectionSetup", meta=(UIMin=1, ClampMin=1, Units="cm"))
-	float TraceRange = 250.f;
+	float TraceRange;
 	
 	UPROPERTY(EditAnywhere, Category="DetectionSetup", meta=(NoResetToDefault, DisplayThumbnail=false))
 	TArray<TObjectPtr<AActor>> IgnoredActors;
 
 private:
-	UFUNCTION()
-	void RefreshOffers(bool bForceBroadcast = true);
-	
+	void SetDefaults();
 	void SetState(EFVInteractorState NewState);
 	void PerformTrace();
-	bool PerformOcclusionTest(const FVector& StartLocation, const AActor* TargetActor);
+	bool PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target);
 	void SetFocusedInteractable(UFVInteractableComponent* NewInteractable);
 	void ClearFocusedInteractable();
+	void RefreshOffers(bool bForceBroadcast = true);
 
 	bool BeginInteraction(const FFVInteractionOffer& Offer, UFVInteractableComponent& Target);
 	void TickInteraction();
@@ -173,21 +166,15 @@ private:
 	UPROPERTY(Transient)
 	TArray<FFVInteractionOffer> CachedOffers;
 	
-	FVector LastFocusImpactPoint = FVector::ZeroVector;
-	
 	FFVInteractionCommit ActiveCommit;
 	EFVInteractionInputMode ActiveMode = EFVInteractionInputMode::Default;
 	float ActiveDuration = 0.f;
 	float ActiveElapsed = 0.f;
-	float LastProgressBroadcast = 0.f;
 	int32 ActivePresses = 0;
 	int32 ActiveRequiredPresses = 0;
 	
-	EFVInteractorState CurrentState = EFVInteractorState::Idle;
-	EFVInteractorState PreviousState = EFVInteractorState::Idle;
+	EFVInteractorState State = EFVInteractorState::Idle;
 	FGameplayTagContainer SuppressionReasons;
-	
-	FGameplayTagContainer PressedTags;
 	
 #if !UE_BUILD_SHIPPING
 	TWeakObjectPtr<UFVInteractionDebugSubsystem> DebugSubsystem;

@@ -21,21 +21,16 @@ void UFVInteractionRegistrySubsystem::Initialize(FSubsystemCollectionBase& Colle
 	
 	TickInterval = FMath::Max(UFVInteractionSystemSettings::Get().RegistrySettings.RefreshInterval, 0.01f);
 	
+#if !UE_BUILD_SHIPPING
 	if (const UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
 	{
 		DebugSubsystem = GameInstance->GetSubsystem<UFVInteractionDebugSubsystem>();
 	}
+#endif
 }
 
 void UFVInteractionRegistrySubsystem::Deinitialize()
-{
-#if !UE_BUILD_SHIPPING
-	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
-	{
-		Debug->Unregister();
-	}
-#endif
-	
+{	
 	ActiveInteractables.Reset();
 	RegisteredInteractables.Reset();
 
@@ -57,7 +52,7 @@ void UFVInteractionRegistrySubsystem::Tick(float DeltaTime)
 
 TStatId UFVInteractionRegistrySubsystem::GetStatId() const
 {
-	RETURN_QUICK_DECLARE_CYCLE_STAT(ULoadingScreenManager, STATGROUP_Tickables);
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UFVInteractionRegistrySubsystem, STATGROUP_Tickables);
 }
 
 void UFVInteractionRegistrySubsystem::Register(UFVInteractableComponent* Interactable)
@@ -76,6 +71,8 @@ void UFVInteractionRegistrySubsystem::Unregister(UFVInteractableComponent* Inter
 
 void UFVInteractionRegistrySubsystem::RegisterInteractor(UFVInteractorComponent* InInteractor)
 {
+	ensureMsgf(!InteractorPtr.IsValid(), TEXT("Only one player interactor can be registered per game."));
+
 	if (!IsValid(InInteractor))
 	{
 		return;
@@ -98,25 +95,23 @@ void UFVInteractionRegistrySubsystem::RegisterInteractor(UFVInteractorComponent*
 
 void UFVInteractionRegistrySubsystem::UnregisterInteractor()
 {
-	TArray<TObjectPtr<UFVInteractableComponent>> Orphaned = MoveTemp(ActiveInteractables);
-
-	for (const TObjectPtr<UFVInteractableComponent>& Interactable : Orphaned)
+	for (const TObjectPtr<UFVInteractableComponent>& Interactable : ActiveInteractables)
 	{
-		if (IsValid(Interactable) && !IsActive(Interactable))
+		if (IsValid(Interactable))
 		{
-			Interactable->SetState(EFVInteractableState::Idle);
+			Interactable->DeactivateInteractions();
 		}
 	}
-}
 
-bool UFVInteractionRegistrySubsystem::IsActive(const UFVInteractableComponent* Interactable)
-{
-	if (ActiveInteractables.Contains(Interactable))
+	ActiveInteractables.Reset();
+	InteractorPtr.Reset();
+
+#if !UE_BUILD_SHIPPING
+	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
 	{
-		return true;
+		Debug->Unregister();
 	}
-	
-	return false;
+#endif
 }
 
 void UFVInteractionRegistrySubsystem::Update()
@@ -137,19 +132,25 @@ void UFVInteractionRegistrySubsystem::Update()
 	for (const TObjectPtr<UFVInteractableComponent>& Interactable : RegisteredInteractables)
 	{
 		if (!IsValid(Interactable))
+		{
+			ActiveInteractables.Remove(Interactable);
 			continue;	
+		}
 		
 		const AActor* InteractableActor = Interactable->GetOwner();
 		
 		if (!IsValid(InteractableActor))
+		{
+			ActiveInteractables.Remove(Interactable);
 			continue;
+		}
 		
 		const bool bIsInRange = FVector::DistSquared(Origin, InteractableActor->GetActorLocation()) <= RadiusSq;
-		const bool bIsActive = ActiveInteractables.Contains(Interactable);
+		const bool bIsIdle = Interactable->GetState() == EFVInteractableState::Idle;
 			
 		if (bIsInRange)
 		{
-			if (!bIsActive)
+			if (bIsIdle)
 			{
 				Interactable->ActivateInteractions();
 				ActiveInteractables.Add(Interactable);
@@ -157,7 +158,7 @@ void UFVInteractionRegistrySubsystem::Update()
 		}
 		else
 		{
-			if (bIsActive)
+			if (!bIsIdle)
 			{
 				Interactable->DeactivateInteractions();
 				ActiveInteractables.Remove(Interactable);

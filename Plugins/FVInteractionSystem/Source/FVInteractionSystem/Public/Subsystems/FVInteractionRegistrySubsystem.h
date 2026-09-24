@@ -11,8 +11,6 @@ class UFVInteractionDebugSubsystem;
 class UFVInteractableComponent;
 class UFVInteractorComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInRangeSetChanged, bool, bHasAnyInRange);
-
 UCLASS(MinimalAPI, NotBlueprintable)
 class UFVInteractionRegistrySubsystem final : public UTickableWorldSubsystem
 {
@@ -25,17 +23,17 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual TStatId GetStatId() const override;
 
-	UE_API void Register(UFVInteractableComponent* Interactable);
-	UE_API void Unregister(UFVInteractableComponent* Interactable);
-	UE_API void RegisterInteractor(UFVInteractorComponent* InInteractor);
-	UE_API void UnregisterInteractor();
+	UE_API const TArray<TObjectPtr<UFVInteractableComponent>>& GetAllInteractables() const { return RegisteredInteractables; }
+	UE_API const TArray<TObjectPtr<UFVInteractableComponent>>& GetActiveInteractables() const { return ActiveInteractables; }
 	
-	const TArray<TObjectPtr<UFVInteractableComponent>>& GetAllInteractables() const { return RegisteredInteractables; }
-	const TArray<TObjectPtr<UFVInteractableComponent>>& GetActiveInteractables() const { return ActiveInteractables; }
+	void Register(UFVInteractableComponent* Interactable);
+	void Unregister(UFVInteractableComponent* Interactable);
+	void RegisterInteractor(UFVInteractorComponent* InInteractor);
+	void UnregisterInteractor();
+	
 	
 private:
 	void Update();
-	bool IsActive(const UFVInteractableComponent* Interactable);
 
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UFVInteractorComponent> InteractorPtr;
@@ -46,8 +44,8 @@ private:
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UFVInteractableComponent>> RegisteredInteractables;
 	
-	float TickInterval;
-	float TimeSinceLastTick;
+	float TickInterval = 0.01f;
+	float TimeSinceLastTick = 0.f;
 	
 #if !UE_BUILD_SHIPPING
 	TWeakObjectPtr<UFVInteractionDebugSubsystem> DebugSubsystem;

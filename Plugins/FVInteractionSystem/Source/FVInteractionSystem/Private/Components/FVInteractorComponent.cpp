@@ -12,27 +12,26 @@
 #include "TimerManager.h"
 #include "Core/FVInteractionLogger.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 #if !UE_BUILD_SHIPPING
 #include "Subsystems/FVInteractionDebugSubsystem.h"
 #endif
 
-#include "Kismet/GameplayStatics.h"
-
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractorComponent)
 
-const FName GInteractor_Mesh_Tag = TEXT("InteractorMesh");
-
 UFVInteractorComponent::UFVInteractorComponent()
+	: CollisionChannel(ECC_Camera)
+	, OcclusionChannel(ECC_Camera)
+	, State(EFVInteractorState::Idle)
+	, InteractorTag(FVInteractionGameplayTags::Interactor_Tag_Player)
+	, TraceRadius(15.f)
+	, TickInterval(0.1f)
+	, TraceRange(250.f)
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	PrimaryComponentTick.TickGroup = TG_PostPhysics;
-	
-	const FFVInteractorSettings& Defaults = UFVInteractionSystemSettings::Get().InteractorDefaultSettings;
-	DetectionMode = Defaults.DefaultDetectionMode;
-	GrantedTags.AddTag(FVInteractionGameplayTags::Interactor_Tag_Player);
-	SetComponentTickInterval(TickInterval);
 }
 
 void UFVInteractorComponent::BeginPlay()
@@ -47,15 +46,20 @@ void UFVInteractorComponent::BeginPlay()
 
 	Registry = GetWorld()->GetSubsystem<UFVInteractionRegistrySubsystem>();
 	
-	if (Registry != nullptr)
+	if (IsValid(Registry))
 	{
 		Registry->RegisterInteractor(this);
 	}
 	
+	SetDefaults();
+	SetComponentTickInterval(TickInterval);
+
+#if !UE_BUILD_SHIPPING
 	if (const UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
 	{
 		DebugSubsystem = GameInstance->GetSubsystem<UFVInteractionDebugSubsystem>();
 	}
+#endif
 }
 
 void UFVInteractorComponent::TickComponent(
@@ -65,17 +69,23 @@ void UFVInteractorComponent::TickComponent(
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
-	if (CurrentState == EFVInteractorState::Idle || CurrentState == EFVInteractorState::Awake)
+	if (State == EFVInteractorState::Idle || State == EFVInteractorState::Awake)
 	{
-		const EFVInteractorState NewState = Registry->GetActiveInteractables().Num() > 0
-			? EFVInteractorState::Awake
-			: EFVInteractorState::Idle;
-		
+		EFVInteractorState NewState = EFVInteractorState::Idle;
+
+		if (IsValid(Registry) && Registry->GetActiveInteractables().Num() > 0)
+		{
+			NewState = EFVInteractorState::Awake;
+		}
+
 		SetState(NewState);
 	}
 	
-	if (CurrentState != EFVInteractorState::Awake)
+	if (State != EFVInteractorState::Awake && State != EFVInteractorState::Interacting)
+	{
+		ClearFocusedInteractable();
 		return;
+	}
 	
 	PerformTrace();
 }
@@ -84,7 +94,7 @@ void UFVInteractorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	DisableTracing();
 
-	if (Registry)
+	if (IsValid(Registry))
 	{
 		Registry->UnregisterInteractor();
 	}
@@ -132,9 +142,8 @@ void UFVInteractorComponent::AddSuppression(FGameplayTag Reason)
 	}
 
 	SuppressionReasons.AddTag(Reason);
-
-	SetState(EFVInteractorState::Suppressed);
 	CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_Suppressed);
+	SetState(EFVInteractorState::Suppressed);
 }
 
 void UFVInteractorComponent::RemoveSuppression(FGameplayTag Reason)
@@ -146,22 +155,28 @@ void UFVInteractorComponent::RemoveSuppression(FGameplayTag Reason)
 
 	SuppressionReasons.RemoveTag(Reason);
 
-	if (SuppressionReasons.IsEmpty())
+	if (SuppressionReasons.IsEmpty() && State == EFVInteractorState::Suppressed)
 	{
-		SetState(PreviousState);
+		EFVInteractorState NewState = EFVInteractorState::Idle;
+
+		if (IsValid(Registry) && Registry->GetActiveInteractables().Num() > 0)
+		{
+			NewState = EFVInteractorState::Awake;
+		}
+
+		SetState(NewState);
 	}
 }
 
 void UFVInteractorComponent::SetState(EFVInteractorState NewState)
 {
-	if (CurrentState == NewState)
+	if (State == NewState)
 	{
 		return;
 	}
 	
-	PreviousState = CurrentState;
-	CurrentState = NewState;
-	StateChanged.Broadcast(CurrentState);
+	State = NewState;
+	StateChanged.Broadcast(State);
 }
 
 const FFVInteractionOffer* UFVInteractorComponent::FindActiveOffer() const
@@ -180,7 +195,7 @@ bool UFVInteractorComponent::PushInput(FGameplayTag InputTag, EFVInteractionInpu
 	}
 #endif
 
-	if (CurrentState == EFVInteractorState::Interacting)
+	if (State == EFVInteractorState::Interacting)
 	{
 		if (!ActiveCommit.InputTag.MatchesTagExact(InputTag))
 		{
@@ -257,7 +272,7 @@ bool UFVInteractorComponent::PushInput(FGameplayTag InputTag, EFVInteractionInpu
 
 bool UFVInteractorComponent::BeginInteraction(const FFVInteractionOffer& Offer, UFVInteractableComponent& Target)
 {
-	if (CurrentState == EFVInteractorState::Interacting)
+	if (State == EFVInteractorState::Interacting)
 		return false;
 	if (!Target.CanInteract())
 		return false;
@@ -277,7 +292,6 @@ bool UFVInteractorComponent::BeginInteraction(const FFVInteractionOffer& Offer, 
 		: Offer.InteractionPeriod;
 
 	ActiveElapsed = 0.f;
-	LastProgressBroadcast = 0.f;
 	ActivePresses = 0;
 	ActiveRequiredPresses = FMath::Max(Offer.RequiredPresses, 1);
 	
@@ -304,7 +318,7 @@ bool UFVInteractorComponent::BeginInteraction(const FFVInteractionOffer& Offer, 
 
 void UFVInteractorComponent::TickInteraction()
 {
-	if (CurrentState != EFVInteractorState::Interacting)
+	if (State != EFVInteractorState::Interacting)
 	{
 		return;
 	}
@@ -358,7 +372,7 @@ void UFVInteractorComponent::TickInteraction()
 
 void UFVInteractorComponent::CommitInteraction()
 {
-	if (CurrentState != EFVInteractorState::Interacting)
+	if (State != EFVInteractorState::Interacting)
 	{
 		return;
 	}
@@ -396,7 +410,7 @@ void UFVInteractorComponent::ProgressInteraction(const float Progress)
 
 void UFVInteractorComponent::CancelInteraction(const FGameplayTag& Reason)
 {
-	if (CurrentState != EFVInteractorState::Interacting)
+	if (State != EFVInteractorState::Interacting)
 	{
 		return;
 	}
@@ -450,7 +464,7 @@ void UFVInteractorComponent::PerformTrace()
 {
 	FTraceData TraceData;
 	{
-		TraceData.CollisionChannel = CollisionResponseChannel;
+		TraceData.CollisionChannel = CollisionChannel;
 		TraceData.CollisionParams.AddIgnoredActor(GetOwner());
 		TraceData.CollisionParams.AddIgnoredActors(IgnoredActors);
 		TraceData.CollisionParams.MobilityType = EQueryMobilityType::Any;
@@ -499,7 +513,7 @@ void UFVInteractorComponent::PerformTrace()
 				continue;
 			if (InteractableComponent->GetState() != EFVInteractableState::Awake)
 				continue;
-			if (InteractableComponent->GetCollisionChannel() != CollisionResponseChannel)
+			if (InteractableComponent->GetCollisionChannel() != CollisionChannel)
 				continue;
 			if (!InteractableComponent->GetDetectablePrimitives().Contains(HitComponent))
 				continue;
@@ -514,26 +528,27 @@ void UFVInteractorComponent::PerformTrace()
 			}
 				
 			const float CandidateDetectionWeight = InteractableComponent->GetDetectionWeight();
-			 
-			if (CandidateDetectionWeight > BestDetectionWeight)
-			{
-				BestDetectionWeight = CandidateDetectionWeight;
-				
-				if (PerformOcclusionTest(TraceData.StartLocation, HitActor))
-				{
-					continue;
-				}
-				
-				BestInteractable = InteractableComponent;
-			}
+
+			if (CandidateDetectionWeight <= BestDetectionWeight)
+				continue;
+			if (PerformOcclusionTest(TraceData.StartLocation, HitResult.ImpactPoint, HitActor))
+				continue;
+			
+			BestDetectionWeight = CandidateDetectionWeight;
+			BestInteractable = InteractableComponent;
 		}
+	}
+
+	if (BestInteractable != FocusedInteractable.Get())
+	{
+		ClearFocusedInteractable();
 		
-		if (BestInteractable != FocusedInteractable.Get())
+		if (IsValid(BestInteractable))
 		{
-			ClearFocusedInteractable();
 			SetFocusedInteractable(BestInteractable);
-			RefreshOffers();
 		}
+
+		RefreshOffers();
 	}
 	
 #if !UE_BUILD_SHIPPING
@@ -545,7 +560,7 @@ void UFVInteractorComponent::PerformTrace()
 #endif
 }
 
-bool UFVInteractorComponent::PerformOcclusionTest(const FVector& StartLocation, const AActor* TargetActor)
+bool UFVInteractorComponent::PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target)
 {
 	FHitResult OcclusionHit;
 	FCollisionQueryParams QueryParams;
@@ -553,12 +568,7 @@ bool UFVInteractorComponent::PerformOcclusionTest(const FVector& StartLocation, 
 		QueryParams.AddIgnoredActor(GetOwner());
 	}
 	
-	GetWorld()->LineTraceSingleByChannel(
-		OcclusionHit, 
-		StartLocation, 
-		TargetActor->GetActorLocation(), 
-		OcclusionChannel,
-		QueryParams);
+	GetWorld()->LineTraceSingleByChannel(OcclusionHit, Start, End, OcclusionChannel, QueryParams);
 	
 #if !UE_BUILD_SHIPPING
 	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
@@ -567,17 +577,14 @@ bool UFVInteractorComponent::PerformOcclusionTest(const FVector& StartLocation, 
 	}
 #endif
 	
-	return OcclusionHit.IsValidBlockingHit() && OcclusionHit.GetActor() != TargetActor; 
+	return OcclusionHit.IsValidBlockingHit() && OcclusionHit.GetActor() != Target; 
 }
 
 void UFVInteractorComponent::SetFocusedInteractable(UFVInteractableComponent* NewInteractable)
 {
-	if (NewInteractable != nullptr)
-	{
-		NewInteractable->InteractorFound.Broadcast(this);
-		InteractableFound.Broadcast(NewInteractable);
-		FocusedInteractable = NewInteractable;
-	}
+	NewInteractable->InteractorFound.Broadcast(this);
+	InteractableFound.Broadcast(NewInteractable);
+	FocusedInteractable = NewInteractable;
 }
 
 void UFVInteractorComponent::ClearFocusedInteractable()
