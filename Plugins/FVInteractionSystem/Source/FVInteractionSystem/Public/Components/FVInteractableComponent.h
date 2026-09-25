@@ -71,8 +71,8 @@ public:
 	UE_API void RemoveSuppression(FGameplayTag Reason);
 
 	UFUNCTION(BlueprintPure, Category = "Interactable|State")
-	UE_API bool CanInteract() const { return State == EFVInteractableState::Awake || State == EFVInteractableState::Paused; }
-	
+	UE_API bool CanInteract() const;
+
 #pragma region Detection
 	
 	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
@@ -89,7 +89,13 @@ public:
 	
 	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
 	int32 GetDetectionWeight() const {return DetectionWeight; }
+
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Detection")
+	UE_API void AcquireInteractor(UFVInteractorComponent* NewInteractor);
 	
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Detection")
+	UE_API void ReleaseInteractor(UFVInteractorComponent* InteractorToRelease);
+
 #pragma endregion 
 	
 	const FFVInteractionOffer* FindOffer(const FGameplayTag& InputTag) const;
@@ -164,6 +170,9 @@ private:
 	
 	UPROPERTY(Transient)
 	TObjectPtr<UFVInteractionRegistrySubsystem> Registry;
+
+	UPROPERTY()
+	TWeakObjectPtr<UFVInteractorComponent> TargetInteractor;
 
 	UPROPERTY()
 	FTimerHandle Timer_Interaction;

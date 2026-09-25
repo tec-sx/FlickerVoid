@@ -3,9 +3,11 @@
 #include "Components/FVInteractorComponent.h"
 #include "Engine/World.h"
 #include "FVInteractionSystemSettings.h"
-#include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
-#include "Subsystems//FVInteractionDebugSubsystem.h"
+
+#if !UE_BUILD_SHIPPING
+#include "Subsystems/FVInteractionDebugSubsystem.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionRegistrySubsystem)
 
@@ -46,7 +48,7 @@ void UFVInteractionRegistrySubsystem::Tick(float DeltaTime)
 	if (TimeSinceLastTick >= TickInterval)
 	{
 		Update();
-		TimeSinceLastTick = 0.f;
+		TimeSinceLastTick -= TickInterval;
 	}
 }
 
@@ -71,8 +73,6 @@ void UFVInteractionRegistrySubsystem::Unregister(UFVInteractableComponent* Inter
 
 void UFVInteractionRegistrySubsystem::RegisterInteractor(UFVInteractorComponent* InInteractor)
 {
-	ensureMsgf(!InteractorPtr.IsValid(), TEXT("Only one player interactor can be registered per game."));
-
 	if (!IsValid(InInteractor))
 	{
 		return;
@@ -81,6 +81,8 @@ void UFVInteractionRegistrySubsystem::RegisterInteractor(UFVInteractorComponent*
 	{
 		return;
 	}
+
+	ensureMsgf(!InteractorPtr.IsValid(), TEXT("Only one player interactor can be registered per game."));
 	
 	InteractorPtr = InInteractor;
 	InteractorPtr->EnableTracing();
@@ -129,40 +131,30 @@ void UFVInteractionRegistrySubsystem::Update()
 	const FFVInteractionRegistrySettings& Settings = UFVInteractionSystemSettings::Get().RegistrySettings;
 	const float RadiusSq = FMath::Square(Settings.DefaultActivationRadius);
 	
-	for (const TObjectPtr<UFVInteractableComponent>& Interactable : RegisteredInteractables)
+	for (int32 Index = RegisteredInteractables.Num() - 1; Index >= 0; --Index)
 	{
-		if (!IsValid(Interactable))
-		{
-			ActiveInteractables.Remove(Interactable);
-			continue;	
-		}
-		
-		const AActor* InteractableActor = Interactable->GetOwner();
-		
+		UFVInteractableComponent* Interactable = RegisteredInteractables[Index];
+		const AActor* InteractableActor = IsValid(Interactable) ? Interactable->GetOwner() : nullptr;
+
 		if (!IsValid(InteractableActor))
 		{
-			ActiveInteractables.Remove(Interactable);
+			ActiveInteractables.RemoveSingleSwap(Interactable, EAllowShrinking::No);
+			RegisteredInteractables.RemoveAtSwap(Index, EAllowShrinking::No);
 			continue;
 		}
-		
+
 		const bool bIsInRange = FVector::DistSquared(Origin, InteractableActor->GetActorLocation()) <= RadiusSq;
-		const bool bIsIdle = Interactable->GetState() == EFVInteractableState::Idle;
-			
-		if (bIsInRange)
+		const bool bIsActive = ActiveInteractables.Contains(Interactable);
+
+		if (bIsInRange && !bIsActive)
 		{
-			if (bIsIdle)
-			{
-				Interactable->ActivateInteractions();
-				ActiveInteractables.Add(Interactable);
-			}
+			Interactable->ActivateInteractions();
+			ActiveInteractables.Add(Interactable);
 		}
-		else
+		else if (!bIsInRange && bIsActive)
 		{
-			if (!bIsIdle)
-			{
-				Interactable->DeactivateInteractions();
-				ActiveInteractables.Remove(Interactable);
-			}
+			Interactable->DeactivateInteractions();
+			ActiveInteractables.RemoveSingleSwap(Interactable, EAllowShrinking::No);
 		}
 	}
 	

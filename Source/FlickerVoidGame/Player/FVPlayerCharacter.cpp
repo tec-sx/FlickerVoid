@@ -26,12 +26,12 @@ UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const
 
 UFVInteractableComponent* AFVPlayerCharacter::GetFocusedInteractable() const
 {
-	return InteractorComponent->GetFocusedInteractable();
+	return InteractorComponent->GetTargetInteractable();
 }
 
 AActor* AFVPlayerCharacter::GetFocusedActor() const
 {
-	if (const UFVInteractableComponent* Interactable = InteractorComponent->GetFocusedInteractable())
+	if (const UFVInteractableComponent* Interactable = InteractorComponent->GetTargetInteractable())
 	{
 		return  Interactable->GetOwner();
 	}

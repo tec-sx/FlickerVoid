@@ -124,7 +124,7 @@ void UFVInteractionDebugSubsystem::VisualizeRange(
 		{
 			for (const UFVInteractableComponent* Interactable : ActiveInteractables)
 			{
-				FColor Color = Interactor->GetFocusedInteractable() == Interactable ? FColor::Green : FColor::Yellow;
+				FColor Color = Interactor->GetTargetInteractable() == Interactable ? FColor::Green : FColor::Yellow;
 				DrawBoundingBox(World, Interactable->GetOwner(), Color, Interval);
 			}
 		}
@@ -239,7 +239,7 @@ void UFVInteractionDebugSubsystem::DrawHUD(UCanvas* Canvas, APlayerController* P
 	};
 	
 	// Global
-	const UFVInteractableComponent* FocusedInteractable = Interactor->GetFocusedInteractable();
+	const UFVInteractableComponent* FocusedInteractable = Interactor->GetTargetInteractable();
 	const AActor* FocusedActor = FocusedInteractable ? FocusedInteractable->GetOwner() : nullptr;
 	
 	// Candidates
@@ -256,17 +256,19 @@ void UFVInteractionDebugSubsystem::DrawHUD(UCanvas* Canvas, APlayerController* P
 			}
 			
 			const bool bIsFocused = InteractableCandidate == FocusedInteractable;
+			const bool bIsCompatible = InteractableCandidate->GetCompatibleInteractorTags().HasTag(Interactor->InteractorTag);
 			const AActor* ActorCandidate = InteractableCandidate->GetOwner();
 
 			DrawLine(
 				FString::Printf(
-					TEXT("%s%s:  Distance=%.0f  State=%s  Weight=%d"), 
+					TEXT("%s%s:  Distance=%.0f  State=%s  Weight=%d IsCompatible=%s"), 
 					bIsFocused ? TEXT("* ") : TEXT("  "), 
 					IsValid(ActorCandidate) ? *ActorCandidate->GetName() : TEXT("?"), 
 					FVector::Dist(HitResult.ImpactPoint, Interactor->GetOwner()->GetActorLocation()), 
 					*UEnum::GetDisplayValueAsText(InteractableCandidate->GetState()).ToString(), 
-					InteractableCandidate->GetDetectionWeight()), 
-				bIsFocused ? HeaderColor : TextColor);
+					InteractableCandidate->GetDetectionWeight(),
+					bIsCompatible ? TEXT("Yes") : TEXT("No")),
+				bIsFocused && bIsCompatible ? HeaderColor : TextColor);
 			
 			Y += LineHeight;
 		}

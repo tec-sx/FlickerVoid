@@ -7,7 +7,6 @@
 #include "Core/FVInteractionTypes.h"
 #include "FVInteractionSystemSettings.h"
 
-#include "Subsystems/FVInteractionRegistrySubsystem.h"
 #include "FVInteractorComponent.generated.h"
 
 #define UE_API FVINTERACTIONSYSTEM_API
@@ -15,6 +14,7 @@
 class UFVInteractionDebugSubsystem;
 class UFVInteractableComponent;
 class UFVInteractorResponseComponent;
+class UFVInteractionRegistrySubsystem;
 
 struct FTraceData
 {
@@ -56,10 +56,10 @@ public:
 	UE_API void DisableTracing();
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Detection")
-	UE_API bool HasFocus() const { return FocusedInteractable != nullptr; }
+	UE_API bool HasInteractableTarget() const { return TargetInteractable != nullptr; }
 
 	UFUNCTION(BlueprintPure)
-	UE_API UFVInteractableComponent* GetFocusedInteractable() const { return FocusedInteractable.Get(); }
+	UE_API UFVInteractableComponent* GetTargetInteractable() const { return TargetInteractable.Get(); }
 	
 	UFUNCTION(BlueprintPure)
 	UE_API const TArray<FFVInteractionOffer>& GetOffers() const { return CachedOffers; }
@@ -137,28 +137,23 @@ public:
 	TArray<TObjectPtr<AActor>> IgnoredActors;
 
 private:
-	void SetDefaults();
 	void SetState(EFVInteractorState NewState);
 	void PerformTrace();
 	bool PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target);
-	void SetFocusedInteractable(UFVInteractableComponent* NewInteractable);
-	void ClearFocusedInteractable();
+	void AcquireInteractable(UFVInteractableComponent* NewInteractable);
+	void ReleaseTargetInteractable();
 	void RefreshOffers(bool bForceBroadcast = true);
+	bool InteractableIsInReach(const UFVInteractableComponent* Target) const;
+	bool IsOfferAvailable(const FFVInteractionOffer& Offer) const;
 
-	bool BeginInteraction(const FFVInteractionOffer& Offer, UFVInteractableComponent& Target);
-	void TickInteraction();
-	void CommitInteraction();
+	void TickInteraction(float DeltaTime);
 	void ProgressInteraction(const float Progress);
 	void CancelInteraction(const FGameplayTag& Reason);
-	const FFVInteractionOffer* FindActiveOffer() const;
+	void FinishInteraction(bool bSuccess);
 
-	bool IsOfferAvailable(const FFVInteractionOffer& Offer) const;
-	
-	UPROPERTY()
-	FTimerHandle Timer_Interaction;
 	
 	UPROPERTY(Transient)
-	TWeakObjectPtr<UFVInteractableComponent> FocusedInteractable;
+	TWeakObjectPtr<UFVInteractableComponent> TargetInteractable;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UFVInteractionRegistrySubsystem> Registry;
@@ -166,6 +161,10 @@ private:
 	UPROPERTY(Transient)
 	TArray<FFVInteractionOffer> CachedOffers;
 	
+	int PendingPresses = 0;
+	bool bPendingRelease = false;
+	bool bPendingCancel = false;
+
 	FFVInteractionCommit ActiveCommit;
 	EFVInteractionInputMode ActiveMode = EFVInteractionInputMode::Default;
 	float ActiveDuration = 0.f;

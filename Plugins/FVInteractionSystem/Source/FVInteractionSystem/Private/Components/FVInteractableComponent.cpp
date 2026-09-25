@@ -136,18 +136,18 @@ bool UFVInteractableComponent::IsTransitionAllowed(EFVInteractableState From, EF
 
 void UFVInteractableComponent::ActivateInteractions()
 {
-	if (State == EFVInteractableState::Idle)
-	{
-		SetState(EFVInteractableState::Awake);
-	}
+	if (State != EFVInteractableState::Idle)
+		return;
+
+	SetState(SuppressionReasons.IsEmpty() ? EFVInteractableState::Awake : EFVInteractableState::Suppressed);
 }
 
 void UFVInteractableComponent::DeactivateInteractions()
 {
-	if (State == EFVInteractableState::Idle)
-	{
+	if (State == EFVInteractableState::Idle 
+		|| State == EFVInteractableState::Completed 
+		|| State == EFVInteractableState::Suppressed)
 		return;
-	}
 	
 	if (const UWorld* World = GetWorld())
 	{
@@ -295,6 +295,11 @@ void UFVInteractableComponent::RemoveSuppression(FGameplayTag Reason)
 	}
 }
 
+bool UFVInteractableComponent::CanInteract() const
+{
+	return State == EFVInteractableState::Awake || State == EFVInteractableState::Paused;
+}
+
 void UFVInteractableComponent::StartInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor)
 {
 	SetState(EFVInteractableState::Interacting);
@@ -317,6 +322,27 @@ void UFVInteractableComponent::EndInteraction(const FGameplayTag& ActionTag, UFV
 	}
 	
 	InteractionEnded.Broadcast(ActionTag, Interactor, bSuccess);
+}
+
+void UFVInteractableComponent::AcquireInteractor(UFVInteractorComponent* NewInteractor)
+{
+	if (IsValid(NewInteractor))
+	{
+		TargetInteractor = NewInteractor;
+		InteractorFound.Broadcast(TargetInteractor.Get());
+	}
+}
+
+void UFVInteractableComponent::ReleaseInteractor(UFVInteractorComponent* InteractorToRelease)
+{
+	if (UFVInteractorComponent* Interactor = TargetInteractor.Get())
+	{
+		if (InteractorToRelease == Interactor)
+		{
+			InteractorLost.Broadcast(Interactor);
+			TargetInteractor.Reset();
+		}
+	}
 }
 
 const FFVInteractionOffer* UFVInteractableComponent::FindOffer(const FGameplayTag& InputTag) const
