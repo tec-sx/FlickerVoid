@@ -1,4 +1,4 @@
-#include "Input/FVInputComponent.h"
+#include "FVInputComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInputComponent)
 

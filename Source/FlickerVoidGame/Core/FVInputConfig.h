@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FVCoreInputTypes.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
 
@@ -11,18 +12,16 @@ USTRUCT(BlueprintType)
 struct FFVInputAction
 {
 	GENERATED_BODY()
-
-public:
-
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<const UInputAction> InputAction = nullptr;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Meta = (Categories = "InputTag"))
-	FGameplayTag InputTag;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FFVGesture Gesture;
 };
 
 UCLASS(BlueprintType, Const)
-class FLICKERVOIDCORE_API UFVInputConfig : public UDataAsset
+class FLICKERVOID_API UFVInputConfig : public UDataAsset
 {
 	GENERATED_BODY()
 	

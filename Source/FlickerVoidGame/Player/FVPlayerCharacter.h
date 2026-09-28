@@ -38,7 +38,7 @@ public:
 private:
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
 	TObjectPtr<UFVAbilitySystemComponent> AbilitySystemComponent;
-
+	
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
 	TObjectPtr<UFVInteractorComponent> InteractorComponent;
 

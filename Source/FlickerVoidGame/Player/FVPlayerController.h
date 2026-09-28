@@ -5,6 +5,8 @@
 #include "GameplayTagContainer.h"
 #include "FVPlayerController.generated.h"
 
+struct FFVGesture;
+class UFVGestureComponent;
 class UFVAbilitySystemComponent;
 class AFVPlayerCharacter;
 class UAbilitySystemComponent;
@@ -72,10 +74,13 @@ protected:
     // INPUT CALLBACKS - Abilities
     // ========================================================================
 
-    void Input_AbilityInputTagPressed(FGameplayTag InputTag);
-    void Input_AbilityInputTagReleased(FGameplayTag InputTag);
+    void Input_AbilityInputPressed(const FFVGesture& Gesture);
+    void Input_AbilityInputReleased(const FFVGesture& Gesture);
 
 private:
+	UPROPERTY(VisibleAnywhere, Category = "FlivkerVoid|Input")
+	TObjectPtr<UFVGestureComponent> GestureComponent;
+	
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
 	TObjectPtr<UFVInventoryUIRouterComponent> InventoryUIRouterComponent;
 

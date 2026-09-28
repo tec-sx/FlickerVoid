@@ -57,26 +57,6 @@ enum class EFVHighlightSetupType : uint8
 	Default		UMETA(Hidden)
 };
 
-UENUM(BlueprintType, meta=(ScriptName="InteractionInputPhase"))
-enum class EFVInteractionInputPhase : uint8
-{
-	Pressed		UMETA(DisplayName="Pressed", Tooltip="Input key was pressed this frame."),
-	Released	UMETA(DisplayName="Released", Tooltip="Input key was released this frame."),
-	Cancelled	UMETA(DisplayName="Cancelled", Tooltip="Input was aborted without a commit."),
-	Default		UMETA(Hidden)
-};
-
-UENUM(BlueprintType, meta=(ScriptName="InteractionInputMode"))
-enum class EFVInteractionInputMode : uint8
-{
-	Press		UMETA(DisplayName="Press", Tooltip="Commits immediately on press."),
-	Hold		UMETA(DisplayName="Hold", Tooltip="Commits after the key is held for InteractionPeriod."),
-	Mash		UMETA(DisplayName="Mash", Tooltip="Commits after RequiredPresses within InteractionPeriod."),
-	Hover		UMETA(DisplayName="Hover", Tooltip="Commits after being focused for InteractionPeriod, no key needed."),
-	Automatic	UMETA(DisplayName="Automatic", Tooltip="Commits as soon as the offer becomes available."),
-	Default		UMETA(Hidden)
-};
-
 UENUM(BlueprintType, meta=(ScriptName="InteractionGate"))
 enum class EFVInteractionGate : uint8
 {

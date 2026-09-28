@@ -46,9 +46,6 @@ public:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	UFUNCTION(BlueprintCallable)
-	UE_API bool PushInput(FGameplayTag InputTag, EFVInteractionInputPhase Phase);
-
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Detection")
 	UE_API void EnableTracing();
 
@@ -68,10 +65,10 @@ public:
 	UE_API EFVInteractorState GetState() const { return State; }
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|State")
-	UE_API void AddSuppression(FGameplayTag Reason);
+	UE_API void AddSuppression(const FGameplayTag Reason);
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|State")
-	UE_API void RemoveSuppression(FGameplayTag Reason);
+	UE_API void RemoveSuppression(const FGameplayTag Reason);
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	UE_API void RequestOfferRefresh() { RefreshOffers(); }
@@ -83,11 +80,23 @@ public:
 	UE_API void UnbindResponse(UFVInteractorResponseComponent* Response);
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Identity")
-	UE_API void GrantTag(FGameplayTag NewTag);
+	UE_API void GrantTag(const FGameplayTag NewTag);
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Identity")
-	UE_API void RemoveTag(FGameplayTag OldTag);
+	UE_API void RemoveTag(const FGameplayTag OldTag);
+	
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Trigger")
+	UE_API bool BeginInteraction(const FGameplayTag InputTag);
 
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Trigger")
+	UE_API void UpdateInteraction(const float Progress);
+	
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Trigger")
+	UE_API void CommitInteraction();
+	
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Trigger")
+	UE_API void CancelInteraction(const FGameplayTag Reason);
+	
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|State")
 	FInteractorStateChanged StateChanged;
 	
@@ -137,20 +146,19 @@ public:
 	TArray<TObjectPtr<AActor>> IgnoredActors;
 
 private:
-	void SetState(EFVInteractorState NewState);
+	void SetState(const EFVInteractorState NewState);
 	void PerformTrace();
-	bool PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target);
+	bool PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target) const;
 	void AcquireInteractable(UFVInteractableComponent* NewInteractable);
 	void ReleaseTargetInteractable();
 	void RefreshOffers(bool bForceBroadcast = true);
 	bool InteractableIsInReach(const UFVInteractableComponent* Target) const;
 	bool IsOfferAvailable(const FFVInteractionOffer& Offer) const;
-
-	void TickInteraction(float DeltaTime);
+	
+	void ValidateInteraction();
 	void ProgressInteraction(const float Progress);
-	void CancelInteraction(const FGameplayTag& Reason);
-	void FinishInteraction(bool bSuccess);
-
+	void FinishInteraction(const bool bSuccess);
+	const FFVInteractionOffer* FindOffer(const FGameplayTag& InputTag);
 	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UFVInteractableComponent> TargetInteractable;
@@ -160,19 +168,9 @@ private:
 	
 	UPROPERTY(Transient)
 	TArray<FFVInteractionOffer> CachedOffers;
-	
-	int PendingPresses = 0;
-	bool bPendingRelease = false;
-	bool bPendingCancel = false;
 
 	FFVInteractionCommit ActiveCommit;
-	EFVInteractionInputMode ActiveMode = EFVInteractionInputMode::Default;
-	float ActiveDuration = 0.f;
-	float ActiveElapsed = 0.f;
-	int32 ActivePresses = 0;
-	int32 ActiveRequiredPresses = 0;
-	
-	EFVInteractorState State = EFVInteractorState::Idle;
+	EFVInteractorState State;
 	FGameplayTagContainer SuppressionReasons;
 	
 #if !UE_BUILD_SHIPPING

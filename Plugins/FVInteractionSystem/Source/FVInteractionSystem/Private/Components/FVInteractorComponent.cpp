@@ -9,7 +9,6 @@
 #include "GameFramework/PlayerController.h"
 #include "Misc/ScopeExit.h"
 #include "Subsystems/FVInteractionRegistrySubsystem.h"
-#include "Core/FVInteractionLogger.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -66,13 +65,13 @@ void UFVInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	
 	if (State == EFVInteractorState::Interacting)
 	{
-		TickInteraction(DeltaTime);
+		ValidateInteraction();
 		return;
 	}
 
 	if (State == EFVInteractorState::Idle || State == EFVInteractorState::Awake)
 	{
-		const bool bHasInteractablesInRange = IsValid(Registry) && Registry->GetActiveInteractables().Num() > 0;
+		const bool bHasInteractablesInRange = IsValid(Registry) && !Registry->GetActiveInteractables().IsEmpty();
 		SetState(bHasInteractablesInRange ? EFVInteractorState::Awake : EFVInteractorState::Idle);
 	}
 	
@@ -133,7 +132,7 @@ void UFVInteractorComponent::UnbindResponse(UFVInteractorResponseComponent* Resp
 	Response->UnbindEvents(this);
 }
 
-void UFVInteractorComponent::AddSuppression(FGameplayTag Reason)
+void UFVInteractorComponent::AddSuppression(const FGameplayTag Reason)
 {
 	if (!Reason.IsValid() || SuppressionReasons.HasTagExact(Reason))
 	{
@@ -145,7 +144,7 @@ void UFVInteractorComponent::AddSuppression(FGameplayTag Reason)
 	SetState(EFVInteractorState::Suppressed);
 }
 
-void UFVInteractorComponent::RemoveSuppression(FGameplayTag Reason)
+void UFVInteractorComponent::RemoveSuppression(const FGameplayTag Reason)
 {
 	if (!SuppressionReasons.HasTagExact(Reason))
 	{
@@ -167,7 +166,7 @@ void UFVInteractorComponent::RemoveSuppression(FGameplayTag Reason)
 	}
 }
 
-void UFVInteractorComponent::SetState(EFVInteractorState NewState)
+void UFVInteractorComponent::SetState(const EFVInteractorState NewState)
 {
 	if (State == NewState)
 	{
@@ -178,7 +177,7 @@ void UFVInteractorComponent::SetState(EFVInteractorState NewState)
 	StateChanged.Broadcast(State);
 }
 
-bool UFVInteractorComponent::PushInput(FGameplayTag InputTag, EFVInteractionInputPhase Phase)
+bool UFVInteractorComponent::BeginInteraction(const FGameplayTag InputTag)
 {
 #if !UE_BUILD_SHIPPING
 	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
@@ -187,21 +186,8 @@ bool UFVInteractorComponent::PushInput(FGameplayTag InputTag, EFVInteractionInpu
 		Debug->DebugInteractionOutcome(EFVDebugInteractionOutcome::NoPrompt);
 	}
 #endif
-
-	if (State == EFVInteractorState::Interacting)
-	{
-		if (!ActiveCommit.InputTag.MatchesTagExact(InputTag))
-		{
-			return false;
-		}
-		
-		PendingPresses += Phase == EFVInteractionInputPhase::Pressed ? 1 : 0;
-		bPendingRelease |= Phase == EFVInteractionInputPhase::Released;
-		bPendingCancel |= Phase == EFVInteractionInputPhase::Cancelled;
-		return true;
-	}
-
-	if (State != EFVInteractorState::Awake || Phase != EFVInteractionInputPhase::Pressed)
+	
+	if (State != EFVInteractorState::Awake)
 	{
 		return false;
 	}
@@ -212,11 +198,7 @@ bool UFVInteractorComponent::PushInput(FGameplayTag InputTag, EFVInteractionInpu
 		return false;
 	}
 
-	const FFVInteractionOffer* Offer = CachedOffers.FindByPredicate([&InputTag](const FFVInteractionOffer& Candidate)
-	{
-		return Candidate.InputTag.MatchesTagExact(InputTag);
-	});
-
+	const FFVInteractionOffer* Offer = FindOffer(InputTag);
 	if (!Offer || !Offer->CanExecute())
 	{
 #if !UE_BUILD_SHIPPING
@@ -233,26 +215,37 @@ bool UFVInteractorComponent::PushInput(FGameplayTag InputTag, EFVInteractionInpu
 	ActiveCommit.InputTag = Offer->InputTag;
 	ActiveCommit.Interactable = Target;
 	ActiveCommit.Interactor = this;
-
-	ActiveMode = Offer->InputMode == EFVInteractionInputMode::Default
-		? EFVInteractionInputMode::Press
-		: Offer->InputMode;
-	ActiveDuration = Offer->InteractionPeriod < 0.f
-		? UFVInteractionSystemSettings::Get().InteractableBaseSettings.DefaultInteractionPeriod
-		: Offer->InteractionPeriod;
-	ActiveElapsed = 0.f;
-	ActivePresses = 0;
-	ActiveRequiredPresses = FMath::Max(Offer->RequiredPresses, 1);
-	PendingPresses = 0;
-	bPendingRelease = false;
-	bPendingRelease = false;
-
+	
 	SetState(EFVInteractorState::Interacting);
 	SetComponentTickInterval(0.f);
 	Target->StartInteraction(ActiveCommit.ActionTag, this);
 	InteractionCommitStarted.Broadcast(ActiveCommit);
 
 	return true;
+}
+
+void UFVInteractorComponent::UpdateInteraction(const float Progress)
+{
+	if (State == EFVInteractorState::Interacting)
+	{
+		ProgressInteraction(FMath::Clamp(Progress, 0.f, 1.f));
+	}
+}
+
+void UFVInteractorComponent::CommitInteraction()
+{
+	if (State == EFVInteractorState::Interacting)
+	{
+		FinishInteraction(true);
+	}
+}
+
+void UFVInteractorComponent::CancelInteraction(const FGameplayTag Reason)
+{
+	if (State == EFVInteractorState::Interacting)
+	{
+		FinishInteraction(false);
+	}
 }
 
 void UFVInteractorComponent::TickInteraction(float DeltaTime)
@@ -265,8 +258,9 @@ void UFVInteractorComponent::TickInteraction(float DeltaTime)
 	PendingPresses = 0;
 	bPendingRelease = false;
 	bPendingCancel = false;
+	float Progress = 1.f;
 
-	UFVInteractableComponent* Target = ActiveCommit.Interactable;
+	const UFVInteractableComponent* Target = ActiveCommit.Interactable;
 	if (!IsValid(Target) || !InteractableIsInReach(Target))
 	{
 		CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_FocusLost);
@@ -292,20 +286,18 @@ void UFVInteractorComponent::TickInteraction(float DeltaTime)
 		return;
 	}
 
-	float Progress = 1.f;
-
-	switch (ActiveMode)
+	if (ActiveMode == EFVInteractionInputMode::Hold)
 	{
-	case EFVInteractionInputMode::Hold:
 		if (bReleased)
 		{
 			CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_Released);
 			return;
 		}
 		Progress = ActiveDuration > 0.f ? FMath::Clamp(ActiveElapsed / ActiveDuration, 0.f, 1.f) : 1.f;
-		break;
-
-	case EFVInteractionInputMode::Mash:
+	}
+	
+	if (ActiveMode == EFVInteractionInputMode::Mash)
+	{
 		ActivePresses += Presses;
 		if (ActiveDuration > 0.f && ActiveElapsed >= ActiveDuration && ActivePresses < ActiveRequiredPresses)
 		{
@@ -313,18 +305,18 @@ void UFVInteractorComponent::TickInteraction(float DeltaTime)
 			return;
 		}
 		Progress = FMath::Clamp(ActivePresses / static_cast<float>(ActiveRequiredPresses), 0.f, 1.f);
-		break;
-
-	default:
-		break;
 	}
-
+	
 	ProgressInteraction(Progress);
 
 	if (Progress >= 1.f)
 	{
 		FinishInteraction(true);
 	}
+}
+
+void UFVInteractorComponent::ValidateInteraction()
+{
 }
 
 void UFVInteractorComponent::CancelInteraction(const FGameplayTag& Reason)
@@ -337,7 +329,7 @@ void UFVInteractorComponent::CancelInteraction(const FGameplayTag& Reason)
 	FinishInteraction(false);
 }
 
-void UFVInteractorComponent::FinishInteraction(bool bSuccess)
+void UFVInteractorComponent::FinishInteraction(const bool bSuccess)
 {
 #if !UE_BUILD_SHIPPING
 	if (bSuccess)
@@ -367,6 +359,14 @@ void UFVInteractorComponent::FinishInteraction(bool bSuccess)
 	RefreshOffers();
 }
 
+const FFVInteractionOffer* UFVInteractorComponent::FindOffer(const FGameplayTag& InputTag)
+{
+	return CachedOffers.FindByPredicate([&InputTag](const FFVInteractionOffer& Candidate)
+	{
+		return Candidate.InputTag.MatchesTagExact(InputTag);
+	});
+}
+
 void UFVInteractorComponent::ProgressInteraction(const float Progress)
 {
 	InteractionCommitProgressed.Broadcast(ActiveCommit, Progress);
@@ -387,7 +387,7 @@ bool UFVInteractorComponent::IsOfferAvailable(const FFVInteractionOffer& Offer) 
 	return Offer.AreTagsSatisfied(GrantedTags);
 }
 
-void UFVInteractorComponent::GrantTag(FGameplayTag NewTag)
+void UFVInteractorComponent::GrantTag(const FGameplayTag NewTag)
 {
 	if (!NewTag.IsValid() || GrantedTags.HasTagExact(NewTag))
 	{
@@ -398,7 +398,7 @@ void UFVInteractorComponent::GrantTag(FGameplayTag NewTag)
 	RefreshOffers();
 }
 
-void UFVInteractorComponent::RemoveTag(FGameplayTag OldTag)
+void UFVInteractorComponent::RemoveTag(const FGameplayTag OldTag)
 {
 	if (!GrantedTags.HasTagExact(OldTag))
 	{
@@ -493,7 +493,7 @@ void UFVInteractorComponent::PerformTrace()
 #endif
 }
 
-bool UFVInteractorComponent::PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target)
+bool UFVInteractorComponent::PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target) const
 {
 	FHitResult OcclusionHit;
 	FCollisionQueryParams QueryParams;

@@ -1,5 +1,5 @@
 #include "FVPlayerController.h"
-#include "Input/FVInputComponent.h"
+#include "Core/FVInputComponent.h"
 #include "FVCoreTags.h"
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -14,15 +14,15 @@
 #include "Logging/FVLogSystem.h"
 #include "Player/FVInventoryUIRouterComponent.h"
 #include "Player/FVDialogueUIRouterComponent.h"
-#include "Systems/FVAssetManager.h"
-#include "Core/FVInteractionTypes.h"
 #include "Components/FVInteractorComponent.h"
+#include "Core/FVGestureComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
 
 AFVPlayerController::AFVPlayerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	GestureComponent = CreateDefaultSubobject<UFVGestureComponent>(TEXT("GestureComponent"));
 	InventoryUIRouterComponent = CreateDefaultSubobject<UFVInventoryUIRouterComponent>(TEXT("InventoryUIRouterComponent"));
 	DialogueUIRouterComponent = CreateDefaultSubobject<UFVDialogueUIRouterComponent>(TEXT("DialogueUIRouterComponent"));
 }
@@ -96,8 +96,8 @@ void AFVPlayerController::InitializeInput()
     FVIC->BindAbilityActions(
         InputConfig,
         this,
-        &ThisClass::Input_AbilityInputTagPressed,
-        &ThisClass::Input_AbilityInputTagReleased,
+        &ThisClass::Input_AbilityInputPressed,
+        &ThisClass::Input_AbilityInputReleased,
         AbilityBindHandles
     );
 
@@ -288,7 +288,7 @@ void AFVPlayerController::Input_AimCompleted(const FInputActionValue& Value)
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
+void AFVPlayerController::Input_AbilityInputPressed(const FFVGesture& Gesture)
 {
     const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
     if (!FVPlayer)
@@ -296,21 +296,29 @@ void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
         return;
     }
 
-	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
+	if (GestureComponent)
+	{
+		if (GestureComponent->PushInput(Gesture.InputTag, EFVInputPhase::Pressed))
+		{
+			return;
+		}
+	}
+	
+	if (Gesture.InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
 	{
 		if (UFVInteractorComponent* Interactor = FVPlayer->GetInteractorComponent())
 		{
-			Interactor->PushInput(InputTag, EFVInteractionInputPhase::Pressed);
+			Interactor->BeginInteraction(InputTag, EFVInputPhase::Pressed);
 		}
 
 		return;
 	}
 
-	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(InputTag);
+	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(Gesture.InputTag);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-void AFVPlayerController::Input_AbilityInputTagReleased(FGameplayTag InputTag)
+void AFVPlayerController::Input_AbilityInputReleased(const FFVGesture& Gesture)
 {
 	const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
 	if (!FVPlayer)
@@ -318,15 +326,15 @@ void AFVPlayerController::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 		return;
 	}
 
-	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
+	if (Gesture.InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
 	{
 		if (UFVInteractorComponent* Interactor = FVPlayer->GetInteractorComponent())
 		{
-			Interactor->PushInput(InputTag, EFVInteractionInputPhase::Released);
+			Interactor->BeginInteraction(InputTag, EFVInputPhase::Released);
 		}
 
 		return;
 	}
 
-	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagReleased(InputTag);
+	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagReleased(Gesture.InputTag);
 }

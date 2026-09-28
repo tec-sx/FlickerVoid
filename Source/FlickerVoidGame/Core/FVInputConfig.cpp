@@ -1,4 +1,4 @@
-#include "Input/FVInputConfig.h"
+#include "FVInputConfig.h"
 #include "InputAction.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInputConfig)
