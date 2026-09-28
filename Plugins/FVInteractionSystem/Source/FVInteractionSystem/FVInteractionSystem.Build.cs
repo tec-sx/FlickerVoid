@@ -28,7 +28,8 @@ public class FVInteractionSystem : ModuleRules
 				"Core",
 				"GameplayTags",
 				"InputCore",
-			}
+                "FVInputSystem",
+            }
 			);
 			
 		
@@ -39,7 +40,6 @@ public class FVInteractionSystem : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"DeveloperSettings",
-				"FVInputSystem"
 			}
 			);
 		

@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Core/FVCoreInputTypes.h"
+#include "Core/FVInputTypes.h"
 #include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
+
 #include "FVGestureComponent.generated.h"
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -17,7 +18,7 @@ public:
 	UFVGestureComponent();
 	
 	UFUNCTION(BlueprintCallable, Category="Gestures")
-	bool BeginGesture(const FFVGesture& InGesture);
+	bool BeginGesture(const FGameplayTag InInputTag, const FFVGesture& InGesture);
 	
 	UFUNCTION(BlueprintCallable, Category="Gestures")
 	bool PushInput(const FGameplayTag InputTag, const EFVInputPhase Phase);
@@ -44,6 +45,7 @@ private:
 	EFVGestureStatus EvaluateHold();
 	EFVGestureStatus EvaluateMash(const float DeltaTime);
 	
+	FGameplayTag ActiveInputTag;
 	TOptional<FFVGesture> ActiveGesture;
 	
 	float Elapsed = 0.f;

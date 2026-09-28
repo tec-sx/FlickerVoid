@@ -17,8 +17,6 @@ UFVInteractableComponent::UFVInteractableComponent()
 	, DetectionWeight(1)
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	
-	ComponentTags.Add(TEXT("InteractableComponent"));
 }
 
 void UFVInteractableComponent::BeginPlay()
@@ -40,6 +38,8 @@ void UFVInteractableComponent::BeginPlay()
 			DetectablePrimitives.Add(Primitive);
 		}
 	}
+
+	ProcessDependencies();
 
 	Registry = GetWorld()->GetSubsystem<UFVInteractionRegistrySubsystem>();
 
@@ -235,7 +235,7 @@ void UFVInteractableComponent::StartCooldown()
 	{
 		World->GetTimerManager().SetTimer(
 			Timer_Cooldown,
-			[this]() { SetState(EFVInteractableState::Awake); },
+			FTimerDelegate::CreateWeakLambda(this, [this]() { SetState(EFVInteractableState::Awake); }),
 			CooldownPeriod,
 			false);
 	}
@@ -270,6 +270,7 @@ void UFVInteractableComponent::AddSuppression(FGameplayTag Reason)
 	}
 
 	SuppressionReasons.AddTag(Reason);
+	GetWorld()->GetTimerManager().ClearTimer(Timer_Cooldown);
 	SetState(EFVInteractableState::Suppressed);
 }
 

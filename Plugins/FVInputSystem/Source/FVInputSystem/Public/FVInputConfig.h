@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/FVCoreInputTypes.h"
+#include "Core/FVInputTypes.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
 
@@ -17,7 +17,7 @@ struct FFVInputAction
 	TObjectPtr<const UInputAction> InputAction = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FFVGesture Gesture;
+	FGameplayTag InputTag;
 };
 
 UCLASS(BlueprintType, Const)

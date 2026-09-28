@@ -1,5 +1,6 @@
 #pragma once
 #include "GameplayTagContainer.h"
+#include "Core/FVInputTypes.h"
 
 #include "FVInteractionTypes.generated.h"
 
@@ -93,6 +94,9 @@ struct FVINTERACTIONSYSTEM_API FFVInteractionOffer
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Interaction.Action"))
 	FGameplayTag ActionTag;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ShowOnlyInnerProperties))
+	FFVGesture Gesture;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Requirements")
 	FGameplayTagContainer RequiredTags;
 
@@ -137,6 +141,7 @@ struct FVINTERACTIONSYSTEM_API FFVInteractionOffer
 	{
 		return InputTag == Other.InputTag &&
 			ActionTag == Other.ActionTag &&
+			Gesture == Other.Gesture &&
 			bRequirementsMet == Other.bRequirementsMet &&
 			RequirementGate == Other.RequirementGate &&
 			RemainingUses == Other.RemainingUses &&

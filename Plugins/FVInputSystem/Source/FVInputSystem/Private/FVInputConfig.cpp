@@ -7,7 +7,7 @@ const UInputAction* UFVInputConfig::FindNativeInputActionForTag(const FGameplayT
 {
 	for (const FFVInputAction& Action : NativeInputActions)
 	{
-		if (Action.InputAction && (Action.Gesture.InputTag == InputTag))
+		if (Action.InputAction && (Action.InputTag == InputTag))
 		{
 			return Action.InputAction;
 		}
@@ -25,7 +25,7 @@ const UInputAction* UFVInputConfig::FindAbilityInputActionForTag(const FGameplay
 {
 	for (const FFVInputAction& Action : AbilityInputActions)
 	{
-		if (Action.InputAction && (Action.Gesture.InputTag == InputTag))
+		if (Action.InputAction && (Action.InputTag == InputTag))
 		{
 			return Action.InputAction;
 		}
@@ -48,7 +48,7 @@ TArray<FGameplayTag> UFVInputConfig::GetAllNativeInputTags() const
 	{
 		if (Action.InputAction)
 		{
-			Tags.Add(Action.Gesture.InputTag);
+			Tags.Add(Action.InputTag);
 		}
 	}
 	return Tags;
@@ -63,7 +63,7 @@ TArray<FGameplayTag> UFVInputConfig::GetAllAbilityInputTags() const
 	{
 		if (Action.InputAction)
 		{
-			Tags.Add(Action.Gesture.InputTag);
+			Tags.Add(Action.InputTag);
 		}
 	}
 	return Tags;

@@ -62,16 +62,16 @@ void UFVInputComponent::BindAbilityActions(const UFVInputConfig* InputConfig, Us
 
 	for (const FFVInputAction& Action : InputConfig->AbilityInputActions)
 	{
-		if (Action.InputAction && Action.Gesture.InputTag.IsValid())
+		if (Action.InputAction && Action.InputTag.IsValid())
 		{
 			if (PressedFunc)
 			{
-				BindHandles.Add(BindAction(Action.InputAction, ETriggerEvent::Started, Object, PressedFunc, Action.Gesture).GetHandle());
+				BindHandles.Add(BindAction(Action.InputAction, ETriggerEvent::Started, Object, PressedFunc, Action.InputTag).GetHandle());
 			}
 
 			if (ReleasedFunc)
 			{
-				BindHandles.Add(BindAction(Action.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, Action.Gesture).GetHandle());
+				BindHandles.Add(BindAction(Action.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, Action.InputTag).GetHandle());
 			}
 		}
 	}

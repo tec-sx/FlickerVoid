@@ -11,6 +11,7 @@
 #include "Subsystems/FVInteractionRegistrySubsystem.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/FVGestureComponent.h"
 
 #if !UE_BUILD_SHIPPING
 #include "Subsystems/FVInteractionDebugSubsystem.h"
@@ -65,6 +66,7 @@ void UFVInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	
 	if (State == EFVInteractorState::Interacting)
 	{
+		TickInteraction(DeltaTime);
 		return;
 	}
 
@@ -106,6 +108,7 @@ void UFVInteractorComponent::EnableTracing()
 
 void UFVInteractorComponent::DisableTracing()
 {
+	CancelInteraction(FGameplayTag());
 	ReleaseTargetInteractable();
 	RefreshOffers();
 	PrimaryComponentTick.SetTickFunctionEnable(false);
@@ -209,6 +212,14 @@ bool UFVInteractorComponent::BeginInteraction(const FGameplayTag InputTag)
 		return false;
 	}
 
+	UFVGestureComponent* Gesture = ResolveGestureComponent();
+	if (!Gesture || !Gesture->BeginGesture(InputTag, Offer->Gesture))
+	{
+		return false;
+	}
+
+	Gesture->PushInput(InputTag, EFVInputPhase::Pressed);
+
 	ActiveCommit = FFVInteractionCommit();
 	ActiveCommit.ActionTag = Offer->ActionTag;
 	ActiveCommit.InputTag = Offer->InputTag;
@@ -220,23 +231,46 @@ bool UFVInteractorComponent::BeginInteraction(const FGameplayTag InputTag)
 	Target->StartInteraction(ActiveCommit.ActionTag, this);
 	InteractionCommitStarted.Broadcast(ActiveCommit);
 
+	TickInteraction(0.f);
 	return true;
 }
 
-void UFVInteractorComponent::UpdateInteraction(const float Progress)
+void UFVInteractorComponent::TickInteraction(const float DeltaTime)
 {
-	if (State == EFVInteractorState::Interacting)
+	UFVGestureComponent* Gesture = GestureComponent.Get();
+	if (!Gesture || !ValidateActiveInteraction())
 	{
-		ProgressInteraction(FMath::Clamp(Progress, 0.f, 1.f));
+		FinishInteraction(false);
+		return;
 	}
+
+	const EFVGestureStatus Status = Gesture->UpdateGesture(DeltaTime);
+	if (Status != EFVGestureStatus::Running)
+	{
+		FinishInteraction(Status == EFVGestureStatus::Completed);
+		return;
+	}
+
+	const float Progress = Gesture->GetProgress();
+	ActiveCommit.Interactable->ProgressInteraction(ActiveCommit.ActionTag, this, Progress);
+	InteractionCommitProgressed.Broadcast(ActiveCommit, Progress);
 }
 
-void UFVInteractorComponent::CommitInteraction()
+bool UFVInteractorComponent::ValidateActiveInteraction()
 {
-	if (State == EFVInteractorState::Interacting)
+	const UFVInteractableComponent* Target = TargetInteractable.Get();
+	if (!Target || Target != ActiveCommit.Interactable || !InteractableIsInReach(Target))
 	{
-		FinishInteraction(true);
+		return false;
 	}
+
+	if (Target->GetState() != EFVInteractableState::Interacting)
+	{
+		return false;
+	}
+
+	const FFVInteractionOffer* Offer = FindOffer(ActiveCommit.InputTag);
+	return Offer && Offer->CanExecute();
 }
 
 void UFVInteractorComponent::CancelInteraction(const FGameplayTag Reason)
@@ -249,6 +283,11 @@ void UFVInteractorComponent::CancelInteraction(const FGameplayTag Reason)
 
 void UFVInteractorComponent::FinishInteraction(const bool bSuccess)
 {
+	if (UFVGestureComponent* Gesture = GestureComponent.Get())
+	{
+		Gesture->ResetGesture();
+	}
+
 #if !UE_BUILD_SHIPPING
 	if (bSuccess)
 	{
@@ -259,9 +298,11 @@ void UFVInteractorComponent::FinishInteraction(const bool bSuccess)
 	}
 #endif
 
+	const FFVInteractionCommit Commit = ActiveCommit;
+	ActiveCommit = FFVInteractionCommit();
+
 	SetState(EFVInteractorState::Awake);
 	SetComponentTickInterval(TickInterval);
-	InteractionCommitEnded.Broadcast(ActiveCommit, bSuccess);
 	
 	if (UFVInteractableComponent* Target = ActiveCommit.Interactable)
 	{
@@ -273,7 +314,7 @@ void UFVInteractorComponent::FinishInteraction(const bool bSuccess)
 		Target->EndInteraction(ActiveCommit.ActionTag, this, bSuccess);
 	}
 	
-	ActiveCommit = FFVInteractionCommit();
+	InteractionCommitEnded.Broadcast(ActiveCommit, bSuccess);
 	RefreshOffers();
 }
 
@@ -285,14 +326,28 @@ const FFVInteractionOffer* UFVInteractorComponent::FindOffer(const FGameplayTag&
 	});
 }
 
-void UFVInteractorComponent::ProgressInteraction(const float Progress)
+UFVGestureComponent* UFVInteractorComponent::ResolveGestureComponent()
 {
-	InteractionCommitProgressed.Broadcast(ActiveCommit, Progress);
-	
-	if (UFVInteractableComponent* Target = ActiveCommit.Interactable)
+	if (UFVGestureComponent* Cached = GestureComponent.Get())
 	{
-		Target->ProgressInteraction(ActiveCommit.ActionTag, this, Progress);
+		return Cached;
 	}
+
+	const APawn* Pawn = Cast<APawn>(GetOwner());
+	if (!Pawn)
+	{
+		return nullptr;
+	}
+
+	UFVGestureComponent* Found = Pawn->FindComponentByClass<UFVGestureComponent>();
+	if (!Found && Pawn->GetController())
+	{
+		Found = Pawn->GetController()->FindComponentByClass<UFVGestureComponent>();
+	}
+
+	ensureMsgf(Found, TEXT("%s requires a UFVGestureComponent on its pawn or controller."), *GetNameSafe(GetOwner()));
+	GestureComponent = Found;
+	return Found;
 }
 
 bool UFVInteractorComponent::IsOfferAvailable(const FFVInteractionOffer& Offer) const
@@ -325,6 +380,17 @@ void UFVInteractorComponent::RemoveTag(const FGameplayTag OldTag)
 
 	GrantedTags.RemoveTag(OldTag);
 	RefreshOffers();
+}
+
+bool UFVInteractorComponent::PushInput(const FGameplayTag InputTag, const EFVInputPhase Phase)
+{
+	if (State == EFVInteractorState::Interacting)
+	{
+		UFVGestureComponent* Gesture = GestureComponent.Get();
+		return Gesture && Gesture->PushInput(InputTag, Phase);
+	}
+
+	return Phase == EFVInputPhase::Pressed && BeginInteraction(InputTag);
 }
 
 void UFVInteractorComponent::PerformTrace()

@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "GameplayTagContainer.h"
 
-#include "FVCoreInputTypes.generated.h"
+#include "FVInputTypes.generated.h"
 
 UENUM(BlueprintType, meta=(ScriptName="InputPhase"))
 enum class EFVInputPhase : uint8
@@ -31,12 +31,9 @@ enum class EFVGestureStatus : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FFVGesture
+struct FVINPUTSYSTEM_API FFVGesture
 {
 	GENERATED_BODY()
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTag InputTag;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(Categories="Gestures"))
 	EFVGestureMode Mode = EFVGestureMode::Press;
@@ -46,4 +43,9 @@ struct FFVGesture
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin="1", EditCondition="Mode == EFVGestureMode::Mash", EditConditionHides))
 	int32 PressCount = 1;
+
+	bool operator==(const FFVGesture& Other) const
+	{
+		return Mode == Other.Mode && Duration == Other.Duration && PressCount == Other.PressCount;
+	}
 };

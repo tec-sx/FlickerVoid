@@ -288,37 +288,29 @@ void AFVPlayerController::Input_AimCompleted(const FInputActionValue& Value)
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-void AFVPlayerController::Input_AbilityInputPressed(FFVGesture Gesture)
+void AFVPlayerController::Input_AbilityInputPressed(FGameplayTag InputTag)
 {
     const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
     if (!FVPlayer)
     {
         return;
     }
-
-	if (GestureComponent)
-	{
-		if (GestureComponent->PushInput(Gesture.InputTag, EFVInputPhase::Pressed))
-		{
-			return;
-		}
-	}
 	
-	if (Gesture.InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
+	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
 	{
 		if (UFVInteractorComponent* Interactor = FVPlayer->GetInteractorComponent())
 		{
-			Interactor->BeginInteraction(Gesture.InputTag);
+			Interactor->PushInput(InputTag, EFVInputPhase::Pressed);
 		}
 
 		return;
 	}
 
-	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(Gesture.InputTag);
+	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(InputTag);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-void AFVPlayerController::Input_AbilityInputReleased(FFVGesture Gesture)
+void AFVPlayerController::Input_AbilityInputReleased(FGameplayTag InputTag)
 {
 	const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
 	if (!FVPlayer)
@@ -326,15 +318,15 @@ void AFVPlayerController::Input_AbilityInputReleased(FFVGesture Gesture)
 		return;
 	}
 
-	if (Gesture.InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
+	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
 	{
 		if (UFVInteractorComponent* Interactor = FVPlayer->GetInteractorComponent())
 		{
-			Interactor->BeginInteraction(Gesture.InputTag);
+			Interactor->PushInput(InputTag, EFVInputPhase::Released);
 		}
 
 		return;
 	}
 
-	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagReleased(Gesture.InputTag);
+	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagReleased(InputTag);
 }

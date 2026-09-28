@@ -15,6 +15,7 @@ class UFVInteractionDebugSubsystem;
 class UFVInteractableComponent;
 class UFVInteractorResponseComponent;
 class UFVInteractionRegistrySubsystem;
+class UFVGestureComponent;
 
 struct FTraceData
 {
@@ -85,16 +86,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Identity")
 	UE_API void RemoveTag(const FGameplayTag OldTag);
 	
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Trigger")
-	UE_API bool BeginInteraction(const FGameplayTag InputTag);
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Input")
+	UE_API bool PushInput(const FGameplayTag InputTag, const EFVInputPhase Phase);
 
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Trigger")
-	UE_API void UpdateInteraction(const float Progress);
-	
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Trigger")
-	UE_API void CommitInteraction();
-	
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Trigger")
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Input")
 	UE_API void CancelInteraction(const FGameplayTag Reason);
 	
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|State")
@@ -155,10 +150,19 @@ private:
 	bool InteractableIsInReach(const UFVInteractableComponent* Target) const;
 	bool IsOfferAvailable(const FFVInteractionOffer& Offer) const;
 	
-	void ProgressInteraction(const float Progress);
+	bool BeginInteraction(const FGameplayTag InputTag);
+	void TickInteraction(const float DeltaTime);
+	bool ValidateActiveInteraction();
 	void FinishInteraction(const bool bSuccess);
 	const FFVInteractionOffer* FindOffer(const FGameplayTag& InputTag);
-	
+	UFVGestureComponent* ResolveGestureComponent();
+
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UFVGestureComponent> GestureComponent;
+
+	UPROPERTY(Transient)
+	FFVInteractionCommit ActiveCommit;
+
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UFVInteractableComponent> TargetInteractable;
 
@@ -167,8 +171,7 @@ private:
 	
 	UPROPERTY(Transient)
 	TArray<FFVInteractionOffer> CachedOffers;
-
-	FFVInteractionCommit ActiveCommit;
+	
 	EFVInteractorState State;
 	FGameplayTagContainer SuppressionReasons;
 	

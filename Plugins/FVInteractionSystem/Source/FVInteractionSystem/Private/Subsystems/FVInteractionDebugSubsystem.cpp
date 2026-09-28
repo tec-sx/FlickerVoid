@@ -5,6 +5,7 @@
 
 #include "Components/FVInteractorComponent.h"
 #include "Components/FVInteractableComponent.h"
+#include "Subsystems/FVInteractionRegistrySubsystem.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -96,6 +97,8 @@ void UFVInteractionDebugSubsystem::Unregister()
 		UDebugDrawService::Unregister(HUDDrawHandle);
 		HUDDrawHandle.Reset();
 	}
+
+	InteractorPtr.Reset();
 }
 
 #pragma endregion 
@@ -106,28 +109,31 @@ void UFVInteractionDebugSubsystem::VisualizeRange(
 	const UWorld* World, 
 	const UFVInteractorComponent* Interactor, 
 	const float Radius, 
-	TArray<UFVInteractableComponent*> ActiveInteractables, 
+	TArray<TObjectPtr<UFVInteractableComponent>>& ActiveInteractables,
 	const float Interval)
 {
-	if (CVarInteractionDebugDraw.GetValueOnGameThread() == 0)
+	const int32 DrawLevel = CVarInteractionDebugDraw.GetValueOnGameThread();
+	if (DrawLevel == 0 || !Interactor || !Interactor->GetOwner())
 	{
 		return;
 	}
 	
-	const FVector Origin = Interactor->GetOwner() ? Interactor->GetOwner()->GetActorLocation() : FVector::ZeroVector;
+	DrawDebugCircle(World, Interactor->GetOwner()->GetActorLocation(), Radius, 64, FColor(0, 128, 255), false, Interval, 0, 0.5f, FVector::ForwardVector, FVector::RightVector, false);
 	
-	DrawDebugCircle(World, Origin, Radius, 64, FColor(0, 128, 255), false, Interval, 0, 0.5f, FVector::ForwardVector, FVector::RightVector, false);
-	
-	if (CVarInteractionDebugDraw.GetValueOnGameThread() == 2)
+	if (DrawLevel < 2)
 	{
-		if (ActiveInteractables.Num() > 0)
+		return;
+	}
+
+	for (const UFVInteractableComponent* Interactable : ActiveInteractables)
+	{
+		if (!IsValid(Interactable) || !Interactable->GetOwner())
 		{
-			for (const UFVInteractableComponent* Interactable : ActiveInteractables)
-			{
-				FColor Color = Interactor->GetTargetInteractable() == Interactable ? FColor::Green : FColor::Yellow;
-				DrawBoundingBox(World, Interactable->GetOwner(), Color, Interval);
-			}
+			continue;
 		}
+
+		const FColor Color = Interactor->GetTargetInteractable() == Interactable ? FColor::Green : FColor::Yellow;
+		DrawBoundingBox(World, Interactable->GetOwner(), Color, Interval);
 	}
 }
 
@@ -248,7 +254,10 @@ void UFVInteractionDebugSubsystem::DrawHUD(UCanvas* Canvas, APlayerController* P
 		
 		for (const FHitResult& HitResult : HitResults)
 		{
-			const UFVInteractableComponent* InteractableCandidate = HitResult.GetActor()->FindComponentByClass<UFVInteractableComponent>();
+			const AActor* ActorCandidate = HitResult.GetActor();
+			const UFVInteractableComponent* InteractableCandidate = ActorCandidate 
+				? ActorCandidate->FindComponentByClass<UFVInteractableComponent>() 
+				: nullptr;
 			
 			if (!IsValid(InteractableCandidate) || !InteractableCandidate->CanInteract())
 			{
@@ -257,7 +266,6 @@ void UFVInteractionDebugSubsystem::DrawHUD(UCanvas* Canvas, APlayerController* P
 			
 			const bool bIsFocused = InteractableCandidate == FocusedInteractable;
 			const bool bIsCompatible = InteractableCandidate->GetCompatibleInteractorTags().HasTag(Interactor->InteractorTag);
-			const AActor* ActorCandidate = InteractableCandidate->GetOwner();
 
 			DrawLine(
 				FString::Printf(
@@ -269,15 +277,13 @@ void UFVInteractionDebugSubsystem::DrawHUD(UCanvas* Canvas, APlayerController* P
 					InteractableCandidate->GetDetectionWeight(),
 					bIsCompatible ? TEXT("Yes") : TEXT("No")),
 				bIsFocused && bIsCompatible ? HeaderColor : TextColor);
-			
-			Y += LineHeight;
 		}
 	}
 	
 	// Occlusion 
 	{
-		const bool bIsOccluded = 
-			OcclusionHitResult.IsValidBlockingHit() && OcclusionHitResult.GetActor() != FocusedActor;
+		const AActor* OccluderActor = OcclusionHitResult.GetActor();
+		const bool bIsOccluded = OcclusionHitResult.IsValidBlockingHit() && OccluderActor != FocusedActor;
 		
 		Y += LineHeight * 0.5f;
 		DrawLine(FString::Printf(TEXT("Occlusion: gate=%s %s"),

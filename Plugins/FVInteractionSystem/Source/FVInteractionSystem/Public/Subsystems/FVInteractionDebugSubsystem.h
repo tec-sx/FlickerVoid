@@ -28,7 +28,7 @@ public:
 	void Register(const TWeakObjectPtr<UFVInteractorComponent> InInteractor);
 	void Unregister();
 	
-	static void VisualizeRange(const UWorld* World, const UFVInteractorComponent* Interactor, const float Radius, TArray<UFVInteractableComponent*> ActiveInteractables, const float Interval);
+	static void VisualizeRange(const UWorld* World, const UFVInteractorComponent* Interactor, const float Radius, TArray<TObjectPtr<UFVInteractableComponent>>& ActiveInteractables, const float Interval);
 	static void VisualizeTrace(const UWorld* World, const FTraceData& InTraceData, const float TraceRadius, const float Interval);
 	
 	void DebugTrace(const TArray<FHitResult>& InHitResults);

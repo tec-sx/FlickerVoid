@@ -33,7 +33,7 @@ void UFVInteractionRegistrySubsystem::Initialize(FSubsystemCollectionBase& Colle
 
 void UFVInteractionRegistrySubsystem::Deinitialize()
 {	
-	ActiveInteractables.Reset();
+	UnregisterInteractor();
 	RegisteredInteractables.Reset();
 
 	Super::Deinitialize();
@@ -119,20 +119,25 @@ void UFVInteractionRegistrySubsystem::UnregisterInteractor()
 void UFVInteractionRegistrySubsystem::Update()
 {
 	UFVInteractorComponent* Interactor = InteractorPtr.Get();
-	
-	if (!IsValid(Interactor))
+	const AActor* InteractorActor = Interactor ? Interactor->GetOwner() : nullptr;
+
+	if (!IsValid(InteractorActor))
 	{
 		ActiveInteractables.Reset();
 		return;
 	}
 	
-	const FVector Origin = Interactor->GetOwner() ? Interactor->GetOwner()->GetActorLocation() : FVector::ZeroVector;
-		
+	const FVector Origin = InteractorActor->GetActorLocation();
 	const FFVInteractionRegistrySettings& Settings = UFVInteractionSystemSettings::Get().RegistrySettings;
 	const float RadiusSq = FMath::Square(Settings.DefaultActivationRadius);
 	
 	for (int32 Index = RegisteredInteractables.Num() - 1; Index >= 0; --Index)
 	{
+		if (!RegisteredInteractables.IsValidIndex(Index))
+		{
+			continue;
+		}
+
 		UFVInteractableComponent* Interactable = RegisteredInteractables[Index];
 		const AActor* InteractableActor = IsValid(Interactable) ? Interactable->GetOwner() : nullptr;
 

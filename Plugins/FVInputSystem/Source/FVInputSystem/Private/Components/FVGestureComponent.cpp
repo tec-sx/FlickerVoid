@@ -9,13 +9,14 @@ UFVGestureComponent::UFVGestureComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-bool UFVGestureComponent::BeginGesture(const FFVGesture& InGesture)
+bool UFVGestureComponent::BeginGesture(const FGameplayTag InInputTag, const FFVGesture& InGesture)
 {
-	if (ActiveGesture.IsSet() || !InGesture.InputTag.IsValid())
+	if (ActiveGesture.IsSet() || !InInputTag.IsValid())
 	{
 		return false;
 	}
 	
+	ActiveInputTag = InInputTag;
 	ActiveGesture = InGesture;
 	Elapsed = 0.f;
 	Progress = 0.f;
@@ -28,7 +29,7 @@ bool UFVGestureComponent::BeginGesture(const FFVGesture& InGesture)
 
 bool UFVGestureComponent::PushInput(const FGameplayTag InputTag, const EFVInputPhase Phase)
 {
-	if (!ActiveGesture.IsSet() || !ActiveGesture->InputTag.MatchesTagExact(InputTag))
+	if (!ActiveGesture.IsSet() || !ActiveInputTag.MatchesTagExact(InputTag))
 	{
 		return false;
 	}
@@ -76,6 +77,7 @@ EFVGestureStatus UFVGestureComponent::UpdateGesture(const float DeltaTime)
 void UFVGestureComponent::ResetGesture()
 {
 	ActiveGesture.Reset();
+	ActiveInputTag = FGameplayTag();
 	Progress = 0.f;
 }
 
