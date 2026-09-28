@@ -18,7 +18,7 @@ class ABeverageItem : AItem
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
-        // TODO: Somehow Handle Usage with the drink offer on the interactable component.
+       Interactable.BindResponse(GameplayTags::Interaction_Action_Drink, ConsumeComponent);
     }
 
     UFUNCTION()

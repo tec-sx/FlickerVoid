@@ -160,14 +160,14 @@ void UFVInteractionDebugSubsystem::VisualizeTrace(
 		{
 			bHasHit = true;
 			DrawDebugLine(World, InTraceData.StartLocation, HitResult.ImpactPoint, FColor::Green,false,Interval,0, 0.25f);
-			DrawDebugCircle(World, HitResult.ImpactPoint, TraceRadius, 16, FColor::Green, false, -1.f, 0, 0.5f, DiscX, DiscY, false);
+			DrawDebugCircle(World, HitResult.ImpactPoint, TraceRadius, 16, FColor::Green, false, Interval, 0, 0.5f, DiscX, DiscY, false);
 		}
 	}
 	
 	if (!bHasHit)
 	{
 		DrawDebugLine(World, InTraceData.StartLocation, InTraceData.EndLocation, FColor::Blue,false,Interval,0, 0.25f);
-		DrawDebugCircle(World, InTraceData.EndLocation, TraceRadius, 16, FColor::Blue, false, -1.f, 0, 0.5f, DiscX, DiscY, false);
+		DrawDebugCircle(World, InTraceData.EndLocation, TraceRadius, 16, FColor::Blue, false, Interval, 0, 0.5f, DiscX, DiscY, false);
 	}
 }
 

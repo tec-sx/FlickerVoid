@@ -20,6 +20,7 @@ class UInteractableResponseComponent_Consume : UFVInteractableResponseComponent
 	UFUNCTION(BlueprintOverride)
 	void BindEvents(UFVInteractableComponent Interactable)
 	{
+        Print("Events bind");
         Interactable.InteractionEnded.AddUFunction(this, n"ConsumeItem");
 	}
 
@@ -32,6 +33,7 @@ class UInteractableResponseComponent_Consume : UFVInteractableResponseComponent
     UFUNCTION()
 	private void ConsumeItem(const FGameplayTag&in ActionTag, UFVInteractorComponent InInteractorComponent, bool bSuccess)
 	{
+        Print(ActionTag.ToString());
         // TODO: Handle action filtering logic in C++
         if (ActionTag != GameplayTags::Interaction_Action_Drink)
         {

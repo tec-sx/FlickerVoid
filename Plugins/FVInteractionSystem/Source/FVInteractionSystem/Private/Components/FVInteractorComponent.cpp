@@ -304,17 +304,17 @@ void UFVInteractorComponent::FinishInteraction(const bool bSuccess)
 	SetState(EFVInteractorState::Awake);
 	SetComponentTickInterval(TickInterval);
 	
-	if (UFVInteractableComponent* Target = ActiveCommit.Interactable)
+	if (UFVInteractableComponent* Target = Commit.Interactable)
 	{
 		if (bSuccess)
 		{
-			Target->ConsumeOffer(ActiveCommit.InputTag);
+			Target->ConsumeOffer(Commit.InputTag);
 		}
 
-		Target->EndInteraction(ActiveCommit.ActionTag, this, bSuccess);
+		Target->EndInteraction(Commit.ActionTag, this, bSuccess);
 	}
 	
-	InteractionCommitEnded.Broadcast(ActiveCommit, bSuccess);
+	InteractionCommitEnded.Broadcast(Commit, bSuccess);
 	RefreshOffers();
 }
 

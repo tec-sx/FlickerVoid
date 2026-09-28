@@ -4,17 +4,16 @@
 #include "Components/PrimitiveComponent.h"
 #include "Core/FVInteractionGameplayTags.h"
 #include "FVInteractionSystem.h"
-#include "FVInteractionSystemSettings.h"
 #include "Subsystems/FVInteractionRegistrySubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractableComponent)
 
 UFVInteractableComponent::UFVInteractableComponent()
 	: InteractableType(FVInteractionGameplayTags::Interactable)
-	, State(EFVInteractableState::Idle)
 	, CooldownPeriod(0.f)
 	, CollisionChannel(ECC_Camera)
 	, DetectionWeight(1)
+	, State(EFVInteractableState::Idle)
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
@@ -94,14 +93,6 @@ bool UFVInteractableComponent::IsTransitionAllowed(EFVInteractableState From, EF
 
 	switch (To)
 	{
-	case EFVInteractableState::Awake:
-		if (From == EFVInteractableState::Interacting)
-		{
-			LogRejection(TEXT("Finish or cancel the interaction before waking."));
-			return false;
-		}
-		break;
-
 	case EFVInteractableState::Interacting:
 		if (From != EFVInteractableState::Awake && From != EFVInteractableState::Paused)
 		{
@@ -109,7 +100,6 @@ bool UFVInteractableComponent::IsTransitionAllowed(EFVInteractableState From, EF
 			return false;
 		}
 		break;
-
 	case EFVInteractableState::Paused:
 		if (From != EFVInteractableState::Interacting)
 		{
@@ -117,7 +107,6 @@ bool UFVInteractableComponent::IsTransitionAllowed(EFVInteractableState From, EF
 			return false;
 		}
 		break;
-
 	case EFVInteractableState::Cooldown:
 	case EFVInteractableState::Completed:
 		if (From != EFVInteractableState::Interacting && From != EFVInteractableState::Awake)
