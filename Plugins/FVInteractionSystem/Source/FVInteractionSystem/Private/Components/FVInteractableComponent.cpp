@@ -299,7 +299,7 @@ void UFVInteractableComponent::StartInteraction(const FGameplayTag& ActionTag, U
 void UFVInteractableComponent::ProgressInteraction(
 	const FGameplayTag& ActionTag, 
 	UFVInteractorComponent* Interactor,
-	float Progress)
+	const float Progress) const
 {
 	InteractionProgressed.Broadcast(ActionTag, Interactor, Progress);
 }

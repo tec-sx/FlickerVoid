@@ -162,7 +162,7 @@ private:
 
 	bool SetState(EFVInteractableState NewState);
 	void StartInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor);
-	void ProgressInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, float Progress);
+	void ProgressInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const float Progress) const;
 	void EndInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const bool bSuccess);
 	
 	void ApplyStateTag(EFVInteractableState OldState, EFVInteractableState NewState) const;
