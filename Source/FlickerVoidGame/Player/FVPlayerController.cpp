@@ -1,5 +1,4 @@
 #include "FVPlayerController.h"
-#include "Core/FVInputComponent.h"
 #include "FVCoreTags.h"
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -14,8 +13,9 @@
 #include "Logging/FVLogSystem.h"
 #include "Player/FVInventoryUIRouterComponent.h"
 #include "Player/FVDialogueUIRouterComponent.h"
+#include "Components/FVInputComponent.h"
+#include "Components/FVGestureComponent.h"
 #include "Components/FVInteractorComponent.h"
-#include "Core/FVGestureComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
 

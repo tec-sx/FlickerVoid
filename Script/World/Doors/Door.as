@@ -11,8 +11,6 @@ class ADoor : AActor
 {
     UPROPERTY(DefaultComponent)
     UFVInteractableComponent Interactable;
-    default Interactable.Type = GameplayTags::Interactable_Door;
-    default Interactable.CollisionChannel = ECollisionChannel::ECC_GameTraceChannel1;
     default Interactable.AddCompatibleInteractorTag(GameplayTags::Interactor_Tag_Player);
     default Interactable.AddCompatibleInteractorTag(GameplayTags::Interactor_Tag_AI);
 

@@ -39,6 +39,7 @@ public class FVInteractionSystem : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"DeveloperSettings",
+				"FVInputSystem"
 			}
 			);
 		

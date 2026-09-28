@@ -2,7 +2,6 @@ class ARigidItem : AActor
 {
     UPROPERTY(DefaultComponent)
     UFVInteractableComponent Interactable;
-    default Interactable.Type = GameplayTags::Interactable_Item;
     
     UPROPERTY(DefaultComponent, RootComponent)
     USceneComponent SceneRoot;

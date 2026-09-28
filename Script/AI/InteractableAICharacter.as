@@ -12,7 +12,6 @@ class AInteractableAICharacter : AFVAICharacter
 
     UPROPERTY(DefaultComponent, Category = "Interaction")
     UFVInteractableComponent InteractableComponent;
-    default InteractableComponent.Type = GameplayTags::Interactable_Character;
     
     UPROPERTY(DefaultComponent, Category="UI")
     UWidgetComponent FloatingTextBarComponent;

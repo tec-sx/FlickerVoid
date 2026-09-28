@@ -23,6 +23,12 @@
 		"Name": "FVInteractionSystemEditor",
 		"Type": "Editor",
 		"LoadingPhase": "Default"
-	}]
+	}],
+	"Plugins": [
+		{
+			"Name": "FVInputSystem",
+			"Enabled": true
+		}
+	]
 }
 
