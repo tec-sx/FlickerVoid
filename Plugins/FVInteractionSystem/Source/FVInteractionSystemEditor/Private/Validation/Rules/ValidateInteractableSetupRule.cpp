@@ -61,22 +61,22 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 					*Offer.InputTag.ToString()));
 			}
 
-			if (Offer.InputMode == EFVInteractionInputMode::Hold && Offer.InteractionPeriod == 0.f)
-			{
-				Context.MessageLog.Error(*FString::Printf(
-					TEXT("Interactable component '%s' offer '%s' uses Hold but has an interaction period of zero."),
-					*Interactable->GetName(),
-					*Offer.InputTag.ToString()));
-			}
-
-			if (Offer.InputMode == EFVInteractionInputMode::Mash && Offer.RequiredPresses <= 1)
-			{
-				Context.MessageLog.Warning(*FString::Printf(
-					TEXT("Interactable component '%s' offer '%s' uses Mash but requires %d presses."),
-					*Interactable->GetName(),
-					*Offer.InputTag.ToString(),
-					Offer.RequiredPresses));
-			}
+			// if (Offer.InputMode == EFVInteractionInputMode::Hold && Offer.InteractionPeriod == 0.f)
+			// {
+			// 	Context.MessageLog.Error(*FString::Printf(
+			// 		TEXT("Interactable component '%s' offer '%s' uses Hold but has an interaction period of zero."),
+			// 		*Interactable->GetName(),
+			// 		*Offer.InputTag.ToString()));
+			// }
+			//
+			// if (Offer.InputMode == EFVInteractionInputMode::Mash && Offer.RequiredPresses <= 1)
+			// {
+			// 	Context.MessageLog.Warning(*FString::Printf(
+			// 		TEXT("Interactable component '%s' offer '%s' uses Mash but requires %d presses."),
+			// 		*Interactable->GetName(),
+			// 		*Offer.InputTag.ToString(),
+			// 		Offer.RequiredPresses));
+			// }
 
 			if (!Offer.ActionTag.IsValid())
 			{

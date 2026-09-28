@@ -8,9 +8,6 @@
 #include "Components/ActorComponent.h"
 #include "FVGestureComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFVGestureProgressed, FGameplayTag, InputTag, float, Progress);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFVGestureEnded, FGameplayTag, InputTag, bool, bSuccess);
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FLICKERVOID_API UFVGestureComponent final : public UActorComponent
 {
@@ -19,8 +16,6 @@ class FLICKERVOID_API UFVGestureComponent final : public UActorComponent
 public:
 	UFVGestureComponent();
 	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	
 	UFUNCTION(BlueprintCallable, Category="Gestures")
 	bool BeginGesture(const FFVGesture& InGesture);
 	
@@ -28,34 +23,32 @@ public:
 	bool PushInput(const FGameplayTag InputTag, const EFVInputPhase Phase);
 	
 	UFUNCTION(BlueprintCallable, Category="Gestures")
-	void AbortGesture();
-
-	UPROPERTY(BlueprintAssignable, Category="Gestures")
-	FFVGestureProgressed GestureProgressed;
+	EFVGestureStatus UpdateGesture(const float DeltaTime);
 	
-	UPROPERTY(BlueprintAssignable, Category="Gestures")
-	FFVGestureEnded GestureEnded;
+	UFUNCTION(BlueprintCallable, Category="Gestures")
+	void ResetGesture();
+	
+	UFUNCTION(BlueprintPure, Category="Gestures")
+	float GetProgress() const { return Progress; }
+	
+	const FFVGesture* GetActiveGesture() const {return ActiveGesture.GetPtrOrNull(); }
 	
 	UPROPERTY(EditAnywhere, Category="Gestures", meta=(ToolTip="Measure gestures in real time."))
 	bool bIgnoreTimeDilation;
 	
-	UPROPERTY(EditAnywhere, DisplayName="DecayPerSecond", Category="Gestures|Mash", meta=(ClampMin="1", ToolTip="Presses lost per second."))
+	UPROPERTY(EditAnywhere, DisplayName="DecayPerSecond", Category="Gestures|Mash", meta=(ClampMin="0", ToolTip="Presses lost per second."))
 	float MashDecayPerSecond;
 	
 private:
-	void HandleInput(const EFVInputPhase Phase);
-	void EndGesture(const bool bSuccess);
-	
-	EFVGestureStatus ProgressGesture(const float DeltaTime);
-	EFVGestureStatus ProgressPress();
-	EFVGestureStatus ProgressHold(const float DeltaTime);
-	EFVGestureStatus ProgressMash(const float DeltaTime);
+	EFVGestureStatus EvaluatePress();
+	EFVGestureStatus EvaluateHold();
+	EFVGestureStatus EvaluateMash(const float DeltaTime);
 	
 	TOptional<FFVGesture> ActiveGesture;
 	
 	float Elapsed = 0.f;
 	float Progress = 0.f;
 	float Presses = 0.f;
-	bool bHoldReleased = false;
-	bool bMashCanceled = false;
+	bool bReleased = false;
+	bool bCanceled = false;
 };

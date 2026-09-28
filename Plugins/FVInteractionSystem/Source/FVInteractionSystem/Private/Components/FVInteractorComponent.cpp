@@ -65,7 +65,6 @@ void UFVInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	
 	if (State == EFVInteractorState::Interacting)
 	{
-		ValidateInteraction();
 		return;
 	}
 
@@ -246,87 +245,6 @@ void UFVInteractorComponent::CancelInteraction(const FGameplayTag Reason)
 	{
 		FinishInteraction(false);
 	}
-}
-
-void UFVInteractorComponent::TickInteraction(float DeltaTime)
-{
-	ActiveElapsed += DeltaTime;
-
-	const int32 Presses = PendingPresses;
-	const bool bReleased = bPendingRelease;
-	const bool bCancelled = bPendingCancel;
-	PendingPresses = 0;
-	bPendingRelease = false;
-	bPendingCancel = false;
-	float Progress = 1.f;
-
-	const UFVInteractableComponent* Target = ActiveCommit.Interactable;
-	if (!IsValid(Target) || !InteractableIsInReach(Target))
-	{
-		CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_FocusLost);
-		return;
-	}
-
-	if (Target->GetState() == EFVInteractableState::Suppressed)
-	{
-		CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_Suppressed);
-		return;
-	}
-
-	const FFVInteractionOffer* Offer = Target->FindOffer(ActiveCommit.InputTag);
-	if (!Offer || !IsOfferAvailable(*Offer))
-	{
-		CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_RequirementFailed);
-		return;
-	}
-
-	if (bCancelled)
-	{
-		CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_Player);
-		return;
-	}
-
-	if (ActiveMode == EFVInteractionInputMode::Hold)
-	{
-		if (bReleased)
-		{
-			CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_Released);
-			return;
-		}
-		Progress = ActiveDuration > 0.f ? FMath::Clamp(ActiveElapsed / ActiveDuration, 0.f, 1.f) : 1.f;
-	}
-	
-	if (ActiveMode == EFVInteractionInputMode::Mash)
-	{
-		ActivePresses += Presses;
-		if (ActiveDuration > 0.f && ActiveElapsed >= ActiveDuration && ActivePresses < ActiveRequiredPresses)
-		{
-			CancelInteraction(FVInteractionGameplayTags::Interaction_Cancel_Timeout);
-			return;
-		}
-		Progress = FMath::Clamp(ActivePresses / static_cast<float>(ActiveRequiredPresses), 0.f, 1.f);
-	}
-	
-	ProgressInteraction(Progress);
-
-	if (Progress >= 1.f)
-	{
-		FinishInteraction(true);
-	}
-}
-
-void UFVInteractorComponent::ValidateInteraction()
-{
-}
-
-void UFVInteractorComponent::CancelInteraction(const FGameplayTag& Reason)
-{
-	if (State != EFVInteractorState::Interacting)
-	{
-		return;
-	}
-
-	FinishInteraction(false);
 }
 
 void UFVInteractorComponent::FinishInteraction(const bool bSuccess)

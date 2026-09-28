@@ -105,15 +105,6 @@ struct FVINTERACTIONSYSTEM_API FFVInteractionOffer
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Requirements")
 	EFVInteractionGate RequirementGate = EFVInteractionGate::Disable;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	EFVInteractionInputMode InputMode = EFVInteractionInputMode::Default;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "-1", Units = "s"))
-	float InteractionPeriod = -1.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "InputMode==EFVInteractionInputMode::Mash", ClampMin = "1"))
-	int32 RequiredPresses = 5;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "0"))
 	int32 Weight = 0;
 
@@ -149,7 +140,6 @@ struct FVINTERACTIONSYSTEM_API FFVInteractionOffer
 			bRequirementsMet == Other.bRequirementsMet &&
 			RequirementGate == Other.RequirementGate &&
 			RemainingUses == Other.RemainingUses &&
-			InputMode == Other.InputMode &&
 			Weight == Other.Weight;
 	}
 

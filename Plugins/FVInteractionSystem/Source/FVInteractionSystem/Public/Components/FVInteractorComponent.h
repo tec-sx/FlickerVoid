@@ -155,7 +155,6 @@ private:
 	bool InteractableIsInReach(const UFVInteractableComponent* Target) const;
 	bool IsOfferAvailable(const FFVInteractionOffer& Offer) const;
 	
-	void ValidateInteraction();
 	void ProgressInteraction(const float Progress);
 	void FinishInteraction(const bool bSuccess);
 	const FFVInteractionOffer* FindOffer(const FGameplayTag& InputTag);

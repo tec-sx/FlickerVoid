@@ -74,8 +74,8 @@ protected:
     // INPUT CALLBACKS - Abilities
     // ========================================================================
 
-    void Input_AbilityInputPressed(const FFVGesture& Gesture);
-    void Input_AbilityInputReleased(const FFVGesture& Gesture);
+    void Input_AbilityInputPressed(FFVGesture Gesture);
+    void Input_AbilityInputReleased(FFVGesture Gesture);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "FlivkerVoid|Input")
