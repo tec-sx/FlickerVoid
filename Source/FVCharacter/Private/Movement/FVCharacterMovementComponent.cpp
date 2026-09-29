@@ -52,10 +52,13 @@ void UFVCharacterMovementComponent::TickComponent(float DeltaTime, ELevelTick Ti
 	}
 
 	// Re-evaluate every tick so tag/state changes (not just mode changes) can drive handler switches.
-	UFVMovementHandlerBase* SelectedHandler = SelectHandler();
-	if (SelectedHandler && SelectedHandler != CurrentHandler)
+	if (CanInterruptCurrentHandler())
 	{
-		TransitionToHandler(SelectedHandler);
+		UFVMovementHandlerBase* SelectedHandler = SelectHandler();
+		if (SelectedHandler && SelectedHandler != CurrentHandler)
+		{
+			TransitionToHandler(SelectedHandler);
+		}
 	}
 
 	if (CurrentHandler && CurrentHandler->IsActive())
@@ -69,6 +72,11 @@ void UFVCharacterMovementComponent::OnMovementModeChanged(EMovementMode Previous
 	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
 	
 	if (!bIsInitialized)
+	{
+		return;
+	}
+
+	if (!CanInterruptCurrentHandler())
 	{
 		return;
 	}
@@ -140,7 +148,7 @@ void UFVCharacterMovementComponent::InitializeHandlers()
 UFVMovementHandlerBase* UFVCharacterMovementComponent::SelectHandler() const
 {
 	UFVMovementHandlerBase* BestHandler = nullptr;
-	int32 BestPriority = -1;
+	const FFVMovementHandlerInfo* BestInfo = nullptr;
 
 	for (UFVMovementHandlerBase* Handler : RegisteredHandlers)
 	{
@@ -161,38 +169,49 @@ UFVMovementHandlerBase* UFVCharacterMovementComponent::SelectHandler() const
 			continue;
 		}
 
-		if (Info.Priority > BestPriority)
+		if (!BestInfo || Info.HasHigherPriorityThan(*BestInfo))
 		{
 			BestHandler = Handler;
-			BestPriority = Info.Priority;
+			BestInfo = &Info;
 		}
 	}
 
 	return BestHandler;
 }
 
+bool UFVCharacterMovementComponent::CanInterruptCurrentHandler() const
+{
+	if (!CurrentHandler || !CurrentHandler->IsActive())
+	{
+		return true;
+	}
+
+	return CurrentHandler->GetConfig().bCanBeInterrupted;
+}
+
 void UFVCharacterMovementComponent::TransitionToHandler(UFVMovementHandlerBase* NewHandler)
 {
-	if (CurrentHandler && CurrentHandler->IsActive())
+	if (!NewHandler || NewHandler == CurrentHandler)
 	{
-		const FFVMovementHandlerInfo& CurrentConfig = CurrentHandler->GetConfig();
-		for (const FGameplayTag& Tag : CurrentConfig.GrantedTags)
-		{
-			ActiveTags.RemoveTag(Tag);
-		}
+		return;
+	}
 
+	if (CurrentHandler)
+	{
+		ActiveTags.RemoveTags(CurrentHandler->GetConfig().GrantedTags);
 		CurrentHandler->Exit();
+		CurrentHandler = nullptr;
+	}
+
+	// Tags are only granted once activation is confirmed, otherwise a failed Enter() leaks them.
+	NewHandler->Enter();
+	if (!NewHandler->IsActive())
+	{
+		return;
 	}
 
 	CurrentHandler = NewHandler;
-
-	const FFVMovementHandlerInfo& NewConfig = NewHandler->GetConfig();
-	for (const FGameplayTag& Tag : NewConfig.GrantedTags)
-	{
-		ActiveTags.AddTag(Tag);
-	}
-
-	CurrentHandler->Enter();
+	ActiveTags.AppendTags(NewHandler->GetConfig().GrantedTags);
 }
 
 TArray<UFVMovementHandlerBase*> UFVCharacterMovementComponent::GetAllHandlers() const
@@ -240,7 +259,7 @@ bool UFVCharacterMovementComponent::RegisterHandler(const FFVMovementHandlerInfo
 
 AFVCharacter* UFVCharacterMovementComponent::GetFVCharacter() const
 {
-	return Character ? Character : Cast<AFVCharacter>(GetOwner());
+	return Character ? Character.Get() : Cast<AFVCharacter>(GetOwner());
 }
 
 void UFVCharacterMovementComponent::ReloadConfiguration()
@@ -251,18 +270,18 @@ void UFVCharacterMovementComponent::ReloadConfiguration()
 		return;
 	}
 
-	// Exit current handler
-	if (CurrentHandler && CurrentHandler->IsActive())
+	if (CurrentHandler)
 	{
 		CurrentHandler->Exit();
 		CurrentHandler = nullptr;
 	}
 
-	// Reinitialize — InitializeHandlers selects the initial handler internally.
+	ActiveTags.Reset();
+
 	bIsInitialized = false;
 	InitializeHandlers();
 
-	UE_LOG(LogFVMovement, Log, TEXT("Movement configuration reloaded"));
+	FV_LOG_INFO(LogFVMovement, "Movement configuration reloaded");
 }
 
 #if WITH_EDITOR

@@ -34,17 +34,6 @@ namespace FVNarrativeTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestAccepted);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestCompleted);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestFailed);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event_QuestFailed);
-	
-	// ============================================================================
-	// QUEST STATE TAGS
-	// ============================================================================
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Unavailable);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Available);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Active);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Completed);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Failed);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_State_Abandoned);
 
 	// ============================================================================
 	// QUEST TYPE TAGS
@@ -55,20 +44,6 @@ namespace FVNarrativeTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_Type_Rehabilitation);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_Type_Errand);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Quest_Type_Social);
-
-	// ============================================================================
-	// OBJECTIVE TYPE TAGS
-	// ============================================================================
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Talk);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Investigate);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Infiltrate);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Obtain);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Deliver);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Attend);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Wait);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Threshold);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_MaintainState);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Objective_Type_Location);
 
 	// ============================================================================
 	// SANITY & PSYCHOLOGICAL STATE TAGS
@@ -133,6 +108,28 @@ namespace FVNarrativeTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Blocker_Trust_Insufficient);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Blocker_Memory_Required);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Blocker_Rehabilitation_Required);
+
+	// ============================================================================
+	// FACT TAGS (CHAPTER / QUEST SYSTEM)
+	// Roots only. Concrete facts are composed at runtime by FVQuestFactHelpers:
+	//   Fact.Chapter.<ChapterId>.Stage                            - sparse EFVQuestStage value
+	//   Fact.Chapter.<ChapterId>.Outcome                          - designer defined outcome id
+	//   Fact.Quest.<ChapterId>.<QuestId>.Stage                    - sparse EFVQuestStage value
+	//   Fact.Quest.<ChapterId>.<QuestId>.Outcome                  - designer defined outcome id
+	//   Fact.Quest.<ChapterId>.<QuestId>.Objective.<ObjId>        - undefined not issued, 0 active, 1 done
+	//   Fact.Quest.<ChapterId>.<QuestId>.Counter.<Counter>        - per quest tallies
+	// Quests nest under their chapter so UndefineFactsUnderTag can wipe either a whole
+	// chapter (Fact.Quest.<ChapterId>) or a single quest (Fact.Quest.<ChapterId>.<QuestId>).
+	//
+	// Whether a quest is REQUIRED to progress its chapter is deliberately not a fact.
+	// That is authored, immutable data; the fact DB holds mutable runtime state. The
+	// chapter's Flow graph declares it, by naming the gating quests in the condition
+	// group of its Wait For Fact Condition node.
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Chapter);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Chapter_Current);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Quest);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Dialogue);
 }
 
 #undef UE_API

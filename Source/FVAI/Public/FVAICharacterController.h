@@ -8,10 +8,6 @@
 
 class UBoxComponent;
 enum class EFVStateTreeEvent : uint8;
-class UAISenseConfig_Prediction;
-class UAISenseConfig_Damage;
-class UAISenseConfig_Hearing;
-class UAISenseConfig_Sight;
 class AFVAICharacter;
 class UFVStateTreeAIComponent;
 class AFVCharacter;
@@ -44,10 +40,7 @@ public:
 	
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
-	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
-	// Returns the State Tree AI Component for this character
-	// This component handles the AI behavior for the enemy character.
 	UFUNCTION(BlueprintCallable, Category = "AI", meta = (DisplayName = "Get State Tree AI Component"))
 	UFVStateTreeAIComponent* GetStateTreeAIComponent() const { return StateTreeAIComponent; };
 
@@ -102,6 +95,9 @@ public:
 	EFVStateTreeEvent CurrentStateTreeState;
 
 protected:
+	UFUNCTION(BlueprintPure, Category = "AI|Perception")
+	bool IsValidPerceptionTarget(const AActor* Actor) const;
+
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
@@ -114,18 +110,6 @@ private:
 	
 	UPROPERTY(Transient)
 	TObjectPtr<AFVAICharacter> PossesedCharacter = nullptr;
-	
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
-	TObjectPtr<UAISenseConfig_Sight> SightConfig;
-	
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
-	TObjectPtr<UAISenseConfig_Hearing> HearingConfig;
-	
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
-	TObjectPtr<UAISenseConfig_Damage> DamageConfig;
-	
-	UPROPERTY()
-	TObjectPtr<UAISenseConfig_Prediction> PredictionConfig;
 	
 	EFVStimulusSenseType CurrentStimulusSenseType = EFVStimulusSenseType::Unknown;
 };

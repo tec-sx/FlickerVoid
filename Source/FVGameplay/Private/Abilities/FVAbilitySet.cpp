@@ -3,7 +3,12 @@
 
 #include "Abilities/FVAbilitySet.h"
 #include "Abilities/FVGameplayAbility.h"
+#include "Abilities/FVInteractAbility.h"
 #include "Abilities/FVAbilitySystemComponent.h"
+
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVAbilitySet)
 
@@ -109,7 +114,32 @@ void UFVAbilitySet::PassToAbilitySystem(UFVAbilitySystemComponent* FVASC, FFVAbi
 			OutGrantedHandles->AddAbilitySpecHandle(AbilitySpecHandle);
 		}
 	}
+	
+	// Grant the interaction abilities
+	for (int32 AbilityIndex = 0; AbilityIndex < GrantedInteractionAbilities.Num(); ++AbilityIndex)
+	{
+		const FFVAbilitySet_InteractAbility& AbilityToGrant = GrantedInteractionAbilities[AbilityIndex];
 
+		if (!IsValid(AbilityToGrant.Ability))
+		{
+			UE_LOG(LogTemp, Error, TEXT("GrantedInteractionAbilities[%d] on ability set [%s] is not valid."), AbilityIndex, *GetNameSafe(this));
+			continue;
+		}
+
+		UFVInteractAbility* AbilityCDO = AbilityToGrant.Ability->GetDefaultObject<UFVInteractAbility>();
+
+		FGameplayAbilitySpec AbilitySpec(AbilityCDO, AbilityToGrant.AbilityLevel);
+		AbilitySpec.SourceObject = SourceObject;
+		AbilitySpec.GetDynamicSpecSourceTags().AddTag(AbilityToGrant.ActionTag);
+
+		const FGameplayAbilitySpecHandle AbilitySpecHandle = FVASC->GiveAbility(AbilitySpec);
+
+		if (OutGrantedHandles)
+		{
+			OutGrantedHandles->AddAbilitySpecHandle(AbilitySpecHandle);
+		}
+	}
+	
 	// Grant the gameplay effects.
 	for (int32 EffectIndex = 0; EffectIndex < GrantedGameplayEffects.Num(); ++EffectIndex)
 	{
@@ -130,3 +160,40 @@ void UFVAbilitySet::PassToAbilitySystem(UFVAbilitySystemComponent* FVASC, FFVAbi
 		}
 	}
 }
+
+#if WITH_EDITOR
+
+#define LOCTEXT_NAMESPACE "FVAbilitySet"
+
+EDataValidationResult UFVAbilitySet::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+
+	for (int32 Index = 0; Index < GrantedGameplayAbilities.Num(); ++Index)
+	{
+		const FFVAbilitySet_GameplayAbility& Entry = GrantedGameplayAbilities[Index];
+
+		if (!Entry.Ability)
+		{
+			Context.AddError(FText::Format(
+				LOCTEXT("NullAbility", "GrantedGameplayAbilities[{0}] has no Ability set."), Index));
+			Result = EDataValidationResult::Invalid;
+			continue;
+		}
+
+		if (Entry.Ability->IsChildOf(UFVInteractAbility::StaticClass()) && !Entry.InputTag.IsValid())
+		{
+			Context.AddError(FText::Format(
+				LOCTEXT("MissingInteractInputTag", "GrantedGameplayAbilities[{0}] ('{1}') is an interaction ability but has no InputTag; its slot cannot be resolved."),
+				Index,
+				FText::FromString(Entry.Ability->GetName())));
+			Result = EDataValidationResult::Invalid;
+		}
+	}
+
+	return Result;
+}
+
+#undef LOCTEXT_NAMESPACE
+
+#endif

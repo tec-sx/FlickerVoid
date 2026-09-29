@@ -1,25 +1,50 @@
-class APlayerCharacter : AFVCharacter
+class APlayerCharacter : AFVPlayerCharacter
 {
     UPROPERTY(DefaultComponent, Category = Movement)
     UMotionWarpingComponent MotionWarpingComponent;
 
-    UPROPERTY(DefaultComponent, Category = Interaction)
-    UFVInteractionInstigatorComponent InteractionInstigator;
-
     UPROPERTY(DefaultComponent, Category = Animation)
     UContextualAnimSceneActorComponent ContextualAnimation;
 
-    UPROPERTY(DefaultComponent, Category = Interaction)
-    UPlayerInteractionComponent InteractionComponent;
+    UPROPERTY(DefaultComponent, Category = Camera)
+    UGameplayCameraComponent GameplayCamera;
+
+    UPROPERTY(DefaultComponent)
+    UNavigationMarkerComponent NavigationMarker;
     
     UPROPERTY()
     UFVTraversalComponent Traversal;
+    
+    UPROPERTY()
+    FIKGoal RightHandIKGoal;
 
     bool bJustLanded = false;
     bool bIsRagdolling = false;
 
+    default InteractorComponent.InteractorTag = GameplayTags::Interactor_Tag_Player;
     default Mesh.SetRelativeLocation(FVector(0, 0, -CapsuleComponent.CapsuleHalfHeight));
     default Mesh.SetRelativeRotation(FRotator(0, -90, 0));
+
+    UFUNCTION(BlueprintOverride)
+    void Possessed(AController NewController)
+    {
+        APlayerCharacterController PlayerController = Cast<APlayerCharacterController>(NewController);
+
+        if (IsValid(PlayerController))
+        {
+            GameplayCamera.AttachToComponent(
+                Mesh,
+                NAME_None,
+                EAttachmentRule::SnapToTarget,
+                EAttachmentRule::SnapToTarget,
+                EAttachmentRule::KeepRelative,
+                false);
+
+            GameplayCamera.ActivateCameraForPlayerController(PlayerController, true);
+        }
+
+        FVAbilitySystemComponent.AddLooseGameplayTag(GameplayTags::Ability_Technical_LockPick);
+    }
 
     APlayerCharacter()
     {
@@ -84,5 +109,11 @@ class APlayerCharacter : AFVCharacter
         Settings.PlayerStance = EFVStance::Stand;
 
         return Settings;
+    }
+
+    UFUNCTION()
+    bool HasFocusedInteractable()
+    {
+        return InteractorComponent.HasInteractableTarget();
     }
 }

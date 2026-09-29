@@ -5,12 +5,16 @@
 #include "GameplayTagContainer.h"
 #include "FVPlayerController.generated.h"
 
-class UFVInteractionSubsystem;
+struct FFVGesture;
+class UFVGestureComponent;
+class UFVAbilitySystemComponent;
+class AFVPlayerCharacter;
 class UAbilitySystemComponent;
 class AFVPlayerState;
-class AFVCharacter;
 class UFVInputConfig;
 class UInputMappingContext;
+class UFVDialogueUIRouterComponent;
+class UFVInteractorComponent;
 struct FInputActionValue;
 
 UCLASS(Config = Game)
@@ -42,15 +46,9 @@ public:
     virtual void OnUnPossess() override;
 
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerController")
-	AFVCharacter* GetControlledCharacter() const { return CachedCharacter; }
+	AFVPlayerCharacter* GetControlledCharacter() const { return CachedCharacter.Get(); }
 
 protected:
-    // ========================================================================
-    // INPUT SETUP
-    // ========================================================================
-
-    virtual void SetupInputComponent() override;
-
     void InitializeInput();
     void AddInputMappingContexts();
     void RemoveInputMappingContexts();
@@ -75,14 +73,17 @@ protected:
     // INPUT CALLBACKS - Abilities
     // ========================================================================
 
-    void Input_AbilityInputTagPressed(FGameplayTag InputTag);
-    void Input_AbilityInputTagReleased(FGameplayTag InputTag);
+    void Input_AbilityInputPressed(FGameplayTag InputTag);
+    void Input_AbilityInputReleased(FGameplayTag InputTag);
 
 private:
-	UPROPERTY(Transient)
-    TObjectPtr<AFVCharacter> CachedCharacter;
+	UPROPERTY(VisibleAnywhere, Category = "FlivkerVoid|Input")
+	TObjectPtr<UFVGestureComponent> GestureComponent;
 	
-	mutable TWeakObjectPtr<UFVInteractionSubsystem> InteractionSubsystem;
+	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
+	TObjectPtr<UFVDialogueUIRouterComponent> DialogueUIRouterComponent;
+
+	TWeakObjectPtr<AFVPlayerCharacter> CachedCharacter;
 
     TArray<uint32> AbilityBindHandles;
     

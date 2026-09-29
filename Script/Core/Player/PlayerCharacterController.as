@@ -1,54 +1,27 @@
 class APlayerCharacterController : AFVPlayerController
 {
-    UPROPERTY()
-    FCameraAssetReference PlayerCameraAsset;
-
-    UPROPERTY(DefaultComponent, Category = Camera)
-    UGameplayCameraComponent GameplayCamera;
+    UPROPERTY(DefaultComponent)
+    UNarrativeNavigationComponent Navigation;
     
+    UPROPERTY()
+    TSubclassOf<UUserWidget> HUDWidgetClass;
+
+    UPROPERTY()
+    UUserWidget HUDWidget;
+
     UFUNCTION(BlueprintOverride)
-    void ReceivePossess(APawn PossessedPawn)
+    void ActorOnClicked(FKey ButtonPressed)
     {
-        SetupCamera(GetControlledCharacter());
+        if (ButtonPressed == FKey(n"M"))
+        {
+            Print("M");
+        }
     }
 
-    UFUNCTION(BlueprintCallable)
-    void SetupCamera(AFVCharacter Character)
+    UFUNCTION(BlueprintOverride)
+    void BeginPlay()
     {
-        FFVResult Result;
-
-        // Validate GameplayCamera
-        Result = FVValidation::ValidateComponent(GameplayCamera, "GameplayCamera");
-        if (!Result.bSuccess)
-        {
-            Warning(Result.ErrorMessage + " on " + GetName());
-            return;
-        }
-
-        // Validate Character
-        Result = FVValidation::ValidateObject(Character, "Character");
-        if (!Result.bSuccess)
-        {
-            Warning(Result.ErrorMessage + " when setting up camera on " + GetName());
-            return;
-        }
-
-        // Validate Character.Mesh
-        Result = FVValidation::ValidateComponent(Character.Mesh, "Character.Mesh");
-        if (!Result.bSuccess)
-        {
-            Warning(Result.ErrorMessage + " when setting up camera on " + GetName());
-            return;
-        }
-
-        GameplayCamera.AttachToComponent(
-            Character.Mesh,
-            NAME_None,
-            EAttachmentRule::SnapToTarget,
-            EAttachmentRule::SnapToTarget,
-            EAttachmentRule::KeepRelative,
-            false);
-
-        GameplayCamera.ActivateCameraForPlayerController(this, true);
+        HUDWidget = WidgetBlueprint::CreateWidget(HUDWidgetClass, this);
+        HUDWidget.AddToViewport();
     }
 }

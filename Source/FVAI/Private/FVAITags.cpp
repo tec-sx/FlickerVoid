@@ -56,4 +56,12 @@ namespace FVAITags
 	UE_DEFINE_GAMEPLAY_TAG(AI_Event_Focus, "AI.Event.Focus");
 	UE_DEFINE_GAMEPLAY_TAG(AI_Event_Act, "AI.Event.Act");
 
+	// ============================================================================
+	// FACT TAGS (NPC)
+	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_NPC, "Fact.NPC",
+								   "Root for per NPC facts: Fact.NPC.<NpcId>.<Aspect> and Fact.NPC.<NpcId>.Knows.<TopicId>.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Faction, "Fact.Faction",
+								   "Root for per faction facts: Fact.Faction.<FactionId>.<Aspect>.");
+
 }

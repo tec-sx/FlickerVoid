@@ -44,6 +44,9 @@ public:
 	EFVAbilityActivationPolicy GetActivationPolicy() const { return ActivationPolicy; }
 	EFVAbilityActivationGroup GetActivationGroup() const { return ActivationGroup; }
 
+	const FGameplayTagContainer& GetActivationRequiredTags() const { return ActivationRequiredTags; }
+	const FGameplayTagContainer& GetActivationBlockedTags() const { return ActivationBlockedTags; }
+
 	UE_API void TryActivateAbilityOnSpawn(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) const;
 
 	void OnAbilityFailedToActivate(const FGameplayTagContainer& FailedReason) const

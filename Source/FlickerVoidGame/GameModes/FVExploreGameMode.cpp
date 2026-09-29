@@ -52,32 +52,6 @@ const UFVPawnData* AFVExploreGameMode::GetPawnDataForController(const AControlle
 void AFVExploreGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
-	
-	// 		
-	// UGameInstance* GI = nullptr;
-	// if (UWorld* World = GEngine ? GEngine->GetCurrentPlayWorld() : nullptr)
-	// {
-	// 	GI = World->GetGameInstance();
-	// }
- //
-	// if (!GI)
-	// {
-	// 	UE_LOG(LogTemp, Warning,
-	// 		TEXT("UFVAssetManager::PushDialogueConfigToSubsystem — GameInstance not yet "
-	// 			 "available. UFVDialogueSubsystem will self-initialize on first signal."));
-	// 	return;
-	// }
- //
-	// UFVDialogueSubsystem* DS = GI->GetSubsystem<UFVDialogueSubsystem>();
-	// if (!DS)
-	// {
-	// 	UE_LOG(LogTemp, Warning,
-	// 		TEXT("UFVAssetManager::PushDialogueConfigToSubsystem — UDialogueSubsystem "
-	// 			 "not found on GameInstance."));
-	// 	return;
-	// }
- //
-	// DS->InitializeConfig(DialogueConfig);
 }
 
 UClass* AFVExploreGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
@@ -104,6 +78,8 @@ APawn* AFVExploreGameMode::SpawnDefaultPawnAtTransform_Implementation(AControlle
 	{
 		if (APawn* SpawnedPawn = GetWorld()->SpawnActor<APawn>(PawnClass, SpawnTransform, SpawnInfo))
 		{
+			SpawnedPawn->FinishSpawning(SpawnTransform);
+			
 			if (AFVPlayerState* PS = NewPlayer->GetPlayerState<AFVPlayerState>())
 			{
 				if (const UFVPawnData* PawnData = UFVAssetManager::Get().GetDefaultPawnData())
@@ -115,9 +91,7 @@ APawn* AFVExploreGameMode::SpawnDefaultPawnAtTransform_Implementation(AControlle
 					UE_LOG(LogTemp, Error, TEXT("Game mode was unable to set PawnData on the spawned pawn [%s]."), *GetNameSafe(SpawnedPawn));
 				}
 			}
-
-			SpawnedPawn->FinishSpawning(SpawnTransform);
-
+			
 			return SpawnedPawn;
 		}
 		else

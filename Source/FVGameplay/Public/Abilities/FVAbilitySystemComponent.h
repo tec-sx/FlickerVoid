@@ -59,6 +59,8 @@ public:
 
 	UE_API void TryActivateAbilitiesOnSpawn();
 
+	UE_API bool CanActivateAbilityByTag(const FGameplayTag& AbilityTag) const;
+
 protected:
 	UE_API virtual void AbilitySpecInputPressed(FGameplayAbilitySpec& Spec) override;
 	UE_API virtual void AbilitySpecInputReleased(FGameplayAbilitySpec& Spec) override;

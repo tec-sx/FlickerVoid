@@ -1,7 +1,13 @@
 class AFVHUD : AHUD
 {
-    UPROPERTY()
-    private UUserWidget InteractionPromptWidget;
+	UPROPERTY(EditAnywhere, Category = "Configuration")
+    TSubclassOf<UInteractionSetWidget> InteractionOptionsWidgetClass;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Configuration")
+    TSubclassOf<UDialogueWidget> DialogueWidgetClass;
+    
+	UPROPERTY()
+    private UInteractionSetWidget InteractionPromptWidget;
 
 	UPROPERTY(VisibleAnywhere)
 	private UFVDialogueUIManagerBase DialogueManager;
@@ -13,21 +19,39 @@ class AFVHUD : AHUD
 
         if (PC != nullptr)
 	    {
-			UPlayerSettings PlayerSettings = UPlayerSettings.GetDefaultObject();
-
-			if (PlayerSettings.InteractionPromptWidgetClass.IsValid())
+			if (InteractionOptionsWidgetClass.IsValid())
 			{
-				InteractionPromptWidget = WidgetBlueprint::CreateWidget(PlayerSettings.InteractionPromptWidgetClass.Get(), PC);
+				InteractionPromptWidget = WidgetBlueprint::CreateWidget(InteractionOptionsWidgetClass, PC);
 				InteractionPromptWidget.AddToViewport(0);
+
+				APlayerController PlayerController = GetOwningPlayerController();
+				PC.OnPossessedPawnChanged.AddUFunction(this, n"UpdatePawn");
+				UpdatePawn(nullptr, PC.GetControlledPawn());
 			}
 
-			if (PlayerSettings.DialogueWidgetClass.IsValid())
+			if (DialogueWidgetClass.IsValid())
 			{
 				DialogueManager = NewObject(this, UDialogueHUDManager);
-				DialogueManager.Initialize(PlayerSettings.DialogueWidgetClass.Get(), GetOwningPlayerController());
+				DialogueManager.Initialize(DialogueWidgetClass.Get(), GetOwningPlayerController());
 			}
 	    }
 	}
+
+    UFUNCTION()
+    private void UpdatePawn(APawn OldPawn, APawn NewPawn)
+    {
+		if (IsValid(OldPawn))
+		{
+			UFVInteractorResponseComponent_ShowPrompt ShowPromptResponse = OldPawn.GetComponentByClass(UFVInteractorResponseComponent_ShowPrompt);
+			InteractionPromptWidget.UnbindResponse(ShowPromptResponse);
+		}
+
+		if (IsValid(NewPawn))
+		{
+			UFVInteractorResponseComponent_ShowPrompt ShowPromptResponse = NewPawn.GetComponentByClass(UFVInteractorResponseComponent_ShowPrompt);
+			InteractionPromptWidget.BindResponse(ShowPromptResponse);
+		}
+    }
 
 	UFUNCTION(BlueprintOverride)
     void EndPlay(EEndPlayReason EndPlayReason)

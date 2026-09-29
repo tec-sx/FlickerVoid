@@ -4,21 +4,14 @@
 #include "FVCharacterTypes.h"
 #include "GameplayTagAssetInterface.h"
 #include "GameplayTagContainer.h"
-#include "GenericTeamAgentInterface.h"
 #include "FVCharacter.generated.h"
 
 class UFlowComponent;
-class UFVTagComponent;
-class UNavMoverComponent;
-class UInputAction;
-class UCharacterMoverComponent;
 class UFVCharacterMovementComponent;
 struct FInputActionValue;
-class UFVAbilitySystemComponent;
-class USpringArmComponent;
 
 UCLASS(Config = Game)
-class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter, public IGameplayTagAssetInterface, public IGenericTeamAgentInterface
+class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -28,13 +21,6 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Landed(const FHitResult& Hit) override;
 	
-	virtual FGenericTeamId GetGenericTeamId() const override { return TeamId; }
-	
-	//~=============================================================================
-	// Character Properties
-	//~=============================================================================
-
-	/** Get aim rotation (override for aim assist, target lock, etc.) */
 	virtual FRotator GetAimRotation() const;
 	
 	UFUNCTION(BlueprintPure, Category = "Character|Movement")
@@ -106,10 +92,8 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
 	FGameplayTagContainer OwnedTags;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGenericTeamId TeamId = FGenericTeamId(1);
 private:
+	
 	// Intent Data
 	FVector MovementDirection = FVector::ZeroVector;
 	EFVGait DesiredGait = EFVGait::Walking;

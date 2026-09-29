@@ -1,12 +1,9 @@
 ﻿#include "Flow/Triggers/FVFlowTriggerSphere.h"
-
+#include "FVFlowTriggerDefs.h"
 #include "Components/BillboardComponent.h"
 #include "Components/SphereComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVFlowTriggerSphere)
-
-static constexpr FColor FlowTriggerBaseColor(100, 255, 100, 255);
-static const FName TriggerCollisionProfileName(TEXT("Trigger"));
 
 // Sets default values
 AFVFlowTriggerSphere::AFVFlowTriggerSphere(const FObjectInitializer& ObjectInitializer)

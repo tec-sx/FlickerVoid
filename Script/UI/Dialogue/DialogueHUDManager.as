@@ -59,7 +59,7 @@ class UDialogueHUDManager : UFVDialogueUIManagerBase
     // ── Delegate Handlers ─────────────────────────────────────────────────────
 
     UFUNCTION(BlueprintOverride)
-    void OnDialogueLineReady(FFVDialogueLineMessage Message)
+    void OnDialogueLineReady(FFVUIDialogueLineMessage Message)
     {
         if (IsValid(DialogueWidget))
         {
@@ -68,12 +68,12 @@ class UDialogueHUDManager : UFVDialogueUIManagerBase
     }
 
     UFUNCTION(BlueprintOverride)
-    void OnDialogueEvent(FFVDialogueEventMessage Message)
+    void OnDialogueEvent(FFVUIDialogueEventMessage Message)
     {
     }
 
     UFUNCTION(BlueprintOverride)
-    void OnDialogueEnded(FFVDialogueEndedMessage Message)
+    void OnDialogueEnded(FFVUIDialogueEndedMessage Message)
     {
         Print("Dialogue End");
         if (IsValid(DialogueWidget))
@@ -83,7 +83,7 @@ class UDialogueHUDManager : UFVDialogueUIManagerBase
     }
 
     UFUNCTION(BlueprintOverride)
-    void OnDialogueChoicesReady(FFVDialogueChoicesMessage Message)
+    void OnDialogueChoicesReady(FFVUIDialogueChoicesMessage Message)
     {
         if (IsValid(DialogueWidget))
         {

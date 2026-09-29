@@ -1,29 +1,22 @@
 #include "FVPlayerState.h"
+
+#include "FlickerVoid.h"
+#include "FVPlayerCharacter.h"
 #include "FVPlayerController.h"
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "Abilities/FVAbilitySet.h"
 #include "Character/FVPawnData.h"
 #include "Components/GameFrameworkComponentManager.h"
 #include "Engine/World.h"
+#include "Logging/FVLogSystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerState)
 
 const FName AFVPlayerState::NAME_FVAbilityReady("FVAbilitiesReady");
 
-AFVPlayerState::AFVPlayerState(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-	AbilitySystemComponent = ObjectInitializer.CreateDefaultSubobject<UFVAbilitySystemComponent>(this, TEXT("AbilitySystemComponent"));
-}
-
 AFVPlayerController* AFVPlayerState::GetFVPlayerController() const
 {
 	return Cast<AFVPlayerController>(GetOwner());
-}
-
-UAbilitySystemComponent* AFVPlayerState::GetAbilitySystemComponent() const
-{
-	return GetFVAbilitySystemComponent();
 }
 
 UFVInputConfig* AFVPlayerState::GetInputConfig() const
@@ -55,14 +48,6 @@ void AFVPlayerState::SetPawnData(const UFVPawnData* InPawnData)
 	}
 
 	PawnData = InPawnData;
-
-	for (const UFVAbilitySet* AbilitySet : PawnData->AbilitySets)
-	{
-		if (AbilitySet)
-		{
-			AbilitySet->PassToAbilitySystem(AbilitySystemComponent, nullptr);
-		}
-	}
 
 	UGameFrameworkComponentManager::SendGameFrameworkComponentExtensionEvent(this, NAME_FVAbilityReady);
 }

@@ -16,4 +16,21 @@ namespace FVWorldTags
 	UE_DEFINE_GAMEPLAY_TAG(World_TimeOfDay_Afternoon, "World.TimeOfDay.Afternoon");
 	UE_DEFINE_GAMEPLAY_TAG(World_TimeOfDay_Evening, "World.TimeOfDay.Evening");
 	UE_DEFINE_GAMEPLAY_TAG(World_TimeOfDay_Night, "World.TimeOfDay.Night");
+
+	// ============================================================================
+	// FACT TAGS (WORLD)
+	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_World, "Fact.World", "Root for global world state facts.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_World_Time, "Fact.World.Time",
+								   "Time related facts such as elapsed days or current time of day index.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_World_Time_Day, "Fact.World.Time.Day",
+								   "Elapsed whole days since game start, starting at 0. Mirrors the Day Sequence clock.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_World_Time_Hour, "Fact.World.Time.Hour",
+								   "Local hour of the current day, 0-23. Mirrors the Day Sequence clock.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_World_Time_Phase, "Fact.World.Time.Phase",
+								   "Coarse time of day as an EFVTimeOfDay value. Mirrors the Day Sequence clock.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_World_Flag, "Fact.World.Flag",
+								   "Generic world flags that do not belong to a quest or location.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Location, "Fact.Location",
+								   "Root for per location facts: Fact.Location.<LocationId>.<Aspect>.");
 }

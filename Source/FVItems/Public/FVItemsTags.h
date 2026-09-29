@@ -25,6 +25,7 @@ namespace FVItemsTags
 	// ============================================================================
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(ItemEffect_Clarity_Down);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(ItemEffect_Clarity_Up);
-}
+
+	}
 
 #undef UE_API

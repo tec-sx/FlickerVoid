@@ -10,9 +10,10 @@ namespace FVCoreTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Sprint, "InputTag.Sprint", "Sprint input.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Jump, "InputTag.Jump", "Jump input.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Aim, "InputTag.Aim", "Aim input.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Primary, "InputTag.Action.Primary", "Primary Action.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Secondary, "InputTag.Action.Secondary", "Secondary Action.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Action_Ternary, "InputTag.Action.Ternary", "Ternary Action.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction, "InputTag.Interaction", "Root of interaction inputs.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Primary, "InputTag.Interaction.Primary", "Primary interaction.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Secondary, "InputTag.Interaction.Secondary", "Secondary interaction.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Ternary, "InputTag.Interaction.Ternary", "Ternary interaction.");
 	
 	UE_DEFINE_GAMEPLAY_TAG(Player_Pawn, "Player.Pawn");
 	
@@ -20,6 +21,12 @@ namespace FVCoreTags
 	UE_DEFINE_GAMEPLAY_TAG(Flow_Common_Disable, "Flow.Common.Disable");
 	UE_DEFINE_GAMEPLAY_TAG(Flow_Common_TriggerZone, "Flow.Common.TriggerZone");
 	UE_DEFINE_GAMEPLAY_TAG(Flow_Common_InteractionZone, "Flow.Common.InteractionZone");
+	
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact, "Fact", "Root of the fact database. Every fact lives under this tag.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_System, "Fact.System",
+								   "Engine/system level facts, e.g. tutorial completion or session bookkeeping.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Debug, "Fact.Debug",
+								   "Facts used only by cheats and debugging. Never ship gameplay logic reading these.");
 	
 	FGameplayTag FindTagByString(const FString& TagString, bool bMatchPartialString)
 	{

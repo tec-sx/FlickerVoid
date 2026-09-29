@@ -25,7 +25,18 @@ namespace FVCharacterTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Mood_Stressed);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Mood_Horny);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_Mood_Exhausted);
-	
+
+	// ============================================================================
+	// FACT TAGS (PLAYER)
+	// Concrete facts are appended per subject, e.g.
+	//   Fact.Player.Knows.<TopicId>, Fact.Player.Choice.<ChoiceId>
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Player);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Player_Knows);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Player_Choice);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Player_Skill);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Player_State);
+
 }
 
 #undef UE_API

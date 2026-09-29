@@ -13,9 +13,7 @@ public class FlickerVoidUI : ModuleRules
             "CoreUObject",
             "Engine",
             "GameplayTags",
-            "FlickerVoidCore",
-            "FlickerVoidGameplay",
-            "FlickerVoidNarrative"
+            "FlickerVoidCore"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] 
@@ -23,7 +21,9 @@ public class FlickerVoidUI : ModuleRules
             "UMG",
             "Slate",
             "SlateCore",
-            "GameplayMessageRuntime"
+            "GameplayMessageRuntime",
+            "CommonUI",
+            "CommonInput"
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));

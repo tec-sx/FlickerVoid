@@ -8,7 +8,6 @@
 #include "FVGameData.generated.h"
 
 class UGameplayEffect;
-class UFVQuestDefinition;
 class UObject;
 
 /**
@@ -72,16 +71,4 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative Thresholds")
 	float DaysCleanForRecovery = 7.0f;
-
-	// ========================================================================
-	// STARTING QUESTS
-	// ========================================================================
-
-	/** Quests available at game start */
-	UPROPERTY(EditDefaultsOnly, Category = "Narrative Startup")
-	TArray<TSoftObjectPtr<UFVQuestDefinition>> InitialQuests;
-
-	/** Quest to auto-start at game begin (main story hook) */
-	UPROPERTY(EditDefaultsOnly, Category = "Narrative Startup")
-	TSoftObjectPtr<UFVQuestDefinition> InitialMainQuest;
 };

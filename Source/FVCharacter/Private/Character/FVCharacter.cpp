@@ -17,8 +17,11 @@ AFVCharacter::AFVCharacter(const FObjectInitializer& ObjectInitializer)
 	SetReplicatingMovement(false);
 	
 	FlowComponent = CreateDefaultSubobject<UFlowComponent>(TEXT("FlowComponent"));
-	
-	GetFlowComponent()->IdentityTags = FGameplayTagContainer(FVCoreTags::Player_Pawn);
+
+	if (FlowComponent)
+	{
+		FlowComponent->IdentityTags = FGameplayTagContainer(FVCoreTags::Player_Pawn);
+	}
 }
 
 
@@ -108,12 +111,19 @@ void AFVCharacter::RequestWalk()
 		return;
 	}
 	
-	IsWalking() ? SetWalking(false) : SetWalking(true);
+	SetWalking(!IsWalking());
 }
 
 void AFVCharacter::RequestCrouch()
 {
-	IsCrouched() ? UnCrouch() : Crouch();
+	if (IsCrouched())
+	{
+		UnCrouch();
+	}
+	else
+	{
+		Crouch();
+	}
 }
 
 void AFVCharacter::RequestSprint(const bool bValue)
@@ -131,12 +141,19 @@ void AFVCharacter::RequestSprint(const bool bValue)
 
 void AFVCharacter::RequestJump()
 {
-	IsCrouched() ? UnCrouch() : Jump();
+	if (IsCrouched())
+	{
+		UnCrouch();
+	}
+	else
+	{
+		Jump();
+	}
 }
 
 FGameplayTagContainer AFVCharacter::GetIdentityTags() const
 {
-	return GetFlowComponent()->IdentityTags;
+	return GetFlowComponent() ? GetFlowComponent()->IdentityTags : FGameplayTagContainer();
 }
 
 void AFVCharacter::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const

@@ -66,10 +66,20 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Movement Handler")
 	bool GrantsTag(const FGameplayTag& Tag) const;
 
+	UFUNCTION(BlueprintNativeEvent, Category = "Movement Handler")
+	TSubclassOf<UFVMovementHandlerConfigBase> GetExpectedConfigClass() const;
+	virtual TSubclassOf<UFVMovementHandlerConfigBase> GetExpectedConfigClass_Implementation() const;
+
 private:
+	UPROPERTY()
 	TObjectPtr<AFVCharacter> Character;
+
+	UPROPERTY()
 	TObjectPtr<UFVCharacterMovementComponent> MovementComponent;
+
+	UPROPERTY()
 	FFVMovementHandlerInfo Config;
+
 	bool bIsInitialized;
 	bool bIsActive;
 };

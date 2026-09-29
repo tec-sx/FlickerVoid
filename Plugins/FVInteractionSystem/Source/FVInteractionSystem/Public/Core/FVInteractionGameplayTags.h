@@ -1,0 +1,73 @@
+#pragma once
+
+#include "NativeGameplayTags.h"
+#include "Core/FVInteractionTypes.h"
+
+#define UE_API FVINTERACTIONSYSTEM_API
+
+namespace FVInteractionGameplayTags
+{
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction);
+	
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_OfferChanged);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_ExamineStarted);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_LockpickStarted);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_LockpickEnded);
+
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Pickup);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Use);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Open);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Close);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Talk);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Examine);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Read);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Activate);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_LockPick);
+
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_WalkedAway);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_HigherPriorityOffer);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_OfferExpired);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_CombatStarted);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_Death);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_Scripted);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_FocusLost);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_Suppressed);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_RequirementFailed);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_Player);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_Released);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_Timeout);
+
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Primary);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Secondary);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Alternate);
+
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Idle);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Awake);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Suppressed);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Interacting);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Paused);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Cooldown);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Completed);
+
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Suppression_Cutscene);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Suppression_Menu);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Suppression_Vehicle);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Suppression_Dependency);
+
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Tag_Player);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Tag_AI);
+
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Item);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Item_Pickup);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Door);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Container);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Character);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Device);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Document);
+
+	UE_API FGameplayTag StateToTag(EFVInteractableState State);
+}
+
+#undef UE_API

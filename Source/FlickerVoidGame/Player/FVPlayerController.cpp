@@ -1,44 +1,62 @@
 #include "FVPlayerController.h"
-#include "FVPlayerState.h"
-#include "Character/FVCharacter.h"
-#include "Input/FVInputComponent.h"
 #include "FVCoreTags.h"
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "FlickerVoid.h"
+#include "FVPlayerCharacter.h"
+#include "FVPlayerState.h"
 #include "InputMappingContext.h"
+#include "Abilities/FVAbilitySet.h"
+#include "Character/FVPawnData.h"
 #include "Movement/FVCharacterMovementComponent.h"
+#include "Logging/FVLogCategories.h"
+#include "Logging/FVLogSystem.h"
+#include "Player/FVDialogueUIRouterComponent.h"
+#include "Components/FVInputComponent.h"
+#include "Components/FVGestureComponent.h"
+#include "Components/FVInteractorComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
 
 AFVPlayerController::AFVPlayerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-{ }
-
-void AFVPlayerController::SetupInputComponent()
 {
-    Super::SetupInputComponent();
-
-    // ========================================================================
-    // NOTE: Input bindings happen in InitializeInput() after possession
-    // SetupInputComponent is called before we have a pawn
-    // ========================================================================
+	GestureComponent = CreateDefaultSubobject<UFVGestureComponent>(TEXT("GestureComponent"));
+	DialogueUIRouterComponent = CreateDefaultSubobject<UFVDialogueUIRouterComponent>(TEXT("DialogueUIRouterComponent"));
 }
 
 void AFVPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
-    CachedCharacter = Cast<AFVCharacter>(InPawn);
+    CachedCharacter = Cast<AFVPlayerCharacter>(InPawn);
 
-    if (CachedCharacter)
+    if (CachedCharacter.IsValid())
     {
         InitializeInput();
 	}
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("Possessed pawn is not AFVCharacter! Input will not be initialized."));
+        FV_LOG_WARNING(LogFVInput, "Possessed pawn is not AFVPlayerCharacter! Input will not be initialized.");
     }
-
+	
+	if (const AFVPlayerState* PS = GetPlayerState<AFVPlayerState>())
+	{
+		for (const UFVAbilitySet* AbilitySet : PS->GetPawnData<UFVPawnData>()->AbilitySets)
+		{
+			if (AbilitySet)
+			{
+				AbilitySet->PassToAbilitySystem(CachedCharacter->GetFVAbilitySystemComponent(), nullptr);
+			}
+		}
+	}
+	else
+	{
+		FV_LOG_ERROR(
+			LogFlickerVoid, 
+			"Player controller unable to set PawnData on the possessed pawn [%s].", 
+			*GetNameSafe(CachedCharacter.Get()));
+	}
 }
 
 void AFVPlayerController::OnUnPossess()
@@ -51,7 +69,7 @@ void AFVPlayerController::OnUnPossess()
         FVIC->RemoveBinds(AbilityBindHandles);
     }
 
-    CachedCharacter = nullptr;
+    CachedCharacter.Reset();
 
     Super::OnUnPossess();
 }
@@ -60,14 +78,14 @@ void AFVPlayerController::InitializeInput()
 {
     if (!InputConfig)
     {
-        UE_LOG(LogTemp, Warning, TEXT("PlayerController has no InputConfig assigned!"));
+        FV_LOG_WARNING(LogFVInput, "PlayerController has no InputConfig assigned!");
         return;
     }
 
     UFVInputComponent* FVIC = Cast<UFVInputComponent>(InputComponent);
     if (!FVIC)
     {
-        UE_LOG(LogTemp, Error, TEXT("InputComponent is not UFVInputComponent! Cannot bind inputs."));
+        FV_LOG_ERROR(LogFVInput, "InputComponent is not UFVInputComponent! Cannot bind inputs.");
         return;
     }
 
@@ -76,16 +94,16 @@ void AFVPlayerController::InitializeInput()
     FVIC->BindAbilityActions(
         InputConfig,
         this,
-        &ThisClass::Input_AbilityInputTagPressed,
-        &ThisClass::Input_AbilityInputTagReleased,
+        &ThisClass::Input_AbilityInputPressed,
+        &ThisClass::Input_AbilityInputReleased,
         AbilityBindHandles
     );
 
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Move, ETriggerEvent::Triggered, this, &ThisClass::Input_MoveTriggered, false);
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Move, ETriggerEvent::Completed, this, &ThisClass::Input_MoveCompleted, false);
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Look_Mouse, ETriggerEvent::Triggered, this, &ThisClass::Input_LookTriggered, false);
-    FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Crouch, ETriggerEvent::Triggered, this, &ThisClass::Input_CrouchTriggered, false);
-    FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Walk, ETriggerEvent::Triggered, this, &ThisClass::Input_WalkTriggered, false);
+    FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Crouch, ETriggerEvent::Started, this, &ThisClass::Input_CrouchTriggered, false);
+    FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Walk, ETriggerEvent::Started, this, &ThisClass::Input_WalkTriggered, false);
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Sprint, ETriggerEvent::Started, this, &ThisClass::Input_SprintTriggered, false);
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Sprint, ETriggerEvent::Completed, this, &ThisClass::Input_SprintCompleted, false);
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Jump, ETriggerEvent::Started, this, &ThisClass::Input_JumpStarted, false);
@@ -139,15 +157,25 @@ void AFVPlayerController::RemoveInputMappingContexts()
 // NATIVE INPUT CALLBACKS
 // ============================================================================
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_MoveTriggered(const FInputActionValue& Value)
 {
-    const FVector MovementVector = Value.Get<FVector>();
-    CachedCharacter->RequestMove(MovementVector);
+    AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
+    if (!FVPlayer)
+    {
+        return;
+    }
+
+    FVPlayer->RequestMove(Value.Get<FVector>());
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_MoveCompleted(const FInputActionValue& Value)
 {
-    CachedCharacter->RequestMove(FVector::ZeroVector);
+    if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+    {
+        FVPlayer->RequestMove(FVector::ZeroVector);
+    }
 }
 
 void AFVPlayerController::Input_LookTriggered(const FInputActionValue& Value)
@@ -157,82 +185,146 @@ void AFVPlayerController::Input_LookTriggered(const FInputActionValue& Value)
     AddPitchInput(LookVector.Y);
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_CrouchTriggered(const FInputActionValue& Value)
 {
-    CachedCharacter->RequestCrouch();
+	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	{
+		FVPlayer->RequestCrouch();
+	}
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_WalkTriggered(const FInputActionValue& Value)
 {
-    CachedCharacter->RequestWalk();
+	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	{
+		FVPlayer->RequestWalk();
+	}
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_SprintTriggered(const FInputActionValue& Value)
 {
-    CachedCharacter->RequestSprint(true);
+	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	{
+		FVPlayer->RequestSprint(true);
+	}
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_SprintCompleted(const FInputActionValue& Value)
 {
-    CachedCharacter->RequestSprint(false);
+	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	{
+		FVPlayer->RequestSprint(false);
+	}
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_JumpStarted(const FInputActionValue& Value)
 {
-    if (CachedCharacter->GetFVCharacterMovement()->IsMovingOnGround())
-    {
-        if (CachedCharacter->RequestTraverse())
-        {
-            return;
-        }
-        
-        CachedCharacter->RequestJump();
-    }
+	AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
+	if (!FVPlayer)
+	{
+		return;
+	}
+
+	const UFVCharacterMovementComponent* MovementComponent = FVPlayer->GetFVCharacterMovement();
+	if (!MovementComponent || !MovementComponent->IsMovingOnGround())
+	{
+		return;
+	}
+
+	if (FVPlayer->RequestTraverse())
+	{
+		return;
+	}
+
+	FVPlayer->RequestJump();
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_JumpTriggered(const FInputActionValue& Value)
 {
-    if (CachedCharacter->GetFVCharacterMovement()->IsFalling())
-    {
-        // Continuous check for traversal opportunities while jump button held (e.g., in air)
-        if (CachedCharacter->IsTraversing())
-        {
-            return;
-        }
-        
-        CachedCharacter->RequestTraverse();
-    }
+	AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
+	if (!FVPlayer)
+	{
+		return;
+	}
+
+	const UFVCharacterMovementComponent* MovementComponent = FVPlayer->GetFVCharacterMovement();
+	if (!MovementComponent || !MovementComponent->IsFalling())
+	{
+		return;
+	}
+
+	if (FVPlayer->IsTraversing())
+	{
+		return;
+	}
+
+	FVPlayer->RequestTraverse();
 }
 
-
+// ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_AimStarted(const FInputActionValue& Value)
 {
-	CachedCharacter->RequestAim(true);
+	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	{
+		FVPlayer->RequestAim(true);
+	}
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_AimCompleted(const FInputActionValue& Value)
 {
-    CachedCharacter->RequestAim(false);
+	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	{
+		FVPlayer->RequestAim(false);
+	}
 }
 
-void AFVPlayerController::Input_AbilityInputTagPressed(FGameplayTag InputTag)
+// ReSharper disable once CppMemberFunctionMayBeConst
+void AFVPlayerController::Input_AbilityInputPressed(FGameplayTag InputTag)
 {
-    if (AFVPlayerState* PS = GetPlayerState<AFVPlayerState>())
+    const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
+    if (!FVPlayer)
     {
-        if (UFVAbilitySystemComponent* ASC = PS->GetFVAbilitySystemComponent())
-        {
-            ASC->AbilityInputTagPressed(InputTag);
-        }
+        return;
     }
+	
+	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
+	{
+		if (UFVInteractorComponent* Interactor = FVPlayer->GetInteractorComponent())
+		{
+			Interactor->PushInput(InputTag, EFVInputPhase::Pressed);
+		}
+
+		return;
+	}
+
+	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagPressed(InputTag);
 }
 
-void AFVPlayerController::Input_AbilityInputTagReleased(FGameplayTag InputTag)
+// ReSharper disable once CppMemberFunctionMayBeConst
+void AFVPlayerController::Input_AbilityInputReleased(FGameplayTag InputTag)
 {
-    if (AFVPlayerState* PS = GetPlayerState<AFVPlayerState>())
-    {
-        if (UFVAbilitySystemComponent* ASC = PS->GetFVAbilitySystemComponent())
-        {
-            ASC->AbilityInputTagReleased(InputTag);
-        }
-    }
+	const AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
+	if (!FVPlayer)
+	{
+		return;
+	}
+
+	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
+	{
+		if (UFVInteractorComponent* Interactor = FVPlayer->GetInteractorComponent())
+		{
+			Interactor->PushInput(InputTag, EFVInputPhase::Released);
+		}
+
+		return;
+	}
+
+	FVPlayer->GetFVAbilitySystemComponent()->AbilityInputTagReleased(InputTag);
 }

@@ -4,6 +4,7 @@
 #include "Character/FVCharacter.h"
 #include "Movement/FVCharacterMovementComponent.h"
 #include "Movement/FVMovementHandlerInfo.h"
+#include "Movement/FVMovementHandlerConfigBase.h"
 #include "Logging/FVLogCategories.h"
 #include "Logging/FVLogSystem.h"
 
@@ -12,8 +13,8 @@
 UFVMovementHandlerBase::UFVMovementHandlerBase()
 	: Character(nullptr)
 	, MovementComponent(nullptr)
-	, bIsActive(false)
 	, bIsInitialized(false)
+	, bIsActive(false)
 {
 }
 
@@ -77,4 +78,9 @@ void UFVMovementHandlerBase::Exit()
 bool UFVMovementHandlerBase::GrantsTag(const FGameplayTag& Tag) const
 {
 	return Config.GrantedTags.HasTag(Tag);
+}
+
+TSubclassOf<UFVMovementHandlerConfigBase> UFVMovementHandlerBase::GetExpectedConfigClass_Implementation() const
+{
+	return nullptr;
 }

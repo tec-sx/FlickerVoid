@@ -60,6 +60,17 @@ namespace FVAITags
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(AI_Event_Notice);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(AI_Event_Focus);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(AI_Event_Act);
+
+	// ============================================================================
+	// FACT TAGS (NPC)
+	// Patterns:
+	//   Fact.NPC.<NpcId>.{Met,Alive,Trust,Disposition}
+	//   Fact.NPC.<NpcId>.Knows.<TopicId>
+	//   Fact.Faction.<FactionId>.<Aspect>
+	// Use the UFVAIFactHelpers builders rather than composing strings by hand.
+	// ============================================================================
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_NPC);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Faction);
 }
 
 #undef UE_API

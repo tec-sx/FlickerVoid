@@ -28,5 +28,3 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "FV|GameState")
 	TObjectPtr<UFVAbilitySystemComponent> AbilitySystemComponent;
 };
-
-#undef UE_API

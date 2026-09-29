@@ -15,16 +15,15 @@ public class FlickerVoidNarrative : ModuleRules
             "GameplayTags",
             "GameplayAbilities",
             "FlickerVoidCore",
-            "FlickerVoidWorld",
             "FlickerVoidGameplay",
             "StateTreeModule",
             "GameplayStateTreeModule",
+            "Flow",
         });
-        
+
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "SUDS",
-            "Flow",
             "GameplayMessageRuntime",
             "CinematicCamera",
             "LevelSequence"

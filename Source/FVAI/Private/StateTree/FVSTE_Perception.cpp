@@ -52,6 +52,7 @@ void UFVSTE_Perception::TreeStart(FStateTreeExecutionContext& Context)
 	if (!StateTreeComp)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UFVSTE_Perception: No UStateTreeAIComponent found on AIController!"));
+		return;
 	}
 }
 
@@ -76,77 +77,72 @@ void UFVSTE_Perception::TreeStop(FStateTreeExecutionContext& Context)
 
 void UFVSTE_Perception::HandleSightStimulus(AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (AIController->CurrentStateTreeState != EFVStateTreeEvent::Notice)
+	if (!AIController.IsValid() || AIController->CurrentStateTreeState == EFVStateTreeEvent::Notice)
 	{
-		AcquiredTarget = Actor;
-		if (AIController.IsValid())
-		{
-			AIController->AcquiredTarget = Actor;
-		}
-		
-		OnSightStimulus(Actor, Stimulus);
-
-		SendEvent(EFVStateTreeEvent::Notice);
-		AIController->CurrentStateTreeState = EFVStateTreeEvent::Notice;
+		return;
 	}
+
+	AcquiredTarget = Actor;
+	AIController->AcquiredTarget = Actor;
+	OnSightStimulus(Actor, Stimulus);
+	SendEvent(EFVStateTreeEvent::Notice);
+	AIController->CurrentStateTreeState = EFVStateTreeEvent::Notice;
 }
 
 void UFVSTE_Perception::HandleSightStimulusForgotten(AActor* Actor)
 {
+	if (!AIController.IsValid())
+	{
+		return;
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("UFVSTE_Perception: Sight stimulus forgotten for actor: %s"), *GetNameSafe(Actor));
 	AcquiredTarget = nullptr;
-	if (AIController.IsValid())
-	{
-		AIController->AcquiredTarget = nullptr;
-	}
+	AIController->AcquiredTarget = nullptr;
 	AIController->CurrentStateTreeState = EFVStateTreeEvent::Unknown;
 	OnSightStimulusForgotten(Actor);
 }
 
 void UFVSTE_Perception::HandleHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (AIController->CurrentStateTreeState != EFVStateTreeEvent::Act)
+	if (!AIController.IsValid() || AIController->CurrentStateTreeState == EFVStateTreeEvent::Act)
 	{
-		AcquiredTarget = Actor;
-		if (AIController.IsValid())
-		{
-			AIController->AcquiredTarget = Actor;
-		}
-		
-		OnHearingStimulus(Actor, Stimulus);
-
-		SendEvent(EFVStateTreeEvent::Act);
-		AIController->CurrentStateTreeState = EFVStateTreeEvent::Act;
+		return;
 	}
+
+	AcquiredTarget = Actor;
+	AIController->AcquiredTarget = Actor;
+	OnHearingStimulus(Actor, Stimulus);
+	SendEvent(EFVStateTreeEvent::Act);
+	AIController->CurrentStateTreeState = EFVStateTreeEvent::Act;
 }
 
 void UFVSTE_Perception::HandleHearingStimulusForgotten(AActor* Actor)
 {
+	if (!AIController.IsValid())
+	{
+		return;
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("UFVSTE_Perception: Hearing stimulus forgotten for actor: %s"), *GetNameSafe(Actor));
 	AcquiredTarget = nullptr;
-	if (AIController.IsValid())
-	{
-		AIController->AcquiredTarget = nullptr;
-	}
+	AIController->AcquiredTarget = nullptr;
 	AIController->CurrentStateTreeState = EFVStateTreeEvent::Unknown;
 	OnHearingStimulusForgotten(Actor);
 }
 
 void UFVSTE_Perception::HandleDamageStimulus(AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (AIController->CurrentStateTreeState != EFVStateTreeEvent::Act)
+	if (!AIController.IsValid() || AIController->CurrentStateTreeState == EFVStateTreeEvent::Act)
 	{
-		AcquiredTarget = Actor;
-		if (AIController.IsValid())
-		{
-			AIController->AcquiredTarget = Actor;
-		}
-		
-		OnDamageStimulus(Actor, Stimulus);
-
-		SendEvent(EFVStateTreeEvent::Act);
-		AIController->CurrentStateTreeState = EFVStateTreeEvent::Act;
+		return;
 	}
+
+	AcquiredTarget = Actor;
+	AIController->AcquiredTarget = Actor;
+	OnDamageStimulus(Actor, Stimulus);
+	SendEvent(EFVStateTreeEvent::Act);
+	AIController->CurrentStateTreeState = EFVStateTreeEvent::Act;
 }
 
 void UFVSTE_Perception::SendEvent(const EFVStateTreeEvent InEvent)
@@ -164,7 +160,7 @@ void UFVSTE_Perception::SendEvent(const EFVStateTreeEvent InEvent)
 		break;
 	case EFVStateTreeEvent::Notice:
 		EventTag = FVAITags::AI_Event_Notice;
-		LastEvent = EFVStateTreeEvent::Idle;
+		LastEvent = EFVStateTreeEvent::Patrol;
 		break;
 	case EFVStateTreeEvent::Focus:
 		EventTag = FVAITags::AI_Event_Focus;
@@ -178,7 +174,7 @@ void UFVSTE_Perception::SendEvent(const EFVStateTreeEvent InEvent)
 		return; // Ignore unknown events
 	}
 	
-	if (AIController.IsValid() && StateTreeComp)
+	if (StateTreeComp)
 	{
 		const FStateTreeEvent Event(EventTag);
 		StateTreeComp->SendStateTreeEvent(Event);
