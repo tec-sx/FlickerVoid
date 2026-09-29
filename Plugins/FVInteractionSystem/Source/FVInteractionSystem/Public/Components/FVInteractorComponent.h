@@ -152,9 +152,9 @@ private:
 	
 	bool BeginInteraction(const FGameplayTag InputTag);
 	void TickInteraction(const float DeltaTime);
-	bool ValidateActiveInteraction();
+	bool ValidateActiveInteraction() const;
 	void FinishInteraction(const bool bSuccess);
-	const FFVInteractionOffer* FindOffer(const FGameplayTag& InputTag);
+	const FFVInteractionOffer* FindOffer(const FGameplayTag& InputTag) const;
 	UFVGestureComponent* ResolveGestureComponent();
 
 	UPROPERTY(Transient)

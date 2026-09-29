@@ -1,13 +1,10 @@
 #include "Components/FVInteractorComponent.h"
 #include "Components/FVInteractableComponent.h"
 #include "Components/FVInteractorResponseComponent.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "Core/FVInteractionGameplayTags.h"
 #include "Engine/World.h"
 #include "FVInteractionSystem.h"
 #include "FVInteractionSystemSettings.h"
-#include "GameFramework/PlayerController.h"
-#include "Misc/ScopeExit.h"
 #include "Subsystems/FVInteractionRegistrySubsystem.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
@@ -256,7 +253,7 @@ void UFVInteractorComponent::TickInteraction(const float DeltaTime)
 	InteractionCommitProgressed.Broadcast(ActiveCommit, Progress);
 }
 
-bool UFVInteractorComponent::ValidateActiveInteraction()
+bool UFVInteractorComponent::ValidateActiveInteraction() const
 {
 	const UFVInteractableComponent* Target = TargetInteractable.Get();
 	if (!Target || Target != ActiveCommit.Interactable || !InteractableIsInReach(Target))
@@ -318,7 +315,7 @@ void UFVInteractorComponent::FinishInteraction(const bool bSuccess)
 	RefreshOffers();
 }
 
-const FFVInteractionOffer* UFVInteractorComponent::FindOffer(const FGameplayTag& InputTag)
+const FFVInteractionOffer* UFVInteractorComponent::FindOffer(const FGameplayTag& InputTag) const
 {
 	return CachedOffers.FindByPredicate([&InputTag](const FFVInteractionOffer& Candidate)
 	{
@@ -552,7 +549,7 @@ void UFVInteractorComponent::RefreshOffers(bool bForceBroadcast)
 			return A.Weight > B.Weight;
 		}
 
-		return A.InputTag.ToString() < B.InputTag.ToString();
+		return A.InputTag.GetTagName().LexicalLess(B.InputTag.GetTagName());
 	});
 
 	const bool bChanged = NewOffers != CachedOffers;
