@@ -32,25 +32,6 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	
-	UE_API FVector GetFocusPoint() const;
-
-	UFUNCTION(BlueprintPure, Category = "Interactable|State")
-	UE_API EFVInteractableState GetState() const { return State; }
-
-	UE_API static bool IsTransitionAllowed(EFVInteractableState From, EFVInteractableState To);
-
-	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
-	void ActivateInteractions();
-	
-	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
-	void DeactivateInteractions();
-    	
-	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
-	UE_API bool IsInteractionActive() const { return State != EFVInteractableState::Idle; }
-	
-	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
-	UE_API void ConsumeOffer(const FGameplayTag& InputTag);
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Responses")
 	UE_API void BindResponse(FGameplayTag ActionTag, UFVInteractableResponseComponent* Response);
@@ -64,6 +45,24 @@ public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Interactable|Dependencies")
 	TArray<TObjectPtr<UFVInteractableComponent>> Dependencies;
 
+#pragma region LifecycleFunctions
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
+	void ActivateInteractions();
+
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
+	void DeactivateInteractions();
+
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
+	UE_API bool IsInteractionActive() const { return State != EFVInteractableState::Idle; }
+
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Lifecycle")
+	UE_API void ConsumeOffer(const FGameplayTag& InputTag);
+#pragma endregion
+
+#pragma region StateFunctions
+	UFUNCTION(BlueprintPure, Category = "Interactable|State")
+	UE_API EFVInteractableState GetState() const { return State; }
+
 	UFUNCTION(BlueprintCallable, Category = "Interactable|State")
 	UE_API void AddSuppression(FGameplayTag Reason);
 
@@ -73,8 +72,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interactable|State")
 	UE_API bool CanInteract() const;
 
-#pragma region Detection
-	
+	UE_API static bool IsTransitionAllowed(EFVInteractableState From, EFVInteractableState To);
+#pragma endregion
+
+#pragma region DetectionFunctions
 	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
 	ECollisionChannel GetCollisionChannel() const { return CollisionChannel; }
 	
@@ -95,9 +96,13 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Detection")
 	UE_API void ReleaseInteractor(UFVInteractorComponent* InteractorToRelease);
-
 #pragma endregion 
 	
+#pragma region InteractionFunctions
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	UE_API void ExecuteAction(const FGameplayTag ActionTag, UFVInteractorComponent* Interactor);
+#pragma endregion
+
 	const FFVInteractionOffer* FindOffer(const FGameplayTag& InputTag) const;
 	const TArray<FFVInteractionOffer>& GetOffers() const { return Offers; }
 
@@ -171,8 +176,11 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UFVInteractionRegistrySubsystem> Registry;
 
-	UPROPERTY()
+	UPROPERTY(Transient)
 	TWeakObjectPtr<UFVInteractorComponent> TargetInteractor;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UFVInteractableResponseComponent>> Responses;
 
 	UPROPERTY()
 	FTimerHandle Timer_Interaction;

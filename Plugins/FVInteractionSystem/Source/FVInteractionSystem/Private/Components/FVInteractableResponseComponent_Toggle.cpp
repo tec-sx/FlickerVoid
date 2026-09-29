@@ -4,17 +4,12 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractableResponseComponent_Toggle)
 
-void UFVInteractableResponseComponent_Toggle::BindEvents_Implementation(UFVInteractableComponent* Interactable)
+void UFVInteractableResponseComponent_Toggle::BeginPlay()
 {
+	Super::BeginPlay();
+
 	bIsOpen = bStartOpen;
 	bIsLocked = bStartLocked;
-	
-	Interactable->InteractionEnded.AddDynamic(this, &UFVInteractableResponseComponent_Toggle::OnInteractionEnded);
-}
-
-void UFVInteractableResponseComponent_Toggle::UnbindEvents_Implementation(UFVInteractableComponent* Interactable)
-{
-	Interactable->InteractionEnded.RemoveDynamic(this, &UFVInteractableResponseComponent_Toggle::OnInteractionEnded);
 }
 
 void UFVInteractableResponseComponent_Toggle::SetLocked(const bool bLocked)
@@ -23,13 +18,8 @@ void UFVInteractableResponseComponent_Toggle::SetLocked(const bool bLocked)
 	OnLockChanged(bIsLocked);
 }
 
-void UFVInteractableResponseComponent_Toggle::OnInteractionEnded(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const bool bSuccess)
+void UFVInteractableResponseComponent_Toggle::ExecuteAction_Implementation(UFVInteractorComponent* Interactor)
 {
-	if (!bSuccess || !MatchesBoundAction(ActionTag))
-	{
-		return;
-	}
-
 	if (bIsLocked)
 	{
 		OnToggleBlocked(!bIsOpen);

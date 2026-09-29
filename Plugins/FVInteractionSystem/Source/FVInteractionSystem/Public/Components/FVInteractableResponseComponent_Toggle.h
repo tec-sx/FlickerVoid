@@ -7,11 +7,13 @@
 #include "FVInteractableResponseComponent_Toggle.generated.h"
 
 UCLASS(ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
-class FVINTERACTIONSYSTEM_API UFVInteractableResponseComponent_Toggle final : public UFVInteractableResponseComponent
+class FVINTERACTIONSYSTEM_API UFVInteractableResponseComponent_Toggle : public UFVInteractableResponseComponent
 {
 	GENERATED_BODY()
 
 public:
+	virtual void BeginPlay() override;
+
 	UFUNCTION(BlueprintPure, Category = "Interaction|Toggle")
 	bool IsOpen() const { return bIsOpen; }
 
@@ -22,9 +24,6 @@ public:
 	void SetLocked(bool bLocked);
 
 protected:
-	virtual void BindEvents_Implementation(UFVInteractableComponent* Interactable) override;
-	virtual void UnbindEvents_Implementation(UFVInteractableComponent* Interactable) override;
-	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
 	void OnToggled(bool bOpen);
 
@@ -41,8 +40,7 @@ protected:
 	bool bStartLocked = false;
 
 private:
-	UFUNCTION()
-	void OnInteractionEnded(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const bool bSuccess);
+	virtual void ExecuteAction_Implementation(UFVInteractorComponent* Interactor) override;
 
 	bool bIsOpen = false;
 	bool bIsLocked = false;

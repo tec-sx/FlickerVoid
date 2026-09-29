@@ -331,6 +331,17 @@ void UFVInteractableComponent::ReleaseInteractor(UFVInteractorComponent* Interac
 	}
 }
 
+void UFVInteractableComponent::ExecuteAction(const FGameplayTag ActionTag, UFVInteractorComponent* Interactor)
+{
+	for (UFVInteractableResponseComponent* Response : Responses)
+	{
+		if (IsValid(Response) && Response->GetActionTag().MatchesTagExact(ActionTag))
+		{
+			Response->ExecuteAction(Interactor);
+		}
+	}
+}
+
 const FFVInteractionOffer* UFVInteractableComponent::FindOffer(const FGameplayTag& InputTag) const
 {
 	return Offers.FindByPredicate([InputTag](const FFVInteractionOffer& Offer)
@@ -354,8 +365,8 @@ void UFVInteractableComponent::BindResponse(FGameplayTag ActionTag, UFVInteracta
 		return;
 	}
 
-	Response->SetBoundActionTag(ActionTag);
-	Response->BindEvents(this);
+	Response->SetActionTag(ActionTag);
+	Responses.AddUnique(Response);
 }
 
 void UFVInteractableComponent::UnbindResponse(UFVInteractableResponseComponent* Response)
@@ -365,6 +376,6 @@ void UFVInteractableComponent::UnbindResponse(UFVInteractableResponseComponent* 
 		return;
 	}
 
-	Response->UnbindEvents(this);
-	Response->SetBoundActionTag(FGameplayTag());
+	Responses.RemoveSingleSwap(Response);
+	Response->SetActionTag(FGameplayTag());
 }

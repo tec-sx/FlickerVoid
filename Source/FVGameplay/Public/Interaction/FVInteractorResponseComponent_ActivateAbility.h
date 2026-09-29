@@ -19,7 +19,7 @@ protected:
 
 private:
 	UFUNCTION()
-	void OnInteractionRequested(const FFVInteractionCommit& Commit, bool bSuccess) const;
+	void OnInteractionCommited(const FFVInteractionCommit& Commit, bool bSuccess) const;
 };
 
 #undef UE_API

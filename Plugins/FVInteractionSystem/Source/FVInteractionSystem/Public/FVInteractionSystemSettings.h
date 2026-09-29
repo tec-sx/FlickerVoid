@@ -62,9 +62,6 @@ struct FVINTERACTIONSYSTEM_API FFVInteractableSettings
 	UPROPERTY(EditAnywhere, Category="InteractableSettings", meta=(NoResetToDefault))
 	TEnumAsByte<ECollisionChannel> DefaultCollisionChannel;
 
-	UPROPERTY(EditAnywhere, Category="InteractableSettings")
-	EFVHighlightSetupType DefaultHighlightSetupType;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractableSettings", meta=(NoResetToDefault))
 	uint8 DefaultInteractionHighlight : 1;
 
@@ -78,7 +75,6 @@ struct FVINTERACTIONSYSTEM_API FFVInteractableSettings
 		: DefaultInteractionPeriod(3.f)
 		, DefaultInteractableState(EFVInteractableState::Idle)
 		, DefaultCollisionChannel(ECC_Camera)
-		, DefaultHighlightSetupType(EFVHighlightSetupType::Quick)
 		, DefaultInteractionHighlight(true)
 		, DefaultHighlightSetup(FFVInteractionHighlightSetup())
 		, DefaultInteractableWeight(1)

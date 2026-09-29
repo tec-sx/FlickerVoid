@@ -18,29 +18,22 @@ class UFVInteractableResponseComponent : public UActorComponent
 public:
 	UFVInteractableResponseComponent() { PrimaryComponentTick.bCanEverTick = false; }
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Interaction|Responder")
-	void BindEvents(UFVInteractableComponent* Interactable);
+	UFUNCTION(BlueprintNativeEvent, Category = "Interaction|Response")
+	void ExecuteAction(UFVInteractorComponent* Interactor);
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Interaction|Responder")
-	void UnbindEvents(UFVInteractableComponent* Interactable);
-
-	UFUNCTION(BlueprintPure, Category = "Interaction|Responder")
-	UE_API FGameplayTag GetBoundActionTag() const { return BoundActionTag; }
+	UFUNCTION(BlueprintPure, Category = "Interaction|Response")
+	UE_API FGameplayTag GetActionTag() const { return ActionTag; }
 
 protected:
-	virtual void BindEvents_Implementation(UFVInteractableComponent* Interactable) {}
-	virtual void UnbindEvents_Implementation(UFVInteractableComponent* Interactable) {}
-
-	UFUNCTION(BlueprintPure, Category = "Interaction|Responder")
-	UE_API bool MatchesBoundAction(const FGameplayTag& ActionTag) const { return ActionTag.MatchesTagExact(BoundActionTag); }
+	virtual void ExecuteAction_Implementation(UFVInteractorComponent* Interactor) {}
 
 private:
 	friend class UFVInteractableComponent;
 
-	void SetBoundActionTag(const FGameplayTag& ActionTag) { BoundActionTag = ActionTag; }
+	void SetActionTag(const FGameplayTag& InActionTag) { ActionTag = InActionTag; }
 
 	UPROPERTY(Transient)
-	FGameplayTag BoundActionTag;
+	FGameplayTag ActionTag;
 };
 
 #undef UE_API

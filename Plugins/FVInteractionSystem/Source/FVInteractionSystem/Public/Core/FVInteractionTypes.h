@@ -48,16 +48,6 @@ enum class EFVHighlightType : uint8
 	Default			UMETA(Hidden)
 };
 
-UENUM(BlueprintType, meta=(ScriptName="HighlightSetupType"))
-enum class EFVHighlightSetupType : uint8
-{
-	FullAll		UMETA(DisplayName="Full Auto Setup", Tooltip="Add all components from Owning Actor to Highlightable and Collision Components."),
-	AllParent	UMETA(DisplayName="All Parents Auto Setup", Tooltip="Add all parent components to Highlightable and Collision Components."),
-	Quick		UMETA(DisplayName="Quick Auto Setup", Tooltip="Add only first parent component to Highlightable and Collision Components."),
-	None		UMETA(DisplayName="None", Tooltip="No auto setup will be performed."),
-	Default		UMETA(Hidden)
-};
-
 UENUM(BlueprintType, meta=(ScriptName="InteractionGate"))
 enum class EFVInteractionGate : uint8
 {
