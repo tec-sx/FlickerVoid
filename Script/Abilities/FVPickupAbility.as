@@ -29,17 +29,7 @@
 
 	private void FinishPickup()
 	{
-		if (IsValid(Interactable) && IsValid(Interactor))
-		{
-			AFVItemPickup Pickup = Cast<AFVItemPickup>(Interactable.GetOwner());
-			UFVInventoryComponent Inventory = Interactor.GetOwner().GetComponentByClass(UFVInventoryComponent);
-
-			if (Pickup != nullptr && Inventory != nullptr)
-			{
-				Pickup.ExecutePickup(Inventory);
-			}
-		}
-
+		// TODO: Route pickup through FVInventoryEquipmentSystem.
 		EndAbility();
 	}
 }

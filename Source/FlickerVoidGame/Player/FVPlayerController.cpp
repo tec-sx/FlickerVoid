@@ -11,7 +11,6 @@
 #include "Movement/FVCharacterMovementComponent.h"
 #include "Logging/FVLogCategories.h"
 #include "Logging/FVLogSystem.h"
-#include "Player/FVInventoryUIRouterComponent.h"
 #include "Player/FVDialogueUIRouterComponent.h"
 #include "Components/FVInputComponent.h"
 #include "Components/FVGestureComponent.h"
@@ -23,7 +22,6 @@ AFVPlayerController::AFVPlayerController(const FObjectInitializer& ObjectInitial
 	: Super(ObjectInitializer)
 {
 	GestureComponent = CreateDefaultSubobject<UFVGestureComponent>(TEXT("GestureComponent"));
-	InventoryUIRouterComponent = CreateDefaultSubobject<UFVInventoryUIRouterComponent>(TEXT("InventoryUIRouterComponent"));
 	DialogueUIRouterComponent = CreateDefaultSubobject<UFVDialogueUIRouterComponent>(TEXT("DialogueUIRouterComponent"));
 }
 

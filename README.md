@@ -105,9 +105,9 @@ Input handling is **fully tag-driven**.
 
 ### Inventory & Interaction
 
-- **FVoidInventoryComponent**
-  - Manages items, resources, and progression-relevant objects
-  - Stores item instances with runtime data (quantity, durability, custom tags)
+- **FVInventoryEquipmentSystem** *(plugin)*
+  - Inventory, equipment and inventory UI (forked from Mountea Advanced Inventory System)
+  - Replaces the legacy in-project inventory component
 
 - **FVoidItemInteractionComponent**
   - Handles item-based and world interactions

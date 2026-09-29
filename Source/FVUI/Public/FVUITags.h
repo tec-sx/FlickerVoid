@@ -9,8 +9,6 @@ namespace FVUITags
 	// ============================================================================
 	// MESSAGE CHANNELS
 	// ============================================================================
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Inventory_Changed);
-
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Interaction_PromptChanged);
 
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_LineReady);

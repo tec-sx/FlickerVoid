@@ -5,7 +5,6 @@ namespace FVUITags
 	// ============================================================================
 	// MESSAGE CHANNELS
 	// ============================================================================
-	UE_DEFINE_GAMEPLAY_TAG(UI_Inventory_Changed, "UI.Inventory.Changed");
 	UE_DEFINE_GAMEPLAY_TAG(UI_Interaction_PromptChanged, "UI.Interaction.PromptChanged");
 
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_LineReady, "Dialogue.LineReady");

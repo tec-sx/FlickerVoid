@@ -13,7 +13,6 @@ class UAbilitySystemComponent;
 class AFVPlayerState;
 class UFVInputConfig;
 class UInputMappingContext;
-class UFVInventoryUIRouterComponent;
 class UFVDialogueUIRouterComponent;
 class UFVInteractorComponent;
 struct FInputActionValue;
@@ -81,9 +80,6 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "FlivkerVoid|Input")
 	TObjectPtr<UFVGestureComponent> GestureComponent;
 	
-	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
-	TObjectPtr<UFVInventoryUIRouterComponent> InventoryUIRouterComponent;
-
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
 	TObjectPtr<UFVDialogueUIRouterComponent> DialogueUIRouterComponent;
 
