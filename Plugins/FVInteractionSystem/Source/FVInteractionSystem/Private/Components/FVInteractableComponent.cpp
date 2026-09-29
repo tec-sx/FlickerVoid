@@ -91,33 +91,29 @@ bool UFVInteractableComponent::IsTransitionAllowed(EFVInteractableState From, EF
 		return false;
 	}
 
-	switch (To)
+	if (To == EFVInteractableState::Interacting)
 	{
-	case EFVInteractableState::Interacting:
 		if (From != EFVInteractableState::Awake && From != EFVInteractableState::Paused)
 		{
 			LogRejection(TEXT("Only an Awake or Paused interactable can start interacting."));
 			return false;
 		}
-		break;
-	case EFVInteractableState::Paused:
+	}
+	else if (To == EFVInteractableState::Paused)
+	{
 		if (From != EFVInteractableState::Interacting)
 		{
 			LogRejection(TEXT("Only an interacting interactable can be paused."));
 			return false;
 		}
-		break;
-	case EFVInteractableState::Cooldown:
-	case EFVInteractableState::Completed:
+	}
+	else if (To == EFVInteractableState::Cooldown || To == EFVInteractableState::Completed)
+	{
 		if (From != EFVInteractableState::Interacting && From != EFVInteractableState::Awake)
 		{
 			LogRejection(TEXT("Only an interacting or awake interactable can finish."));
 			return false;
 		}
-		break;
-
-	default:
-		break;
 	}
 
 	return true;

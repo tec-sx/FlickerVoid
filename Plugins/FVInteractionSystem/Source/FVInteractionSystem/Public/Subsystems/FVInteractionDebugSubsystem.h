@@ -60,7 +60,7 @@ private:
 	
 private:
 	UFUNCTION()
-	void OnOffersChanged(const TArray<FFVInteractionOffer>& Offers);
+	void OnOffersChanged(const TArray<FFVInteractionOffer> Offers);
 	
 	UFUNCTION()
 	void OnInteractionCommitStarted(const FFVInteractionCommit& Commit);

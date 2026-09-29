@@ -30,7 +30,7 @@ struct FTraceData
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorStateChanged, EFVInteractorState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorFoundInteractable, UFVInteractableComponent*, Target);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorLostInteractable, UFVInteractableComponent*, Target);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionOffersChanged, const TArray<FFVInteractionOffer>&, Offers);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionOffersChanged, const TArray<FFVInteractionOffer>, Offers);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionCommitStarted, const FFVInteractionCommit&, Commit);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCommitProgress, const FFVInteractionCommit&, Commit, float, Progress);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCommitEnded, const FFVInteractionCommit&, Commit, const bool, bSuccess);

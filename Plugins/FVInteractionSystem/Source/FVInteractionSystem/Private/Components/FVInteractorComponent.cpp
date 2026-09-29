@@ -21,12 +21,12 @@
 
 UFVInteractorComponent::UFVInteractorComponent()
 	: CollisionChannel(ECC_Camera)
-	, OcclusionChannel(ECC_Camera)
-	, State(EFVInteractorState::Idle)
 	, InteractorTag(FVInteractionGameplayTags::Interactor_Tag_Player)
+	, OcclusionChannel(ECC_Camera)
 	, TraceRadius(15.f)
 	, TickInterval(0.1f)
 	, TraceRange(250.f)
+	, State(EFVInteractorState::Idle)
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;

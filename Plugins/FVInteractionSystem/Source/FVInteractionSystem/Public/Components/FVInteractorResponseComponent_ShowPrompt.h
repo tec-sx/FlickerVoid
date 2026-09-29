@@ -8,8 +8,8 @@
 
 #define UE_API FVINTERACTIONSYSTEM_API
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPromptsChanged, const TArray<FFVInteractionOffer>&, Offers);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPromptProgress, const FGameplayTag&, ActionTag, float, Progress);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPromptsChanged, const TArray<FFVInteractionOffer>, Offers);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPromptProgress, const FGameplayTag, ActionTag, float, Progress);
 
 UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
 class UFVInteractorResponseComponent_ShowPrompt final : public UFVInteractorResponseComponent
@@ -38,7 +38,7 @@ private:
 	void OnFocusChanged(UFVInteractableComponent* NewTarget);
 
 	UFUNCTION()
-	void OnOffersChanged(const TArray<FFVInteractionOffer>& Offers);
+	void OnOffersChanged(const TArray<FFVInteractionOffer> Offers);
 
 	UFUNCTION()
 	void OnInteractionProgress(const FFVInteractionCommit& Commit, float Progress);
