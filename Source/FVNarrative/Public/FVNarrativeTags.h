@@ -12,12 +12,6 @@ namespace FVNarrativeTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Speaker_Player);
 	
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_CallOut);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_LineReady);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_ChoicesReady);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Ended);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_SubmitChoice);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Continue);
 	
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Icon_Trade_Item);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Icon_Trade_Info);
@@ -109,26 +103,7 @@ namespace FVNarrativeTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Blocker_Memory_Required);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Blocker_Rehabilitation_Required);
 
-	// ============================================================================
-	// FACT TAGS (CHAPTER / QUEST SYSTEM)
-	// Roots only. Concrete facts are composed at runtime by FVQuestFactHelpers:
-	//   Fact.Chapter.<ChapterId>.Stage                            - sparse EFVQuestStage value
-	//   Fact.Chapter.<ChapterId>.Outcome                          - designer defined outcome id
-	//   Fact.Quest.<ChapterId>.<QuestId>.Stage                    - sparse EFVQuestStage value
-	//   Fact.Quest.<ChapterId>.<QuestId>.Outcome                  - designer defined outcome id
-	//   Fact.Quest.<ChapterId>.<QuestId>.Objective.<ObjId>        - undefined not issued, 0 active, 1 done
-	//   Fact.Quest.<ChapterId>.<QuestId>.Counter.<Counter>        - per quest tallies
-	// Quests nest under their chapter so UndefineFactsUnderTag can wipe either a whole
-	// chapter (Fact.Quest.<ChapterId>) or a single quest (Fact.Quest.<ChapterId>.<QuestId>).
-	//
-	// Whether a quest is REQUIRED to progress its chapter is deliberately not a fact.
-	// That is authored, immutable data; the fact DB holds mutable runtime state. The
-	// chapter's Flow graph declares it, by naming the gating quests in the condition
-	// group of its Wait For Fact Condition node.
-	// ============================================================================
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Chapter);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Chapter_Current);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Quest);
+	// Fact.Dialogue root for dialogue facts (lines spoken, topics unlocked).
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Dialogue);
 }
 

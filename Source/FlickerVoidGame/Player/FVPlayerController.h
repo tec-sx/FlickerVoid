@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
@@ -13,7 +13,6 @@ class UAbilitySystemComponent;
 class AFVPlayerState;
 class UFVInputConfig;
 class UInputMappingContext;
-class UFVDialogueUIRouterComponent;
 class UFVInteractorComponent;
 struct FInputActionValue;
 
@@ -79,9 +78,6 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere, Category = "FlivkerVoid|Input")
 	TObjectPtr<UFVGestureComponent> GestureComponent;
-	
-	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|PlayerController")
-	TObjectPtr<UFVDialogueUIRouterComponent> DialogueUIRouterComponent;
 
 	TWeakObjectPtr<AFVPlayerCharacter> CachedCharacter;
 

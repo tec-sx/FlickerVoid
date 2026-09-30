@@ -26,7 +26,7 @@
 	}],
 	"Plugins": [
 		{
-			"Name": "FVInputSystem",
+			"Name": "FVFramework",
 			"Enabled": true
 		}
 	]

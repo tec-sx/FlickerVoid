@@ -39,7 +39,4 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlickerVoid|Facts|NPC")
 	static FGameplayTag MakeNpcKnowsTag(FName NpcId, FName TopicId);
 
-	/** Fact.Faction.<FactionId>[.<Aspect>] */
-	UFUNCTION(BlueprintPure, Category = "FlickerVoid|Facts|NPC")
-	static FGameplayTag MakeFactionFactTag(FName FactionId, FName Aspect);
 };

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Conditions/FVCondition.h"
 #include "FVMovementHandlerInfo.generated.h"
 
 class UFVMovementHandlerBase;
@@ -40,7 +41,10 @@ struct FLICKERVOIDCHARACTER_API FFVMovementHandlerInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Activation|Tags")
 	FGameplayTagContainer GrantedTags;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Activation", meta = (ClampMin = "0", ClampMax = "255"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Activation")
+FFVConditionSet ActivationConditions;
+
+UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Activation", meta = (ClampMin = "0", ClampMax = "255"))
 	uint8 Priority = static_cast<uint8>(EFVMovementHandlerPriority::Normal);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Activation")

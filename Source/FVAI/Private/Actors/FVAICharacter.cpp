@@ -1,9 +1,10 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Actors/FVAICharacter.h"
 
 #include "FVAICharacterController.h"
+#include "FVAIConfigData.h"
 #include "FVCoreTags.h"
 #include "FVStateTreeAIComponent.h"
 #include "Components/BoxComponent.h"
@@ -25,6 +26,11 @@ AFVAICharacter::AFVAICharacter()
 void AFVAICharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (AIConfig)
+	{
+		OwnedTags.AppendTags(AIConfig->StartingTags);
+	}
 }
 
 void AFVAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -43,9 +49,10 @@ void AFVAICharacter::PossessedBy(AController* NewController)
 		{
 			if (const AFVAICharacterController* AIController = Cast<AFVAICharacterController>(NewController))
 			{
-				if (AIController->GetStateTreeAIComponent() && StateTree)
+				UStateTree* Tree = StateTree ? StateTree.Get() : (AIConfig ? AIConfig->DefaultStateTree.Get() : nullptr);
+				if (AIController->GetStateTreeAIComponent() && Tree)
 				{
-					AIController->GetStateTreeAIComponent()->StartStateTree(StateTree);
+					AIController->GetStateTreeAIComponent()->StartStateTree(Tree);
 				}
 			}
 		},

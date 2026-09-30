@@ -165,6 +165,11 @@ private:
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UFVInteractableComponent> TargetInteractable;
 
+	FDelegateHandle FactChangedHandle;
+
+	void HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue);
+	bool PassesOfferConditions(const FFVInteractionOffer& Offer) const;
+
 	UPROPERTY(Transient)
 	TObjectPtr<UFVInteractionRegistrySubsystem> Registry;
 	

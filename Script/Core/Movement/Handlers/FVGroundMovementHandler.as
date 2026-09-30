@@ -51,8 +51,8 @@ class UFVGroundMovementHandler : UFVMovementHandlerBase
             MovementComponent.MaxAcceleration = CalculateMaxAcceleration(GaitConfig);
             MovementComponent.BrakingDecelerationWalking = CalculateBrakingDeceleration();
             MovementComponent.GroundFriction = CalculateGroundFriction(GaitConfig);
-            MovementComponent.MaxWalkSpeed = CalculateDirectionalSpeed(GaitConfig.Speeds);
-            MovementComponent.MaxWalkSpeedCrouched = CalculateDirectionalSpeed(GroundConfig.CrouchSpeeds);
+            MovementComponent.MaxWalkSpeed = CalculateDirectionalSpeed(GaitConfig.Speeds) * MovementComponent.GetSpeedMultiplier();
+            MovementComponent.MaxWalkSpeedCrouched = CalculateDirectionalSpeed(GroundConfig.CrouchSpeeds) * MovementComponent.GetSpeedMultiplier();
         }
 
         // Perform Movement if there is movement input

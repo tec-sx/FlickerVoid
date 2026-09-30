@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "AttributeSet.h"
 #include "GameplayTagContainer.h"
 #include "Movement/FVMovementHandlerInfo.h"
 
@@ -23,6 +24,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Handlers", meta = (TitleProperty = "Description"))
 	TArray<FFVMovementHandlerInfo> MovementHandlers;
+
+UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Handlers")
+FGameplayAttribute SpeedMultiplierAttribute;
 
 	//~=============================================================================
 	// Debug Settings

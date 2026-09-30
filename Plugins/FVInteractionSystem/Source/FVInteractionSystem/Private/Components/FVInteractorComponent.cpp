@@ -8,10 +8,11 @@
 #include "Subsystems/FVInteractionRegistrySubsystem.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
-#include "Components/FVGestureComponent.h"
+#include "Input/Components/FVGestureComponent.h"
 
 #if !UE_BUILD_SHIPPING
 #include "Subsystems/FVInteractionDebugSubsystem.h"
+#include "Facts/FVFactDatabase.h"
 #endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractorComponent)
@@ -33,6 +34,11 @@ UFVInteractorComponent::UFVInteractorComponent()
 void UFVInteractorComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (UFVFactDatabase* Facts = UFVFactDatabase::Get(this))
+	{
+		FactChangedHandle = Facts->OnFactChangedNative().AddUObject(this, &UFVInteractorComponent::HandleFactChanged);
+	}
 	
 	if (!Cast<APawn>(GetOwner()))
 	{
@@ -88,6 +94,11 @@ void UFVInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UFVInteractorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (UFVFactDatabase* Facts = UFVFactDatabase::Get(this))
+	{
+		Facts->OnFactChangedNative().Remove(FactChangedHandle);
+	}
+
 	DisableTracing();
 
 	if (IsValid(Registry))
@@ -355,7 +366,31 @@ bool UFVInteractorComponent::IsOfferAvailable(const FFVInteractionOffer& Offer) 
 		return false;
 	}
 
-	return Offer.AreTagsSatisfied(GrantedTags);
+	return Offer.AreTagsSatisfied(GrantedTags) && PassesOfferConditions(Offer);
+}
+
+bool UFVInteractorComponent::PassesOfferConditions(const FFVInteractionOffer& Offer) const
+{
+	if (Offer.Conditions.IsEmpty())
+	{
+		return true;
+	}
+
+	const UFVInteractableComponent* Target = TargetInteractable.Get();
+	FFVConditionContext Context;
+	Context.WorldContext = GetOwner();
+	Context.Instigator = GetOwner();
+	Context.Target = Target ? Target->GetOwner() : nullptr;
+	return Offer.Conditions.Evaluate(Context);
+}
+
+void UFVInteractorComponent::HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue)
+{
+	if (!TargetInteractable.IsValid())
+	{
+		return;
+	}
+	RefreshOffers();
 }
 
 void UFVInteractorComponent::GrantTag(const FGameplayTag NewTag)

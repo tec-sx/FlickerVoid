@@ -10,13 +10,10 @@ namespace FVUITags
 	// MESSAGE CHANNELS
 	// ============================================================================
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Interaction_PromptChanged);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Layer_Game);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Layer_Menu);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Layer_Modal);
 
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_LineReady);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_ChoicesReady);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Event);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Ended);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_SubmitChoice);
-	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Dialogue_Continue);
 }
 
 #undef UE_API
