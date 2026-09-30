@@ -10,11 +10,6 @@ class UDoorRootComponent : USceneComponent
 class ADoor : AActor
 {
     UPROPERTY(DefaultComponent)
-    UFVInteractableComponent Interactable;
-    default Interactable.AddCompatibleInteractorTag(GameplayTags::Interactor_Tag_Player);
-    default Interactable.AddCompatibleInteractorTag(GameplayTags::Interactor_Tag_AI);
-
-    UPROPERTY(DefaultComponent)
     UInteractionResponse_DoorToggle DoorToggleComponent;
     default DoorToggleComponent.bStartOpen = false;
 
@@ -23,6 +18,16 @@ class ADoor : AActor
     
     UPROPERTY(DefaultComponent)
     UTimelineComponent Timeline;
+
+    UPROPERTY(DefaultComponent)
+    UFVInteractableComponent Interactable;
+    default Interactable.AddCompatibleInteractorTag(GameplayTags::Interactor_Tag_Player);
+    default Interactable.AddCompatibleInteractorTag(GameplayTags::Interactor_Tag_AI);
+
+    UPROPERTY(DefaultComponent)
+    UFVInteractableHighlightComponent Highlight;
+    default Highlight.HighlightSetup.HighlightType = EFVHighlightType::PostProcessing;
+    default Highlight.HighlightSetup.StencilID = 133;
 
     UFUNCTION(BlueprintOverride)
     void BeginPlay()

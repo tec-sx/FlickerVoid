@@ -17,30 +17,13 @@ class UInteractableResponseComponent_Consume : UFVInteractableResponseComponent
         return GetOwner().GetActorLocation() - InteractionPointOffset;
     }
 
-	UFUNCTION(BlueprintOverride)
-	void BindEvents(UFVInteractableComponent Interactable)
-	{
-        Print("Events bind");
-        Interactable.InteractionEnded.AddUFunction(this, n"ConsumeItem");
-	}
-
+    
     UFUNCTION(BlueprintOverride)
-	void UnbindEvents(UFVInteractableComponent Interactable)
-	{
-        Interactable.InteractionEnded.Unbind(this, n"ConsumeItem");
-	}
-
-    UFUNCTION()
-	private void ConsumeItem(const FGameplayTag&in ActionTag, UFVInteractorComponent InInteractorComponent, bool bSuccess)
-	{
+    void ExecuteAction(UFVInteractorComponent Interactor)
+    {
         Print(ActionTag.ToString());
-        // TODO: Handle action filtering logic in C++
-        if (ActionTag != GameplayTags::Interaction_Action_Drink)
-        {
-            return;
-        }
 
-        InteractorComponent = InInteractorComponent;
+        InteractorComponent = Interactor;
         InteractorActor = Cast<APlayerCharacter>(InteractorComponent.GetOwner());
 
         if (!IsValid(InteractorActor))
@@ -62,7 +45,7 @@ class UInteractableResponseComponent_Consume : UFVInteractableResponseComponent
         AnimInstance.OnMontageSectionChanged.AddUFunction(this, n"OnMontageSectionChanged");
 
         InteractorComponent.AddSuppression(GameplayTags::Interaction_Suppression_Cutscene);
-	}
+    }
 
     UFUNCTION()
     private void OnMontageEnded(UAnimMontage Montage, bool bInterrupted)

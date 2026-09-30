@@ -14,19 +14,19 @@ class UInteractionOfferWidget : UUserWidget
     {
         SetVisibility(ESlateVisibility::HitTestInvisible);
 
-        if (ActionNameText != nullptr)
-        {
-            ActionNameText.SetText(Style.DisplayName);
-        }
+        // if (ActionNameText != nullptr)
+        // {
+        //     ActionNameText.SetText(Style.DisplayName);
+        // }
 
-        if (IconImage != nullptr)
-        {
-            IconImage.SetBrush(Style.Icon);
-            IconImage.SetVisibility(ESlateVisibility::HitTestInvisible);
-        }
+        // if (IconImage != nullptr)
+        // {
+        //     IconImage.SetBrush(Style.Icon);
+        //     IconImage.SetVisibility(ESlateVisibility::HitTestInvisible);
+        // }
 
-        SetRenderOpacity(Offer.bRequirementsMet ? 1.f : 0.4f);
-        SetToolTipText(Offer.bRequirementsMet ? FText() : Style.RequirementHint);
+        // SetRenderOpacity(Offer.bRequirementsMet ? 1.f : 0.4f);
+        // SetToolTipText(Offer.bRequirementsMet ? FText() : Style.RequirementHint);
     }
 
     void Clear()

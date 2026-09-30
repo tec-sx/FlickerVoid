@@ -5,30 +5,46 @@ class UInteractionSetWidget : UUserWidget
     UPanelWidget InteractionSetBox;
 
     UPROPERTY(EditDefaultsOnly, Category = "Interaction|Configuration")
-    TSubclassOf<UInteractionOfferWidget> SlotFirstWidgetClass;
+    TSubclassOf<UInteractionSlotWidget> SlotFirstWidgetClass;
 
     UPROPERTY(EditDefaultsOnly, Category = "Interaction|Configuration")
-    TSubclassOf<UInteractionOfferWidget> SlotMidWidgetClass;
+    TSubclassOf<UInteractionSlotWidget> SlotMidWidgetClass;
 
     UPROPERTY(EditDefaultsOnly, Category = "Interaction|Configuration")
-    TSubclassOf<UInteractionOfferWidget> SlotLastWidgetClass;
+    TSubclassOf<UInteractionSlotWidget> SlotLastWidgetClass;
 
     UPROPERTY(EditDefaultsOnly, Category = "Interaction|Configuration", Meta = (RequiredAssetDataTags = "RowStructure=/Script/Angelscript.InteractionSlotStyle"))
     UDataTable InteractionSlotStyles;
 
-    private TArray<UInteractionOfferWidget> OfferPool;
 
-    UFUNCTION()
-    void OnPromptChanged(const TArray<FFVInteractionOffer>&in Offers)
+    private UFVInteractorComponent Interactor;
+    private TArray<UInteractionSlotWidget> OfferPool;
+
+    void Init(UFVInteractorComponent InInteractor)
     {
-        if (Offers.Num() == 0)
+        Interactor = InInteractor;
+        Interactor.OffersChanged.AddUFunction(this, n"OnOffersChanged");
+        Interactor.InteractionCommitProgressed.AddUFunction(this, n"OnProgress");
+        Interactor.InteractionCommitEnded.AddUFunction(this, n"OnEnded");
+
+        OfferPool.Empty();
+    }
+    
+    UFUNCTION()
+    private void OnOffersChanged(const TArray<FFVInteractionOffer>&in Offers)
+    {
+        for (UInteractionSlotWidget OfferWidget : OfferPool)
         {
-            for (UInteractionOfferWidget OfferWidget : OfferPool)
+            if (IsValid(OfferWidget))
             {
                 OfferWidget.Clear();
             }
+        }
 
-            OfferPool.Empty();
+        OfferPool.Empty();
+            
+        if (Offers.IsEmpty())
+        {
             return;
         }
 
@@ -36,54 +52,41 @@ class UInteractionSetWidget : UUserWidget
 
         for (int i = 0; i < OfferPool.Num(); i++)
         {
-            UInteractionOfferWidget OfferWidget = OfferPool[i];
+            UInteractionSlotWidget OfferWidget = OfferPool[i];
             const FFVInteractionOffer Offer = Offers[i];
+
 
             FInteractionSlotStyle Style; 
             InteractionSlotStyles.FindRow(Offer.ActionTag.GetTagName(), Style);
-
+            
             // FInteractionKeyBinding Binding;
             // ResolveKeyBinding(Prompt.InputTag, Binding);   
 
-            OfferWidget.SetSlotData(Offer, Style);
+            OfferWidget.SetSlotData(Style, Offer.bRequirementsMet);
         }
     }
 
     UFUNCTION()
-    private void OnPromptProgress(const FGameplayTag&in ActionTag, float32 Progress)
+    private void OnProgress(const FFVInteractionCommit&in Commit, float32 Progress)
     {
     }
 
     UFUNCTION()
-    void BindResponse(UFVInteractorResponseComponent_ShowPrompt ShowPromptResponse)
+    private void OnEnded(const FFVInteractionCommit&in Commit, bool bSuccess)
     {
-    	if (IsValid(ShowPromptResponse))
-    	{
-    		ShowPromptResponse.OnPromptsChanged.AddUFunction(this, n"OnPromptChanged");
-            ShowPromptResponse.OnPromptProgress.AddUFunction(this, n"OnPromptProgress");
-            
-            TArray<FFVInteractionOffer> Offers = ShowPromptResponse.GetPrompts();
-            SetVisibility(Offers.Num() > 0 ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
-    		OnPromptChanged(Offers);
-    	}
-    }
-
-    UFUNCTION()
-    void UnbindResponse(UFVInteractorResponseComponent_ShowPrompt ShowPromptResponse)
-    {
-    	if (IsValid(ShowPromptResponse))
-    	{
-            ShowPromptResponse.OnPromptProgress.Unbind(this, n"OnPromptProgress");
-    		ShowPromptResponse.OnPromptsChanged.Unbind(this, n"OnPromptChanged");
-    	}
     }
 
     private void EnsureSlotPoolSize(int32 Size)
     {
+        if (SlotFirstWidgetClass == nullptr || SlotMidWidgetClass == nullptr || SlotLastWidgetClass == nullptr)
+        {
+            Print("Slot widget class not set on interaction set.");
+        }
+
         int i = 0;
         while (OfferPool.Num() < Size)
         {   
-            UInteractionOfferWidget NewOffer;
+            UInteractionSlotWidget NewOffer;
 
             if (Size == 1)
             {

@@ -198,7 +198,7 @@ void UFVInteractionDebugSubsystem::DebugInteractionOutcome(const EFVDebugInterac
 	LastInteractionOutcome = Outcome;
 }
 
-void UFVInteractionDebugSubsystem::OnOffersChanged(const TArray<FFVInteractionOffer> Offers)
+void UFVInteractionDebugSubsystem::OnOffersChanged(const TArray<FFVInteractionOffer>& Offers)
 {
 	AvailableOffers.Reset();
 	AvailableOffers = Offers;

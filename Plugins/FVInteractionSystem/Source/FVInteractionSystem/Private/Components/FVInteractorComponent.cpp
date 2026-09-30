@@ -305,6 +305,7 @@ void UFVInteractorComponent::FinishInteraction(const bool bSuccess)
 	{
 		if (bSuccess)
 		{
+			Target->ExecuteAction(Commit.ActionTag, this);
 			Target->ConsumeOffer(Commit.InputTag);
 		}
 
@@ -459,7 +460,9 @@ void UFVInteractorComponent::PerformTrace()
 		
 		if (IsValid(BestInteractableCandidate))
 		{
-			AcquireInteractable(BestInteractableCandidate);
+			TargetInteractable = BestInteractableCandidate;
+			BestInteractableCandidate->AcquireInteractor(this);
+			InteractableFound.Broadcast(BestInteractableCandidate);
 		}
 
 		RefreshOffers();
@@ -492,20 +495,6 @@ bool UFVInteractorComponent::PerformOcclusionTest(const FVector& Start, const FV
 #endif
 	
 	return OcclusionHit.IsValidBlockingHit() && OcclusionHit.GetActor() != Target; 
-}
-
-void UFVInteractorComponent::AcquireInteractable(UFVInteractableComponent* NewInteractable)
-{
-	if (IsValid(NewInteractable))
-	{
-		TargetInteractable = NewInteractable;
-	
-		if (UFVInteractableComponent* Interactable = TargetInteractable.Get())
-		{
-			Interactable->AcquireInteractor(this);
-			InteractableFound.Broadcast(Interactable);
-		}
-	}
 }
 
 void UFVInteractorComponent::ReleaseTargetInteractable()

@@ -565,8 +565,9 @@
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/46d407c1917d4575bfc2a8bb1cb5185d"
 		},
 		{
-			"Name": "MounteaAdvancedInventorySystem",
-			"Enabled": false
+			"Name": "MounteaInteractionSystem",
+			"Enabled": false,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/ca842c00ec0d4db0b3aad17701e1637b"
 		},
 		{
 			"Name": "Yap",

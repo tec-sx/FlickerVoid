@@ -33,11 +33,5 @@ void UFVInteractorResponseComponent_ActivateAbility::OnInteractionCommited(const
 	EventData.Target = Commit.Interactable->GetOwner();
 	EventData.OptionalObject = Commit.Interactable;
 
-	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Instigator);
-	const int32 Activated = ASC ? ASC->HandleGameplayEvent(Commit.ActionTag, &EventData) : 0;
-
-	if (Activated == 0)
-	{
-		Commit.Interactable->ExecuteAction(Commit.ActionTag, Commit.Interactor);
-	}
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Instigator, Commit.ActionTag, EventData);
 }

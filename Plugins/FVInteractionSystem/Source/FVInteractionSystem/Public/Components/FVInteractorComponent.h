@@ -30,7 +30,7 @@ struct FTraceData
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorStateChanged, EFVInteractorState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorFoundInteractable, UFVInteractableComponent*, Target);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorLostInteractable, UFVInteractableComponent*, Target);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionOffersChanged, const TArray<FFVInteractionOffer>, Offers);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionOffersChanged, const TArray<FFVInteractionOffer>&, Offers);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionCommitStarted, const FFVInteractionCommit&, Commit);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCommitProgress, const FFVInteractionCommit&, Commit, float, Progress);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCommitEnded, const FFVInteractionCommit&, Commit, const bool, bSuccess);
@@ -144,7 +144,6 @@ private:
 	void SetState(const EFVInteractorState NewState);
 	void PerformTrace();
 	bool PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target) const;
-	void AcquireInteractable(UFVInteractableComponent* NewInteractable);
 	void ReleaseTargetInteractable();
 	void RefreshOffers(bool bForceBroadcast = true);
 	bool InteractableIsInReach(const UFVInteractableComponent* Target) const;

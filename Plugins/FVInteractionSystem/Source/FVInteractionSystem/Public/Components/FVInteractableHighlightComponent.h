@@ -20,10 +20,10 @@ class FVINTERACTIONSYSTEM_API UFVInteractableHighlightComponent final : public U
 public:
 	UFVInteractableHighlightComponent() { PrimaryComponentTick.bCanEverTick = false; }
 
-protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+protected:
 	UPROPERTY(EditAnywhere, Category = "Interaction|Highlight", meta = (Tooltip = "Use this setup instead of the project default."))
 	bool bOverrideSetup = false;
 

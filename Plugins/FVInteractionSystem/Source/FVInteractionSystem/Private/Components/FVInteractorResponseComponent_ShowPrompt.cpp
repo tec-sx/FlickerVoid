@@ -30,7 +30,7 @@ void UFVInteractorResponseComponent_ShowPrompt::OnFocusChanged(UFVInteractableCo
 	}
 }
 
-void UFVInteractorResponseComponent_ShowPrompt::OnOffersChanged(const TArray<FFVInteractionOffer> Offers)
+void UFVInteractorResponseComponent_ShowPrompt::OnOffersChanged(const TArray<FFVInteractionOffer>& Offers)
 {
 	Prompts = Offers;
 	OnPromptsChanged.Broadcast(Prompts);
