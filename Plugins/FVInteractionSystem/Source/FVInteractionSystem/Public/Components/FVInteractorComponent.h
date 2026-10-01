@@ -22,6 +22,8 @@ struct FTraceData
 	FVector StartLocation = FVector::ZeroVector;
 	FVector EndLocation = FVector::ZeroVector;
 	FRotator TraceRotation = FRotator::ZeroRotator;
+	FVector HeadLocation = FVector::ZeroVector;
+	FVector CameraLocation = FVector::ZeroVector;
 	FCollisionQueryParams CollisionParams = FCollisionQueryParams::DefaultQueryParam;
 	ECollisionChannel CollisionChannel = ECC_Visibility;
 	TArray<FHitResult> HitResults;
@@ -140,9 +142,29 @@ public:
 	UPROPERTY(EditAnywhere, Category="DetectionSetup", meta=(NoResetToDefault, DisplayThumbnail=false))
 	TArray<TObjectPtr<AActor>> IgnoredActors;
 
+	UPROPERTY(EditAnywhere, Category="DetectionSetup|Origin")
+	bool bUseViewRay;
+
+	UPROPERTY(EditAnywhere, Category="DetectionSetup|Origin", meta=(EditCondition="bUseViewRay"))
+	FName HeadSocket;
+
+	UPROPERTY(EditAnywhere, Category="DetectionSetup|Origin", meta=(Units="cm"))
+	float HeadOffset;
+
+	UPROPERTY(EditAnywhere, Category="DetectionSetup|Origin", meta=(EditCondition="bUseViewRay", UIMin=-89, UIMax=0, ClampMin=-89, ClampMax=0, Units="deg"))
+	float CameraBlendPitchStart;
+
+	UPROPERTY(EditAnywhere, Category="DetectionSetup|Origin", meta=(EditCondition="bUseViewRay", UIMin=-89, UIMax=0, ClampMin=-89, ClampMax=0, Units="deg"))
+	float CameraBlendPitchEnd;
+
+	UPROPERTY(EditAnywhere, Category="DetectionSetup|Origin", meta=(EditCondition="bUseViewRay", UIMin=0, UIMax=1, ClampMin=0, ClampMax=1))
+	float MaxCameraBlend;
+
 private:
 	void SetState(const EFVInteractorState NewState);
 	void PerformTrace();
+	void ComputeTraceOrigin(FTraceData& TraceData) const;
+	FVector GetHeadLocation() const;
 	bool PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target) const;
 	void ReleaseTargetInteractable();
 	void RefreshOffers(bool bForceBroadcast = true);

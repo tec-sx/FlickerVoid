@@ -9,6 +9,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Input/Components/FVGestureComponent.h"
+#include "GameFramework/Character.h"
+#include "Components/SkeletalMeshComponent.h"
 
 #if !UE_BUILD_SHIPPING
 #include "Subsystems/FVInteractionDebugSubsystem.h"
@@ -24,6 +26,12 @@ UFVInteractorComponent::UFVInteractorComponent()
 	, TraceRadius(15.f)
 	, TickInterval(0.1f)
 	, TraceRange(250.f)
+	, bUseViewRay(true)
+	, HeadSocket(TEXT("head"))
+	, HeadOffset(10.f)
+	, CameraBlendPitchStart(-20.f)
+	, CameraBlendPitchEnd(-60.f)
+	, MaxCameraBlend(1.f)
 	, State(EFVInteractorState::Idle)
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -436,9 +444,8 @@ void UFVInteractorComponent::PerformTrace()
 		TraceData.CollisionParams.MobilityType = EQueryMobilityType::Any;
 		TraceData.CollisionParams.bReturnPhysicalMaterial = true;
 		
-		GetOwner()->GetActorEyesViewPoint(TraceData.StartLocation, TraceData.TraceRotation);
-		FVector DirectionVector = UKismetMathLibrary::GetForwardVector(TraceData.TraceRotation);
-		TraceData.EndLocation = DirectionVector * TraceRange + TraceData.StartLocation;
+		ComputeTraceOrigin(TraceData);
+		TraceData.EndLocation = TraceData.TraceRotation.Vector() * TraceRange + TraceData.StartLocation;
 	}
 	
 	const FCollisionShape CollisionShape = FCollisionShape::MakeSphere(TraceRadius);
@@ -482,7 +489,7 @@ void UFVInteractorComponent::PerformTrace()
 
 		if (CandidateDetectionWeight <= BestDetectionWeight)
 			continue;
-		if (PerformOcclusionTest(TraceData.StartLocation, HitResult.ImpactPoint, HitActor))
+		if (PerformOcclusionTest(TraceData.HeadLocation, HitResult.ImpactPoint, HitActor))
 			continue;
 		
 		BestDetectionWeight = CandidateDetectionWeight;
@@ -512,6 +519,55 @@ void UFVInteractorComponent::PerformTrace()
 #endif
 }
 
+FVector UFVInteractorComponent::GetHeadLocation() const
+{
+	const FVector Up(0.f, 0.f, HeadOffset);
+
+	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	const USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr;
+	if (Mesh && Mesh->DoesSocketExist(HeadSocket))
+	{
+		return Mesh->GetSocketLocation(HeadSocket) + Up;
+	}
+
+	const APawn* Pawn = Cast<APawn>(GetOwner());
+	const float EyeHeight = Pawn ? Pawn->BaseEyeHeight : 0.f;
+	return GetOwner()->GetActorLocation() + FVector(0.f, 0.f, EyeHeight) + Up;
+}
+
+void UFVInteractorComponent::ComputeTraceOrigin(FTraceData& TraceData) const
+{
+	const APawn* Pawn = Cast<APawn>(GetOwner());
+	const AController* Controller = Pawn ? Pawn->GetController() : nullptr;
+
+	if (!bUseViewRay || !Controller || !Controller->IsPlayerController())
+	{
+		GetOwner()->GetActorEyesViewPoint(TraceData.StartLocation, TraceData.TraceRotation);
+		TraceData.HeadLocation = TraceData.StartLocation;
+		TraceData.CameraLocation = TraceData.StartLocation;
+		return;
+	}
+
+	FVector Camera;
+	Controller->GetPlayerViewPoint(Camera, TraceData.TraceRotation);
+
+	const FVector Direction = TraceData.TraceRotation.Vector();
+	const FVector Head = GetHeadLocation();
+
+	// Closest point on the view ray to the head keeps crosshair aim while removing the shoulder offset.
+	const FVector OnRay = Camera + Direction * FMath::Max(0.f, FVector::DotProduct(Head - Camera, Direction));
+
+	const float Pitch = FRotator::NormalizeAxis(TraceData.TraceRotation.Pitch);
+	const float Blend = FMath::GetMappedRangeValueClamped(
+		FVector2f(CameraBlendPitchStart, CameraBlendPitchEnd),
+		FVector2f(0.f, MaxCameraBlend),
+		Pitch);
+
+	TraceData.StartLocation = FMath::Lerp(OnRay, Camera, Blend);
+	TraceData.HeadLocation = Head;
+	TraceData.CameraLocation = Camera;
+}
+
 bool UFVInteractorComponent::PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target) const
 {
 	FHitResult OcclusionHit;
@@ -519,7 +575,7 @@ bool UFVInteractorComponent::PerformOcclusionTest(const FVector& Start, const FV
 	{
 		QueryParams.AddIgnoredActor(GetOwner());
 	}
-	
+
 	GetWorld()->LineTraceSingleByChannel(OcclusionHit, Start, End, OcclusionChannel, QueryParams);
 	
 #if !UE_BUILD_SHIPPING
