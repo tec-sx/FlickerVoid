@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Subsystems/FVInteractionDebugSubsystem.h"
@@ -151,6 +151,13 @@ void UFVInteractionDebugSubsystem::VisualizeTrace(
 	FVector DiscX;
 	FVector DiscY;
 	UKismetMathLibrary::GetForwardVector(InTraceData.TraceRotation).FindBestAxisVectors(DiscX, DiscY);
+
+	if (!InTraceData.HeadLocation.IsZero() && InTraceData.HeadLocation != InTraceData.CameraLocation)
+	{
+		DrawDebugSphere(World, InTraceData.HeadLocation, 4.f, 8, FColor::Yellow, false, Interval, 0, 0.5f);
+		DrawDebugSphere(World, InTraceData.CameraLocation, 4.f, 8, FColor::Cyan, false, Interval, 0, 0.5f);
+		DrawDebugLine(World, InTraceData.CameraLocation, InTraceData.StartLocation, FColor::White, false, Interval, 0, 0.25f);
+	}
 	
 	bool bHasHit = false;
 	
