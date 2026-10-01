@@ -8,12 +8,12 @@
 
 class ACharacter;
 class UAnimInstance;
-class UFVTraversalConfig;
+class UFVTraversalConfigNative;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFVOnTraversalChanged);
 
 UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent))
-class FLICKERVOIDCHARACTER_API UFVTraversalComponent : public UActorComponent
+class FLICKERVOIDCHARACTER_API UFVTraversalComponentNative : public UActorComponent
 {
 GENERATED_BODY()
 
@@ -22,16 +22,16 @@ UFUNCTION(BlueprintCallable, Category = "Traversal")
 bool TryTraversalAction(EDrawDebugTrace::Type DrawDebugType);
 
 UFUNCTION(BlueprintPure, Category = "Traversal")
-const FFVTraversalCheckResult& GetLastResult() const { return LastResult; }
+const FFVTraversalCheckResultNative& GetLastResult() const { return LastResult; }
 
 UFUNCTION(BlueprintPure, Category = "Traversal")
-const FFVTraversalChooserOutput& GetLastChooserOutput() const { return LastChooserOutput; }
+const FFVTraversalChooserOutputNative& GetLastChooserOutput() const { return LastChooserOutput; }
 
 UFUNCTION(BlueprintPure, Category = "Traversal")
 FTransform GetInteractionTransform() const;
 
 UFUNCTION(BlueprintPure, Category = "Traversal")
-UFVTraversalConfig* GetConfig() const { return Config; }
+UFVTraversalConfigNative* GetConfig() const { return Config; }
 
 UPROPERTY(BlueprintAssignable, Category = "Traversal")
 FFVOnTraversalChanged OnTraversalFound;
@@ -40,10 +40,10 @@ protected:
 virtual void BeginPlay() override;
 
 UFUNCTION(BlueprintNativeEvent, Category = "Traversal")
-FFVTraversalChooserOutput EvaluateChooserTable(const FFVTraversalChooserInput& Input, UAnimInstance* AnimInstance);
+FFVTraversalChooserOutputNative EvaluateChooserTable(const FFVTraversalChooserInputNative& Input, UAnimInstance* AnimInstance);
 
 UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Traversal")
-TObjectPtr<UFVTraversalConfig> Config;
+TObjectPtr<UFVTraversalConfigNative> Config;
 
 private:
 struct FTraceParams
@@ -56,18 +56,18 @@ float HalfHeight = 0.f;
 
 ACharacter* GetCharacter() const;
 FTraceParams MakeTraceParams(const ACharacter& Character) const;
-bool DoForwardTrace(const ACharacter& Character, const FTraceParams& Params, FFVTraversalCheckResult& Result) const;
-bool DoClearanceTraces(const ACharacter& Character, const FFVTraversalCheckResult& Result, FHitResult& OutBackHit) const;
-void DoFloorTrace(const ACharacter& Character, FFVTraversalCheckResult& Result) const;
+bool DoForwardTrace(const ACharacter& Character, const FTraceParams& Params, FFVTraversalCheckResultNative& Result) const;
+bool DoClearanceTraces(const ACharacter& Character, const FFVTraversalCheckResultNative& Result, FHitResult& OutBackHit) const;
+void DoFloorTrace(const ACharacter& Character, FFVTraversalCheckResultNative& Result) const;
 void CapsuleTrace(const ACharacter& Character, const FVector& Start, const FVector& End, FHitResult& OutHit) const;
-FFVTraversalChooserInput MakeChooserInput(const ACharacter& Character) const;
-static EFVTraversalActionType ClassifyAction(const FFVTraversalCheckResult& Result);
+FFVTraversalChooserInputNative MakeChooserInput(const ACharacter& Character) const;
+static EFVTraversalActionTypeNative ClassifyAction(const FFVTraversalCheckResultNative& Result);
 static EFVMovementMode ToTraversalMode(EMovementMode Mode);
 void ReadDebugSettings();
 void DrawLedges(const FFVLedgeResult& Ledges) const;
 
-FFVTraversalCheckResult LastResult;
-FFVTraversalChooserOutput LastChooserOutput;
+FFVTraversalCheckResultNative LastResult;
+FFVTraversalChooserOutputNative LastChooserOutput;
 TEnumAsByte<EDrawDebugTrace::Type> DebugType = EDrawDebugTrace::None;
 int32 DebugLevel = 0;
 float DebugDuration = 0.f;

@@ -8,7 +8,7 @@
 class UChooserTable;
 
 UCLASS(BlueprintType)
-class FLICKERVOIDCHARACTER_API UFVTraversalConfig : public UFVMovementHandlerConfigBase
+class FLICKERVOIDCHARACTER_API UFVTraversalConfigNative : public UFVMovementHandlerConfigBase
 {
 GENERATED_BODY()
 
@@ -60,7 +60,7 @@ TObjectPtr<UChooserTable> TraversalChooserTable;
 };
 
 UCLASS(BlueprintType)
-class FLICKERVOIDCHARACTER_API UFVTraversableConfig : public UDataAsset
+class FLICKERVOIDCHARACTER_API UFVTraversableConfigNative : public UDataAsset
 {
 GENERATED_BODY()
 

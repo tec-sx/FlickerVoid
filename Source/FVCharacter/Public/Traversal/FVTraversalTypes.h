@@ -8,7 +8,7 @@ class UAnimMontage;
 class UPrimitiveComponent;
 
 UENUM(BlueprintType)
-enum class EFVTraversalActionType : uint8
+enum class EFVTraversalActionTypeNative : uint8
 {
 Hurdle,
 Vault,
@@ -40,12 +40,12 @@ FVector BackNormal = FVector::UpVector;
 };
 
 USTRUCT(BlueprintType)
-struct FLICKERVOIDCHARACTER_API FFVTraversalCheckResult
+struct FLICKERVOIDCHARACTER_API FFVTraversalCheckResultNative
 {
 GENERATED_BODY()
 
 UPROPERTY(BlueprintReadOnly, Category = "Traversal")
-EFVTraversalActionType ActionType = EFVTraversalActionType::Mantle;
+EFVTraversalActionTypeNative ActionType = EFVTraversalActionTypeNative::Mantle;
 
 UPROPERTY(BlueprintReadOnly, Category = "Traversal")
 FFVLedgeResult Ledges;
@@ -70,12 +70,12 @@ TObjectPtr<UPrimitiveComponent> HitComponent;
 };
 
 USTRUCT(BlueprintType)
-struct FLICKERVOIDCHARACTER_API FFVTraversalChooserInput
+struct FLICKERVOIDCHARACTER_API FFVTraversalChooserInputNative
 {
 GENERATED_BODY()
 
 UPROPERTY(BlueprintReadOnly, Category = "Traversal")
-EFVTraversalActionType ActionType = EFVTraversalActionType::Mantle;
+EFVTraversalActionTypeNative ActionType = EFVTraversalActionTypeNative::Mantle;
 
 UPROPERTY(BlueprintReadOnly, Category = "Traversal")
 bool bHasFrontLedge = false;
@@ -109,12 +109,12 @@ EFVGait Gait = EFVGait::Running;
 };
 
 USTRUCT(BlueprintType)
-struct FLICKERVOIDCHARACTER_API FFVTraversalChooserOutput
+struct FLICKERVOIDCHARACTER_API FFVTraversalChooserOutputNative
 {
 GENERATED_BODY()
 
 UPROPERTY(BlueprintReadWrite, Category = "Traversal")
-EFVTraversalActionType ActionType = EFVTraversalActionType::Mantle;
+EFVTraversalActionTypeNative ActionType = EFVTraversalActionTypeNative::Mantle;
 
 UPROPERTY(BlueprintReadWrite, Category = "Traversal")
 float MontageStartTime = 0.f;

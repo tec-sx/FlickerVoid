@@ -8,15 +8,15 @@
 
 class USplineComponent;
 class UStaticMeshComponent;
-class UFVTraversableConfig;
+class UFVTraversableConfigNative;
 
 UCLASS(Blueprintable)
-class FLICKERVOIDCHARACTER_API AFVTraversable : public AActor
+class FLICKERVOIDCHARACTER_API AFVTraversableNative : public AActor
 {
 GENERATED_BODY()
 
 public:
-AFVTraversable();
+AFVTraversableNative();
 
 UFUNCTION(BlueprintPure, Category = "Traversal")
 FFVLedgeResult GetLedgeTransforms(const FVector& HitLocation, const FVector& ActorLocation) const;
@@ -41,7 +41,7 @@ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal")
 TObjectPtr<USplineComponent> LedgeRight;
 
 UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Traversal")
-TObjectPtr<UFVTraversableConfig> Config;
+TObjectPtr<UFVTraversableConfigNative> Config;
 
 UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Traversal")
 FFVConditionSet Requirements;

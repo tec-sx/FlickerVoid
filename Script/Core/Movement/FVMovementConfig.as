@@ -65,3 +65,59 @@ class UFVGroundMovementConfig : UFVMovementHandlerConfigBase
     UPROPERTY()
     float SprintAngleThreshold = 50.f;
 };
+
+// Configuration for traversal system
+class UFVTraversalConfig : UFVMovementHandlerConfigBase
+{
+    UPROPERTY(Category = "Trace|Ground")
+    float GroundTraceForwardDistanceMin = 75.f;
+
+    UPROPERTY(Category = "Trace|Ground")
+    float GroundTraceForwardDistanceMax = 350.f;
+
+    UPROPERTY(Category = "Trace|Ground")
+    FVector2D GroundSpeedRange = FVector2D(0.f, 500.f);
+
+    UPROPERTY(Category = "Trace|Ground")
+    FVector GroundTraceOriginOffset = FVector(0.f, 0.f, 0.f);
+
+    UPROPERTY(Category = "Trace|Ground")
+    FVector GroundTraceEndOffset = FVector(0.f, 0.f, 0.f);
+
+    UPROPERTY(Category = "Trace|Ground")
+    float GroundTraceHalfHeight = 60.f;
+
+    UPROPERTY(Category = "Trace|Air")
+    float AirTraceForwardDistance = 75.f;
+
+    UPROPERTY(Category = "Trace|Air")
+    FVector AirTraceOriginOffset = FVector(0.f, 0.f, 0.f);
+
+    UPROPERTY(Category = "Trace|Air")
+    FVector AirTraceEndOffset = FVector(0.f, 0.f, 50.f);
+
+    UPROPERTY(Category = "Trace|Air")
+    float AirTraceHalfHeight = 86.f;
+
+    UPROPERTY(Category = "Trace|Common")
+    float TraceRadius = 30.f;
+
+    UPROPERTY(Category = "Clearance")
+    float CapsuleOffsetDistance = 2.f;
+
+    UPROPERTY(Category = "Clearance")
+    float FloorTraceVerticalOffset = 50.f;
+
+    UPROPERTY(Category = "Motion Matching")
+    UChooserTable TraversalChooserTable;
+};
+
+// Configuration for traversable obstacles
+class UFVTraversableConfig : UDataAsset
+{
+    UPROPERTY(Category = "Ledge")
+    float MinLedgeWidth = 60.f;
+
+    UPROPERTY(Category = "Ledge")
+    float LedgeNormalOffset = 10.f;
+};
