@@ -25,29 +25,29 @@ class UDialogueResponseButton : UUserWidget
         RootButton.OnClicked.AddUFunction(this, n"HandleClicked");
     }
 
-    UFUNCTION(BlueprintCallable, Category = "Dialogue")
-    void SetupFromResponse(FFVUIDialogueChoiceMessage Choice)
-    {
-        ChoiceIndex = Choice.Index;
-        ResponseText.SetText(Choice.Text);
+    // UFUNCTION(BlueprintCallable, Category = "Dialogue")
+    // void SetupFromResponse(FFVUIDialogueChoiceMessage Choice)
+    // {
+    //     ChoiceIndex = Choice.Index;
+    //     ResponseText.SetText(Choice.Text);
 
-        // No icons for now. Future logic might be getting a response type and select
-        // an icon from a data table.
-        IconImage.SetVisibility(ESlateVisibility::Collapsed);
+    //     // No icons for now. Future logic might be getting a response type and select
+    //     // an icon from a data table.
+    //     IconImage.SetVisibility(ESlateVisibility::Collapsed);
 
-        if (Choice.bWasTakenBefore)
-        {
-            RootButton.SetIsEnabled(false);
-            LockedOverlay.SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-            SetRenderOpacity(0.45f);
-        }
-        else
-        {
-            RootButton.SetIsEnabled(true);
-            LockedOverlay.SetVisibility(ESlateVisibility::Collapsed);
-            SetRenderOpacity(1.f);
-        }
-    }
+    //     if (Choice.bWasTakenBefore)
+    //     {
+    //         RootButton.SetIsEnabled(false);
+    //         LockedOverlay.SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+    //         SetRenderOpacity(0.45f);
+    //     }
+    //     else
+    //     {
+    //         RootButton.SetIsEnabled(true);
+    //         LockedOverlay.SetVisibility(ESlateVisibility::Collapsed);
+    //         SetRenderOpacity(1.f);
+    //     }
+    // }
 
     UFUNCTION()
     private void HandleClicked()
