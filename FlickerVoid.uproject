@@ -565,8 +565,8 @@
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/46d407c1917d4575bfc2a8bb1cb5185d"
 		},
 		{
-			"Name": "FVInventoryEquipmentSystem",
-			"Enabled": true
+			"Name": "MounteaAdvancedInventorySystem",
+			"Enabled": false
 		},
 		{
 			"Name": "Yap",

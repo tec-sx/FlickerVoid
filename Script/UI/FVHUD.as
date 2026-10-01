@@ -9,8 +9,8 @@ class AFVHUD : AHUD
 	UPROPERTY()
     private UInteractionSetWidget InteractionPromptWidget;
 
-	UPROPERTY(VisibleAnywhere)
-	private UFVDialogueUIManagerBase DialogueManager;
+	// UPROPERTY(VisibleAnywhere)
+	// private UFVDialogueUIManagerBase DialogueManager;
 
 	UFUNCTION(BlueprintOverride)
 	void BeginPlay()
@@ -29,11 +29,11 @@ class AFVHUD : AHUD
 				UpdatePawn(nullptr, PC.GetControlledPawn());
 			}
 
-			if (DialogueWidgetClass.IsValid())
-			{
-				DialogueManager = NewObject(this, UDialogueHUDManager);
-				DialogueManager.Initialize(DialogueWidgetClass.Get(), GetOwningPlayerController());
-			}
+			// if (DialogueWidgetClass.IsValid())
+			// {
+			// 	DialogueManager = NewObject(this, UDialogueHUDManager);
+			// 	DialogueManager.Initialize(DialogueWidgetClass.Get(), GetOwningPlayerController());
+			// }
 	    }
 	}
 
@@ -63,9 +63,9 @@ class AFVHUD : AHUD
 	UFUNCTION(BlueprintOverride)
     void EndPlay(EEndPlayReason EndPlayReason)
     {
-		if (IsValid(DialogueManager))
-		{
-			DialogueManager.Deinitialize();
-		}
+		// if (IsValid(DialogueManager))
+		// {
+		// 	DialogueManager.Deinitialize();
+		// }
     }
 }

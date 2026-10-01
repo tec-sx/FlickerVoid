@@ -1,108 +1,108 @@
-class UDialogueHUDManager : UFVDialogueUIManagerBase
+class UDialogueHUDManager : UObject
 {
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
-    TSubclassOf<UUserWidget> DialogueWidgetClass;
+    // UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
+    // TSubclassOf<UUserWidget> DialogueWidgetClass;
 
-    private UDialogueWidget DialogueWidget;
-    private APlayerController OwningController;
-    private USUDSDialogue ActiveDialogue;
+    // private UDialogueWidget DialogueWidget;
+    // private APlayerController OwningController;
+    // private USUDSDialogue ActiveDialogue;
 
-    UFUNCTION(BlueprintOverride)
-    void OnManagerInitialized(TSubclassOf<UUserWidget> InDialogueWidgetClass, APlayerController InPC)
-    {
-        OwningController = InPC;
+    // UFUNCTION(BlueprintOverride)
+    // void OnManagerInitialized(TSubclassOf<UUserWidget> InDialogueWidgetClass, APlayerController InPC)
+    // {
+    //     OwningController = InPC;
 
-        if (InDialogueWidgetClass != nullptr)
-        {
-            DialogueWidgetClass = InDialogueWidgetClass;
-        }
+    //     if (InDialogueWidgetClass != nullptr)
+    //     {
+    //         DialogueWidgetClass = InDialogueWidgetClass;
+    //     }
 
-        if (DialogueWidgetClass == nullptr)
-        {
-            System::PrintString(
-				"DialogueHUDManager: No DialogueWidgetClass set — dialogue UI will not appear.",
-                true,
-				true,
-				FLinearColor::Red,
-				10.f);
-            return;
-        }
+    //     if (DialogueWidgetClass == nullptr)
+    //     {
+    //         System::PrintString(
+	// 			"DialogueHUDManager: No DialogueWidgetClass set — dialogue UI will not appear.",
+    //             true,
+	// 			true,
+	// 			FLinearColor::Red,
+	// 			10.f);
+    //         return;
+    //     }
 
-        DialogueWidget = Cast<UDialogueWidget>(WidgetBlueprint::CreateWidget(DialogueWidgetClass, InPC));
+    //     DialogueWidget = Cast<UDialogueWidget>(WidgetBlueprint::CreateWidget(DialogueWidgetClass, InPC));
 
-        if (DialogueWidget == nullptr)
-        {
-            System::PrintString(
-				"DialogueHUDManager: Failed to create DialogueWidget.",
-                true,
-				true,
-				FLinearColor::Red,
-				10.f);
-            return;
-        }
+    //     if (DialogueWidget == nullptr)
+    //     {
+    //         System::PrintString(
+	// 			"DialogueHUDManager: Failed to create DialogueWidget.",
+    //             true,
+	// 			true,
+	// 			FLinearColor::Red,
+	// 			10.f);
+    //         return;
+    //     }
 
-        DialogueWidget.Initialize();
-        DialogueWidget.AddToViewport(100);
-    }
+    //     DialogueWidget.Initialize();
+    //     DialogueWidget.AddToViewport(100);
+    // }
 
     
-    UFUNCTION(BlueprintOverride)
-    void OnManagerDeinitialized()
-    {
-        if (DialogueWidget != nullptr)
-        {
-            DialogueWidget.RemoveFromParent();
-            DialogueWidget = nullptr;
-        }
-    }
+    // UFUNCTION(BlueprintOverride)
+    // void OnManagerDeinitialized()
+    // {
+    //     if (DialogueWidget != nullptr)
+    //     {
+    //         DialogueWidget.RemoveFromParent();
+    //         DialogueWidget = nullptr;
+    //     }
+    // }
 
-    // ── Delegate Handlers ─────────────────────────────────────────────────────
+    // // ── Delegate Handlers ─────────────────────────────────────────────────────
 
-    UFUNCTION(BlueprintOverride)
-    void OnDialogueLineReady(FFVUIDialogueLineMessage Message)
-    {
-        if (IsValid(DialogueWidget))
-        {
-            DialogueWidget.ShowLine(Message.Text, Message.SpeakerDisplayName);
-        }
-    }
+    // UFUNCTION(BlueprintOverride)
+    // void OnDialogueLineReady(FFVUIDialogueLineMessage Message)
+    // {
+    //     if (IsValid(DialogueWidget))
+    //     {
+    //         DialogueWidget.ShowLine(Message.Text, Message.SpeakerDisplayName);
+    //     }
+    // }
 
-    UFUNCTION(BlueprintOverride)
-    void OnDialogueEvent(FFVUIDialogueEventMessage Message)
-    {
-    }
+    // UFUNCTION(BlueprintOverride)
+    // void OnDialogueEvent(FFVUIDialogueEventMessage Message)
+    // {
+    // }
 
-    UFUNCTION(BlueprintOverride)
-    void OnDialogueEnded(FFVUIDialogueEndedMessage Message)
-    {
-        Print("Dialogue End");
-        if (IsValid(DialogueWidget))
-        {
-            DialogueWidget.HideWidget();
-        }
-    }
+    // UFUNCTION(BlueprintOverride)
+    // void OnDialogueEnded(FFVUIDialogueEndedMessage Message)
+    // {
+    //     Print("Dialogue End");
+    //     if (IsValid(DialogueWidget))
+    //     {
+    //         DialogueWidget.HideWidget();
+    //     }
+    // }
 
-    UFUNCTION(BlueprintOverride)
-    void OnDialogueChoicesReady(FFVUIDialogueChoicesMessage Message)
-    {
-        if (IsValid(DialogueWidget))
-        {
-            DialogueWidget.ShowChoices(Message.Choices);
-        }
-    }
+    // UFUNCTION(BlueprintOverride)
+    // void OnDialogueChoicesReady(FFVUIDialogueChoicesMessage Message)
+    // {
+    //     if (IsValid(DialogueWidget))
+    //     {
+    //         DialogueWidget.ShowChoices(Message.Choices);
+    //     }
+    // }
 
 
-    UFUNCTION()
-    void DisplayChoices(const TArray<FSUDSScriptEdge> Choices)
-    {
-    }
+    // UFUNCTION()
+    // void DisplayChoices(const TArray<FSUDSScriptEdge> Choices)
+    // {
+    // }
 
-    UFUNCTION()
-    void HandleHideChoices()
-    {
-        if (IsValid(DialogueWidget))
-        {
-            DialogueWidget.HideChoices();
-        }
-    }
+    // UFUNCTION()
+    // void HandleHideChoices()
+    // {
+    //     if (IsValid(DialogueWidget))
+    //     {
+    //         DialogueWidget.HideChoices();
+    //     }
+    // }
 }
