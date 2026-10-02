@@ -33,6 +33,31 @@ const bool bRestore = Facts && Settings->MinutesFact.IsValid() && Facts->IsFactD
 
 TotalMinutes = bRestore ? Facts->GetFact(Settings->MinutesFact) : Settings->StartHour * 60.0;
 CurrentPhase = ResolvePhase(GetHour());
+WriteCalendarFacts();
+}
+
+void UFVWorldClock::WriteCalendarFacts() const
+{
+const UFVWorldClockSettings* Settings = GetDefault<UFVWorldClockSettings>();
+UFVFactDatabase* Facts = UFVFactDatabase::Get(this);
+if (!Facts)
+{
+return;
+}
+
+if (Settings->PhaseFact.IsValid())
+{
+const int32 PhaseIndex = Settings->Phases.IndexOfByPredicate([this](const FFVDayPhase& Phase) { return Phase.Phase == CurrentPhase; });
+if (PhaseIndex != INDEX_NONE)
+{
+Facts->SetFact(Settings->PhaseFact, PhaseIndex);
+}
+}
+
+if (Settings->DayFact.IsValid())
+{
+Facts->SetFact(Settings->DayFact, GetDay());
+}
 }
 
 void UFVWorldClock::Tick(float DeltaTime)
@@ -90,11 +115,13 @@ const FGameplayTag NewPhase = ResolvePhase(GetHour());
 if (NewPhase != CurrentPhase)
 {
 CurrentPhase = NewPhase;
+WriteCalendarFacts();
 OnPhaseChanged.Broadcast();
 }
 
 if (GetDay() != OldDay)
 {
+WriteCalendarFacts();
 OnDayChanged.Broadcast();
 }
 }

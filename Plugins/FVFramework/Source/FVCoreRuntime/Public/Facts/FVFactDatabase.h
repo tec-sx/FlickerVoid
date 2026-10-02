@@ -16,7 +16,16 @@ class FVCORERUNTIME_API UFVFactDatabase : public UGameInstanceSubsystem
 public:
 	static UFVFactDatabase* Get(const UObject* WorldContext);
 
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
+
+	/** Replaces all facts with the defaults declared in UFVFactSettings. */
+	UFUNCTION(BlueprintCallable, Category = "Facts")
+	void ResetToDefaults();
+
+	/** Label of the current value for enum-like facts, or None. */
+	UFUNCTION(BlueprintPure, Category = "Facts")
+	FName GetFactValueName(FGameplayTag Tag) const;
 
 	UFUNCTION(BlueprintPure, Category = "Facts", meta = (GameplayTagFilter = "Fact"))
 	int32 GetFact(FGameplayTag Tag) const;

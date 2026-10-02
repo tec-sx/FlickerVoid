@@ -44,6 +44,14 @@ public:
 	/** Fact storing total elapsed minutes, so time is saved with facts. */
 	UPROPERTY(Config, EditAnywhere, Category = "Time")
 	FGameplayTag MinutesFact;
+
+	/** Fact receiving the index of the current phase in Phases. */
+	UPROPERTY(Config, EditAnywhere, Category = "Time")
+	FGameplayTag PhaseFact;
+
+	/** Fact receiving the current day number. */
+	UPROPERTY(Config, EditAnywhere, Category = "Time")
+	FGameplayTag DayFact;
 };
 
 UCLASS()
@@ -86,6 +94,7 @@ public:
 private:
 	void SetTotalMinutes(double NewMinutes);
 	FGameplayTag ResolvePhase(float Hour) const;
+	void WriteCalendarFacts() const;
 
 	double TotalMinutes = 0.0;
 	FGameplayTag CurrentPhase;

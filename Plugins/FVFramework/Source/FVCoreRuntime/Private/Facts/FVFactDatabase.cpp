@@ -4,6 +4,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "FVCoreRuntime.h"
+#include "Facts/FVFactSettings.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVFactDatabase)
 
@@ -12,6 +13,31 @@ UFVFactDatabase* UFVFactDatabase::Get(const UObject* WorldContext)
 	const UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::LogAndReturnNull) : nullptr;
 	const UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
 	return GameInstance ? GameInstance->GetSubsystem<UFVFactDatabase>() : nullptr;
+}
+
+void UFVFactDatabase::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+	ResetToDefaults();
+}
+
+void UFVFactDatabase::ResetToDefaults()
+{
+	Facts.Reset();
+	for (const FFVFactDefinition& Definition : GetDefault<UFVFactSettings>()->Definitions)
+	{
+		if (Definition.Tag.IsValid())
+		{
+			Facts.Add(Definition.Tag, Definition.bClamp ? FMath::Clamp(Definition.DefaultValue, Definition.Min, Definition.Max) : Definition.DefaultValue);
+		}
+	}
+	LastChangedTag = FGameplayTag();
+	OnFactsChanged.Broadcast();
+}
+
+FName UFVFactDatabase::GetFactValueName(FGameplayTag Tag) const
+{
+	return GetDefault<UFVFactSettings>()->GetValueName(Tag, GetFact(Tag));
 }
 
 void UFVFactDatabase::Deinitialize()
@@ -95,6 +121,11 @@ void UFVFactDatabase::WriteFact(FGameplayTag Tag, int32 NewValue)
 	{
 		UE_LOG(LogFVFacts, Error, TEXT("Attempted to write an invalid fact tag."));
 		return;
+	}
+
+	if (const FFVFactDefinition* Definition = GetDefault<UFVFactSettings>()->FindDefinition(Tag); Definition && Definition->bClamp)
+	{
+		NewValue = FMath::Clamp(NewValue, Definition->Min, Definition->Max);
 	}
 
 	int32& Stored = Facts.FindOrAdd(Tag, 0);
