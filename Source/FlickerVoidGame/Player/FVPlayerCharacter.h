@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -10,8 +10,7 @@
 
 class UFVInteractableComponent;
 class UFVAbilitySystemComponent;
-class UFVInteractorResponseComponent_ActivateAbility;
-class UFVInteractorResponseComponent;
+class UFVInteractionAbilityComponent;
 class UFVInteractorComponent;
 
 UCLASS()
@@ -43,5 +42,5 @@ private:
 	TObjectPtr<UFVInteractorComponent> InteractorComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
-	TObjectPtr<UFVInteractorResponseComponent_ActivateAbility> ActivateAbilityResponseComponent;
+	TObjectPtr<UFVInteractionAbilityComponent> InteractionAbilityComponent;
 };

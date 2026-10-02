@@ -15,6 +15,7 @@ public class FlickerVoidUI : ModuleRules
             "GameplayTags",
             "FlickerVoidCore",
             "CommonUI",
+            "FVCoreUI",
             "FVStorySystem"
         });
 

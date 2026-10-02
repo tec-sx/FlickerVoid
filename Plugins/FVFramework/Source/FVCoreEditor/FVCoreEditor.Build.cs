@@ -23,7 +23,11 @@ public class FVCoreEditor : ModuleRules
             "WorkspaceMenuStructure",
             "AssetRegistry",
             "DataValidation",
-            "GameplayTags"
+            "GameplayTags",
+            "ToolMenus",
+            "Settings",
+            "DeveloperSettings",
+            "FVCoreUI"
         });
     }
 }

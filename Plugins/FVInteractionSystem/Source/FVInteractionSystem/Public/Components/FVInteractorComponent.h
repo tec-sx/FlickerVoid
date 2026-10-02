@@ -13,7 +13,6 @@
 
 class UFVInteractionDebugSubsystem;
 class UFVInteractableComponent;
-class UFVInteractorResponseComponent;
 class UFVInteractionRegistrySubsystem;
 class UFVGestureComponent;
 
@@ -73,12 +72,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	UE_API void RequestOfferRefresh() { RefreshOffers(); }
-
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Responses")
-	UE_API void BindResponse(UFVInteractorResponseComponent* Response);
-
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Responses")
-	UE_API void UnbindResponse(UFVInteractorResponseComponent* Response);
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Identity")
 	UE_API void GrantTag(const FGameplayTag NewTag);

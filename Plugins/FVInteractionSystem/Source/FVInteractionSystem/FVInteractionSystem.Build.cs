@@ -40,6 +40,9 @@ public class FVInteractionSystem : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"DeveloperSettings",
+				"UMG",
+				"CommonUI",
+				"FVCoreUI",
 			}
 			);
 		

@@ -1,6 +1,5 @@
 #include "Components/FVInteractorComponent.h"
 #include "Components/FVInteractableComponent.h"
-#include "Components/FVInteractorResponseComponent.h"
 #include "Core/FVInteractionGameplayTags.h"
 #include "Engine/World.h"
 #include "FVInteractionSystem.h"
@@ -121,26 +120,6 @@ void UFVInteractorComponent::DisableTracing()
 	ReleaseTargetInteractable();
 	RefreshOffers();
 	PrimaryComponentTick.SetTickFunctionEnable(false);
-}
-
-void UFVInteractorComponent::BindResponse(UFVInteractorResponseComponent* Response)
-{
-	if (!IsValid(Response))
-	{
-		return;
-	}
-
-	Response->BindEvents(this);
-}
-
-void UFVInteractorComponent::UnbindResponse(UFVInteractorResponseComponent* Response)
-{
-	if (!IsValid(Response))
-	{
-		return;
-	}
-
-	Response->UnbindEvents(this);
 }
 
 void UFVInteractorComponent::AddSuppression(const FGameplayTag Reason)

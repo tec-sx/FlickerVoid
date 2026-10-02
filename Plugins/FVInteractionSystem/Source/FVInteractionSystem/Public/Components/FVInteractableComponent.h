@@ -115,13 +115,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
 	FInteractableStateChanged StateChanged;
 	
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|State")
+	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
 	FInteractionStarted InteractionStarted;
 
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|State")
+	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
 	FInteractionProgress InteractionProgressed;
 
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|State")
+	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
 	FInteractionEnded InteractionEnded;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Interactable|Identity", meta = (Categories = "Interactable"))

@@ -5,13 +5,20 @@
 #include "Data/FVDefinition.h"
 #include "Editor.h"
 #include "EditorValidatorSubsystem.h"
+#include "Engine/DeveloperSettings.h"
+#include "ISettingsModule.h"
+#include "Layout/FVUILayout.h"
 #include "PropertyEditorModule.h"
+#include "Subsystems/AssetEditorSubsystem.h"
+#include "Time/FVWorldClock.h"
+#include "ToolMenus.h"
 #include "WorkspaceMenuStructure.h"
 #include "WorkspaceMenuStructureModule.h"
 
 #define LOCTEXT_NAMESPACE "FVCoreEditor"
 
 static const FName ConditionSetStructName("FVConditionSet");
+static const FName FlickerVoidMenuName("LevelEditor.MainMenu.FlickerVoid");
 
 static void ValidateAllDefinitions()
 {
@@ -45,10 +52,74 @@ void FFVCoreEditorModule::StartupModule()
 	FPropertyEditorModule& PropertyEditor = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyEditor.RegisterCustomPropertyTypeLayout(ConditionSetStructName,
 		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFVConditionSetCustomization::MakeInstance));
+
+	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FFVCoreEditorModule::RegisterMenus));
+}
+
+void FFVCoreEditorModule::RegisterMenus()
+{
+	FToolMenuOwnerScoped OwnerScoped(this);
+
+	UToolMenu* MainMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu");
+	MainMenu->AddSubMenu("MainMenu", NAME_None, "FlickerVoid", LOCTEXT("FlickerVoidMenu", "FlickerVoid"), LOCTEXT("FlickerVoidMenuTip", "FlickerVoid framework and plugin settings"));
+	UToolMenus::Get()->RegisterMenu(FlickerVoidMenuName);
+
+	const FText FrameworkLabel = LOCTEXT("FrameworkSection", "Framework");
+	AddMenuAction("Framework", FrameworkLabel, "UISettings", LOCTEXT("FrameworkUI", "UI Settings"), FText::GetEmpty(),
+		[] { OpenSettings(UFVUISettings::StaticClass()); });
+	AddMenuAction("Framework", FrameworkLabel, "WorldClockSettings", LOCTEXT("FrameworkClock", "World Clock Settings"), FText::GetEmpty(),
+		[] { OpenSettings(UFVWorldClockSettings::StaticClass()); });
+}
+
+void FFVCoreEditorModule::AddMenuAction(FName Section, const FText& SectionLabel, FName ActionName, const FText& Label, const FText& ToolTip, TFunction<void()> Action)
+{
+	UToolMenu* Menu = UToolMenus::Get()->ExtendMenu(FlickerVoidMenuName);
+	FToolMenuSection& MenuSection = Menu->FindOrAddSection(Section, SectionLabel);
+	MenuSection.AddMenuEntry(ActionName, Label, ToolTip, FSlateIcon(), FUIAction(FExecuteAction::CreateLambda(MoveTemp(Action))));
+}
+
+void FFVCoreEditorModule::AddSettingsMenuAction(FName Section, const FText& SectionLabel, FName ActionName, const FText& Label, TSubclassOf<UDeveloperSettings> SettingsClass)
+{
+	AddMenuAction(Section, SectionLabel, ActionName, Label, FText::GetEmpty(), [SettingsClass] { OpenSettings(SettingsClass); });
+}
+
+void FFVCoreEditorModule::AddAssetMenuAction(FName Section, const FText& SectionLabel, FName ActionName, const FText& Label, TFunction<UObject*()> GetAsset)
+{
+	AddMenuAction(Section, SectionLabel, ActionName, Label, FText::GetEmpty(), [GetAsset = MoveTemp(GetAsset)]
+	{
+		UObject* Asset = GetAsset();
+		if (Asset && GEditor)
+		{
+			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Asset);
+		}
+	});
+}
+
+void FFVCoreEditorModule::OpenSettings(TSubclassOf<UDeveloperSettings> SettingsClass)
+{
+	const UDeveloperSettings* Settings = SettingsClass ? GetDefault<UDeveloperSettings>(SettingsClass) : nullptr;
+	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"); Settings && SettingsModule)
+	{
+		SettingsModule->ShowViewer(Settings->GetContainerName(), Settings->GetCategoryName(), Settings->GetSectionName());
+	}
+}
+
+void FFVCoreEditorModule::RemoveMenuSection(FName Section)
+{
+	if (UToolMenus::IsToolMenuUIEnabled() && UObjectInitialized())
+	{
+		if (UToolMenu* Menu = UToolMenus::Get()->ExtendMenu(FlickerVoidMenuName))
+		{
+			Menu->RemoveSection(Section);
+		}
+	}
 }
 
 void FFVCoreEditorModule::ShutdownModule()
 {
+	UToolMenus::UnRegisterStartupCallback(this);
+	UToolMenus::UnregisterOwner(this);
+
 	if (FSlateApplication::IsInitialized())
 	{
 		for (const FName TabName : DebuggerTabs)

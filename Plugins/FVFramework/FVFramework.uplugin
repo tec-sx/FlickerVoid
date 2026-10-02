@@ -16,13 +16,19 @@
 "Plugins": [
 { "Name": "DataValidation", "Enabled": true },
 { "Name": "EnhancedInput", "Enabled": true },
-{ "Name": "StateTree", "Enabled": true }
+{ "Name": "StateTree", "Enabled": true },
+{ "Name": "CommonUI", "Enabled": true }
 ],
 "Modules": [
 {
 "Name": "FVCoreRuntime",
 "Type": "Runtime",
 "LoadingPhase": "PreDefault"
+},
+{
+"Name": "FVCoreUI",
+"Type": "Runtime",
+"LoadingPhase": "Default"
 },
 {
 "Name": "FVCoreEditor",

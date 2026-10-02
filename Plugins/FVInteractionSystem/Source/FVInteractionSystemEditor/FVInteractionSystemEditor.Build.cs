@@ -26,6 +26,8 @@ public class FVInteractionSystemEditor : ModuleRules
                 "Kismet",
                 "Slate",
                 "SlateCore",
+                "ToolMenus",
+                "FVCoreEditor",
             }
             );
     }

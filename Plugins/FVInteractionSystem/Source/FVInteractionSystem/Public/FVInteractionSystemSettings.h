@@ -6,6 +6,8 @@
 #include "Core/FVInteractionGameplayTags.h"
 #include "FVInteractionSystemSettings.generated.h"
 
+class UFVInteractionUISettings;
+
 USTRUCT(BlueprintType)
 struct FVINTERACTIONSYSTEM_API FFVInteractionHighlightSetup
 {
@@ -119,6 +121,9 @@ public:
 	
 	UPROPERTY(Config, BlueprintReadOnly, EditAnywhere, Category = "Widgets", meta=(Units="s", UIMin=0.001, ClampMin=0.001))
 	float WidgetUpdateFrequency;
+
+	UPROPERTY(Config, BlueprintReadOnly, EditAnywhere, Category = "UI")
+	TSoftObjectPtr<UFVInteractionUISettings> InteractionUISettings;
 
 	UFVInteractionSystemSettings()
 		: WidgetUpdateFrequency(0.05f)

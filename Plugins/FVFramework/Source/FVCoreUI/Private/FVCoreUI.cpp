@@ -1,0 +1,5 @@
+#include "FVCoreUI.h"
+
+DEFINE_LOG_CATEGORY(LogFVCoreUI);
+
+IMPLEMENT_MODULE(FFVCoreUIModule, FVCoreUI)
