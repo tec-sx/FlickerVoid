@@ -16,11 +16,12 @@ public class FlickerVoidCharacter : ModuleRules
             "GameplayTags",
             "MotionTrajectory",
             "FlickerVoidCore",
+            "FVCoreRuntime",
         });
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "ControlRig",
+            "ControlRig", "Chooser",
             "RigVM",
             "Flow",
         });

@@ -11,9 +11,8 @@
 #include "Movement/FVCharacterMovementComponent.h"
 #include "Logging/FVLogCategories.h"
 #include "Logging/FVLogSystem.h"
-#include "Player/FVDialogueUIRouterComponent.h"
-#include "Components/FVInputComponent.h"
-#include "Components/FVGestureComponent.h"
+#include "Input/Components/FVInputComponent.h"
+#include "Input/Components/FVGestureComponent.h"
 #include "Components/FVInteractorComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
@@ -22,7 +21,6 @@ AFVPlayerController::AFVPlayerController(const FObjectInitializer& ObjectInitial
 	: Super(ObjectInitializer)
 {
 	GestureComponent = CreateDefaultSubobject<UFVGestureComponent>(TEXT("GestureComponent"));
-	DialogueUIRouterComponent = CreateDefaultSubobject<UFVDialogueUIRouterComponent>(TEXT("DialogueUIRouterComponent"));
 }
 
 void AFVPlayerController::OnPossess(APawn* InPawn)

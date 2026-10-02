@@ -1,6 +1,7 @@
 #pragma once
 #include "GameplayTagContainer.h"
-#include "Core/FVInputTypes.h"
+#include "Input/Core/FVInputTypes.h"
+#include "Conditions/FVCondition.h"
 
 #include "FVInteractionTypes.generated.h"
 
@@ -98,6 +99,9 @@ struct FVINTERACTIONSYSTEM_API FFVInteractionOffer
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Requirements")
 	EFVInteractionGate RequirementGate = EFVInteractionGate::Disable;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Requirements")
+	FFVConditionSet Conditions;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "0"))
 	int32 Weight = 0;

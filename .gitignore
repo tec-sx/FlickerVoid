@@ -20,4 +20,5 @@ Plugins/*
 *.xcworkspace
 
 !Plugins/FVInteractionSystem
-!Plugins/FVInputSystem
+!Plugins/FVFramework
+!Plugins/FVStorySystem

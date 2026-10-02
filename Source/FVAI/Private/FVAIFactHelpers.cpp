@@ -56,12 +56,3 @@ FGameplayTag UFVAIFactHelpers::MakeNpcKnowsTag(FName NpcId, FName TopicId)
 	return MakeChildTag(FVAITags::Fact_NPC, {NpcId, FVNpcFactAspects::Knows, TopicId});
 }
 
-FGameplayTag UFVAIFactHelpers::MakeFactionFactTag(FName FactionId, FName Aspect)
-{
-	if (Aspect.IsNone())
-	{
-		return MakeChildTag(FVAITags::Fact_Faction, {FactionId});
-	}
-
-	return MakeChildTag(FVAITags::Fact_Faction, {FactionId, Aspect});
-}

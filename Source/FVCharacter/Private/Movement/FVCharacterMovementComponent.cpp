@@ -7,6 +7,8 @@
 #include "Movement/FVMovementHandlerInfo.h"
 #include "Logging/FVLogCategories.h"
 #include "Logging/FVLogSystem.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVCharacterMovementComponent)
 
@@ -148,7 +150,7 @@ void UFVCharacterMovementComponent::InitializeHandlers()
 UFVMovementHandlerBase* UFVCharacterMovementComponent::SelectHandler() const
 {
 	UFVMovementHandlerBase* BestHandler = nullptr;
-	const FFVMovementHandlerInfo* BestInfo = nullptr;
+	const FFVMovementHandlerInfo* BestInfo = nullptr; FGameplayTagContainer Tags = GatherTags();
 
 	for (UFVMovementHandlerBase* Handler : RegisteredHandlers)
 	{
@@ -159,7 +161,7 @@ UFVMovementHandlerBase* UFVCharacterMovementComponent::SelectHandler() const
 
 		const FFVMovementHandlerInfo& Info = Handler->GetConfig();
 
-		if (!Info.CanActivate(ActiveTags))
+		if (!Info.CanActivate(Tags) || !PassesConditions(Info))
 		{
 			continue;
 		}
@@ -179,6 +181,43 @@ UFVMovementHandlerBase* UFVCharacterMovementComponent::SelectHandler() const
 	return BestHandler;
 }
 
+FGameplayTagContainer UFVCharacterMovementComponent::GatherTags() const
+{
+FGameplayTagContainer Tags = ActiveTags;
+if (const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()))
+{
+ASC->GetOwnedGameplayTags(Tags);
+Tags.AppendTags(ActiveTags);
+}
+return Tags;
+}
+
+bool UFVCharacterMovementComponent::PassesConditions(const FFVMovementHandlerInfo& Info) const
+{
+if (Info.ActivationConditions.IsEmpty())
+{
+return true;
+}
+FFVConditionContext Context;
+Context.WorldContext = GetOwner();
+Context.Instigator = GetOwner();
+Context.Target = GetOwner();
+return Info.ActivationConditions.Evaluate(Context);
+}
+
+float UFVCharacterMovementComponent::GetSpeedMultiplier() const
+{
+if (!MovementConfig || !MovementConfig->SpeedMultiplierAttribute.IsValid())
+{
+return 1.f;
+}
+const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+if (!ASC || !ASC->HasAttributeSetForAttribute(MovementConfig->SpeedMultiplierAttribute))
+{
+return 1.f;
+}
+return ASC->GetNumericAttribute(MovementConfig->SpeedMultiplierAttribute);
+}
 bool UFVCharacterMovementComponent::CanInterruptCurrentHandler() const
 {
 	if (!CurrentHandler || !CurrentHandler->IsActive())

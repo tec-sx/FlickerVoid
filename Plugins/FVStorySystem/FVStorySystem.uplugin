@@ -1,0 +1,30 @@
+{
+"FileVersion": 3,
+"Version": 1,
+"VersionName": "1.0",
+"FriendlyName": "FVStorySystem",
+"Description": "FlickerVoid narrative layer: knowledge, reputation, quests and Yap/Flow dialogue bridge.",
+"Category": "FlickerVoid",
+"CreatedBy": "TecSX",
+"CanContainContent": false,
+"IsBetaVersion": false,
+"Installed": false,
+"Modules": [
+{
+"Name": "FVStorySystem",
+"Type": "Runtime",
+"LoadingPhase": "Default"
+},
+{
+"Name": "FVStorySystemEditor",
+"Type": "Editor",
+"LoadingPhase": "PostEngineInit"
+}
+],
+"Plugins": [
+{ "Name": "FVFramework", "Enabled": true },
+{ "Name": "Flow", "Enabled": true },
+{ "Name": "Yap", "Enabled": true },
+{ "Name": "GameplayMessageRouter", "Enabled": true }
+]
+}

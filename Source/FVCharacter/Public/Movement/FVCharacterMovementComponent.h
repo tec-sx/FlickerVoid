@@ -55,6 +55,11 @@ protected:
 	UFUNCTION(BlueprintPure, Category = "Movement")
 	AFVCharacter* GetFVCharacter() const;
 
+public:
+	UFUNCTION(BlueprintPure, Category = "Movement")
+	float GetSpeedMultiplier() const;
+
+protected:
 	UFUNCTION(BlueprintCallable, Category = "Movement|Configuration")
 	void ReloadConfiguration();
 
@@ -68,6 +73,8 @@ private:
 	void InitializeHandlers();
 	void TransitionToHandler(UFVMovementHandlerBase* NewHandler);
 	UFVMovementHandlerBase* SelectHandler() const;
+FGameplayTagContainer GatherTags() const;
+bool PassesConditions(const FFVMovementHandlerInfo& Info) const;
 	bool CanInterruptCurrentHandler() const;
 
 

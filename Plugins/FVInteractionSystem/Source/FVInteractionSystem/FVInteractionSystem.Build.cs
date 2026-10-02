@@ -28,7 +28,7 @@ public class FVInteractionSystem : ModuleRules
 				"Core",
 				"GameplayTags",
 				"InputCore",
-                "FVInputSystem",
+                "FVCoreRuntime",
             }
 			);
 			

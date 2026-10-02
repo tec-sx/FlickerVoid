@@ -8,12 +8,6 @@ namespace FVNarrativeTags
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Speaker_Player, "Dialogue.Speaker.Player");
 	
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_CallOut, "Dialogue.CallOut");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_LineReady, "Dialogue.LineReady");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_ChoicesReady, "Dialogue.ChoicesReady");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Event, "Dialogue.Event");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Ended, "Dialogue.Ended");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_SubmitChoice, "Dialogue.SubmitChoice");
-	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Continue, "Dialogue.Continue");
 	
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Icon_Trade_Item, "Dialogue.Icon.Trade.Item");
 	UE_DEFINE_GAMEPLAY_TAG(Dialogue_Icon_Trade_Info, "Dialogue.Icon.Trade.Info");
@@ -107,11 +101,6 @@ namespace FVNarrativeTags
 	// ============================================================================
 	// FACT TAGS (QUEST SYSTEM)
 	// ============================================================================
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Chapter, "Fact.Chapter", "Root for chapter progression facts.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Chapter_Current, "Fact.Chapter.Current",
-								   "Index of the chapter the story is currently in.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Quest, "Fact.Quest",
-								   "Root for per quest facts: Fact.Quest.<QuestId>.Stage/Outcome/Objective/Counter.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Dialogue, "Fact.Dialogue",
+				UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Dialogue, "Fact.Dialogue",
 								   "Root for dialogue facts, e.g. lines already spoken or topics unlocked.");
 }

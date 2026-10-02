@@ -40,7 +40,7 @@ public class FlickerVoid : ModuleRules
 			"RigVM",
 			"GameplayMessageRuntime",
             "FVInteractionSystem",
-            "FVInputSystem"
+            "FVCoreRuntime"
         });
 
 		PublicIncludePaths.Add(ModuleDirectory);

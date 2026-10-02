@@ -23,7 +23,6 @@ public class FlickerVoidNarrative : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "SUDS",
             "GameplayMessageRuntime",
             "CinematicCamera",
             "LevelSequence"

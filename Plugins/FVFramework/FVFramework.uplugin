@@ -1,0 +1,33 @@
+{
+"FileVersion": 3,
+"Version": 1,
+"VersionName": "1.0",
+"FriendlyName": "FVFramework",
+"Description": "FlickerVoid framework core: conditions, effects, facts, input, world clock, cinematics, StateTree nodes, saveable component, easing.",
+"Category": "FlickerVoid",
+"CreatedBy": "TecSX",
+"CreatedByURL": "",
+"DocsURL": "",
+"MarketplaceURL": "",
+"SupportURL": "",
+"CanContainContent": false,
+"IsBetaVersion": false,
+"Installed": false,
+"Plugins": [
+{ "Name": "DataValidation", "Enabled": true },
+{ "Name": "EnhancedInput", "Enabled": true },
+{ "Name": "StateTree", "Enabled": true }
+],
+"Modules": [
+{
+"Name": "FVCoreRuntime",
+"Type": "Runtime",
+"LoadingPhase": "PreDefault"
+},
+{
+"Name": "FVCoreEditor",
+"Type": "Editor",
+"LoadingPhase": "PostEngineInit"
+}
+]
+}
