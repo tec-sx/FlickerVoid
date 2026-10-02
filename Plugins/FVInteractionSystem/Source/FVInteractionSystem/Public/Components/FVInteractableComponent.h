@@ -14,6 +14,7 @@ class UPrimitiveComponent;
 class UShapeComponent;
 class UFVInteractableResponseComponent;
 class UFVInteractionRegistrySubsystem;
+class UFVInteractableDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableFoundInteractor, UFVInteractorComponent*, Interactor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableLostInteractor, UFVInteractorComponent*, Interactor);
@@ -32,6 +33,19 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
+#endif
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable")
+	TObjectPtr<UFVInteractableDefinition> Definition;
+
+	UFUNCTION(BlueprintPure, Category = "Interactable")
+	UE_API FGameplayTag GetInteractableType() const;
+
+	UFUNCTION(BlueprintPure, Category = "Interactable")
+	UE_API float GetCooldownPeriod() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Responses")
 	UE_API void BindResponse(FGameplayTag ActionTag, UFVInteractableResponseComponent* Response);
@@ -77,19 +91,16 @@ public:
 
 #pragma region DetectionFunctions
 	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
-	ECollisionChannel GetCollisionChannel() const { return CollisionChannel; }
-	
+	UE_API ECollisionChannel GetCollisionChannel() const;
+
 	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
-	FGameplayTagContainer GetCompatibleInteractorTags() const { return CompatibleInteractorTags; }
-	
-	UFUNCTION(BlueprintCallable, Category = "Interactable|Detection")
-	void AddCompatibleInteractorTag(const FGameplayTag Tag) { CompatibleInteractorTags.AddTag(Tag); }
-	
+	UE_API FGameplayTagContainer GetCompatibleInteractorTags() const;
+
 	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
 	TArray<UPrimitiveComponent*> GetDetectablePrimitives() const { return DetectablePrimitives; }
-	
+
 	UFUNCTION(BlueprintPure, Category = "Interactable|Detection")
-	int32 GetDetectionWeight() const {return DetectionWeight; }
+	UE_API int32 GetDetectionWeight() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Detection")
 	UE_API void AcquireInteractor(UFVInteractorComponent* NewInteractor);
@@ -104,7 +115,7 @@ public:
 #pragma endregion
 
 	const FFVInteractionOffer* FindOffer(const FGameplayTag& InputTag) const;
-	const TArray<FFVInteractionOffer>& GetOffers() const { return Offers; }
+	const TArray<FFVInteractionOffer>& GetOffers() const { return RuntimeOffers; }
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
 	FInteractableFoundInteractor InteractorFound;
@@ -123,38 +134,19 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable|State")
 	FInteractionEnded InteractionEnded;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Interactable|Identity", meta = (Categories = "Interactable"))
-	FGameplayTag InteractableType;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Detection")
 	FName DetectablePrimitiveTag = TEXT("Detectable");
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Lifecycle", meta = (ClampMin = "0", Units = "s"))
-	float CooldownPeriod;
 
 protected:
 	UPROPERTY(SaveGame, VisibleAnywhere, Category="MounteaInteraction|Read Only")
 	TArray<TObjectPtr<UMeshComponent>> HighlightableComponents;
 
-#pragma region Detection
-	
-	UPROPERTY(SaveGame, EditAnywhere, Category="Interactable|Detection", meta=(NoResetToDefault))
-	TEnumAsByte<ECollisionChannel> CollisionChannel;
-	
-	UPROPERTY(SaveGame, EditAnywhere, Category="Interactable|Detection")
-	FGameplayTagContainer CompatibleInteractorTags;
-	
 	UPROPERTY(SaveGame, VisibleAnywhere, Category="Interactable|Detection")
 	TArray<TObjectPtr<UPrimitiveComponent>>	DetectablePrimitives;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Detection", meta = (ClampMin = "-1"))
-	int32 DetectionWeight;
 
-#pragma endregion
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Actions", meta = (ForceInlineRow))
-	TArray<FFVInteractionOffer> Offers;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Interactable|Actions")
+	TArray<FFVInteractionOffer> RuntimeOffers;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Interactable|State")
 	EFVInteractableState State;
@@ -172,6 +164,7 @@ private:
 	
 	void ApplyStateTag(EFVInteractableState OldState, EFVInteractableState NewState) const;
 	void StartCooldown();
+	void ApplyOfferEffects(const FGameplayTag& ActionTag, const UFVInteractorComponent* Interactor) const;
 	
 	UPROPERTY(Transient)
 	TObjectPtr<UFVInteractionRegistrySubsystem> Registry;

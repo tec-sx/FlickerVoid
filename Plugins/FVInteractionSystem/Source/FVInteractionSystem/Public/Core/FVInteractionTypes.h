@@ -2,6 +2,8 @@
 #include "GameplayTagContainer.h"
 #include "Input/Core/FVInputTypes.h"
 #include "Conditions/FVCondition.h"
+#include "Conditions/FVEffect.h"
+#include "Data/FVDisplayInfo.h"
 
 #include "FVInteractionTypes.generated.h"
 
@@ -49,13 +51,6 @@ enum class EFVHighlightType : uint8
 	Default			UMETA(Hidden)
 };
 
-UENUM(BlueprintType, meta=(ScriptName="InteractionGate"))
-enum class EFVInteractionGate : uint8
-{
-	Disable	UMETA(DisplayName="Disable", Tooltip="Offer stays visible but cannot be executed."),
-	Hide	UMETA(DisplayName="Hide", Tooltip="Offer is not shown at all while unmet.")
-};
-
 USTRUCT(BlueprintType)
 struct FVINTERACTIONSYSTEM_API FFVInteractionCommit
 {
@@ -78,69 +73,96 @@ USTRUCT(BlueprintType)
 struct FVINTERACTIONSYSTEM_API FFVInteractionOffer
 {
 	GENERATED_BODY()
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "InputTag.Interaction"))
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (Categories = "InputTag.Interaction"))
 	FGameplayTag InputTag;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Interaction.Action"))
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (Categories = "Interaction.Action"))
 	FGameplayTag ActionTag;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ShowOnlyInnerProperties))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (ShowOnlyInnerProperties))
 	FFVGesture Gesture;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Requirements")
-	FGameplayTagContainer RequiredTags;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Requirements")
-	FGameplayTagContainer BlockedTags;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Requirements", meta = (Tooltip = "Require every tag in RequiredTags instead of any one of them."))
-	bool bRequireAllTags = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Requirements")
-	EFVInteractionGate RequirementGate = EFVInteractionGate::Disable;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Display")
+	FFVDisplayInfo Display;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Requirements")
 	FFVConditionSet Conditions;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction|Effects")
+	FFVEffectList Effects;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (ClampMin = "0"))
 	int32 Weight = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "-1", Tooltip = "-1 is unlimited. 0 means the action is exhausted."))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (ClampMin = "-1", Tooltip = "-1 is unlimited. 0 means the action is exhausted."))
 	int32 RemainingUses = -1;
-
-	UPROPERTY(BlueprintReadOnly, Transient, meta = (Tooltip = "Evaluated per interactor when offers are refreshed."))
-	bool bRequirementsMet = false;
 
 	bool IsValid() const { return InputTag.IsValid() && ActionTag.IsValid(); }
 	bool IsExhausted() const { return RemainingUses == 0; }
-	bool CanExecute() const { return bRequirementsMet && RemainingUses != 0; }
+	bool HidesWhenUnavailable() const { return Conditions.FailurePresentation == EFVConditionFailurePresentation::Hidden; }
+};
 
-	bool AreTagsSatisfied(const FGameplayTagContainer& SourceTags) const
+USTRUCT(BlueprintType)
+struct FVINTERACTIONSYSTEM_API FFVInteractionOfferData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction", meta = (Categories = "InputTag.Interaction"))
+	FGameplayTag InputTag;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction", meta = (Categories = "Interaction.Action"))
+	FGameplayTag ActionTag;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	FFVGesture Gesture;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	FFVDisplayInfo Display;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	int32 Weight = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	int32 RemainingUses = -1;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	bool bAvailable = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	FText LockedReason;
+
+	bool CanExecute() const { return bAvailable && RemainingUses != 0; }
+
+	static FFVInteractionOfferData From(const FFVInteractionOffer& Offer, const bool bInAvailable)
 	{
-		if (SourceTags.HasAny(BlockedTags))
-		{
-			return false;
-		}
+		FFVInteractionOfferData Data;
+		Data.InputTag = Offer.InputTag;
+		Data.ActionTag = Offer.ActionTag;
+		Data.Gesture = Offer.Gesture;
+		Data.Display = Offer.Display;
+		Data.Weight = Offer.Weight;
+		Data.RemainingUses = Offer.RemainingUses;
+		Data.bAvailable = bInAvailable;
 
-		if (RequiredTags.IsEmpty())
+		if (!bInAvailable && Offer.Conditions.FailurePresentation == EFVConditionFailurePresentation::ShowLockedWithReason)
 		{
-			return true;
+			Data.LockedReason = Offer.Conditions.FailureReason.IsEmpty() ? Offer.Conditions.GetDescription() : Offer.Conditions.FailureReason;
 		}
-
-		return bRequireAllTags ? SourceTags.HasAll(RequiredTags) : SourceTags.HasAny(RequiredTags);
+		return Data;
 	}
 
-	bool operator==(const FFVInteractionOffer& Other) const
+	bool operator==(const FFVInteractionOfferData& Other) const
 	{
 		return InputTag == Other.InputTag &&
 			ActionTag == Other.ActionTag &&
 			Gesture == Other.Gesture &&
-			bRequirementsMet == Other.bRequirementsMet &&
-			RequirementGate == Other.RequirementGate &&
+			Weight == Other.Weight &&
 			RemainingUses == Other.RemainingUses &&
-			Weight == Other.Weight;
+			bAvailable == Other.bAvailable &&
+			LockedReason.EqualTo(Other.LockedReason);
 	}
 
-	bool operator!=(const FFVInteractionOffer& Other) const { return !(*this == Other); }
+	bool operator!=(const FFVInteractionOfferData& Other) const { return !(*this == Other); }
 };
+

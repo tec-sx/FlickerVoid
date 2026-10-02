@@ -29,7 +29,7 @@ struct FTraceData
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorStateChanged, EFVInteractorState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorFoundInteractable, UFVInteractableComponent*, Target);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorLostInteractable, UFVInteractableComponent*, Target);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionOffersChanged, const TArray<FFVInteractionOffer>&, Offers);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionOffersChanged, const TArray<FFVInteractionOfferData>&, Offers);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionCommitStarted, const FFVInteractionCommit&, Commit);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCommitProgress, const FFVInteractionCommit&, Commit, float, Progress);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCommitEnded, const FFVInteractionCommit&, Commit, const bool, bSuccess);
@@ -59,7 +59,7 @@ public:
 	UE_API UFVInteractableComponent* GetTargetInteractable() const { return TargetInteractable.Get(); }
 	
 	UFUNCTION(BlueprintPure)
-	UE_API const TArray<FFVInteractionOffer>& GetOffers() const { return CachedOffers; }
+	UE_API const TArray<FFVInteractionOfferData>& GetOffers() const { return CachedOffers; }
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|State")
 	UE_API EFVInteractorState GetState() const { return State; }
@@ -155,7 +155,7 @@ private:
 	void TickInteraction(const float DeltaTime);
 	bool ValidateActiveInteraction() const;
 	void FinishInteraction(const bool bSuccess);
-	const FFVInteractionOffer* FindOffer(const FGameplayTag& InputTag) const;
+	const FFVInteractionOfferData* FindOffer(const FGameplayTag& InputTag) const;
 	UFVGestureComponent* ResolveGestureComponent();
 
 	UPROPERTY(Transient)
@@ -170,13 +170,12 @@ private:
 	FDelegateHandle FactChangedHandle;
 
 	void HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue);
-	bool PassesOfferConditions(const FFVInteractionOffer& Offer) const;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UFVInteractionRegistrySubsystem> Registry;
 	
 	UPROPERTY(Transient)
-	TArray<FFVInteractionOffer> CachedOffers;
+	TArray<FFVInteractionOfferData> CachedOffers;
 	
 	EFVInteractorState State;
 	FGameplayTagContainer SuppressionReasons;

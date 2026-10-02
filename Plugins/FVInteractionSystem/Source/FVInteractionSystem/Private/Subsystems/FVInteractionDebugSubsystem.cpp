@@ -200,7 +200,7 @@ void UFVInteractionDebugSubsystem::DebugInteractionOutcome(const EFVDebugInterac
 	LastInteractionOutcome = Outcome;
 }
 
-void UFVInteractionDebugSubsystem::OnOffersChanged(const TArray<FFVInteractionOffer>& Offers)
+void UFVInteractionDebugSubsystem::OnOffersChanged(const TArray<FFVInteractionOfferData>& Offers)
 {
 	AvailableOffers.Reset();
 	AvailableOffers = Offers;
@@ -312,16 +312,16 @@ void UFVInteractionDebugSubsystem::DrawHUD(UCanvas* Canvas, APlayerController* P
 		}
 		else
 		{
-			for (const FFVInteractionOffer& Offer : AvailableOffers)
+			for (const FFVInteractionOfferData& Offer : AvailableOffers)
 			{
 				const TCHAR* Status = TEXT("AVAILABLE");
-				if (Offer.IsExhausted())
+				if (Offer.RemainingUses == 0)
 				{
 					Status = TEXT("SPENT");
 				}
-				else if (!Offer.bRequirementsMet)
+				else if (!Offer.bAvailable)
 				{
-					Status = Offer.RequirementGate == EFVInteractionGate::Hide ? TEXT("HIDDEN") : TEXT("GATED");
+					Status = TEXT("LOCKED");
 				}
 
 				DrawLine(

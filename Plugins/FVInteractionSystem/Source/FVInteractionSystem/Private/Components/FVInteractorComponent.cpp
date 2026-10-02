@@ -1,5 +1,6 @@
 #include "Components/FVInteractorComponent.h"
 #include "Components/FVInteractableComponent.h"
+#include "Conditions/FVConditionStatics.h"
 #include "Core/FVInteractionGameplayTags.h"
 #include "Engine/World.h"
 #include "FVInteractionSystem.h"
@@ -188,7 +189,7 @@ bool UFVInteractorComponent::BeginInteraction(const FGameplayTag InputTag)
 		return false;
 	}
 
-	const FFVInteractionOffer* Offer = FindOffer(InputTag);
+	const FFVInteractionOfferData* Offer = FindOffer(InputTag);
 	if (!Offer || !Offer->CanExecute())
 	{
 #if !UE_BUILD_SHIPPING
@@ -257,7 +258,7 @@ bool UFVInteractorComponent::ValidateActiveInteraction() const
 		return false;
 	}
 
-	const FFVInteractionOffer* Offer = FindOffer(ActiveCommit.InputTag);
+	const FFVInteractionOfferData* Offer = FindOffer(ActiveCommit.InputTag);
 	return Offer && Offer->CanExecute();
 }
 
@@ -307,9 +308,9 @@ void UFVInteractorComponent::FinishInteraction(const bool bSuccess)
 	RefreshOffers();
 }
 
-const FFVInteractionOffer* UFVInteractorComponent::FindOffer(const FGameplayTag& InputTag) const
+const FFVInteractionOfferData* UFVInteractorComponent::FindOffer(const FGameplayTag& InputTag) const
 {
-	return CachedOffers.FindByPredicate([&InputTag](const FFVInteractionOffer& Candidate)
+	return CachedOffers.FindByPredicate([&InputTag](const FFVInteractionOfferData& Candidate)
 	{
 		return Candidate.InputTag.MatchesTagExact(InputTag);
 	});
@@ -346,22 +347,13 @@ bool UFVInteractorComponent::IsOfferAvailable(const FFVInteractionOffer& Offer) 
 		return false;
 	}
 
-	return Offer.AreTagsSatisfied(GrantedTags) && PassesOfferConditions(Offer);
-}
-
-bool UFVInteractorComponent::PassesOfferConditions(const FFVInteractionOffer& Offer) const
-{
 	if (Offer.Conditions.IsEmpty())
 	{
 		return true;
 	}
 
 	const UFVInteractableComponent* Target = TargetInteractable.Get();
-	FFVConditionContext Context;
-	Context.WorldContext = GetOwner();
-	Context.Instigator = GetOwner();
-	Context.Target = Target ? Target->GetOwner() : nullptr;
-	return Offer.Conditions.Evaluate(Context);
+	return Offer.Conditions.Evaluate(UFVConditionStatics::MakeContext(GetOwner(), Target ? Target->GetOwner() : nullptr));
 }
 
 void UFVInteractorComponent::HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue)
@@ -527,7 +519,7 @@ void UFVInteractorComponent::ReleaseTargetInteractable()
 void UFVInteractorComponent::RefreshOffers(bool bForceBroadcast)
 {
 	const UFVInteractableComponent* Target = TargetInteractable.Get();
-	TArray<FFVInteractionOffer> NewOffers;
+	TArray<FFVInteractionOfferData> NewOffers;
 
 	if (Target)
 	{
@@ -536,18 +528,16 @@ void UFVInteractorComponent::RefreshOffers(bool bForceBroadcast)
 			if (!Offer.IsValid())
 				continue;
 
-			const bool bRequirementsMet = IsOfferAvailable(Offer);
+			const bool bAvailable = IsOfferAvailable(Offer);
 
-			if (!bRequirementsMet && Offer.RequirementGate == EFVInteractionGate::Hide)
+			if (!bAvailable && Offer.HidesWhenUnavailable())
 				continue;
-			
-			FFVInteractionOffer& Slot = NewOffers.Add_GetRef(Offer);
-			Slot.bRequirementsMet = bRequirementsMet;
+
+			NewOffers.Add(FFVInteractionOfferData::From(Offer, bAvailable));
 		}
 	}
 
-
-	NewOffers.Sort([](const FFVInteractionOffer& A, const FFVInteractionOffer& B)
+	NewOffers.Sort([](const FFVInteractionOfferData& A, const FFVInteractionOfferData& B)
 	{
 		if (A.Weight != B.Weight)
 		{

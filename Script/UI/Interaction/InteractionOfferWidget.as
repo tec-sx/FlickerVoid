@@ -10,23 +10,17 @@ class UInteractionOfferWidget : UUserWidget
     UPROPERTY(BindWidgetOptional)
     UTextBlock KeyHintText;
 
-    void SetSlotData(FFVInteractionOffer Offer, const FInteractionSlotStyle& Style)
+    void SetSlotData(FFVInteractionOfferData Offer, const FInteractionSlotStyle& Style)
     {
         SetVisibility(ESlateVisibility::HitTestInvisible);
 
-        // if (ActionNameText != nullptr)
-        // {
-        //     ActionNameText.SetText(Style.DisplayName);
-        // }
+        if (ActionNameText != nullptr)
+        {
+            Offer.Display.Name
+        }
 
-        // if (IconImage != nullptr)
-        // {
-        //     IconImage.SetBrush(Style.Icon);
-        //     IconImage.SetVisibility(ESlateVisibility::HitTestInvisible);
-        // }
-
-        // SetRenderOpacity(Offer.bRequirementsMet ? 1.f : 0.4f);
-        // SetToolTipText(Offer.bRequirementsMet ? FText() : Style.RequirementHint);
+        SetRenderOpacity(Offer.bAvailable ? 1.f : 0.4f);
+        SetToolTipText(Offer.LockedReason);
     }
 
     void Clear()

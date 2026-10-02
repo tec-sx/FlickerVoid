@@ -127,7 +127,7 @@ void UFVInteractionUIComponent::OnFocusChanged(UFVInteractableComponent* NewTarg
 	}
 }
 
-void UFVInteractionUIComponent::OnOffersChanged(const TArray<FFVInteractionOffer>& InOffers)
+void UFVInteractionUIComponent::OnOffersChanged(const TArray<FFVInteractionOfferData>& InOffers)
 {
 	Offers = InOffers;
 	OffersChanged.Broadcast(Offers);

@@ -2,20 +2,61 @@
 #include "Components/FVInteractableResponseComponent.h"
 #include "Components/FVInteractorComponent.h"
 #include "Components/PrimitiveComponent.h"
+#include "Conditions/FVConditionStatics.h"
 #include "Core/FVInteractionGameplayTags.h"
+#include "Data/FVInteractableDefinition.h"
 #include "FVInteractionSystem.h"
+#include "FVInteractionSystemSettings.h"
 #include "Subsystems/FVInteractionRegistrySubsystem.h"
+
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractableComponent)
 
 UFVInteractableComponent::UFVInteractableComponent()
-	: InteractableType(FVInteractionGameplayTags::Interactable)
-	, CooldownPeriod(0.f)
-	, CollisionChannel(ECC_Camera)
-	, DetectionWeight(1)
-	, State(EFVInteractableState::Idle)
+	: State(EFVInteractableState::Idle)
 {
 	PrimaryComponentTick.bCanEverTick = false;
+}
+
+#if WITH_EDITOR
+EDataValidationResult UFVInteractableComponent::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+	if (!Definition)
+	{
+		Context.AddError(FText::Format(NSLOCTEXT("FVInteractableComponent", "NoDefinition", "Interactable component '{0}' has no Definition assigned."), FText::FromString(GetName())));
+		Result = EDataValidationResult::Invalid;
+	}
+	return Result;
+}
+#endif
+
+FGameplayTag UFVInteractableComponent::GetInteractableType() const
+{
+	return Definition ? Definition->InteractableType : FGameplayTag(FVInteractionGameplayTags::Interactable);
+}
+
+float UFVInteractableComponent::GetCooldownPeriod() const
+{
+	return Definition ? Definition->CooldownPeriod : 0.f;
+}
+
+ECollisionChannel UFVInteractableComponent::GetCollisionChannel() const
+{
+	return Definition ? Definition->CollisionChannel.GetValue() : UFVInteractionSystemSettings::Get().InteractableBaseSettings.DefaultCollisionChannel.GetValue();
+}
+
+FGameplayTagContainer UFVInteractableComponent::GetCompatibleInteractorTags() const
+{
+	return Definition ? Definition->CompatibleInteractorTags : FGameplayTagContainer();
+}
+
+int32 UFVInteractableComponent::GetDetectionWeight() const
+{
+	return Definition ? Definition->DetectionWeight : UFVInteractionSystemSettings::Get().InteractableBaseSettings.DefaultInteractableWeight;
 }
 
 void UFVInteractableComponent::BeginPlay()
@@ -26,7 +67,14 @@ void UFVInteractableComponent::BeginPlay()
 	{
 		return;
 	}
-	
+
+	if (ensureMsgf(Definition, TEXT("%s on %s has no interactable Definition."), *GetName(), *GetNameSafe(GetOwner())))
+	{
+		RuntimeOffers = Definition->Offers;
+	}
+
+	const ECollisionChannel CollisionChannel = GetCollisionChannel();
+
 	TArray<UActorComponent*> DetectableComponents = GetOwner()->GetComponentsByTag(UPrimitiveComponent::StaticClass(), DetectablePrimitiveTag);
 	
 	for (UActorComponent* Component : DetectableComponents)
@@ -183,7 +231,7 @@ void UFVInteractableComponent::ApplyStateTag(const EFVInteractableState OldState
 
 void UFVInteractableComponent::ConsumeOffer(const FGameplayTag& InputTag)
 {
-	FFVInteractionOffer* Offer = Offers.FindByPredicate([&InputTag](const FFVInteractionOffer& Candidate)
+	FFVInteractionOffer* Offer = RuntimeOffers.FindByPredicate([&InputTag](const FFVInteractionOffer& Candidate)
 	{
 		return Candidate.InputTag.MatchesTagExact(InputTag);
 	});
@@ -195,7 +243,7 @@ void UFVInteractableComponent::ConsumeOffer(const FGameplayTag& InputTag)
 
 	--Offer->RemainingUses;
 
-	const bool bAllExhausted = !Offers.ContainsByPredicate([](const FFVInteractionOffer& Candidate)
+	const bool bAllExhausted = !RuntimeOffers.ContainsByPredicate([](const FFVInteractionOffer& Candidate)
 	{
 		return Candidate.IsValid() && !Candidate.IsExhausted();
 	});
@@ -211,6 +259,7 @@ void UFVInteractableComponent::ConsumeOffer(const FGameplayTag& InputTag)
 
 void UFVInteractableComponent::StartCooldown()
 {
+	const float CooldownPeriod = GetCooldownPeriod();
 	if (CooldownPeriod <= 0.f || !SetState(EFVInteractableState::Cooldown))
 	{
 		return;
@@ -306,8 +355,26 @@ void UFVInteractableComponent::EndInteraction(const FGameplayTag& ActionTag, UFV
 	{
 		SetState(EFVInteractableState::Awake);
 	}
-	
+
+	if (bSuccess)
+	{
+		ApplyOfferEffects(ActionTag, Interactor);
+	}
+
 	InteractionEnded.Broadcast(ActionTag, Interactor, bSuccess);
+}
+
+void UFVInteractableComponent::ApplyOfferEffects(const FGameplayTag& ActionTag, const UFVInteractorComponent* Interactor) const
+{
+	const FFVInteractionOffer* Offer = RuntimeOffers.FindByPredicate([&ActionTag](const FFVInteractionOffer& Candidate)
+	{
+		return Candidate.ActionTag.MatchesTagExact(ActionTag);
+	});
+
+	if (Offer && !Offer->Effects.IsEmpty())
+	{
+		Offer->Effects.Apply(UFVConditionStatics::MakeContext(Interactor ? Interactor->GetOwner() : nullptr, GetOwner()));
+	}
 }
 
 void UFVInteractableComponent::AcquireInteractor(UFVInteractorComponent* NewInteractor)
@@ -344,7 +411,7 @@ void UFVInteractableComponent::ExecuteAction(const FGameplayTag ActionTag, UFVIn
 
 const FFVInteractionOffer* UFVInteractableComponent::FindOffer(const FGameplayTag& InputTag) const
 {
-	return Offers.FindByPredicate([InputTag](const FFVInteractionOffer& Offer)
+	return RuntimeOffers.FindByPredicate([InputTag](const FFVInteractionOffer& Offer)
 	{
 		return Offer.InputTag == InputTag;
 	});

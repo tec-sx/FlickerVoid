@@ -1,9 +1,10 @@
 #include "Validation/Rules/ValidateInteractableSetupRule.h"
 
 #include "Components/FVInteractableComponent.h"
-#include "Core/FVInteractionGameplayTags.h"
+#include "Data/FVInteractableDefinition.h"
 #include "Engine/Blueprint.h"
 #include "Kismet2/CompilerResultsLog.h"
+#include "Misc/DataValidation.h"
 #include "Validation/InteractionBlueprintComponentUtils.h"
 
 bool FValidateInteractableSetupRule::ShouldRun(const FInteractionCompileContext& Context) const
@@ -24,83 +25,30 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 			continue;
 		}
 
-		if (Interactable->GetOffers().IsEmpty())
+		const UFVInteractableDefinition* Definition = Interactable->Definition;
+		if (!Definition)
 		{
-			Context.MessageLog.Warning(*FString::Printf(
-				TEXT("Interactable component '%s' declares no offers and can never be interacted with."),
+			Context.MessageLog.Error(*FString::Printf(
+				TEXT("Interactable component '%s' has no Definition assigned."),
 				*Interactable->GetName()));
+			continue;
 		}
 
-		TSet<FGameplayTag> SeenInputTags;
+		FDataValidationContext DataContext;
+		Definition->IsDataValid(DataContext);
 
-		for (const FFVInteractionOffer& Offer : Interactable->GetOffers())
+		for (const FDataValidationContext::FIssue& Issue : DataContext.GetIssues())
 		{
-			if (!Offer.InputTag.IsValid())
+			const FString Message = FString::Printf(TEXT("Interactable component '%s' definition '%s': %s"),
+				*Interactable->GetName(), *Definition->GetName(), *Issue.Message.ToString());
+
+			if (Issue.Severity == EMessageSeverity::Error)
 			{
-				Context.MessageLog.Error(*FString::Printf(
-					TEXT("Interactable component '%s' has an offer with no input tag."),
-					*Interactable->GetName()));
-			}
-			else if (SeenInputTags.Contains(Offer.InputTag))
-			{
-				Context.MessageLog.Error(*FString::Printf(
-					TEXT("Interactable component '%s' declares more than one offer for input '%s'."),
-					*Interactable->GetName(),
-					*Offer.InputTag.ToString()));
+				Context.MessageLog.Error(*Message);
 			}
 			else
 			{
-				SeenInputTags.Add(Offer.InputTag);
-			}
-
-			if (Offer.RemainingUses == 0)
-			{
-				Context.MessageLog.Warning(*FString::Printf(
-					TEXT("Interactable component '%s' offer '%s' is authored with zero remaining uses and can never execute."),
-					*Interactable->GetName(),
-					*Offer.InputTag.ToString()));
-			}
-
-			// if (Offer.InputMode == EFVInteractionInputMode::Hold && Offer.InteractionPeriod == 0.f)
-			// {
-			// 	Context.MessageLog.Error(*FString::Printf(
-			// 		TEXT("Interactable component '%s' offer '%s' uses Hold but has an interaction period of zero."),
-			// 		*Interactable->GetName(),
-			// 		*Offer.InputTag.ToString()));
-			// }
-			//
-			// if (Offer.InputMode == EFVInteractionInputMode::Mash && Offer.RequiredPresses <= 1)
-			// {
-			// 	Context.MessageLog.Warning(*FString::Printf(
-			// 		TEXT("Interactable component '%s' offer '%s' uses Mash but requires %d presses."),
-			// 		*Interactable->GetName(),
-			// 		*Offer.InputTag.ToString(),
-			// 		Offer.RequiredPresses));
-			// }
-
-			if (!Offer.ActionTag.IsValid())
-			{
-				Context.MessageLog.Error(*FString::Printf(
-					TEXT("Interactable component '%s' has an offer for input '%s' with no action tag."),
-					*Interactable->GetName(),
-					*Offer.InputTag.ToString()));
-			}
-			else if (!Offer.ActionTag.MatchesTag(FVInteractionGameplayTags::Interaction_Action))
-			{
-				Context.MessageLog.Error(*FString::Printf(
-					TEXT("Interactable component '%s' offer '%s' uses action tag '%s', which is not under '%s'."),
-					*Interactable->GetName(),
-					*Offer.InputTag.ToString(),
-					*Offer.ActionTag.ToString(),
-					*FVInteractionGameplayTags::Interaction_Action.GetTag().ToString()));
-			}
-
-			if (Offer.RequiredTags.HasAny(Offer.BlockedTags))
-			{
-				Context.MessageLog.Error(*FString::Printf(
-					TEXT("Interactable component '%s' offer '%s' has a tag present in both RequiredTags and BlockedTags, so it can never be satisfied."),
-					*Interactable->GetName(),
-					*Offer.InputTag.ToString()));
+				Context.MessageLog.Warning(*Message);
 			}
 		}
 	}

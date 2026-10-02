@@ -51,7 +51,7 @@ private:
 	double LastInputTime;
 	
 	// Interaction
-	TArray<FFVInteractionOffer> AvailableOffers;
+	TArray<FFVInteractionOfferData> AvailableOffers;
 	FFVInteractionCommit ActiveCommit;
 	float InteractionProgress;
 	EFVDebugInteractionOutcome LastInteractionOutcome;
@@ -60,7 +60,7 @@ private:
 	
 private:
 	UFUNCTION()
-	void OnOffersChanged(const TArray<FFVInteractionOffer>& Offers);
+	void OnOffersChanged(const TArray<FFVInteractionOfferData>& Offers);
 	
 	UFUNCTION()
 	void OnInteractionCommitStarted(const FFVInteractionCommit& Commit);

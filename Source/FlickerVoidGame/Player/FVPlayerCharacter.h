@@ -10,7 +10,6 @@
 
 class UFVInteractableComponent;
 class UFVAbilitySystemComponent;
-class UFVInteractionAbilityComponent;
 class UFVInteractorComponent;
 
 UCLASS()
@@ -40,7 +39,4 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
 	TObjectPtr<UFVInteractorComponent> InteractorComponent;
-
-	UPROPERTY(VisibleAnywhere, Category = "FlickerVoid|Interaction")
-	TObjectPtr<UFVInteractionAbilityComponent> InteractionAbilityComponent;
 };

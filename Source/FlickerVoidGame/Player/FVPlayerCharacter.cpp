@@ -6,7 +6,6 @@
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "Components/FVInteractableComponent.h"
 #include "Components/FVInteractorComponent.h"
-#include "Interaction/FVInteractionAbilityComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerCharacter)
 
@@ -15,7 +14,6 @@ AFVPlayerCharacter::AFVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 {
 	AbilitySystemComponent = CreateDefaultSubobject<UFVAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	InteractorComponent = CreateDefaultSubobject<UFVInteractorComponent>(TEXT("InteractorComponent"));
-	InteractionAbilityComponent = CreateDefaultSubobject<UFVInteractionAbilityComponent>(TEXT("InteractionAbilityComponent"));
 }
 
 UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const

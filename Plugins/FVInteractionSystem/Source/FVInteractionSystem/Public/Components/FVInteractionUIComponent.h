@@ -13,7 +13,7 @@ class UFVInteractableComponent;
 class UFVInteractionUISettings;
 class UUserWidget;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOffersChanged, TArray<FFVInteractionOffer>, Offers);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOffersChanged, const TArray<FFVInteractionOfferData>&, Offers);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOfferProgress, const FGameplayTag, ActionTag, float, Progress);
 
 UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent, RequiresInteractor))
@@ -25,7 +25,7 @@ public:
 	UFVInteractionUIComponent();
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Prompt")
-	UE_API const TArray<FFVInteractionOffer>& GetOffers() const { return Offers; }
+	UE_API const TArray<FFVInteractionOfferData>& GetOffers() const { return Offers; }
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Prompt")
 	UE_API bool HasFocus() const { return FocusedTarget != nullptr; }
@@ -59,7 +59,7 @@ private:
 	void OnFocusChanged(UFVInteractableComponent* NewTarget);
 
 	UFUNCTION()
-	void OnOffersChanged(const TArray<FFVInteractionOffer>& InOffers);
+	void OnOffersChanged(const TArray<FFVInteractionOfferData>& InOffers);
 
 	UFUNCTION()
 	void OnInteractionProgress(const FFVInteractionCommit& Commit, float Progress);
@@ -68,7 +68,7 @@ private:
 	TObjectPtr<UFVInteractorComponent> Interactor;
 
 	UPROPERTY(Transient)
-	TArray<FFVInteractionOffer> Offers;
+	TArray<FFVInteractionOfferData> Offers;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UFVInteractableComponent> FocusedTarget;

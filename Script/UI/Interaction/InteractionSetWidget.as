@@ -31,7 +31,7 @@ class UInteractionSetWidget : UUserWidget
     }
     
     UFUNCTION()
-    private void OnOffersChanged(const TArray<FFVInteractionOffer>&in Offers)
+    private void OnOffersChanged(const TArray<FFVInteractionOfferData>&in Offers)
     {
         for (UInteractionSlotWidget OfferWidget : OfferPool)
         {
@@ -53,7 +53,7 @@ class UInteractionSetWidget : UUserWidget
         for (int i = 0; i < OfferPool.Num(); i++)
         {
             UInteractionSlotWidget OfferWidget = OfferPool[i];
-            const FFVInteractionOffer Offer = Offers[i];
+            const FFVInteractionOfferData Offer = Offers[i];
 
 
             FInteractionSlotStyle Style; 
@@ -62,7 +62,7 @@ class UInteractionSetWidget : UUserWidget
             // FInteractionKeyBinding Binding;
             // ResolveKeyBinding(Prompt.InputTag, Binding);   
 
-            OfferWidget.SetSlotData(Style, Offer.bRequirementsMet);
+            OfferWidget.SetSlotData(Style, Offer.bAvailable);
         }
     }
 
