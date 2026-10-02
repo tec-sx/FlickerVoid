@@ -51,6 +51,9 @@ namespace FVInteractionGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Suppression_Dependency, "Interaction.Suppression.Dependency", "Suppressed by another interaction holding a dependency.");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Tag_Player, "Interactor.Tag.Player", "Interactor driven by a human player.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Mode, "Interactor.Mode", "Root for interactor detection modes.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Mode_Default, "Interactor.Mode.Default", "Default interactor detection mode.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Mode_Aim, "Interactor.Mode.Aim", "Precise detection mode used while aiming.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Tag_AI, "Interactor.Tag.AI", "Interactor driven by AI.");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable, "Interactable", "Base interactable tag.");

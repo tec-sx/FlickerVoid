@@ -267,7 +267,7 @@ void UFVInteractionDebugSubsystem::DrawHUD(UCanvas* Canvas, APlayerController* P
 			}
 			
 			const bool bIsFocused = InteractableCandidate == FocusedInteractable;
-			const bool bIsCompatible = InteractableCandidate->GetCompatibleInteractorTags().HasTag(Interactor->InteractorTag);
+			const bool bIsCompatible = InteractableCandidate->GetCompatibleInteractorTags().HasTag(Interactor->GetInteractorTag());
 
 			DrawLine(
 				FString::Printf(

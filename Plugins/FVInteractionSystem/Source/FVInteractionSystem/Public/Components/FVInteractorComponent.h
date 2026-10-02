@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Core/FVInteractionTypes.h"
+#include "Data/FVInteractorModeDefinition.h"
 #include "FVInteractionSystemSettings.h"
 
 #include "FVInteractorComponent.generated.h"
@@ -15,6 +16,19 @@ class UFVInteractionDebugSubsystem;
 class UFVInteractableComponent;
 class UFVInteractionRegistrySubsystem;
 class UFVGestureComponent;
+class UFVInteractorDefinition;
+
+USTRUCT()
+struct FFVInteractorModeEntry
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<const UFVInteractorModeDefinition> Mode;
+
+	int32 Priority = 0;
+	uint32 PushOrder = 0;
+};
 
 struct FTraceData
 {
@@ -33,6 +47,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionOffersChanged, const TAr
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionCommitStarted, const FFVInteractionCommit&, Commit);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCommitProgress, const FFVInteractionCommit&, Commit, float, Progress);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionCommitEnded, const FFVInteractionCommit&, Commit, const bool, bSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractorModeChanged, FGameplayTag, NewMode, FGameplayTag, OldMode);
 
 UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), NotBlueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
 class UFVInteractorComponent final : public UActorComponent
@@ -45,6 +60,34 @@ public:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
+#endif
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Mode")
+	UE_API bool PushMode(const FGameplayTag ModeTag, const int32 Priority = 0);
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Mode")
+	UE_API bool RemoveMode(const FGameplayTag ModeTag);
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction|Mode")
+	UE_API void ClearModes();
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|Mode")
+	UE_API bool HasMode(const FGameplayTag ModeTag) const;
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|Mode")
+	UE_API FGameplayTag GetActiveModeTag() const;
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|Mode")
+	const FFVInteractorDetectionSettings& GetActiveDetection() const { return ActiveDetection; }
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|Identity")
+	UE_API FGameplayTag GetInteractorTag() const;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction|Mode")
+	FInteractorModeChanged InteractorModeChanged;
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Detection")
 	UE_API void EnableTracing();
@@ -106,43 +149,36 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|State")
 	FInteractionCommitEnded InteractionCommitEnded;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Identity", meta = (Tooltip = "Tags this interactor presents to offer requirement gates."))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
+	TObjectPtr<UFVInteractorDefinition> Definition;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Interaction|Identity", meta = (Tooltip = "Runtime tags this interactor presents to offer conditions. Initialized from Definition."))
 	FGameplayTagContainer GrantedTags;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Requirements", meta = (Tooltip = "Any offer whose ActionTag matches these is gated off entirely."))
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Interaction|Requirements", meta = (Tooltip = "Runtime blocked action tags. Initialized from Definition."))
 	FGameplayTagContainer BlockedActionTags;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction|Detection")
-	TEnumAsByte<ECollisionChannel> CollisionChannel;
-
-	UPROPERTY(EditAnywhere, Category="InteractorSettings")
-	FGameplayTag InteractorTag;
-	
-	UPROPERTY(EditAnywhere, Category="DetectionSetup")
-	TEnumAsByte<ECollisionChannel> OcclusionChannel;
-
-	UPROPERTY(EditAnywhere, Category="DetectionSetup", meta=(UIMin=0, ClampMin=0, Units="cm"))
-	float TraceRadius;
-	
-	UPROPERTY(EditAnywhere, Category="DetectionSetup", meta=(UIMin=0.01, ClampMin=0.01, Units="s"))
-	float TickInterval;
-	
-	UPROPERTY(EditAnywhere, Category="DetectionSetup", meta=(UIMin=1, ClampMin=1, Units="cm"))
-	float TraceRange;
-	
-	UPROPERTY(EditAnywhere, Category="DetectionSetup", meta=(NoResetToDefault, DisplayThumbnail=false))
+	UPROPERTY(EditAnywhere, Category="Interaction|Detection", meta=(NoResetToDefault, DisplayThumbnail=false))
 	TArray<TObjectPtr<AActor>> IgnoredActors;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DetectionSetup|Origin", meta=(Tooltip="Offset from the origin in view space (X forward, Y right, Z up)."))
-	FVector TraceOffset;
-
-	UFUNCTION(BlueprintCallable, Category="Interaction|Detection")
-	UE_API void SetTraceOffset(const FVector& NewOffset) { TraceOffset = NewOffset; }
-
-	UFUNCTION(BlueprintPure, Category="Interaction|Detection")
-	UE_API FVector GetTraceOffset() const { return TraceOffset; }
-
 private:
+	void ApplyTopMode();
+	void TickModeBlend(const float DeltaTime);
+	const FFVInteractorModeEntry* GetTopEntry() const;
+
+	UPROPERTY(Transient)
+	TArray<FFVInteractorModeEntry> ModeStack;
+
+	UPROPERTY(Transient)
+	TObjectPtr<const UFVInteractorModeDefinition> ActiveMode;
+
+	FFVInteractorDetectionSettings ActiveDetection;
+	FFVInteractorDetectionSettings BlendFrom;
+	FFVInteractorDetectionSettings BlendTarget;
+	float BlendElapsed = 0.f;
+	float BlendDuration = 0.f;
+	uint32 NextPushOrder = 0;
+
 	void SetState(const EFVInteractorState NewState);
 	void PerformTrace();
 	bool PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target) const;

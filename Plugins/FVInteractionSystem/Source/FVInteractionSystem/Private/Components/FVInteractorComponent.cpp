@@ -1,6 +1,11 @@
 #include "Components/FVInteractorComponent.h"
 #include "Components/FVInteractableComponent.h"
 #include "Conditions/FVConditionStatics.h"
+#include "Data/FVInteractorDefinition.h"
+
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 #include "Core/FVInteractionGameplayTags.h"
 #include "Engine/World.h"
 #include "FVInteractionSystem.h"
@@ -18,23 +23,49 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractorComponent)
 
 UFVInteractorComponent::UFVInteractorComponent()
-	: CollisionChannel(ECC_Camera)
-	, InteractorTag(FVInteractionGameplayTags::Interactor_Tag_Player)
-	, OcclusionChannel(ECC_Camera)
-	, TraceRadius(15.f)
-	, TickInterval(0.1f)
-	, TraceRange(250.f)
-	, TraceOffset(FVector::ZeroVector)
-	, State(EFVInteractorState::Idle)
+	: State(EFVInteractorState::Idle)
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	PrimaryComponentTick.TickGroup = TG_PostPhysics;
 }
 
+#if WITH_EDITOR
+EDataValidationResult UFVInteractorComponent::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+	if (!Definition)
+	{
+		Context.AddError(FText::Format(NSLOCTEXT("FVInteractorComponent", "NoDefinition", "Interactor component '{0}' has no Definition assigned."), FText::FromString(GetName())));
+		Result = EDataValidationResult::Invalid;
+	}
+	return Result;
+}
+#endif
+
 void UFVInteractorComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!ensureMsgf(Definition && Definition->DefaultMode, TEXT("%s on %s requires a Definition with a DefaultMode."), *GetName(), *GetNameSafe(GetOwner())))
+	{
+		PrimaryComponentTick.SetTickFunctionEnable(false);
+		return;
+	}
+
+	GrantedTags = Definition->GrantedTags;
+	BlockedActionTags = Definition->BlockedActionTags;
+
+	ModeStack.Reset();
+	FFVInteractorModeEntry& DefaultEntry = ModeStack.AddDefaulted_GetRef();
+	DefaultEntry.Mode = Definition->DefaultMode;
+	DefaultEntry.Priority = MIN_int32;
+	DefaultEntry.PushOrder = NextPushOrder++;
+
+	ActiveMode = Definition->DefaultMode;
+	ActiveDetection = ActiveMode->Detection;
+	BlendTarget = ActiveDetection;
+	BlendDuration = 0.f;
 
 	if (UFVFactDatabase* Facts = UFVFactDatabase::Get(this))
 	{
@@ -54,7 +85,7 @@ void UFVInteractorComponent::BeginPlay()
 		Registry->RegisterInteractor(this);
 	}
 	
-	SetComponentTickInterval(TickInterval);
+	SetComponentTickInterval(ActiveDetection.TickInterval);
 
 #if !UE_BUILD_SHIPPING
 	if (const UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
@@ -67,7 +98,9 @@ void UFVInteractorComponent::BeginPlay()
 void UFVInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
+
+	TickModeBlend(DeltaTime);
+
 	if (State == EFVInteractorState::Interacting)
 	{
 		TickInteraction(DeltaTime);
@@ -166,6 +199,142 @@ void UFVInteractorComponent::SetState(const EFVInteractorState NewState)
 	
 	State = NewState;
 	StateChanged.Broadcast(State);
+}
+
+FGameplayTag UFVInteractorComponent::GetInteractorTag() const
+{
+	return Definition ? Definition->InteractorTag : FGameplayTag();
+}
+
+bool UFVInteractorComponent::PushMode(const FGameplayTag ModeTag, const int32 Priority)
+{
+	const UFVInteractorModeDefinition* Mode = Definition ? Definition->FindMode(ModeTag) : nullptr;
+	if (!Mode)
+	{
+		UE_LOG(LogFVInteraction, Warning, TEXT("%s: interactor mode '%s' is not declared in the definition."), *GetNameSafe(GetOwner()), *ModeTag.ToString());
+		return false;
+	}
+
+	if (Mode == Definition->DefaultMode)
+	{
+		return true;
+	}
+
+	FFVInteractorModeEntry* Entry = ModeStack.FindByPredicate([Mode](const FFVInteractorModeEntry& Candidate) { return Candidate.Mode == Mode; });
+	if (!Entry)
+	{
+		Entry = &ModeStack.AddDefaulted_GetRef();
+		Entry->Mode = Mode;
+	}
+
+	Entry->Priority = Priority;
+	Entry->PushOrder = NextPushOrder++;
+	ApplyTopMode();
+	return true;
+}
+
+bool UFVInteractorComponent::RemoveMode(const FGameplayTag ModeTag)
+{
+	const int32 Removed = ModeStack.RemoveAll([&ModeTag](const FFVInteractorModeEntry& Entry)
+	{
+		return Entry.Mode && Entry.Priority != MIN_int32 && Entry.Mode->ModeTag.MatchesTagExact(ModeTag);
+	});
+
+	if (Removed > 0)
+	{
+		ApplyTopMode();
+	}
+	return Removed > 0;
+}
+
+void UFVInteractorComponent::ClearModes()
+{
+	ModeStack.RemoveAll([](const FFVInteractorModeEntry& Entry) { return Entry.Priority != MIN_int32; });
+	ApplyTopMode();
+}
+
+bool UFVInteractorComponent::HasMode(const FGameplayTag ModeTag) const
+{
+	return ModeStack.ContainsByPredicate([&ModeTag](const FFVInteractorModeEntry& Entry)
+	{
+		return Entry.Mode && Entry.Mode->ModeTag.MatchesTagExact(ModeTag);
+	});
+}
+
+FGameplayTag UFVInteractorComponent::GetActiveModeTag() const
+{
+	return ActiveMode ? ActiveMode->ModeTag : FGameplayTag();
+}
+
+const FFVInteractorModeEntry* UFVInteractorComponent::GetTopEntry() const
+{
+	const FFVInteractorModeEntry* Top = nullptr;
+	for (const FFVInteractorModeEntry& Entry : ModeStack)
+	{
+		if (!Entry.Mode)
+		{
+			continue;
+		}
+
+		if (!Top || Entry.Priority > Top->Priority || (Entry.Priority == Top->Priority && Entry.PushOrder > Top->PushOrder))
+		{
+			Top = &Entry;
+		}
+	}
+	return Top;
+}
+
+void UFVInteractorComponent::ApplyTopMode()
+{
+	const FFVInteractorModeEntry* Top = GetTopEntry();
+	const UFVInteractorModeDefinition* NewMode = Top ? Top->Mode.Get() : nullptr;
+	if (!NewMode || NewMode == ActiveMode)
+	{
+		return;
+	}
+
+	const FGameplayTag OldTag = GetActiveModeTag();
+	ActiveMode = NewMode;
+
+	BlendFrom = ActiveDetection;
+	BlendTarget = NewMode->Detection;
+	BlendElapsed = 0.f;
+	BlendDuration = NewMode->BlendTime;
+
+	if (BlendDuration <= 0.f)
+	{
+		ActiveDetection = BlendTarget;
+	}
+	else
+	{
+		ActiveDetection.CollisionChannel = BlendTarget.CollisionChannel;
+		ActiveDetection.OcclusionChannel = BlendTarget.OcclusionChannel;
+		ActiveDetection.TickInterval = BlendTarget.TickInterval;
+	}
+
+	if (State != EFVInteractorState::Interacting)
+	{
+		SetComponentTickInterval(ActiveDetection.TickInterval);
+	}
+
+	InteractorModeChanged.Broadcast(NewMode->ModeTag, OldTag);
+}
+
+void UFVInteractorComponent::TickModeBlend(const float DeltaTime)
+{
+	if (BlendDuration <= 0.f)
+	{
+		return;
+	}
+
+	BlendElapsed += DeltaTime;
+	const float Alpha = FMath::Clamp(BlendElapsed / BlendDuration, 0.f, 1.f);
+	ActiveDetection = FFVInteractorDetectionSettings::Lerp(BlendFrom, BlendTarget, Alpha);
+
+	if (Alpha >= 1.f)
+	{
+		BlendDuration = 0.f;
+	}
 }
 
 bool UFVInteractorComponent::BeginInteraction(const FGameplayTag InputTag)
@@ -291,7 +460,7 @@ void UFVInteractorComponent::FinishInteraction(const bool bSuccess)
 	ActiveCommit = FFVInteractionCommit();
 
 	SetState(EFVInteractorState::Awake);
-	SetComponentTickInterval(TickInterval);
+	SetComponentTickInterval(ActiveDetection.TickInterval);
 	
 	if (UFVInteractableComponent* Target = Commit.Interactable)
 	{
@@ -402,7 +571,7 @@ void UFVInteractorComponent::PerformTrace()
 {
 	FTraceData TraceData;
 	{
-		TraceData.CollisionChannel = CollisionChannel;
+		TraceData.CollisionChannel = ActiveDetection.CollisionChannel;
 		TraceData.CollisionParams.AddIgnoredActor(GetOwner());
 		TraceData.CollisionParams.AddIgnoredActors(IgnoredActors);
 		TraceData.CollisionParams.MobilityType = EQueryMobilityType::Any;
@@ -410,11 +579,11 @@ void UFVInteractorComponent::PerformTrace()
 		
 		GetOwner()->GetActorEyesViewPoint(TraceData.StartLocation, TraceData.TraceRotation);
 
-		TraceData.StartLocation += TraceData.TraceRotation.RotateVector(TraceOffset);
-		TraceData.EndLocation = TraceData.TraceRotation.Vector() * TraceRange + TraceData.StartLocation;
+		TraceData.StartLocation += TraceData.TraceRotation.RotateVector(ActiveDetection.TraceOffset);
+		TraceData.EndLocation = TraceData.TraceRotation.Vector() * ActiveDetection.TraceRange + TraceData.StartLocation;
 	}
-	
-	const FCollisionShape CollisionShape = FCollisionShape::MakeSphere(TraceRadius);
+
+	const FCollisionShape CollisionShape = FCollisionShape::MakeSphere(ActiveDetection.TraceRadius);
 
 	GetWorld()->SweepMultiByChannel
 	(
@@ -444,11 +613,11 @@ void UFVInteractorComponent::PerformTrace()
 			continue;
 		if (!InteractableCandidate->CanInteract())
 			continue;
-		if (InteractableCandidate->GetCollisionChannel() != CollisionChannel)
+		if (InteractableCandidate->GetCollisionChannel() != ActiveDetection.CollisionChannel)
 			continue;
 		if (!InteractableCandidate->GetDetectablePrimitives().Contains(HitComponent))
 			continue;
-		if (!InteractableCandidate->GetCompatibleInteractorTags().HasTag(InteractorTag))
+		if (!InteractableCandidate->GetCompatibleInteractorTags().HasTag(GetInteractorTag()))
 			continue;
 			
 		const float CandidateDetectionWeight = InteractableCandidate->GetDetectionWeight();
@@ -479,7 +648,7 @@ void UFVInteractorComponent::PerformTrace()
 #if !UE_BUILD_SHIPPING
 	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
 	{
-		Debug->VisualizeTrace(GetWorld(), TraceData, TraceRadius, TickInterval);
+		Debug->VisualizeTrace(GetWorld(), TraceData, ActiveDetection.TraceRadius, ActiveDetection.TickInterval);
 		Debug->DebugTrace(TraceData.HitResults);
 	}
 #endif
@@ -493,7 +662,7 @@ bool UFVInteractorComponent::PerformOcclusionTest(const FVector& Start, const FV
 		QueryParams.AddIgnoredActor(GetOwner());
 	}
 
-	GetWorld()->LineTraceSingleByChannel(OcclusionHit, Start, End, OcclusionChannel, QueryParams);
+	GetWorld()->LineTraceSingleByChannel(OcclusionHit, Start, End, ActiveDetection.OcclusionChannel, QueryParams);
 	
 #if !UE_BUILD_SHIPPING
 	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
@@ -559,5 +728,5 @@ void UFVInteractorComponent::RefreshOffers(bool bForceBroadcast)
 bool UFVInteractorComponent::InteractableIsInReach(const UFVInteractableComponent* Target) const
 {
 	const AActor* TargetActor = Target->GetOwner();
-	return IsValid(TargetActor) && FVector::DistSquared(GetOwner()->GetActorLocation(), TargetActor->GetActorLocation()) <= FMath::Square(TraceRange * 1.5f);
+	return TargetActor && FVector::DistSquared(GetOwner()->GetActorLocation(), TargetActor->GetActorLocation()) <= FMath::Square(ActiveDetection.TraceRange * 1.5f);
 }

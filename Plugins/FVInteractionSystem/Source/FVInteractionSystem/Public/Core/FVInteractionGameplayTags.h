@@ -56,6 +56,9 @@ namespace FVInteractionGameplayTags
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Suppression_Dependency);
 
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Tag_Player);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Mode);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Mode_Default);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Mode_Aim);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Tag_AI);
 
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable);

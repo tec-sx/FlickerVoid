@@ -21,7 +21,6 @@ class APlayerCharacter : AFVPlayerCharacter
     bool bJustLanded = false;
     bool bIsRagdolling = false;
 
-    default InteractorComponent.InteractorTag = GameplayTags::Interactor_Tag_Player;
     default Mesh.SetRelativeLocation(FVector(0, 0, -CapsuleComponent.CapsuleHalfHeight));
     default Mesh.SetRelativeRotation(FRotator(0, -90, 0));
 
