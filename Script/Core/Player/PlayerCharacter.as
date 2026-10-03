@@ -65,23 +65,11 @@ class APlayerCharacter : AFVPlayerCharacter
     UFUNCTION(BlueprintOverride)
     bool RequestTraverse()
     {
-        FFVTraversalCharacterData CharacterData;
-        CharacterData.CapsuleRadius = CapsuleComponent.CapsuleRadius;
-        CharacterData.CapsuleHalfHeight = CapsuleComponent.CapsuleHalfHeight;
-        CharacterData.ForwardDirection = GetActorForwardVector();
-        CharacterData.Location = GetActorLocation();
-        CharacterData.Rotation = GetActorRotation();
-        CharacterData.Velocity = Velocity;
-        CharacterData.Speed = Velocity.Size2D();
-        CharacterData.MovementMode = CharacterMovement.MovementMode;
-        CharacterData.Mesh = Mesh;
-        CharacterData.MotionWarping = MotionWarpingComponent;
-
         EDrawDebugTrace DrawDebugType = CharacterMovement.IsMovingOnGround()
             ? EDrawDebugTrace::ForOneFrame
             : EDrawDebugTrace::ForDuration;
 
-        bool bIsTraversing = Traversal.TryTraversalAction(CharacterData, DrawDebugType);
+        bool bIsTraversing = Traversal.TryTraversalAction(DrawDebugType);
 
         SetTraversing(bIsTraversing);
 

@@ -12,21 +12,21 @@
 #include "Traversal/FVTraversable.h"
 #include "Traversal/FVTraversalConfig.h"
 
-void UFVTraversalComponentNative::BeginPlay()
+void UFVTraversalComponent::BeginPlay()
 {
 Super::BeginPlay();
 if (!Config)
 {
-Config = NewObject<UFVTraversalConfigNative>(this);
+Config = NewObject<UFVTraversalConfig>(this);
 }
 }
 
-ACharacter* UFVTraversalComponentNative::GetCharacter() const
+ACharacter* UFVTraversalComponent::GetCharacter() const
 {
 return Cast<ACharacter>(GetOwner());
 }
 
-void UFVTraversalComponentNative::ReadDebugSettings()
+void UFVTraversalComponent::ReadDebugSettings()
 {
 const IConsoleVariable* Level = IConsoleManager::Get().FindConsoleVariable(TEXT("FVCvar.Traversal.DrawDebugLevel"));
 const IConsoleVariable* Duration = IConsoleManager::Get().FindConsoleVariable(TEXT("FVCvar.Traversal.DrawDebugDuration"));
@@ -34,7 +34,7 @@ DebugLevel = Level ? Level->GetInt() : 0;
 DebugDuration = Duration ? Duration->GetFloat() : 0.f;
 }
 
-bool UFVTraversalComponentNative::TryTraversalAction(EDrawDebugTrace::Type DrawDebugType)
+bool UFVTraversalComponent::TryTraversalAction(EDrawDebugTrace::Type DrawDebugType)
 {
 ACharacter* Character = GetCharacter();
 if (!Character || !Config)
@@ -44,7 +44,7 @@ return false;
 DebugType = DrawDebugType;
 ReadDebugSettings();
 
-FFVTraversalCheckResultNative Result;
+FFVTraversalCheckResult Result;
 if (!DoForwardTrace(*Character, MakeTraceParams(*Character), Result))
 {
 return false;
@@ -75,18 +75,18 @@ OnTraversalFound.Broadcast();
 return true;
 }
 
-FFVTraversalChooserOutputNative UFVTraversalComponentNative::EvaluateChooserTable_Implementation(const FFVTraversalChooserInputNative& Input, UAnimInstance* AnimInstance)
+FFVTraversalChooserOutput UFVTraversalComponent::EvaluateChooserTable_Implementation(const FFVTraversalChooserInput& Input, UAnimInstance* AnimInstance)
 {
-FFVTraversalChooserOutputNative Output;
+FFVTraversalChooserOutput Output;
 Output.ActionType = Input.ActionType;
 
-const UFVTraversalConfigNative* TraversalConfig = GetConfig();
+const UFVTraversalConfig* TraversalConfig = GetConfig();
 if (!TraversalConfig || !TraversalConfig->TraversalChooserTable)
 {
 return Output;
 }
 
-FFVTraversalChooserInputNative MutableInput = Input;
+FFVTraversalChooserInput MutableInput = Input;
 FChooserEvaluationContext Context(AnimInstance);
 Context.AddStructParam(MutableInput);
 Context.AddStructParam(Output);
@@ -106,12 +106,12 @@ return FObjectChooserBase::EIteratorStatus::Stop;
 return Output;
 }
 
-FTransform UFVTraversalComponentNative::GetInteractionTransform() const
+FTransform UFVTraversalComponent::GetInteractionTransform() const
 {
 return FTransform(FRotationMatrix::MakeFromZ(LastResult.Ledges.FrontNormal).Rotator(), LastResult.Ledges.FrontLocation);
 }
 
-UFVTraversalComponentNative::FTraceParams UFVTraversalComponentNative::MakeTraceParams(const ACharacter& Character) const
+UFVTraversalComponent::FTraceParams UFVTraversalComponent::MakeTraceParams(const ACharacter& Character) const
 {
 FTraceParams Params;
 const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
@@ -134,7 +134,7 @@ Params.HalfHeight = Config->GroundTraceHalfHeight;
 return Params;
 }
 
-bool UFVTraversalComponentNative::DoForwardTrace(const ACharacter& Character, const FTraceParams& Params, FFVTraversalCheckResultNative& Result) const
+bool UFVTraversalComponent::DoForwardTrace(const ACharacter& Character, const FTraceParams& Params, FFVTraversalCheckResult& Result) const
 {
 const FVector Location = Character.GetActorLocation();
 const FVector Start = Location + Params.OriginOffset;
@@ -146,7 +146,7 @@ GetOwner(), Start, End, Config->TraceRadius, Params.HalfHeight, Config->Obstacle
 DebugLevel >= 2 ? DebugType.GetValue() : EDrawDebugTrace::None, Hit, true,
 FLinearColor::Black, FLinearColor::Black, DebugDuration);
 
-const AFVTraversableNative* Traversable = Cast<AFVTraversableNative>(Hit.GetActor());
+const AFVTraversable* Traversable = Cast<AFVTraversable>(Hit.GetActor());
 if (!Hit.bBlockingHit || !Traversable || !Traversable->CanTraverse(GetOwner()))
 {
 return false;
@@ -169,7 +169,7 @@ Result.ObstacleHeight = FMath::Abs(Location.Z - HalfHeight - Ledges.FrontLocatio
 return true;
 }
 
-bool UFVTraversalComponentNative::DoClearanceTraces(const ACharacter& Character, const FFVTraversalCheckResultNative& Result, FHitResult& OutBackHit) const
+bool UFVTraversalComponent::DoClearanceTraces(const ACharacter& Character, const FFVTraversalCheckResult& Result, FHitResult& OutBackHit) const
 {
 const UCapsuleComponent* Capsule = Character.GetCapsuleComponent();
 const float Offset = Capsule->GetScaledCapsuleRadius() + Config->CapsuleOffsetDistance;
@@ -188,7 +188,7 @@ CapsuleTrace(Character, AboveFront, AboveBack, OutBackHit);
 return true;
 }
 
-void UFVTraversalComponentNative::DoFloorTrace(const ACharacter& Character, FFVTraversalCheckResultNative& Result) const
+void UFVTraversalComponent::DoFloorTrace(const ACharacter& Character, FFVTraversalCheckResult& Result) const
 {
 const UCapsuleComponent* Capsule = Character.GetCapsuleComponent();
 const float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
@@ -208,7 +208,7 @@ Result.BackFloorLocation = Hit.ImpactPoint;
 Result.BackLedgeHeight = FMath::Abs(Hit.ImpactPoint.Z - Result.Ledges.BackLocation.Z);
 }
 
-void UFVTraversalComponentNative::CapsuleTrace(const ACharacter& Character, const FVector& Start, const FVector& End, FHitResult& OutHit) const
+void UFVTraversalComponent::CapsuleTrace(const ACharacter& Character, const FVector& Start, const FVector& End, FHitResult& OutHit) const
 {
 const UCapsuleComponent* Capsule = Character.GetCapsuleComponent();
 UKismetSystemLibrary::CapsuleTraceSingle(
@@ -218,9 +218,9 @@ DebugLevel >= 3 ? DebugType.GetValue() : EDrawDebugTrace::None, OutHit, true,
 FLinearColor::Red, FLinearColor::Green, DebugDuration);
 }
 
-FFVTraversalChooserInputNative UFVTraversalComponentNative::MakeChooserInput(const ACharacter& Character) const
+FFVTraversalChooserInput UFVTraversalComponent::MakeChooserInput(const ACharacter& Character) const
 {
-FFVTraversalChooserInputNative Input;
+FFVTraversalChooserInput Input;
 Input.ActionType = LastResult.ActionType;
 Input.bHasFrontLedge = LastResult.Ledges.bHasFrontLedge;
 Input.bHasBackLedge = LastResult.Ledges.bHasBackLedge;
@@ -238,21 +238,21 @@ Input.Gait = FVCharacter->GetRuntimeState().Gait;
 return Input;
 }
 
-EFVTraversalActionTypeNative UFVTraversalComponentNative::ClassifyAction(const FFVTraversalCheckResultNative& Result)
+EFVTraversalActionType UFVTraversalComponent::ClassifyAction(const FFVTraversalCheckResult& Result)
 {
 if (!Result.Ledges.bHasBackLedge)
 {
-return EFVTraversalActionTypeNative::Mantle;
+return EFVTraversalActionType::Mantle;
 }
-return Result.bHasBackFloor ? EFVTraversalActionTypeNative::Hurdle : EFVTraversalActionTypeNative::Vault;
+return Result.bHasBackFloor ? EFVTraversalActionType::Hurdle : EFVTraversalActionType::Vault;
 }
 
-EFVMovementMode UFVTraversalComponentNative::ToTraversalMode(EMovementMode Mode)
+EFVMovementMode UFVTraversalComponent::ToTraversalMode(EMovementMode Mode)
 {
 return Mode == MOVE_Falling || Mode == MOVE_Flying ? EFVMovementMode::InAir : EFVMovementMode::OnGround;
 }
 
-void UFVTraversalComponentNative::DrawLedges(const FFVLedgeResult& Ledges) const
+void UFVTraversalComponent::DrawLedges(const FFVLedgeResult& Ledges) const
 {
 if (Ledges.bHasFrontLedge)
 {

@@ -8,48 +8,48 @@
 
 class USplineComponent;
 class UStaticMeshComponent;
-class UFVTraversableConfigNative;
+class UFVTraversableConfig;
 
 UCLASS(Blueprintable)
-class FLICKERVOIDCHARACTER_API AFVTraversableNative : public AActor
+class FLICKERVOIDCHARACTER_API AFVTraversable : public AActor
 {
-GENERATED_BODY()
+	GENERATED_BODY()
 
 public:
-AFVTraversableNative();
+	AFVTraversable();
 
-UFUNCTION(BlueprintPure, Category = "Traversal")
-FFVLedgeResult GetLedgeTransforms(const FVector& HitLocation, const FVector& ActorLocation) const;
+	UFUNCTION(BlueprintPure, Category = "Traversal")
+	FFVLedgeResult GetLedgeTransforms(const FVector& HitLocation, const FVector& ActorLocation) const;
 
-UFUNCTION(BlueprintPure, Category = "Traversal")
-bool CanTraverse(AActor* Traverser) const;
+	UFUNCTION(BlueprintPure, Category = "Traversal")
+	bool CanTraverse(AActor* Traverser) const;
 
 protected:
-UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal")
-TObjectPtr<UStaticMeshComponent> Mesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal")
+	TObjectPtr<UStaticMeshComponent> Mesh;
 
-UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal")
-TObjectPtr<USplineComponent> LedgeFront;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal")
+	TObjectPtr<USplineComponent> LedgeFront;
 
-UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal")
-TObjectPtr<USplineComponent> LedgeLeft;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal")
+	TObjectPtr<USplineComponent> LedgeLeft;
 
-UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal")
-TObjectPtr<USplineComponent> LedgeBack;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal")
+	TObjectPtr<USplineComponent> LedgeBack;
 
-UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal")
-TObjectPtr<USplineComponent> LedgeRight;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Traversal")
+	TObjectPtr<USplineComponent> LedgeRight;
 
-UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Traversal")
-TObjectPtr<UFVTraversableConfigNative> Config;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Traversal")
+	TObjectPtr<UFVTraversableConfig> Config;
 
-UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Traversal")
-FFVConditionSet Requirements;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Traversal")
+	FFVConditionSet Requirements;
 
 private:
-USplineComponent* CreateLedge(FName Name);
-USplineComponent* FindClosestLedge(const FVector& Location) const;
-USplineComponent* GetOpposite(const USplineComponent* Ledge) const;
-float GetMinLedgeWidth() const;
-float GetLedgeNormalOffset() const;
+	USplineComponent* CreateLedge(FName Name);
+	USplineComponent* FindClosestLedge(const FVector& Location) const;
+	USplineComponent* GetOpposite(const USplineComponent* Ledge) const;
+	float GetMinLedgeWidth() const;
+	float GetLedgeNormalOffset() const;
 };

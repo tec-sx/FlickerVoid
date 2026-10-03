@@ -14,10 +14,10 @@ class UInteractionOfferWidget : UUserWidget
     {
         SetVisibility(ESlateVisibility::HitTestInvisible);
 
-        if (ActionNameText != nullptr)
-        {
-            Offer.Display.Name
-        }
+        // if (ActionNameText != nullptr)
+        // {
+        //     Offer.Display.Name
+        // }
 
         SetRenderOpacity(Offer.bAvailable ? 1.f : 0.4f);
         SetToolTipText(Offer.LockedReason);

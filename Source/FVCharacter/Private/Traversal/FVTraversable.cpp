@@ -4,7 +4,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Traversal/FVTraversalConfig.h"
 
-AFVTraversableNative::AFVTraversableNative()
+AFVTraversable::AFVTraversable()
 {
 PrimaryActorTick.bCanEverTick = false;
 RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
@@ -16,33 +16,33 @@ LedgeBack = CreateLedge(TEXT("LedgeBack"));
 LedgeRight = CreateLedge(TEXT("LedgeRight"));
 }
 
-USplineComponent* AFVTraversableNative::CreateLedge(FName Name)
+USplineComponent* AFVTraversable::CreateLedge(FName Name)
 {
 USplineComponent* Spline = CreateDefaultSubobject<USplineComponent>(Name);
 Spline->SetupAttachment(RootComponent);
 return Spline;
 }
 
-float AFVTraversableNative::GetMinLedgeWidth() const
+float AFVTraversable::GetMinLedgeWidth() const
 {
 return Config ? Config->MinLedgeWidth : 60.f;
 }
 
-float AFVTraversableNative::GetLedgeNormalOffset() const
+float AFVTraversable::GetLedgeNormalOffset() const
 {
 return Config ? Config->LedgeNormalOffset : 10.f;
 }
 
-bool AFVTraversableNative::CanTraverse(AActor* Traverser) const
+bool AFVTraversable::CanTraverse(AActor* Traverser) const
 {
 FFVConditionContext Context;
-Context.WorldContext = const_cast<AFVTraversableNative*>(this);
+Context.WorldContext = const_cast<AFVTraversable*>(this);
 Context.Instigator = Traverser;
-Context.Target = const_cast<AFVTraversableNative*>(this);
+Context.Target = const_cast<AFVTraversable*>(this);
 return Requirements.Evaluate(Context);
 }
 
-USplineComponent* AFVTraversableNative::GetOpposite(const USplineComponent* Ledge) const
+USplineComponent* AFVTraversable::GetOpposite(const USplineComponent* Ledge) const
 {
 if (Ledge == LedgeFront) { return LedgeBack; }
 if (Ledge == LedgeBack) { return LedgeFront; }
@@ -51,7 +51,7 @@ if (Ledge == LedgeRight) { return LedgeLeft; }
 return nullptr;
 }
 
-USplineComponent* AFVTraversableNative::FindClosestLedge(const FVector& Location) const
+USplineComponent* AFVTraversable::FindClosestLedge(const FVector& Location) const
 {
 USplineComponent* Best = nullptr;
 float BestDistance = TNumericLimits<float>::Max();
@@ -73,7 +73,7 @@ Best = Ledge;
 return Best;
 }
 
-FFVLedgeResult AFVTraversableNative::GetLedgeTransforms(const FVector& HitLocation, const FVector& ActorLocation) const
+FFVLedgeResult AFVTraversable::GetLedgeTransforms(const FVector& HitLocation, const FVector& ActorLocation) const
 {
 FFVLedgeResult Result;
 const float MinWidth = GetMinLedgeWidth();
