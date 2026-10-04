@@ -24,6 +24,12 @@ namespace FVCharacterTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Character_Mood_Exhausted, "Character.Mood.Exhausted", "Exhausted mood.");
 
 	// ============================================================================
+	// CHARACTER STATUS TAGS
+	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_Movement_Blocked, "Status.Movement.Blocked",
+								   "Character ignores movement input while this tag is present.");
+
+	// ============================================================================
 	// FACT TAGS (PLAYER)
 	// ============================================================================
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Player, "Fact.Player", "Root for facts about the player character.");

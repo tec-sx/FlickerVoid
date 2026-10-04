@@ -56,13 +56,14 @@ public:
 	UFUNCTION(BlueprintPure)
 	FFVCharacterRuntimeState GetRuntimeState() const;
 	
+	/** False while movement input is ignored, movement is disabled, or a MovementBlockingTags tag is owned. */
 	UFUNCTION(BlueprintPure)
-	bool CanMove() const { return true; /* TODO: Check for movement restrictions, etc. */ }
+	bool CanMove() const;
 	
 	UFUNCTION(BlueprintPure)
 	bool CanSprint() const;
 	
-	void RequestMove(const FVector& NewDirection) { MovementDirection = NewDirection; }
+	void RequestMove(const FVector& NewDirection) { MovementDirection = CanMove() ? NewDirection : FVector::ZeroVector; }
 	void RequestWalk();
 	void RequestCrouch();
 	void RequestSprint(const bool bValue);
@@ -92,6 +93,10 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
 	FGameplayTagContainer OwnedTags;
+
+	/** Owning any of these tags (on the ability system or OwnedTags) blocks movement. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Movement")
+	FGameplayTagContainer MovementBlockingTags;
 private:
 	
 	// Intent Data
