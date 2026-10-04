@@ -2,6 +2,10 @@
 
 #include "Blueprint/UserWidget.h"
 #include "Components/FVInteractorComponent.h"
+#include "Components/FVInteractableComponent.h"
+#include "Engine/DataTable.h"
+#include "Engine/Texture2D.h"
+#include "UI/FVInteractionWidget.h"
 #include "Data/FVInteractionUISettings.h"
 #include "Engine/LocalPlayer.h"
 #include "FVInteractionSystem.h"
@@ -38,8 +42,13 @@ void UFVInteractionUIComponent::BeginPlay()
 	}
 
 	Interactor->InteractableFound.AddDynamic(this, &UFVInteractionUIComponent::OnFocusChanged);
+	Interactor->InteractableLost.AddDynamic(this, &UFVInteractionUIComponent::OnFocusLost);
 	Interactor->OffersChanged.AddDynamic(this, &UFVInteractionUIComponent::OnOffersChanged);
 	Interactor->InteractionCommitProgressed.AddDynamic(this, &UFVInteractionUIComponent::OnInteractionProgress);
+	Interactor->InteractionCommitEnded.AddDynamic(this, &UFVInteractionUIComponent::OnInteractionEnded);
+
+	CacheCrosshairs();
+	CurrentCrosshair = DefaultCrosshair;
 
 	if (APawn* Pawn = Cast<APawn>(GetOwner()))
 	{
@@ -54,8 +63,10 @@ void UFVInteractionUIComponent::EndPlay(const EEndPlayReason::Type EndPlayReason
 	if (Interactor)
 	{
 		Interactor->InteractableFound.RemoveDynamic(this, &UFVInteractionUIComponent::OnFocusChanged);
+		Interactor->InteractableLost.RemoveDynamic(this, &UFVInteractionUIComponent::OnFocusLost);
 		Interactor->OffersChanged.RemoveDynamic(this, &UFVInteractionUIComponent::OnOffersChanged);
 		Interactor->InteractionCommitProgressed.RemoveDynamic(this, &UFVInteractionUIComponent::OnInteractionProgress);
+		Interactor->InteractionCommitEnded.RemoveDynamic(this, &UFVInteractionUIComponent::OnInteractionEnded);
 		Interactor = nullptr;
 	}
 
@@ -91,6 +102,13 @@ void UFVInteractionUIComponent::ShowWidget()
 	{
 		Widget = UIManager->PushUserWidget(Settings->LayerTag, Settings->WidgetClass.LoadSynchronous());
 	}
+
+	if (UFVInteractionWidget* InteractionWidget = GetInteractionWidget())
+	{
+		InteractionWidget->OnInteractionInitialized(Interactor);
+		InteractionWidget->OnCrosshairChanged(CurrentCrosshair, CurrentInteractableType);
+		InteractionWidget->OnOffersChanged(Offers);
+	}
 }
 
 void UFVInteractionUIComponent::HideWidget()
@@ -116,24 +134,119 @@ void UFVInteractionUIComponent::OnControllerChanged(APawn* Pawn, AController* Ol
 	ShowWidget();
 }
 
+UFVInteractionWidget* UFVInteractionUIComponent::GetInteractionWidget() const
+{
+	return Cast<UFVInteractionWidget>(Widget);
+}
+
+void UFVInteractionUIComponent::CacheCrosshairs()
+{
+	CrosshairOverrides.Reset();
+	const UFVInteractionUISettings* Settings = GetUISettings();
+	if (!Settings)
+	{
+		return;
+	}
+
+	DefaultCrosshair = Settings->DefaultCrosshair.LoadSynchronous();
+
+	if (const UDataTable* Table = Settings->CrosshairOverrides.LoadSynchronous())
+	{
+		Table->ForeachRow<FFVInteractionCrosshairRow>(TEXT("FVInteractionCrosshair"), [this](const FName& RowName, const FFVInteractionCrosshairRow& Row)
+		{
+			if (UTexture2D* Icon = Row.Icon.LoadSynchronous())
+			{
+				CrosshairOverrides.Add(RowName, Icon);
+			}
+		});
+	}
+}
+
+UTexture2D* UFVInteractionUIComponent::ResolveCrosshair(const FGameplayTag& InteractableType) const
+{
+	for (FGameplayTag Tag = InteractableType; Tag.IsValid(); Tag = Tag.RequestDirectParent())
+	{
+		if (const TObjectPtr<UTexture2D>* Found = CrosshairOverrides.Find(Tag.GetTagName()))
+		{
+			return *Found;
+		}
+	}
+	return DefaultCrosshair;
+}
+
+void UFVInteractionUIComponent::UpdateCrosshair()
+{
+	const FGameplayTag NewType = FocusedTarget ? FocusedTarget->GetInteractableType() : FGameplayTag();
+	UTexture2D* NewCrosshair = ResolveCrosshair(NewType);
+	if (NewCrosshair == CurrentCrosshair && NewType == CurrentInteractableType)
+	{
+		return;
+	}
+
+	CurrentCrosshair = NewCrosshair;
+	CurrentInteractableType = NewType;
+
+	if (UFVInteractionWidget* InteractionWidget = GetInteractionWidget())
+	{
+		InteractionWidget->OnCrosshairChanged(CurrentCrosshair, CurrentInteractableType);
+	}
+}
+
+void UFVInteractionUIComponent::PushOffersToWidget()
+{
+	OffersChanged.Broadcast(Offers);
+	if (UFVInteractionWidget* InteractionWidget = GetInteractionWidget())
+	{
+		InteractionWidget->OnOffersChanged(Offers);
+	}
+}
+
 void UFVInteractionUIComponent::OnFocusChanged(UFVInteractableComponent* NewTarget)
 {
 	FocusedTarget = NewTarget;
+	UpdateCrosshair();
 
 	if (!FocusedTarget)
 	{
 		Offers.Reset();
-		OffersChanged.Broadcast(Offers);
+		PushOffersToWidget();
+	}
+}
+
+void UFVInteractionUIComponent::OnFocusLost(UFVInteractableComponent* OldTarget)
+{
+	if (OldTarget == FocusedTarget)
+	{
+		OnFocusChanged(nullptr);
+	}
+}
+
+void UFVInteractionUIComponent::OnInteractionEnded(const FFVInteractionCommit& Commit, bool bSuccess)
+{
+	if (UFVInteractionWidget* InteractionWidget = GetInteractionWidget())
+	{
+		InteractionWidget->OnOfferEnded(Commit.ActionTag, bSuccess);
 	}
 }
 
 void UFVInteractionUIComponent::OnOffersChanged(const TArray<FFVInteractionOfferData>& InOffers)
 {
-	Offers = InOffers;
-	OffersChanged.Broadcast(Offers);
+	if (FocusedTarget && !FocusedTarget->ShouldShowOffers())
+	{
+		Offers.Reset();
+	}
+	else
+	{
+		Offers = InOffers;
+	}
+	PushOffersToWidget();
 }
 
 void UFVInteractionUIComponent::OnInteractionProgress(const FFVInteractionCommit& Commit, float Progress)
 {
 	OfferProgress.Broadcast(Commit.ActionTag, Progress);
+	if (UFVInteractionWidget* InteractionWidget = GetInteractionWidget())
+	{
+		InteractionWidget->OnOfferProgress(Commit.ActionTag, Progress);
+	}
 }

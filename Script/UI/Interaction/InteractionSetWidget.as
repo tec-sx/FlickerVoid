@@ -1,5 +1,5 @@
 UCLASS(Abstract, Blueprintable)
-class UInteractionSetWidget : UUserWidget
+class UInteractionSetWidget : UFVInteractionWidget
 {
     UPROPERTY(BindWidget)
     UPanelWidget InteractionSetBox;
@@ -20,18 +20,15 @@ class UInteractionSetWidget : UUserWidget
     private UFVInteractorComponent Interactor;
     private TArray<UInteractionSlotWidget> OfferPool;
 
-    void Init(UFVInteractorComponent InInteractor)
+    UFUNCTION(BlueprintOverride)
+    void OnInteractionInitialized(UFVInteractorComponent InInteractor)
     {
         Interactor = InInteractor;
-        Interactor.OffersChanged.AddUFunction(this, n"OnOffersChanged");
-        Interactor.InteractionCommitProgressed.AddUFunction(this, n"OnProgress");
-        Interactor.InteractionCommitEnded.AddUFunction(this, n"OnEnded");
-
         OfferPool.Empty();
     }
-    
-    UFUNCTION()
-    private void OnOffersChanged(const TArray<FFVInteractionOfferData>&in Offers)
+
+    UFUNCTION(BlueprintOverride)
+    void OnOffersChanged(const TArray<FFVInteractionOfferData>&in Offers)
     {
         for (UInteractionSlotWidget OfferWidget : OfferPool)
         {
@@ -66,13 +63,18 @@ class UInteractionSetWidget : UUserWidget
         }
     }
 
-    UFUNCTION()
-    private void OnProgress(const FFVInteractionCommit&in Commit, float32 Progress)
+    UFUNCTION(BlueprintOverride)
+    void OnCrosshairChanged(UTexture2D Icon, FGameplayTag InteractableType)
     {
     }
 
-    UFUNCTION()
-    private void OnEnded(const FFVInteractionCommit&in Commit, bool bSuccess)
+    UFUNCTION(BlueprintOverride)
+    void OnOfferProgress(FGameplayTag ActionTag, float32 Progress)
+    {
+    }
+
+    UFUNCTION(BlueprintOverride)
+    void OnOfferEnded(FGameplayTag ActionTag, bool bSuccess)
     {
     }
 

@@ -44,6 +44,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interactable")
 	UE_API FGameplayTag GetInteractableType() const;
 
+	/** False for simple interactables that only change the crosshair. */
+	UFUNCTION(BlueprintPure, Category = "Interactable")
+	UE_API bool ShouldShowOffers() const;
+
 	UFUNCTION(BlueprintPure, Category = "Interactable")
 	UE_API float GetCooldownPeriod() const;
 

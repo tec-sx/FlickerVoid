@@ -34,6 +34,11 @@ EDataValidationResult UFVInteractableComponent::IsDataValid(FDataValidationConte
 }
 #endif
 
+bool UFVInteractableComponent::ShouldShowOffers() const
+{
+	return !Definition || Definition->bShowOffers;
+}
+
 FGameplayTag UFVInteractableComponent::GetInteractableType() const
 {
 	return Definition ? Definition->InteractableType : FGameplayTag(FVInteractionGameplayTags::Interactable);
