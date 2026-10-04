@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include "FVGameModeBase.h"
 #include "FVStoryGameMode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class FLICKERVOID_API AFVStoryGameMode : public AGameModeBase
+class FLICKERVOID_API AFVStoryGameMode : public AFVGameModeBase
 {
 	GENERATED_BODY()
 	

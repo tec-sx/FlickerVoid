@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
+#include "FVCoreNames.h"
 #include "GameplayTagContainer.h"
 #include "FVFactSettings.generated.h"
 
@@ -42,7 +43,7 @@ class FVCORERUNTIME_API UFVFactSettings : public UDeveloperSettings
 	GENERATED_BODY()
 
 public:
-	virtual FName GetCategoryName() const override { return TEXT("FlickerVoid"); }
+	virtual FName GetCategoryName() const override { return FV::Names::SettingsCategory; }
 
 	const FFVFactDefinition* FindDefinition(const FGameplayTag& Tag) const;
 	FName GetValueName(const FGameplayTag& Tag, int32 Value) const;

@@ -2,6 +2,8 @@
 
 #include "CommonActivatableWidget.h"
 #include "Engine/LocalPlayer.h"
+#include "FVCoreUI.h"
+#include "HUD/FVHUD.h"
 #include "Layout/FVUserWidgetHost.h"
 #include "GameFramework/PlayerController.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
@@ -34,12 +36,33 @@ UFVUILayout* UFVUIManagerSubsystem::EnsureLayout()
 	UClass* LayoutClass = GetDefault<UFVUISettings>()->LayoutClass.LoadSynchronous();
 	if (!PC || !LayoutClass)
 	{
+		if (PC && !LayoutClass)
+		{
+			UE_LOG(LogFVCoreUI, Warning, TEXT("LayoutClass is not set in Project Settings > FlickerVoid > UI."));
+		}
 		return nullptr;
 	}
+
+#if !UE_BUILD_SHIPPING
+	if (GetDefault<UFVUISettings>()->bWarnIfHUDMissing && !Cast<AFVHUD>(PC->GetHUD()))
+	{
+		UE_LOG(LogFVCoreUI, Warning, TEXT("Layout created lazily; HUD is not an AFVHUD. Set the game mode HUD class to AFVHUD."));
+	}
+#endif
 
 	Layout = CreateWidget<UFVUILayout>(PC, LayoutClass);
 	Layout->AddToPlayerScreen();
 	return Layout;
+}
+
+void UFVUIManagerSubsystem::ReleaseLayout()
+{
+	if (Layout)
+	{
+		Layout->RemoveFromParent();
+		Layout = nullptr;
+		OnStackChanged.Broadcast();
+	}
 }
 
 UCommonActivatableWidget* UFVUIManagerSubsystem::PushScreen(FGameplayTag LayerTag, TSubclassOf<UCommonActivatableWidget> WidgetClass)

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include "FVGameModeBase.h"
 
 #include "FVExploreGameMode.generated.h"
 
@@ -16,7 +16,7 @@ class AController;
 class APlayerController;
 
 UCLASS(MinimalAPI, Config = Game)
-class AFVExploreGameMode : public AGameModeBase
+class AFVExploreGameMode : public AFVGameModeBase
 {
 	GENERATED_BODY()
 	

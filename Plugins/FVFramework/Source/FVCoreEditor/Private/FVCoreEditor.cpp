@@ -4,11 +4,13 @@
 #include "Customizations/FVConditionSetCustomization.h"
 #include "Data/FVDefinition.h"
 #include "Editor.h"
+#include "FVCoreNames.h"
 #include "EditorValidatorSubsystem.h"
 #include "Engine/DeveloperSettings.h"
 #include "ISettingsModule.h"
 #include "Layout/FVUILayout.h"
 #include "PropertyEditorModule.h"
+#include "Styling/AppStyle.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "Time/FVWorldClock.h"
 #include "ToolMenus.h"
@@ -18,7 +20,7 @@
 #define LOCTEXT_NAMESPACE "FVCoreEditor"
 
 static const FName ConditionSetStructName("FVConditionSet");
-static const FName FlickerVoidMenuName("LevelEditor.MainMenu.FlickerVoid");
+
 
 static void ValidateAllDefinitions()
 {
@@ -62,7 +64,20 @@ void FFVCoreEditorModule::RegisterMenus()
 
 	UToolMenu* MainMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu");
 	MainMenu->AddSubMenu("MainMenu", NAME_None, "FlickerVoid", LOCTEXT("FlickerVoidMenu", "FlickerVoid"), LOCTEXT("FlickerVoidMenuTip", "FlickerVoid framework and plugin settings"));
-	UToolMenus::Get()->RegisterMenu(FlickerVoidMenuName);
+	UToolMenus::Get()->RegisterMenu(FV::Names::EditorMenu);
+
+	UToolMenu* Toolbar = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar.User");
+	FToolMenuSection& ToolbarSection = Toolbar->FindOrAddSection("FlickerVoid");
+	ToolbarSection.AddEntry(FToolMenuEntry::InitComboButton(
+		"FlickerVoidToolbar",
+		FUIAction(),
+		FOnGetContent::CreateLambda([]
+		{
+			return UToolMenus::Get()->GenerateWidget(FV::Names::EditorMenu, FToolMenuContext());
+		}),
+		LOCTEXT("FlickerVoidToolbar", "FlickerVoid"),
+		LOCTEXT("FlickerVoidToolbarTip", "FlickerVoid framework and plugin settings"),
+		FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.GameSettings")));
 
 	const FText FrameworkLabel = LOCTEXT("FrameworkSection", "Framework");
 	AddMenuAction("Framework", FrameworkLabel, "UISettings", LOCTEXT("FrameworkUI", "UI Settings"), FText::GetEmpty(),
@@ -73,7 +88,7 @@ void FFVCoreEditorModule::RegisterMenus()
 
 void FFVCoreEditorModule::AddMenuAction(FName Section, const FText& SectionLabel, FName ActionName, const FText& Label, const FText& ToolTip, TFunction<void()> Action)
 {
-	UToolMenu* Menu = UToolMenus::Get()->ExtendMenu(FlickerVoidMenuName);
+	UToolMenu* Menu = UToolMenus::Get()->ExtendMenu(FV::Names::EditorMenu);
 	FToolMenuSection& MenuSection = Menu->FindOrAddSection(Section, SectionLabel);
 	MenuSection.AddMenuEntry(ActionName, Label, ToolTip, FSlateIcon(), FUIAction(FExecuteAction::CreateLambda(MoveTemp(Action))));
 }
@@ -108,7 +123,7 @@ void FFVCoreEditorModule::RemoveMenuSection(FName Section)
 {
 	if (UToolMenus::IsToolMenuUIEnabled() && UObjectInitialized())
 	{
-		if (UToolMenu* Menu = UToolMenus::Get()->ExtendMenu(FlickerVoidMenuName))
+		if (UToolMenu* Menu = UToolMenus::Get()->ExtendMenu(FV::Names::EditorMenu))
 		{
 			Menu->RemoveSection(Section);
 		}

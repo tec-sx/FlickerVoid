@@ -5,6 +5,7 @@
 #include "Conditions/FVEffect.h"
 #include "Data/FVDefinition.h"
 #include "Engine/DeveloperSettings.h"
+#include "FVCoreNames.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "FVQuest.generated.h"
 
@@ -77,13 +78,13 @@ virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context)
 #endif
 };
 
-UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "FlickerVoid Quests"))
+UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Quests"))
 class FVSTORYSYSTEM_API UFVQuestSettings : public UDeveloperSettings
 {
 GENERATED_BODY()
 
 public:
-virtual FName GetCategoryName() const override { return TEXT("FlickerVoid"); }
+virtual FName GetCategoryName() const override { return FV::Names::SettingsCategory; }
 
 /** Quests tracked by the quest subsystem (auto-start, objective evaluation). */
 UPROPERTY(Config, EditAnywhere, Category = "Quests")

@@ -1,8 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/DeveloperSettings.h"
 #include "FlowSave.h"
 #include "GameplayTagContainer.h"
+#include "FVCoreNames.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "FVSaveSystem.generated.h"
 
@@ -72,12 +74,14 @@ void ReadSave(UFVSaveGame* SaveGame, UObject* WorldContext);
 virtual void ReadSave_Implementation(UFVSaveGame* SaveGame, UObject* WorldContext) {}
 };
 
-UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "FV Save"))
+UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Save"))
 class FVSTORYSYSTEM_API UFVSaveSettings : public UDeveloperSettings
 {
 GENERATED_BODY()
 
 public:
+virtual FName GetCategoryName() const override { return FV::Names::SettingsCategory; }
+
 UPROPERTY(Config, EditAnywhere, Category = "Save")
 FString CheckpointSlot = TEXT("Checkpoint");
 

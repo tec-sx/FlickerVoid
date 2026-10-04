@@ -26,10 +26,6 @@
 
 AFVExploreGameMode::AFVExploreGameMode()
 {
-	GameStateClass = AFVGameState::StaticClass();
-	PlayerControllerClass = AFVPlayerController::StaticClass();
-	PlayerStateClass = AFVPlayerState::StaticClass();
-	DefaultPawnClass = AFVCharacter::StaticClass();
 }
 
 const UFVPawnData* AFVExploreGameMode::GetPawnDataForController(const AController* InController) const

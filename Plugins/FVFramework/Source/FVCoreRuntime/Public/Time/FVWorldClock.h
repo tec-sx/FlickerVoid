@@ -5,6 +5,7 @@
 #include "Conditions/FVEffect.h"
 #include "Engine/DeveloperSettings.h"
 #include "GameplayTagContainer.h"
+#include "FVCoreNames.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "FVWorldClock.generated.h"
 
@@ -23,13 +24,13 @@ struct FVCORERUNTIME_API FFVDayPhase
 	float StartHour = 0.f;
 };
 
-UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "FlickerVoid World Clock"))
+UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "World Clock"))
 class FVCORERUNTIME_API UFVWorldClockSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
 
 public:
-	virtual FName GetCategoryName() const override { return TEXT("FlickerVoid"); }
+	virtual FName GetCategoryName() const override { return FV::Names::SettingsCategory; }
 
 	/** Real seconds per in-game hour. 0 = time only advances via AdvanceTime. */
 	UPROPERTY(Config, EditAnywhere, Category = "Time", meta = (ClampMin = 0))
