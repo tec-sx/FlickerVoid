@@ -27,8 +27,13 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
 	void OnOffersChanged(const TArray<FFVInteractionOfferData>& Offers);
 
+	/** Focus icon for the current interactable type. Draw it at UFVInteractionUIComponent::GetFocusWidgetPosition. */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
 	void OnCrosshairChanged(UTexture2D* Icon, FGameplayTag InteractableType);
+
+	/** True while the active interactor mode wants a screen center reticle (precise aiming modes). */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+	void OnReticleVisibilityChanged(bool bVisible);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
 	void OnOfferProgress(FGameplayTag ActionTag, float Progress);

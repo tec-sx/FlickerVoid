@@ -1,6 +1,8 @@
 #include "Components/FVInteractionUIComponent.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/PrimitiveComponent.h"
 #include "Components/FVInteractorComponent.h"
 #include "Components/FVInteractableComponent.h"
 #include "Engine/DataTable.h"
@@ -46,9 +48,11 @@ void UFVInteractionUIComponent::BeginPlay()
 	Interactor->OffersChanged.AddDynamic(this, &UFVInteractionUIComponent::OnOffersChanged);
 	Interactor->InteractionCommitProgressed.AddDynamic(this, &UFVInteractionUIComponent::OnInteractionProgress);
 	Interactor->InteractionCommitEnded.AddDynamic(this, &UFVInteractionUIComponent::OnInteractionEnded);
+	Interactor->InteractorModeChanged.AddDynamic(this, &UFVInteractionUIComponent::OnModeChanged);
 
 	CacheCrosshairs();
 	CurrentCrosshair = DefaultCrosshair;
+	bReticleVisible = Interactor->GetActiveDetection().bShowReticle;
 
 	if (APawn* Pawn = Cast<APawn>(GetOwner()))
 	{
@@ -67,6 +71,7 @@ void UFVInteractionUIComponent::EndPlay(const EEndPlayReason::Type EndPlayReason
 		Interactor->OffersChanged.RemoveDynamic(this, &UFVInteractionUIComponent::OnOffersChanged);
 		Interactor->InteractionCommitProgressed.RemoveDynamic(this, &UFVInteractionUIComponent::OnInteractionProgress);
 		Interactor->InteractionCommitEnded.RemoveDynamic(this, &UFVInteractionUIComponent::OnInteractionEnded);
+		Interactor->InteractorModeChanged.RemoveDynamic(this, &UFVInteractionUIComponent::OnModeChanged);
 		Interactor = nullptr;
 	}
 
@@ -107,6 +112,7 @@ void UFVInteractionUIComponent::ShowWidget()
 	{
 		InteractionWidget->OnInteractionInitialized(Interactor);
 		InteractionWidget->OnCrosshairChanged(CurrentCrosshair, CurrentInteractableType);
+		InteractionWidget->OnReticleVisibilityChanged(bReticleVisible);
 		InteractionWidget->OnOffersChanged(Offers);
 	}
 }
@@ -190,6 +196,60 @@ void UFVInteractionUIComponent::UpdateCrosshair()
 	{
 		InteractionWidget->OnCrosshairChanged(CurrentCrosshair, CurrentInteractableType);
 	}
+}
+
+void UFVInteractionUIComponent::UpdateReticle()
+{
+	const bool bNewVisible = Interactor && Interactor->GetActiveDetection().bShowReticle;
+	if (bNewVisible == bReticleVisible)
+	{
+		return;
+	}
+
+	bReticleVisible = bNewVisible;
+
+	if (UFVInteractionWidget* InteractionWidget = GetInteractionWidget())
+	{
+		InteractionWidget->OnReticleVisibilityChanged(bReticleVisible);
+	}
+}
+
+void UFVInteractionUIComponent::OnModeChanged(FGameplayTag NewMode, FGameplayTag OldMode)
+{
+	UpdateReticle();
+}
+
+FVector UFVInteractionUIComponent::GetFocusWorldLocation() const
+{
+	FBox Bounds(ForceInit);
+	for (const UPrimitiveComponent* Primitive : FocusedTarget->GetDetectablePrimitives())
+	{
+		if (IsValid(Primitive))
+		{
+			Bounds += Primitive->Bounds.GetBox();
+		}
+	}
+
+	if (Bounds.IsValid)
+	{
+		return Bounds.GetCenter();
+	}
+
+	const AActor* TargetActor = FocusedTarget->GetOwner();
+	return TargetActor ? TargetActor->GetActorLocation() : FVector::ZeroVector;
+}
+
+bool UFVInteractionUIComponent::GetFocusWidgetPosition(FVector2D& OutPosition) const
+{
+	OutPosition = FVector2D::ZeroVector;
+	if (!FocusedTarget)
+	{
+		return false;
+	}
+
+	const APawn* Pawn = Cast<APawn>(GetOwner());
+	APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+	return PC && UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(PC, GetFocusWorldLocation(), OutPosition, false);
 }
 
 void UFVInteractionUIComponent::PushOffersToWidget()

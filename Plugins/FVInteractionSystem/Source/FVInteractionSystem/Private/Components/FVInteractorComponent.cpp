@@ -8,6 +8,8 @@
 #endif
 #include "Core/FVInteractionGameplayTags.h"
 #include "Engine/World.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 #include "FVInteractionSystem.h"
 #include "FVInteractionSystemSettings.h"
 #include "Subsystems/FVInteractionRegistrySubsystem.h"
@@ -310,6 +312,8 @@ void UFVInteractorComponent::ApplyTopMode()
 		ActiveDetection.CollisionChannel = BlendTarget.CollisionChannel;
 		ActiveDetection.OcclusionChannel = BlendTarget.OcclusionChannel;
 		ActiveDetection.TickInterval = BlendTarget.TickInterval;
+		ActiveDetection.TraceOrigin = BlendTarget.TraceOrigin;
+		ActiveDetection.bShowReticle = BlendTarget.bShowReticle;
 	}
 
 	if (State != EFVInteractorState::Interacting)
@@ -577,7 +581,19 @@ void UFVInteractorComponent::PerformTrace()
 		TraceData.CollisionParams.MobilityType = EQueryMobilityType::Any;
 		TraceData.CollisionParams.bReturnPhysicalMaterial = true;
 		
-		GetOwner()->GetActorEyesViewPoint(TraceData.StartLocation, TraceData.TraceRotation);
+		if (ActiveDetection.TraceOrigin == EFVInteractorTraceOrigin::Camera)
+		{
+			GetCameraViewPoint(TraceData.StartLocation, TraceData.TraceRotation);
+
+			// Start level with the pawn so nothing between the camera and the character is picked up.
+			const FVector Forward = TraceData.TraceRotation.Vector();
+			const float DistanceToPawn = FVector::DotProduct(GetOwner()->GetActorLocation() - TraceData.StartLocation, Forward);
+			TraceData.StartLocation += Forward * FMath::Max(DistanceToPawn, 0.f);
+		}
+		else
+		{
+			GetOwner()->GetActorEyesViewPoint(TraceData.StartLocation, TraceData.TraceRotation);
+		}
 
 		TraceData.StartLocation += TraceData.TraceRotation.RotateVector(ActiveDetection.TraceOffset);
 		TraceData.EndLocation = TraceData.TraceRotation.Vector() * ActiveDetection.TraceRange + TraceData.StartLocation;
@@ -596,8 +612,13 @@ void UFVInteractorComponent::PerformTrace()
 		TraceData.CollisionParams
 	);
 
+	FVector ViewLocation;
+	FRotator ViewRotation;
+	GetCameraViewPoint(ViewLocation, ViewRotation);
+	const FVector ViewDirection = ViewRotation.Vector();
+
 	UFVInteractableComponent* BestInteractableCandidate = nullptr;
-	float BestDetectionWeight = -1;
+	float BestScore = -1.f;
 	
 	for (FHitResult& HitResult : TraceData.HitResults)
 	{	
@@ -620,14 +641,18 @@ void UFVInteractorComponent::PerformTrace()
 		if (!InteractableCandidate->GetCompatibleInteractorTags().HasTag(GetInteractorTag()))
 			continue;
 			
-		const float CandidateDetectionWeight = InteractableCandidate->GetDetectionWeight();
+		float CandidateScore = ScoreCandidate(InteractableCandidate, HitResult, ViewLocation, ViewDirection);
 
-		if (CandidateDetectionWeight <= BestDetectionWeight)
+		// Small bias toward the current target so focus doesn't flicker between near-equal candidates.
+		if (InteractableCandidate == TargetInteractable.Get())
+			CandidateScore *= 1.1f;
+
+		if (CandidateScore <= BestScore)
 			continue;
 		if (PerformOcclusionTest(TraceData.StartLocation, HitResult.ImpactPoint, HitActor))
 			continue;
 		
-		BestDetectionWeight = CandidateDetectionWeight;
+		BestScore = CandidateScore;
 		BestInteractableCandidate = InteractableCandidate;
 	}
 
@@ -652,6 +677,40 @@ void UFVInteractorComponent::PerformTrace()
 		Debug->DebugTrace(TraceData.HitResults);
 	}
 #endif
+}
+
+void UFVInteractorComponent::GetCameraViewPoint(FVector& OutLocation, FRotator& OutRotation) const
+{
+	const APawn* Pawn = Cast<APawn>(GetOwner());
+	const APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+
+	if (PC && PC->PlayerCameraManager)
+	{
+		PC->GetPlayerViewPoint(OutLocation, OutRotation);
+		return;
+	}
+
+	GetOwner()->GetActorEyesViewPoint(OutLocation, OutRotation);
+}
+
+float UFVInteractorComponent::ScoreCandidate(const UFVInteractableComponent* Candidate, const FHitResult& Hit, const FVector& ViewLocation, const FVector& ViewDirection) const
+{
+	// Point on the hit primitive's bounds nearest the camera's line of sight, so large objects
+	// (doors, tables) count as aligned whenever the view passes through them.
+	const FBox Bounds = Hit.GetComponent()->Bounds.GetBox();
+	const FVector OnViewLine = FMath::ClosestPointOnInfiniteLine(ViewLocation, ViewLocation + ViewDirection, Bounds.GetCenter());
+	const FVector Focus = Bounds.GetClosestPointTo(OnViewLine);
+
+	const FVector ToFocus = (Focus - ViewLocation).GetSafeNormal();
+	const float AngleDeg = ToFocus.IsNearlyZero()
+		? 0.f
+		: FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(FVector::DotProduct(ViewDirection, ToFocus), -1.f, 1.f)));
+
+	const float Alignment = FMath::Clamp(1.f - AngleDeg / ActiveDetection.AlignmentAngle, 0.f, 1.f);
+	const float Closeness = FMath::Clamp(1.f - Hit.Distance / ActiveDetection.TraceRange, 0.f, 1.f);
+
+	// Detection weight scales the score, so a heavier interactable still wins unless it is clearly off to the side.
+	return Candidate->GetDetectionWeight() * (1.f + ActiveDetection.AlignmentWeight * Alignment + ActiveDetection.DistanceWeight * Closeness);
 }
 
 bool UFVInteractorComponent::PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target) const

@@ -4,6 +4,14 @@ class UInteractionSetWidget : UFVInteractionWidget
     UPROPERTY(BindWidget)
     UPanelWidget InteractionSetBox;
 
+    // Drawn on the focused interactable. Place it centered in the widget; Tick offsets it from there.
+    UPROPERTY(BindWidgetOptional)
+    UImage FocusIcon;
+
+    // Screen center reticle, only shown by interactor modes that ask for it (e.g. examine).
+    UPROPERTY(BindWidgetOptional)
+    UWidget CenterReticle;
+
     UPROPERTY(EditDefaultsOnly, Category = "Interaction|Configuration")
     TSubclassOf<UInteractionSlotWidget> SlotFirstWidgetClass;
 
@@ -18,13 +26,39 @@ class UInteractionSetWidget : UFVInteractionWidget
 
 
     private UFVInteractorComponent Interactor;
+    private UFVInteractionUIComponent InteractionUI;
     private TArray<UInteractionSlotWidget> OfferPool;
 
     UFUNCTION(BlueprintOverride)
     void OnInteractionInitialized(UFVInteractorComponent InInteractor)
     {
         Interactor = InInteractor;
+        InteractionUI = UFVInteractionUIComponent::Get(InInteractor.Owner);
         OfferPool.Empty();
+
+        if (FocusIcon != nullptr)
+        {
+            FocusIcon.SetVisibility(ESlateVisibility::Collapsed);
+        }
+    }
+
+    UFUNCTION(BlueprintOverride)
+    void Tick(FGeometry MyGeometry, float InDeltaTime)
+    {
+        if (FocusIcon == nullptr)
+        {
+            return;
+        }
+
+        FVector2D FocusPosition;
+        if (InteractionUI == nullptr || !InteractionUI.GetFocusWidgetPosition(FocusPosition))
+        {
+            FocusIcon.SetVisibility(ESlateVisibility::Collapsed);
+            return;
+        }
+
+        FocusIcon.SetRenderTranslation(FocusPosition - Slate::GetLocalSize(MyGeometry) * 0.5);
+        FocusIcon.SetVisibility(ESlateVisibility::HitTestInvisible);
     }
 
     UFUNCTION(BlueprintOverride)
@@ -66,6 +100,19 @@ class UInteractionSetWidget : UFVInteractionWidget
     UFUNCTION(BlueprintOverride)
     void OnCrosshairChanged(UTexture2D Icon, FGameplayTag InteractableType)
     {
+        if (FocusIcon != nullptr && Icon != nullptr)
+        {
+            FocusIcon.SetBrushFromTexture(Icon);
+        }
+    }
+
+    UFUNCTION(BlueprintOverride)
+    void OnReticleVisibilityChanged(bool bVisible)
+    {
+        if (CenterReticle != nullptr)
+        {
+            CenterReticle.SetVisibility(bVisible ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+        }
     }
 
     UFUNCTION(BlueprintOverride)
