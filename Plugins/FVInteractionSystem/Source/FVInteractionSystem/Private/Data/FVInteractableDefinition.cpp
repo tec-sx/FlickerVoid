@@ -13,6 +13,7 @@
 
 UFVInteractableDefinition::UFVInteractableDefinition()
 	: InteractableType(FVInteractionGameplayTags::Interactable)
+	, bShowOffers(true)
 {
 	const FFVInteractableSettings& Defaults = UFVInteractionSystemSettings::Get().InteractableBaseSettings;
 	CollisionChannel = Defaults.DefaultCollisionChannel;

@@ -10,25 +10,26 @@
 	"DocsURL": "",
 	"MarketplaceURL": "",
 	"SupportURL": "",
-	"CanContainContent": false,
+	"CanContainContent": true,
 	"IsBetaVersion": false,
 	"Installed": false,
 	"Modules": [
-	{
-		"Name": "FVInteractionSystem",
-		"Type": "Runtime",
-		"LoadingPhase": "Default"
-	},
-	{
-		"Name": "FVInteractionSystemEditor",
-		"Type": "Editor",
-		"LoadingPhase": "Default"
-	}],
+		{
+			"Name": "FVInteractionSystem",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "FVInteractionSystemEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	],
 	"Plugins": [
 		{
 			"Name": "FVFramework",
 			"Enabled": true
 		}
-	]
+	],
+	"IsExperimentalVersion": false
 }
-

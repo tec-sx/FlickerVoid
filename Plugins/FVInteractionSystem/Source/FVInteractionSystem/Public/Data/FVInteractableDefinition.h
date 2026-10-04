@@ -17,10 +17,13 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interactable", meta = (Categories = "Interactable"))
 	FGameplayTag InteractableType;
-
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interactable")
+	bool bShowOffers;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interactable", meta = (ForceInlineRow))
 	TArray<FFVInteractionOffer> Offers;
-
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interactable", meta = (ClampMin = "0", Units = "s"))
 	float CooldownPeriod = 0.f;
 

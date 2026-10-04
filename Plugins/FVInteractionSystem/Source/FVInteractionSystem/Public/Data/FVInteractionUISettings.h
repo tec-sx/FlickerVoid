@@ -18,6 +18,9 @@ class UFVInteractionUISettings : public UPrimaryDataAsset
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	TSoftClassPtr<UUserWidget> WidgetClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSoftObjectPtr<UTexture2D> DefaultCrosshairIcon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI", meta = (Categories = "UI.Layer"))
 	FGameplayTag LayerTag;

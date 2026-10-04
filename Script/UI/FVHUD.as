@@ -42,15 +42,15 @@ class AFVHUD : AHUD
     {
 		if (IsValid(NewPawn))
 		{
-			UFVInteractorComponent Interactor = NewPawn.GetComponentByClass(UFVInteractorComponent);
-			if (IsValid(Interactor))
-			{
-				InteractionPromptWidget.Init(Interactor);
-			}
-			else
-			{
-				Print("No Interactor component on player pawn.");
-			}
+			// UFVInteractorComponent Interactor = NewPawn.GetComponentByClass(UFVInteractorComponent);
+			// if (IsValid(Interactor))
+			// {
+			// 	InteractionPromptWidget.Init(Interactor);
+			// }
+			// else
+			// {
+			// 	Print("No Interactor component on player pawn.");
+			// }
 			// UFVInteractorResponseComponent_ShowPrompt ShowPromptResponse = NewPawn.GetComponentByClass(UFVInteractorResponseComponent_ShowPrompt);
 			// if (IsValid(ShowPromptResponse))
     		// {
