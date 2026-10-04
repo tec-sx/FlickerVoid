@@ -10,8 +10,8 @@ class UFVItemDataAsset;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnPickedUp, AActor*, Picker);
 
 /**
- * Makes the owning actor collectable. The item goes to whatever implements IFVItemReceiver
- * on the picker, so the inventory behind it can change without touching pickups.
+ * Makes the owning actor collectable. The item goes to the picker's UFVItemReceiverComponent,
+ * so the inventory behind it can change without touching pickups.
  * The pickup ability calls TryPickup on the interactable's owner when its montage finishes.
  */
 UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
