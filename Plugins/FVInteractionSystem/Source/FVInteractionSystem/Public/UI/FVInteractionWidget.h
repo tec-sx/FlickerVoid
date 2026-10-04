@@ -31,6 +31,9 @@ public:
 	void OnCrosshairChanged(UTexture2D* Icon, FGameplayTag InteractableType);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+	void OnReticleVisibilityChanged(bool bVisible);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
 	void OnOfferProgress(FGameplayTag ActionTag, float Progress);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")

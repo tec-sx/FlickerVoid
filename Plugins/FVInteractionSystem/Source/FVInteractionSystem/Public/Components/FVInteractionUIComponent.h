@@ -38,6 +38,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interaction|Prompt")
 	UE_API UTexture2D* GetCurrentCrosshair() const { return CurrentCrosshair; }
 
+	UFUNCTION(BlueprintPure, Category = "Interaction|Prompt")
+	UE_API bool GetFocusWidgetPosition(FVector2D& OutPosition) const;
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|Prompt")
+	UE_API bool IsReticleVisible() const { return bReticleVisible; }
+
 	UE_API const UFVInteractionUISettings* GetUISettings() const;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|Prompt")
@@ -59,6 +65,8 @@ private:
 	void CacheCrosshairs();
 	UTexture2D* ResolveCrosshair(const FGameplayTag& InteractableType) const;
 	void UpdateCrosshair();
+	void UpdateReticle();
+	FVector GetFocusWorldLocation() const;
 	void PushOffersToWidget();
 	UFVInteractionWidget* GetInteractionWidget() const;
 
@@ -73,6 +81,9 @@ private:
 
 	UFUNCTION()
 	void OnFocusChanged(UFVInteractableComponent* NewTarget);
+
+	UFUNCTION()
+	void OnModeChanged(FGameplayTag NewMode, FGameplayTag OldMode);
 
 	UFUNCTION()
 	void OnOffersChanged(const TArray<FFVInteractionOfferData>& InOffers);
@@ -102,6 +113,7 @@ private:
 	TObjectPtr<UTexture2D> CurrentCrosshair;
 
 	FGameplayTag CurrentInteractableType;
+	bool bReticleVisible = false;
 };
 
 #undef UE_API
