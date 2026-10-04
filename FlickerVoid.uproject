@@ -583,10 +583,6 @@
 		{
 			"Name": "FVStorySystem",
 			"Enabled": true
-		},
-		{
-			"Name": "FVInventoryEquipmentSystem",
-			"Enabled": true
 		}
 	]
 }

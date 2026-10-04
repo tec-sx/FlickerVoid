@@ -1,77 +1,35 @@
 #include "Pickup/FVPickupComponent.h"
 
-#include "Definitions/FVInventoryItemTemplate.h"
-#include "GameFramework/Controller.h"
-#include "GameFramework/Pawn.h"
-#include "GameFramework/PlayerState.h"
-#include "Interfaces/Inventory/FVAdvancedInventoryInterface.h"
+#include "GameFramework/Actor.h"
+#include "Interfaces/FVItemReceiver.h"
+#include "Items/FVItemDataAsset.h"
 #include "Logging/FVLogCategories.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPickupComponent)
 
-namespace
-{
-	UObject* FindInventoryOn(const AActor* Actor)
-	{
-		if (!Actor)
-		{
-			return nullptr;
-		}
-
-		if (Actor->Implements<UFVAdvancedInventoryInterface>())
-		{
-			return const_cast<AActor*>(Actor);
-		}
-
-		TArray<UActorComponent*> Inventories = Actor->GetComponentsByInterface(UFVAdvancedInventoryInterface::StaticClass());
-		return Inventories.IsEmpty() ? nullptr : Inventories[0];
-	}
-}
-
-UObject* UFVPickupComponent::FindInventory(AActor* Actor)
-{
-	if (UObject* Inventory = FindInventoryOn(Actor))
-	{
-		return Inventory;
-	}
-
-	if (const APawn* Pawn = Cast<APawn>(Actor))
-	{
-		if (UObject* Inventory = FindInventoryOn(Pawn->GetController()))
-		{
-			return Inventory;
-		}
-
-		return FindInventoryOn(Pawn->GetPlayerState());
-	}
-
-	return nullptr;
-}
-
 bool UFVPickupComponent::CanBePickedUpBy(AActor* Picker) const
 {
-	UObject* Inventory = FindInventory(Picker);
-	return ItemTemplate && Inventory
-		&& IFVAdvancedInventoryInterface::Execute_CanAddItemFromTemplate(Inventory, ItemTemplate, Quantity);
+	const UObject* Receiver = IFVItemReceiver::FindReceiver(Picker);
+	return Item && Receiver && IFVItemReceiver::Execute_CanReceiveItem(Receiver, Item, Quantity);
 }
 
 bool UFVPickupComponent::TryPickup(AActor* Picker)
 {
-	if (!ItemTemplate)
+	if (!Item)
 	{
-		UE_LOG(LogFVInventory, Warning, TEXT("%s: pickup has no item template."), *GetNameSafe(GetOwner()));
+		UE_LOG(LogFVItems, Warning, TEXT("%s: pickup has no item."), *GetNameSafe(GetOwner()));
 		return false;
 	}
 
-	UObject* Inventory = FindInventory(Picker);
-	if (!Inventory)
+	UObject* Receiver = IFVItemReceiver::FindReceiver(Picker);
+	if (!Receiver)
 	{
-		UE_LOG(LogFVInventory, Warning, TEXT("%s: no inventory found on %s."), *GetNameSafe(GetOwner()), *GetNameSafe(Picker));
+		UE_LOG(LogFVItems, Warning, TEXT("%s: %s has nothing that can receive items."), *GetNameSafe(GetOwner()), *GetNameSafe(Picker));
 		return false;
 	}
 
-	if (!IFVAdvancedInventoryInterface::Execute_CanAddItemFromTemplate(Inventory, ItemTemplate, Quantity)
-		|| !IFVAdvancedInventoryInterface::Execute_AddItemFromTemplate(Inventory, ItemTemplate, Quantity, Durability))
+	if (!IFVItemReceiver::Execute_CanReceiveItem(Receiver, Item, Quantity)
+		|| !IFVItemReceiver::Execute_ReceiveItem(Receiver, Item, Quantity))
 	{
 		return false;
 	}

@@ -19,11 +19,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interaction|Toggle")
 	bool IsOpen() const { return bIsOpen; }
 
+	/** Locked state comes from a UFVLockComponent on the owner; without one the toggle is never locked. */
 	UFUNCTION(BlueprintPure, Category = "Interaction|Toggle")
 	bool IsLocked() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Toggle")
-	void SetLocked(bool bLocked);
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
@@ -38,10 +36,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Interaction|Toggle")
 	bool bStartOpen = false;
 
-	/** Ignored when the owner has a UFVLockComponent; the lock component owns the state then. */
-	UPROPERTY(EditAnywhere, Category = "Interaction|Toggle")
-	bool bStartLocked = false;
-
 private:
 	virtual void ExecuteAction_Implementation(UFVInteractorComponent* Interactor) override;
 
@@ -52,5 +46,4 @@ private:
 	TObjectPtr<UFVLockComponent> LockComponent;
 
 	bool bIsOpen = false;
-	bool bIsLocked = false;
 };

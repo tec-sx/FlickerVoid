@@ -10,7 +10,6 @@ void UFVInteractableResponseComponent_Toggle::BeginPlay()
 	Super::BeginPlay();
 
 	bIsOpen = bStartOpen;
-	bIsLocked = bStartLocked;
 
 	LockComponent = GetOwner()->FindComponentByClass<UFVLockComponent>();
 	if (LockComponent)
@@ -21,20 +20,7 @@ void UFVInteractableResponseComponent_Toggle::BeginPlay()
 
 bool UFVInteractableResponseComponent_Toggle::IsLocked() const
 {
-	return LockComponent ? LockComponent->IsLocked() : bIsLocked;
-}
-
-void UFVInteractableResponseComponent_Toggle::SetLocked(const bool bLocked)
-{
-	if (LockComponent)
-	{
-		// The lock component broadcasts back into HandleLockStateChanged.
-		LockComponent->SetLocked(bLocked);
-		return;
-	}
-
-	bIsLocked = bLocked;
-	OnLockChanged(bIsLocked);
+	return LockComponent && LockComponent->IsLocked();
 }
 
 void UFVInteractableResponseComponent_Toggle::HandleLockStateChanged(const bool bLocked, AActor* Instigator)
