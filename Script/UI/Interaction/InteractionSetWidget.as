@@ -4,6 +4,10 @@ class UInteractionSetWidget : UFVInteractionWidget
     UPROPERTY(BindWidget)
     UPanelWidget InteractionSetBox;
 
+    // Drawn on the focused interactable. Place it centered in the widget; Tick offsets it from there.
+    UPROPERTY(BindWidgetOptional)
+    UImage FocusIndicator;
+
     UPROPERTY(EditDefaultsOnly, Category = "Interaction|Configuration")
     TSubclassOf<UInteractionSlotWidget> SlotFirstWidgetClass;
 
@@ -18,13 +22,40 @@ class UInteractionSetWidget : UFVInteractionWidget
 
 
     private UFVInteractorComponent Interactor;
+    private UFVInteractionUIComponent InteractionUI;
     private TArray<UInteractionSlotWidget> OfferPool;
+    private bool bHasFocusIndicatorBrush = false;
 
     UFUNCTION(BlueprintOverride)
     void OnInteractionInitialized(UFVInteractorComponent InInteractor)
     {
         Interactor = InInteractor;
+        InteractionUI = UFVInteractionUIComponent::Get(InInteractor.Owner);
         OfferPool.Empty();
+
+        if (FocusIndicator != nullptr)
+        {
+            FocusIndicator.SetVisibility(ESlateVisibility::Collapsed);
+        }
+    }
+
+    UFUNCTION(BlueprintOverride)
+    void Tick(FGeometry MyGeometry, float InDeltaTime)
+    {
+        if (FocusIndicator == nullptr)
+        {
+            return;
+        }
+
+        FVector2D FocusPosition;
+        if (!bHasFocusIndicatorBrush || InteractionUI == nullptr || !InteractionUI.GetFocusWidgetPosition(FocusPosition))
+        {
+            FocusIndicator.SetVisibility(ESlateVisibility::Collapsed);
+            return;
+        }
+
+        FocusIndicator.SetRenderTranslation(FocusPosition - Slate::GetLocalSize(MyGeometry) * 0.5);
+        FocusIndicator.SetVisibility(ESlateVisibility::HitTestInvisible);
     }
 
     UFUNCTION(BlueprintOverride)
@@ -64,8 +95,13 @@ class UInteractionSetWidget : UFVInteractionWidget
     }
 
     UFUNCTION(BlueprintOverride)
-    void OnCrosshairChanged(UTexture2D Icon, FGameplayTag InteractableType)
+    void OnFocusIndicatorChanged(const FSlateBrush&in Brush, FGameplayTag InteractableType)
     {
+        bHasFocusIndicatorBrush = Brush.DrawAs != ESlateBrushDrawType::NoDrawType;
+        if (FocusIndicator != nullptr)
+        {
+            FocusIndicator.SetBrush(Brush);
+        }
     }
 
     UFUNCTION(BlueprintOverride)

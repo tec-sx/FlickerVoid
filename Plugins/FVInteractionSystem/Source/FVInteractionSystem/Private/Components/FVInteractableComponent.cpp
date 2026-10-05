@@ -39,6 +39,16 @@ bool UFVInteractableComponent::ShouldShowOffers() const
 	return !Definition || Definition->bShowOffers;
 }
 
+EFVFocusIndicatorAnchor UFVInteractableComponent::GetFocusIndicatorAnchor() const
+{
+	return Definition ? Definition->FocusIndicatorAnchor : EFVFocusIndicatorAnchor::Center;
+}
+
+FVector UFVInteractableComponent::GetFocusIndicatorOffset() const
+{
+	return Definition ? Definition->FocusIndicatorOffset : FVector::ZeroVector;
+}
+
 FGameplayTag UFVInteractableComponent::GetInteractableType() const
 {
 	return Definition ? Definition->InteractableType : FGameplayTag(FVInteractionGameplayTags::Interactable);

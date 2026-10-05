@@ -3,6 +3,7 @@
 #include "Components/ActorComponent.h"
 #include "Core/FVInteractionTypes.h"
 #include "CoreMinimal.h"
+#include "Styling/SlateBrush.h"
 
 #include "FVInteractionUIComponent.generated.h"
 
@@ -13,7 +14,6 @@ class UFVInteractableComponent;
 class UFVInteractionUISettings;
 class UUserWidget;
 class UFVInteractionWidget;
-class UTexture2D;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOffersChanged, const TArray<FFVInteractionOfferData>&, Offers);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOfferProgress, const FGameplayTag, ActionTag, float, Progress);
@@ -36,7 +36,10 @@ public:
 	UE_API UUserWidget* GetWidget() const { return Widget; }
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Prompt")
-	UE_API UTexture2D* GetCurrentCrosshair() const { return CurrentCrosshair; }
+	UE_API const FSlateBrush& GetCurrentFocusIndicatorBrush() const { return CurrentFocusIndicatorBrush; }
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|Prompt")
+	UE_API bool GetFocusWidgetPosition(FVector2D& OutPosition) const;
 
 	UE_API const UFVInteractionUISettings* GetUISettings() const;
 
@@ -56,9 +59,11 @@ protected:
 private:
 	void ShowWidget();
 	void HideWidget();
-	void CacheCrosshairs();
-	UTexture2D* ResolveCrosshair(const FGameplayTag& InteractableType) const;
-	void UpdateCrosshair();
+	void CacheFocusIndicators();
+	const FSlateBrush& ResolveFocusIndicator(const FGameplayTag& InteractableType) const;
+	void UpdateFocusIndicator();
+	void UpdateOverlay();
+	FVector GetFocusWorldLocation() const;
 	void PushOffersToWidget();
 	UFVInteractionWidget* GetInteractionWidget() const;
 
@@ -73,6 +78,9 @@ private:
 
 	UFUNCTION()
 	void OnFocusChanged(UFVInteractableComponent* NewTarget);
+
+	UFUNCTION()
+	void OnModeChanged(FGameplayTag NewMode, FGameplayTag OldMode);
 
 	UFUNCTION()
 	void OnOffersChanged(const TArray<FFVInteractionOfferData>& InOffers);
@@ -93,13 +101,19 @@ private:
 	TObjectPtr<UUserWidget> Widget;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UTexture2D> DefaultCrosshair;
+	TObjectPtr<UUserWidget> OverlayWidget;
 
 	UPROPERTY(Transient)
-	TMap<FName, TObjectPtr<UTexture2D>> CrosshairOverrides;
+	TSubclassOf<UUserWidget> OverlayClass;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UTexture2D> CurrentCrosshair;
+	FSlateBrush DefaultFocusIndicatorBrush;
+
+	UPROPERTY(Transient)
+	TMap<FName, FSlateBrush> FocusIndicatorOverrides;
+
+	UPROPERTY(Transient)
+	FSlateBrush CurrentFocusIndicatorBrush;
 
 	FGameplayTag CurrentInteractableType;
 };

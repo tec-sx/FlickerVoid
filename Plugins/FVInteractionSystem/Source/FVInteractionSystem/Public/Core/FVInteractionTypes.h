@@ -51,6 +51,14 @@ enum class EFVHighlightType : uint8
 	Default			UMETA(Hidden)
 };
 
+UENUM(BlueprintType, meta = (ScriptName = "FocusIndicatorAnchor"))
+enum class EFVFocusIndicatorAnchor : uint8
+{
+	Center	UMETA(DisplayName = "Center", Tooltip = "Render focus indicatior in the center of the interactable object."),
+	Top		UMETA(DisplayName = "Top", Tooltip = "Render focus indicatior on top of the interactable object."),
+	Bottom	UMETA(DisplayName = "Bottom", Tooltip = "Render focus indicatior in the bottom of the interactable object.")
+};
+
 USTRUCT(BlueprintType)
 struct FVINTERACTIONSYSTEM_API FFVInteractionCommit
 {

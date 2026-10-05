@@ -20,6 +20,12 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interactable")
 	bool bShowOffers;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interactable|UI")
+	EFVFocusIndicatorAnchor FocusIndicatorAnchor = EFVFocusIndicatorAnchor::Center;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interactable|UI", meta = (Tooltip = "Offset from the anchor in the interactable's local space."))
+	FVector FocusIndicatorOffset = FVector::ZeroVector;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interactable", meta = (ForceInlineRow))
 	TArray<FFVInteractionOffer> Offers;

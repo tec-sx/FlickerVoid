@@ -4,11 +4,11 @@
 #include "Blueprint/UserWidget.h"
 #include "Core/FVInteractionTypes.h"
 #include "GameplayTagContainer.h"
+#include "Styling/SlateBrush.h"
 
 #include "FVInteractionWidget.generated.h"
 
 class UFVInteractorComponent;
-class UTexture2D;
 
 /**
  * Persistent interaction HUD widget. Created once by UFVInteractionUIComponent
@@ -28,7 +28,7 @@ public:
 	void OnOffersChanged(const TArray<FFVInteractionOfferData>& Offers);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
-	void OnCrosshairChanged(UTexture2D* Icon, FGameplayTag InteractableType);
+	void OnFocusIndicatorChanged(const FSlateBrush& Brush, FGameplayTag InteractableType);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
 	void OnOfferProgress(FGameplayTag ActionTag, float Progress);

@@ -24,7 +24,7 @@ The **FlickerVoid** toolbar button (level editor toolbar) and the **FlickerVoid*
 ### Gameplay tags
 Add layer tags (Project Settings → GameplayTags or a tag `.ini`), for example:
 ```
-UI.Layer.Game        // HUD elements: crosshair, interaction prompts
+UI.Layer.Game        // HUD elements: interaction prompts, mode overlays
 UI.Layer.GameMenu    // inventory, journal
 UI.Layer.Menu        // pause / main menu
 UI.Layer.Modal       // confirmations, popups
@@ -67,19 +67,24 @@ No content assets are required beyond the gameplay tags you reference.
 ### Assets
 | Asset | Parent / Type | Notes |
 |---|---|---|
-| `DA_InteractionUISettings` | `FVInteractionUISettings` data asset | Widget class, layer tag (`UI.Layer.Game`), default crosshair, crosshair overrides |
-| `WBP_InteractionSet` | `InteractionSetWidget` (AngelScript) or any `FVInteractionWidget` child | Implements `OnOffersChanged`, `OnCrosshairChanged`, `OnOfferProgress`, `OnOfferEnded` |
+| `DA_InteractionUISettings` | `FVInteractionUISettings` data asset | Widget class, layer tag (`UI.Layer.Game`), default focus indicator brush, focus indicator overrides |
+| `WBP_InteractionSet` | `InteractionSetWidget` (AngelScript) or any `FVInteractionWidget` child | Implements `OnOffersChanged`, `OnFocusIndicatorChanged`, `OnOfferProgress`, `OnOfferEnded`. Optional `FocusIndicator` image, centered |
 | `WBP_InteractionSlot_First/Mid/Last` | `InteractionSlotWidget` | Assigned on `WBP_InteractionSet` |
 | `DT_InteractionSlotStyles` | DataTable, row `InteractionSlotStyle` | Row name = action tag |
-| `DT_CrosshairOverrides` | DataTable, row `FVInteractionCrosshairRow` | Row name = interactable type tag (e.g. `Interactable.Door`). Lookup tries the exact tag, then each parent tag, then the default crosshair |
-| `T_Crosshair_Default` | Texture2D | Default crosshair |
+| `DT_FocusIndicatorOverrides` | DataTable, row `FVInteractionFocusIndicatorRow` | Row name = interactable type tag (e.g. `Interactable.Door`). Lookup tries the exact tag, then each parent tag, then the default brush |
+| `T_FocusIndicator_Default` | Texture2D | Image used by `DefaultFocusIndicatorBrush` (brush rows also set tint, size, etc.) |
+| `WBP_AimOverlay` | UserWidget (FVInteractionSystem plugin content) | Overlay with a centered, `HitTestInvisible` Image (Reticle). Assigned as the Interaction Mode UI Overlay on aim modes |
 
 ### Settings
 **Project Settings → FlickerVoid → Interaction System → Interaction UI Settings** = `DA_InteractionUISettings`.
 
 ### Interactables
-- Set `Interactable Type` on each interactable definition. It selects the crosshair row.
-- Untick `Show Offers` for simple interactables (e.g. an unlocked door). The widget then gets an empty offer list but still gets the type-specific crosshair.
+- Set `Interactable Type` on each interactable definition. It selects the focus indicator row.
+- Untick `Show Offers` for simple interactables (e.g. an unlocked door). The widget then gets an empty offer list but still shows the type-specific focus indicator.
+- `Focus Indicator Anchor` (Center/Top/Bottom of the detectable bounds) and `Focus Indicator Offset` (actor local space) place the indicator.
+
+### Interactor modes
+Tick `Show Overlay` and set `Interaction Mode UI Overlay` (e.g. `WBP_AimOverlay`) on modes that need one. The overlay is pushed to the interaction layer while the mode is active.
 
 ### Player
 The pawn/controller needs `FVInteractorComponent` and `FVInteractionUIComponent`.
@@ -95,5 +100,5 @@ The UI component pushes the interaction widget into the layout once and keeps it
 | Log says `HUD is not an AFVHUD` | Set the game mode HUD Class to `AFVHUD`, or derive from `AFVGameModeBase` |
 | Widgets pushed but invisible | The layer tag isn't registered in the layout's `Event Construct` |
 | Interaction widget gets no events | Its widget class isn't a child of `FVInteractionWidget` |
-| Crosshair never changes | The row name doesn't match the interactable type tag, or the table's row struct is wrong |
+| Focus indicator never changes | The row name doesn't match the interactable type tag, or the table's row struct is wrong |
 must return `FV::Names::SettingsCategory` (`FVCoreNames.h`)
