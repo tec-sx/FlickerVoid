@@ -10,7 +10,7 @@
 
 /** One line of scan information, shown only when its conditions pass (e.g. a Perception check or known clue). */
 USTRUCT(BlueprintType)
-struct FVSCANNERSYSTEM_API FFVScanEntry
+struct FLICKERVOIDGAMEPLAY_API FFVScanEntry
 {
 	GENERATED_BODY()
 
@@ -26,7 +26,7 @@ struct FVSCANNERSYSTEM_API FFVScanEntry
 
 /** What a scannable reveals. Display is the scan title; effects run once on the first completed scan. */
 UCLASS(BlueprintType)
-class FVSCANNERSYSTEM_API UFVScanDefinition : public UFVDefinition
+class FLICKERVOIDGAMEPLAY_API UFVScanDefinition : public UFVDefinition
 {
 	GENERATED_BODY()
 
@@ -51,7 +51,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FVSCANNERSYSTEM_API FFVScanCategory
+struct FLICKERVOIDGAMEPLAY_API FFVScanCategory
 {
 	GENERATED_BODY()
 
@@ -67,7 +67,7 @@ struct FVSCANNERSYSTEM_API FFVScanCategory
 };
 
 UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Scanner"))
-class FVSCANNERSYSTEM_API UFVScannerSettings : public UDeveloperSettings
+class FLICKERVOIDGAMEPLAY_API UFVScannerSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
 

@@ -17,12 +17,14 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScannerModeChanged, bool, bActi
  * direction, and scans it while scanning is held.
  */
 UCLASS(ClassGroup = (FV), meta = (BlueprintSpawnableComponent))
-class FVSCANNERSYSTEM_API UFVScannerComponent : public UActorComponent
+class FLICKERVOIDGAMEPLAY_API UFVScannerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 	UFVScannerComponent();
+
+	static UFVScannerComponent* Find(const AActor* Actor);
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Scanner")
 	void SetScanMode(bool bActive);

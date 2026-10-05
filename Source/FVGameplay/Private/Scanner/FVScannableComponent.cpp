@@ -1,8 +1,8 @@
-#include "FVScannableComponent.h"
+#include "Scanner/FVScannableComponent.h"
 
 #include "Components/PrimitiveComponent.h"
 #include "Conditions/FVConditionStatics.h"
-#include "FVScannerSubsystem.h"
+#include "Scanner/FVScannerSubsystem.h"
 #include "GameFramework/Actor.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVScannableComponent)
@@ -12,24 +12,9 @@ UFVScannableComponent::UFVScannableComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UFVScannableComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (UFVScannerSubsystem* Subsystem = UFVScannerSubsystem::Get(this))
-	{
-		Subsystem->Register(this);
-	}
-}
-
 void UFVScannableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	SetRevealed(false);
-	if (UFVScannerSubsystem* Subsystem = UFVScannerSubsystem::Get(this))
-	{
-		Subsystem->Unregister(this);
-	}
-
 	Super::EndPlay(EndPlayReason);
 }
 

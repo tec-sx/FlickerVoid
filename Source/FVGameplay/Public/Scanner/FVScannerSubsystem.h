@@ -8,9 +8,9 @@ class UFVScannableComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScanModeChanged, bool, bActive);
 
-/** Registry of scannables and the global scan mode state (for post process and audio). */
+/** Global scan mode state, for post process, audio and UI. Scannables come from the interaction registry. */
 UCLASS()
-class FVSCANNERSYSTEM_API UFVScannerSubsystem : public UWorldSubsystem
+class FLICKERVOIDGAMEPLAY_API UFVScannerSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
@@ -25,11 +25,9 @@ public:
 
 	void SetScanModeActive(bool bActive);
 
-	void Register(UFVScannableComponent* Scannable) { Scannables.AddUnique(Scannable); }
-	void Unregister(UFVScannableComponent* Scannable) { Scannables.Remove(Scannable); }
-	const TArray<TWeakObjectPtr<UFVScannableComponent>>& GetScannables() const { return Scannables; }
+	/** Scannable components on registered interactables within Range of Origin. */
+	void CollectScannables(const FVector& Origin, float Range, TArray<UFVScannableComponent*>& OutScannables) const;
 
 private:
-	TArray<TWeakObjectPtr<UFVScannableComponent>> Scannables;
 	bool bScanModeActive = false;
 };

@@ -1,9 +1,9 @@
-#include "FVScannerComponent.h"
+#include "Scanner/FVScannerComponent.h"
 
 #include "CollisionQueryParams.h"
 #include "Engine/World.h"
-#include "FVScannableComponent.h"
-#include "FVScannerSubsystem.h"
+#include "Scanner/FVScannableComponent.h"
+#include "Scanner/FVScannerSubsystem.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/Pawn.h"
@@ -15,6 +15,11 @@ UFVScannerComponent::UFVScannerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
+}
+
+UFVScannerComponent* UFVScannerComponent::Find(const AActor* Actor)
+{
+	return Actor != nullptr ? Actor->FindComponentByClass<UFVScannerComponent>() : nullptr;
 }
 
 void UFVScannerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -114,19 +119,17 @@ void UFVScannerComponent::UpdateTargets()
 	float BestDot = MinDot;
 	TArray<TWeakObjectPtr<UFVScannableComponent>> NowRevealed;
 
-	for (const TWeakObjectPtr<UFVScannableComponent>& Weak : Subsystem->GetScannables())
+	TArray<UFVScannableComponent*> Candidates;
+	Subsystem->CollectScannables(ViewLocation, Range, Candidates);
+
+	for (UFVScannableComponent* Scannable : Candidates)
 	{
-		UFVScannableComponent* Scannable = Weak.Get();
-		if (!Scannable || Scannable->GetOwner() == GetOwner())
+		if (Scannable->GetOwner() == GetOwner() || !Scannable->CanBeScannedBy(GetOwner()))
 		{
 			continue;
 		}
 
 		const FVector ToTarget = Scannable->GetScanLocation() - ViewLocation;
-		if (ToTarget.SizeSquared() > FMath::Square(Range) || !Scannable->CanBeScannedBy(GetOwner()))
-		{
-			continue;
-		}
 
 		Scannable->SetRevealed(true);
 		NowRevealed.Add(Scannable);

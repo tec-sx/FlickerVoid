@@ -584,7 +584,7 @@
 			"Enabled": true
 		},
 		{
-			"Name": "FVScannerSystem",
+			"Name": "FVAttributeSystem",
 			"Enabled": true
 		}
 	]

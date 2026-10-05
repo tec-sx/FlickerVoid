@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "FVScanDefinition.h"
+#include "Scanner/FVScanDefinition.h"
 #include "FVScannableComponent.generated.h"
 
 class UPrimitiveComponent;
@@ -10,9 +10,12 @@ class UPrimitiveComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScanRevealChanged, bool, bRevealed);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScanned, AActor*, Scanner);
 
-/** Makes the owner show up in scan mode and reveal its scan definition when scanned. */
+/**
+ * Makes the owner show up in scan mode and reveal its scan definition when scanned. The owner also
+ * needs an interactable component, since the scanner finds its targets through the interaction registry.
+ */
 UCLASS(ClassGroup = (FV), meta = (BlueprintSpawnableComponent))
-class FVSCANNERSYSTEM_API UFVScannableComponent : public UActorComponent
+class FLICKERVOIDGAMEPLAY_API UFVScannableComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -54,7 +57,6 @@ public:
 	FFVOnScanned OnScanned;
 
 protected:
-	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scanner")

@@ -84,4 +84,10 @@ namespace FVGameplayTags
 								   "Records that a specific interaction happened at least once.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Fact_Gameplay_Counter, "Fact.Gameplay.Counter",
 								   "Global tallies not owned by a quest, e.g. total civilians saved.");
+
+	// ============================================================================
+	// SCANNER TAGS
+	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Scan_Category, "Scan.Category",
+								   "Root for scan categories; each one maps to a highlight style in Scanner settings.");
 }
