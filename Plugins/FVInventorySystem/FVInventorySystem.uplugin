@@ -1,34 +1,44 @@
 {
-	"FileVersion": 3,
-	"Version": 1,
-	"VersionName": "1.0",
-	"FriendlyName": "FVInventorySystem",
-	"Description": "FlickerVoid items, inventory, outfit equipment and pickups.",
-	"Category": "FlickerVoid",
-	"CreatedBy": "TecSX",
-	"CreatedByURL": "",
-	"DocsURL": "",
-	"MarketplaceURL": "",
-	"SupportURL": "",
-	"CanContainContent": false,
-	"IsBetaVersion": false,
-	"IsExperimentalVersion": false,
-	"Installed": false,
-	"Modules": [
-		{
-			"Name": "FVInventorySystem",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		}
-	],
-	"Plugins": [
-		{
-			"Name": "FVFramework",
-			"Enabled": true
-		},
-		{
-			"Name": "GameplayAbilities",
-			"Enabled": true
-		}
-	]
+ "FileVersion": 3,
+ "Version": 1,
+ "VersionName": "1.0",
+ "FriendlyName": "FVInventorySystem",
+ "Description": "FlickerVoid items, inventory, outfit equipment and pickups.",
+ "Category": "FlickerVoid",
+ "CreatedBy": "TecSX",
+ "CreatedByURL": "",
+ "DocsURL": "",
+ "MarketplaceURL": "",
+ "SupportURL": "",
+ "CanContainContent": false,
+ "IsBetaVersion": false,
+ "IsExperimentalVersion": false,
+ "Installed": false,
+ "Modules": [
+  {
+   "Name": "FVInventorySystem",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVInventorySystemDebug",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVInventorySystemEditor",
+   "Type": "Editor",
+   "LoadingPhase": "PostEngineInit"
+  }
+ ],
+ "Plugins": [
+  {
+   "Name": "FVFramework",
+   "Enabled": true
+  },
+  {
+   "Name": "GameplayAbilities",
+   "Enabled": true
+  }
+ ]
 }

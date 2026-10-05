@@ -28,12 +28,21 @@ bool UFVPickupComponent::TryPickup(AActor* Picker)
 		return false;
 	}
 
-	if (!Receiver->ReceiveItem(Item, Quantity, GetOwner()))
+	const int32 Taken = Receiver->ReceiveItem(Item, Quantity, GetOwner());
+	if (Taken <= 0)
 	{
+		UE_LOG(LogFVInventorySystem, Verbose, TEXT("%s: %s took nothing, likely out of room."), *GetNameSafe(GetOwner()), *GetNameSafe(Picker));
 		return false;
 	}
 
 	OnPickedUp.Broadcast(Picker);
+
+	// A partial pickup leaves the rest in the world.
+	if (Taken < Quantity)
+	{
+		Quantity -= Taken;
+		return true;
+	}
 
 	if (bDestroyOwnerOnPickup)
 	{

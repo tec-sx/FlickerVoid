@@ -22,7 +22,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (Categories = "Item"))
 	FGameplayTag Category;
 
-	/** Maximum quantity one inventory can hold. 0 = unlimited. */
+	/** Weight of a single unit. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = 0, Units = "kg"))
+	float Weight = 0.1f;
+
+	/** Footprint in grid cells; one stack occupies this much space however many units it holds. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = 1))
+	FIntPoint GridSize = FIntPoint(1, 1);
+
+	/** Maximum quantity one stack can hold. 0 = unlimited. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = 0))
 	int32 MaxQuantity = 0;
 
@@ -41,6 +49,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Item")
 	bool IsUsable() const;
+
+	/** GridSize.X * GridSize.Y. */
+	UFUNCTION(BlueprintPure, Category = "Item")
+	int32 GetCellCount() const { return FMath::Max(1, GridSize.X) * FMath::Max(1, GridSize.Y); }
 
 	/** Equipment slot, or None if not equippable. */
 	UFUNCTION(BlueprintPure, Category = "Item")

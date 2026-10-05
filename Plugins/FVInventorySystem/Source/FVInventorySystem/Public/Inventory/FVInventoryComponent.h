@@ -21,6 +21,7 @@ struct FVINVENTORYSYSTEM_API FFVItemStack
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFVOnInventoryItemChanged, UFVItemDefinition*, Item, int32, OldQuantity, int32, NewQuantity);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnInventoryItemUsed, UFVItemDefinition*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFVOnInventoryCapacityChanged);
 
 /** Holds items, one entry per item definition. Takes items from a UFVItemReceiverComponent on the same actor. */
 UCLASS(ClassGroup = (FV), meta = (BlueprintSpawnableComponent))
@@ -33,7 +34,14 @@ public:
 
 	static UFVInventoryComponent* Find(const AActor* Actor);
 
-	/** Returns the quantity actually added (limited by MaxQuantity). */
+	/** How many units fit, limited by stack size, weight and space. */
+	UFUNCTION(BlueprintPure, Category = "FV|Inventory")
+	int32 GetAcceptedQuantity(const UFVItemDefinition* Item, int32 Quantity = 1) const;
+
+	UFUNCTION(BlueprintPure, Category = "FV|Inventory")
+	bool CanAddItem(const UFVItemDefinition* Item, int32 Quantity = 1) const { return GetAcceptedQuantity(Item, Quantity) >= Quantity; }
+
+	/** Returns the quantity actually added (limited by stack size, weight and space). */
 	UFUNCTION(BlueprintCallable, Category = "FV|Inventory")
 	int32 AddItem(UFVItemDefinition* Item, int32 Quantity = 1);
 
@@ -61,8 +69,30 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FV|Inventory")
 	bool UseItem(UFVItemDefinition* Item);
 
+	UFUNCTION(BlueprintPure, Category = "FV|Inventory")
+	float GetTotalWeight() const;
+
+	/** Base limit from settings plus equipped containers plus WeightBonus. */
+	UFUNCTION(BlueprintPure, Category = "FV|Inventory")
+	float GetWeightLimit() const;
+
+	UFUNCTION(BlueprintPure, Category = "FV|Inventory")
+	int32 GetUsedCells() const;
+
+	/** Pockets plus equipped containers plus CellBonus. */
+	UFUNCTION(BlueprintPure, Category = "FV|Inventory")
+	int32 GetCellCapacity() const;
+
+	/** Extra allowance the game layer grants, e.g. from an Athletics attribute. */
+	UFUNCTION(BlueprintCallable, Category = "FV|Inventory")
+	void SetBonuses(float InWeightBonus, int32 InCellBonus);
+
 	UPROPERTY(BlueprintAssignable, Category = "FV|Inventory")
 	FFVOnInventoryItemChanged OnItemChanged;
+
+	/** Weight or space changed, including when a container was equipped or removed. */
+	UPROPERTY(BlueprintAssignable, Category = "FV|Inventory")
+	FFVOnInventoryCapacityChanged OnCapacityChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "FV|Inventory")
 	FFVOnInventoryItemUsed OnItemUsed;
@@ -79,6 +109,16 @@ private:
 	UFUNCTION()
 	void HandleItemReceived(UFVItemDefinition* Item, int32 Quantity, AActor* Source);
 
+	UFUNCTION()
+	void HandleEquipmentChanged(FGameplayTag Slot, UFVItemDefinition* OldItem, UFVItemDefinition* NewItem);
+
 	FFVItemStack* FindStack(const UFVItemDefinition* Item);
 	void SetQuantity(UFVItemDefinition* Item, int32 NewQuantity);
+
+	float ContainerWeightBonus = 0.f;
+	int32 ContainerCells = 0;
+	float WeightBonus = 0.f;
+	int32 CellBonus = 0;
+
+	void RefreshContainers();
 };

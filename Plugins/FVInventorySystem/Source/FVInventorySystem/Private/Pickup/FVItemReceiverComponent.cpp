@@ -43,13 +43,16 @@ UFVItemReceiverComponent* UFVItemReceiverComponent::FindReceiver(AActor* Actor)
 	return nullptr;
 }
 
-bool UFVItemReceiverComponent::ReceiveItem(UFVItemDefinition* Item, const int32 Quantity, AActor* Source)
+int32 UFVItemReceiverComponent::ReceiveItem(UFVItemDefinition* Item, const int32 Quantity, AActor* Source)
 {
 	if (!Item || Quantity <= 0 || !bAcceptingItems)
 	{
-		return false;
+		return 0;
 	}
 
+	TakenQuantity = 0;
 	OnItemReceived.Broadcast(Item, Quantity, Source);
-	return true;
+
+	// Nothing reported back means the listener takes everything, e.g. a quest trigger.
+	return OnItemReceived.IsBound() ? FMath::Min(TakenQuantity > 0 ? TakenQuantity : Quantity, Quantity) : 0;
 }

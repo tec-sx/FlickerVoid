@@ -30,6 +30,19 @@ struct FVINVENTORYSYSTEM_API FFVItemFragment_Equippable : public FFVItemFragment
 	TSoftObjectPtr<USkeletalMesh> Mesh;
 };
 
+/** A bag or backpack: adds carrying space and weight allowance while equipped. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Container"))
+struct FVINVENTORYSYSTEM_API FFVItemFragment_Container : public FFVItemFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Container", meta = (ClampMin = 0))
+	int32 Cells = 12;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Container", meta = (Units = "kg"))
+	float WeightBonus = 5.f;
+};
+
 /** Can be used from the inventory. Instigator is the owner, Target is the owner too. */
 USTRUCT(BlueprintType, meta = (DisplayName = "Usable"))
 struct FVINVENTORYSYSTEM_API FFVItemFragment_Usable : public FFVItemFragment

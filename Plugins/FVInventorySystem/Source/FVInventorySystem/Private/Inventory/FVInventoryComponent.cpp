@@ -1,12 +1,34 @@
 #include "Inventory/FVInventoryComponent.h"
 
 #include "Conditions/FVConditionStatics.h"
+#include "Equipment/FVEquipmentComponent.h"
+#include "FVInventorySettings.h"
+#include "HAL/IConsoleManager.h"
 #include "GameFramework/Actor.h"
 #include "Items/FVItemDefinition.h"
 #include "Items/FVItemFragments.h"
 #include "Pickup/FVItemReceiverComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInventoryComponent)
+
+namespace
+{
+	TAutoConsoleVariable<int32> CVarEnforceWeight(
+		TEXT("FVCvar.Inventory.EnforceWeight"),
+		-1,
+		TEXT("Override the weight limit setting. -1 use settings, 0 off, 1 on."));
+
+	TAutoConsoleVariable<int32> CVarEnforceSpace(
+		TEXT("FVCvar.Inventory.EnforceSpace"),
+		-1,
+		TEXT("Override the grid space setting. -1 use settings, 0 off, 1 on."));
+
+	bool IsEnforced(const TAutoConsoleVariable<int32>& CVar, const bool bSetting)
+	{
+		const int32 Override = CVar.GetValueOnGameThread();
+		return Override < 0 ? bSetting : Override > 0;
+	}
+}
 
 UFVInventoryComponent::UFVInventoryComponent()
 {
@@ -26,6 +48,13 @@ void UFVInventoryComponent::BeginPlay()
 	{
 		Receiver->OnItemReceived.AddUniqueDynamic(this, &UFVInventoryComponent::HandleItemReceived);
 	}
+
+	if (UFVEquipmentComponent* Equipment = UFVEquipmentComponent::Find(GetOwner()))
+	{
+		Equipment->OnEquipmentChanged.AddUniqueDynamic(this, &UFVInventoryComponent::HandleEquipmentChanged);
+	}
+
+	RefreshContainers();
 }
 
 void UFVInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -35,27 +64,142 @@ void UFVInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		Receiver->OnItemReceived.RemoveDynamic(this, &UFVInventoryComponent::HandleItemReceived);
 	}
 
+	if (UFVEquipmentComponent* Equipment = UFVEquipmentComponent::Find(GetOwner()))
+	{
+		Equipment->OnEquipmentChanged.RemoveDynamic(this, &UFVInventoryComponent::HandleEquipmentChanged);
+	}
+
 	Super::EndPlay(EndPlayReason);
 }
 
 void UFVInventoryComponent::HandleItemReceived(UFVItemDefinition* Item, const int32 Quantity, AActor* Source)
 {
-	AddItem(Item, Quantity);
+	if (UFVItemReceiverComponent* Receiver = UFVItemReceiverComponent::FindReceiver(GetOwner()))
+	{
+		Receiver->ReportTaken(AddItem(Item, Quantity));
+	}
 }
 
-int32 UFVInventoryComponent::AddItem(UFVItemDefinition* Item, const int32 Quantity)
+void UFVInventoryComponent::HandleEquipmentChanged(FGameplayTag Slot, UFVItemDefinition* OldItem, UFVItemDefinition* NewItem)
 {
-	if (!Item || Quantity <= 0)
+	RefreshContainers();
+}
+
+void UFVInventoryComponent::RefreshContainers()
+{
+	const float OldWeight = ContainerWeightBonus;
+	const int32 OldCells = ContainerCells;
+
+	ContainerWeightBonus = 0.f;
+	ContainerCells = 0;
+
+	if (const UFVEquipmentComponent* Equipment = UFVEquipmentComponent::Find(GetOwner()))
+	{
+		for (const FFVEquippedItem& Entry : Equipment->GetAllEquipped())
+		{
+			if (Entry.Item == nullptr)
+			{
+				continue;
+			}
+
+			if (const FFVItemFragment_Container* Container = Entry.Item->FindFragment<FFVItemFragment_Container>())
+			{
+				ContainerWeightBonus += Container->WeightBonus;
+				ContainerCells += Container->Cells;
+			}
+		}
+	}
+
+	if (!FMath::IsNearlyEqual(OldWeight, ContainerWeightBonus) || OldCells != ContainerCells)
+	{
+		OnCapacityChanged.Broadcast();
+	}
+}
+
+float UFVInventoryComponent::GetTotalWeight() const
+{
+	float Total = 0.f;
+	for (const FFVItemStack& Stack : Items)
+	{
+		if (Stack.Item != nullptr)
+		{
+			Total += Stack.Item->Weight * Stack.Quantity;
+		}
+	}
+	return Total;
+}
+
+float UFVInventoryComponent::GetWeightLimit() const
+{
+	return UFVInventorySettings::Get().BaseWeightLimit + ContainerWeightBonus + WeightBonus;
+}
+
+int32 UFVInventoryComponent::GetUsedCells() const
+{
+	int32 Used = 0;
+	for (const FFVItemStack& Stack : Items)
+	{
+		if (Stack.Item != nullptr)
+		{
+			Used += Stack.Item->GetCellCount();
+		}
+	}
+	return Used;
+}
+
+int32 UFVInventoryComponent::GetCellCapacity() const
+{
+	return UFVInventorySettings::Get().BasePocketCells + ContainerCells + CellBonus;
+}
+
+void UFVInventoryComponent::SetBonuses(const float InWeightBonus, const int32 InCellBonus)
+{
+	if (FMath::IsNearlyEqual(WeightBonus, InWeightBonus) && CellBonus == InCellBonus)
+	{
+		return;
+	}
+
+	WeightBonus = InWeightBonus;
+	CellBonus = InCellBonus;
+	OnCapacityChanged.Broadcast();
+}
+
+int32 UFVInventoryComponent::GetAcceptedQuantity(const UFVItemDefinition* Item, const int32 Quantity) const
+{
+	if (Item == nullptr || Quantity <= 0)
 	{
 		return 0;
 	}
 
+	const UFVInventorySettings& Settings = UFVInventorySettings::Get();
 	const int32 Current = GetQuantity(Item);
-	const int32 Room = Item->MaxQuantity > 0 ? FMath::Max(Item->MaxQuantity - Current, 0) : Quantity;
-	const int32 Added = FMath::Min(Quantity, Room);
+
+	int32 Accepted = Item->MaxQuantity > 0 ? FMath::Clamp(Item->MaxQuantity - Current, 0, Quantity) : Quantity;
+
+	if (Accepted > 0 && IsEnforced(CVarEnforceWeight, Settings.bEnforceWeight) && Item->Weight > 0.f)
+	{
+		const float Room = GetWeightLimit() - GetTotalWeight();
+		Accepted = FMath::Clamp(FMath::FloorToInt32(Room / Item->Weight), 0, Accepted);
+	}
+
+	// A new stack claims its footprint once; adding to an existing stack claims nothing more.
+	if (Accepted > 0 && Current == 0 && IsEnforced(CVarEnforceSpace, Settings.bEnforceSpace))
+	{
+		if (GetUsedCells() + Item->GetCellCount() > GetCellCapacity())
+		{
+			Accepted = 0;
+		}
+	}
+
+	return Accepted;
+}
+
+int32 UFVInventoryComponent::AddItem(UFVItemDefinition* Item, const int32 Quantity)
+{
+	const int32 Added = GetAcceptedQuantity(Item, Quantity);
 	if (Added > 0)
 	{
-		SetQuantity(Item, Current + Added);
+		SetQuantity(Item, GetQuantity(Item) + Added);
 	}
 	return Added;
 }
@@ -144,4 +288,5 @@ void UFVInventoryComponent::SetQuantity(UFVItemDefinition* Item, const int32 New
 	}
 
 	OnItemChanged.Broadcast(Item, OldQuantity, FMath::Max(NewQuantity, 0));
+	OnCapacityChanged.Broadcast();
 }
