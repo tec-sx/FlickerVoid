@@ -313,7 +313,6 @@ void UFVInteractorComponent::ApplyTopMode()
 		ActiveDetection.OcclusionChannel = BlendTarget.OcclusionChannel;
 		ActiveDetection.TickInterval = BlendTarget.TickInterval;
 		ActiveDetection.TraceOrigin = BlendTarget.TraceOrigin;
-		ActiveDetection.bShowOverlay = BlendTarget.bShowOverlay;
 		ActiveDetection.OverlayWidgetClass = BlendTarget.OverlayWidgetClass;
 	}
 
@@ -579,8 +578,11 @@ void UFVInteractorComponent::PerformTrace()
 
 	if (!PC)
 	{
-		ReleaseTargetInteractable();
-		RefreshOffers();
+		if (TargetInteractable.IsValid())
+		{
+			ReleaseTargetInteractable();
+			RefreshOffers();
+		}
 
 		return;
 	}
@@ -592,6 +594,8 @@ void UFVInteractorComponent::PerformTrace()
 	FVector CameraViewLocation;
 	FRotator CameraViewRotation;
 	PC->GetPlayerViewPoint(CameraViewLocation, CameraViewRotation);
+
+	const FVector ViewDirection = CameraViewRotation.Vector();
 
 	FTraceData TraceData;
 	{
@@ -656,7 +660,6 @@ void UFVInteractorComponent::PerformTrace()
 		if (!InteractableCandidate->GetCompatibleInteractorTags().HasTag(GetInteractorTag()))
 			continue;
 			
-		const FVector ViewDirection = CameraViewRotation.Vector();
 		float CandidateScore = ScoreCandidate(InteractableCandidate, HitResult, CameraViewLocation, ViewDirection);
 
 		// Small bias toward the current target so focus doesn't flicker between near-equal candidates.

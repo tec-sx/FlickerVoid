@@ -97,7 +97,7 @@ class UInteractionSetWidget : UFVInteractionWidget
     UFUNCTION(BlueprintOverride)
     void OnFocusIndicatorChanged(const FSlateBrush&in Brush, FGameplayTag InteractableType)
     {
-        bHasFocusIndicatorBrush = Brush.HasUObject();
+        bHasFocusIndicatorBrush = Brush.DrawAs != ESlateBrushDrawType::NoDrawType;
         if (FocusIndicator != nullptr)
         {
             FocusIndicator.SetBrush(Brush);

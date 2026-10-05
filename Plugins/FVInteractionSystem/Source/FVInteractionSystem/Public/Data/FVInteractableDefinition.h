@@ -7,14 +7,6 @@
 
 #include "FVInteractableDefinition.generated.h"
 
-UENUM(BlueprintType)
-enum class EFVFocusIndicatorAnchor : uint8
-{
-	Center,
-	Top,
-	Bottom
-};
-
 UCLASS(BlueprintType, Const)
 class FVINTERACTIONSYSTEM_API UFVInteractableDefinition : public UPrimaryDataAsset
 {

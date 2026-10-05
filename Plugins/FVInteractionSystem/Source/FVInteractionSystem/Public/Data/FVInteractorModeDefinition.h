@@ -50,11 +50,8 @@ struct FVINTERACTIONSYSTEM_API FFVInteractorDetectionSettings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scoring", meta = (UIMin = 0, ClampMin = 0, Tooltip = "How much being near counts when picking between candidates."))
 	float DistanceWeight = 0.5f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI", meta = (Tooltip = "Show a UI overlay (e.g. a reticle) while this mode is active."))
-	bool bShowOverlay = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI", meta = (DisplayName = "Interaction Mode UI Overlay", EditCondition = "bShowOverlay", EditConditionHides))
-	TSoftClassPtr<UUserWidget> OverlayWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI", meta = (DisplayName = "Optional Interaction Mode UI Overlay"))
+	TSubclassOf<UUserWidget> OverlayWidgetClass;
 
 	static FFVInteractorDetectionSettings Lerp(const FFVInteractorDetectionSettings& From, const FFVInteractorDetectionSettings& To, const float Alpha)
 	{

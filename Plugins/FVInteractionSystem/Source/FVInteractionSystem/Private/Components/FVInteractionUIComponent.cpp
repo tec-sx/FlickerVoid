@@ -212,7 +212,7 @@ void UFVInteractionUIComponent::UpdateOverlay()
 	}
 
 	const FFVInteractorDetectionSettings& Detection = Interactor->GetActiveDetection();
-	const TSubclassOf<UUserWidget> NewClass = Detection.bShowOverlay ? Detection.OverlayWidgetClass.LoadSynchronous() : nullptr;
+	const TSubclassOf<UUserWidget> NewClass = Detection.OverlayWidgetClass ? Detection.OverlayWidgetClass : nullptr;
 	if (NewClass == OverlayClass)
 	{
 		return;

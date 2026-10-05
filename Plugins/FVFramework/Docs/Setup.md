@@ -84,7 +84,7 @@ No content assets are required beyond the gameplay tags you reference.
 - `Focus Indicator Anchor` (Center/Top/Bottom of the detectable bounds) and `Focus Indicator Offset` (actor local space) place the indicator.
 
 ### Interactor modes
-Tick `Show Overlay` and set `Interaction Mode UI Overlay` (e.g. `WBP_Reticle`) on modes that need one. The overlay is pushed to the interaction layer while the mode is active.
+Tick `Show Overlay` and set `Interaction Mode UI Overlay` (e.g. `WBP_AimOverlay`) on modes that need one. The overlay is pushed to the interaction layer while the mode is active.
 
 ### Player
 The pawn/controller needs `FVInteractorComponent` and `FVInteractionUIComponent`.
