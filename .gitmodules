@@ -6,10 +6,6 @@
 	path = Plugins/ToneMapFX
 	url = https://github.com/przemek-em/UE5-ToneMapFX
 	branch = main
-[submodule "Plugins/SUDS"]
-	path = Plugins/SUDS
-	url = https://github.com/sinbad/SUDS.git
-	branch = master
 [submodule "Plugins/GameplayMessageRouter"]
 	path = Plugins/GameplayMessageRouter
 	url = https://github.com/IncantaUnreal/GameplayMessageRouter.git
