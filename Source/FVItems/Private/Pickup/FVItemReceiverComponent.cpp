@@ -32,8 +32,15 @@ UFVItemReceiverComponent* UFVItemReceiverComponent::FindReceiver(AActor* Actor)
 		}
 	}
 
-	const APlayerState* PlayerState = Pawn->GetPlayerState();
-	return PlayerState ? PlayerState->FindComponentByClass<UFVItemReceiverComponent>() : nullptr;
+	if (const APlayerState* PlayerState = Pawn->GetPlayerState())
+	{
+		if (UFVItemReceiverComponent* Receiver = PlayerState->FindComponentByClass<UFVItemReceiverComponent>())
+		{
+			return Receiver;
+		}
+	}
+
+	return nullptr;
 }
 
 bool UFVItemReceiverComponent::ReceiveItem(UFVItemDataAsset* Item, const int32 Quantity, AActor* Source)
