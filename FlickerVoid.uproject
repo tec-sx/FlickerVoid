@@ -28,11 +28,6 @@
 			"LoadingPhase": "Default"
 		},
 		{
-			"Name": "FlickerVoidItems",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		},
-		{
 			"Name": "FlickerVoidNarrative",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"

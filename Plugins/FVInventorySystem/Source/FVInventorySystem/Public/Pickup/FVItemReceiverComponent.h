@@ -3,14 +3,14 @@
 #include "Components/ActorComponent.h"
 #include "FVItemReceiverComponent.generated.h"
 
-#define UE_API FLICKERVOIDITEMS_API
+#define UE_API FVINVENTORYSYSTEM_API
 
 class UFVItemDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFVOnItemReceived, UFVItemDefinition*, Item, int32, Quantity, AActor*, Source);
 
 /** Lets an actor take items from the world; inventories bind to OnItemReceived. */
-UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
+UCLASS(MinimalAPI, ClassGroup=(FV), meta=(BlueprintSpawnableComponent))
 class UFVItemReceiverComponent : public UActorComponent
 {
 	GENERATED_BODY()

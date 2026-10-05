@@ -23,3 +23,7 @@ Plugins/*
 !Plugins/FVInteractionSystem/Content
 !Plugins/FVFramework
 !Plugins/FVStorySystem
+!Plugins/FVInventorySystem
+!Plugins/FVDialogueSystem
+!Plugins/FVSocialSystem
+!Plugins/FVScannerSystem

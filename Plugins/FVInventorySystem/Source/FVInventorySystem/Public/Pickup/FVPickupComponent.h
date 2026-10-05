@@ -3,14 +3,14 @@
 #include "Components/ActorComponent.h"
 #include "FVPickupComponent.generated.h"
 
-#define UE_API FLICKERVOIDITEMS_API
+#define UE_API FVINVENTORYSYSTEM_API
 
 class UFVItemDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnPickedUp, AActor*, Picker);
 
 /** Makes the owning actor collectable into the picker's UFVItemReceiverComponent. */
-UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
+UCLASS(MinimalAPI, ClassGroup=(FV), meta=(BlueprintSpawnableComponent))
 class UFVPickupComponent : public UActorComponent
 {
 	GENERATED_BODY()
