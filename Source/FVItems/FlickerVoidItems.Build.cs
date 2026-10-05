@@ -16,6 +16,7 @@ public class FlickerVoidItems : ModuleRules
             "EnhancedInput",
             "FlickerVoidCore",
             "FlickerVoidGameplay",
+            "FVCoreRuntime",
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] {

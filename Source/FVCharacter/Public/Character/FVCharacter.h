@@ -57,12 +57,12 @@ public:
 	FFVCharacterRuntimeState GetRuntimeState() const;
 	
 	UFUNCTION(BlueprintPure)
-	bool CanMove() const { return true; /* TODO: Check for movement restrictions, etc. */ }
+	bool CanMove() const;
 	
 	UFUNCTION(BlueprintPure)
 	bool CanSprint() const;
 	
-	void RequestMove(const FVector& NewDirection) { MovementDirection = NewDirection; }
+	void RequestMove(const FVector& NewDirection) { MovementDirection = CanMove() ? NewDirection : FVector::ZeroVector; }
 	void RequestWalk();
 	void RequestCrouch();
 	void RequestSprint(const bool bValue);
@@ -92,6 +92,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
 	FGameplayTagContainer OwnedTags;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Movement")
+	FGameplayTagContainer MovementBlockingTags;
 private:
 	
 	// Intent Data

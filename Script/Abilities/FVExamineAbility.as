@@ -4,8 +4,14 @@ class UFVExamineAbility : UFVInteractAbility
 	UPROPERTY(EditDefaultsOnly, Category = "Examine")
 	TArray<FRotator> SecretViewAngles;
 
+	// Memory recovered when the matching SecretViewAngles entry is found (same index).
+	UPROPERTY(EditDefaultsOnly, Category = "Examine")
+	TArray<UFVMemoryFragment> SecretMemories;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Examine")
 	float SecretAngleTolerance = 12.f;
+
+	default ActivationOwnedTags.AddTag(GameplayTags::Status_Interacting);
 
 	private FGameplayMessageListenerHandle ExamineHandle;
 	private TArray<int> FoundSecrets;
@@ -65,10 +71,19 @@ class UFVExamineAbility : UFVInteractAbility
 			&& Math::Abs(Math::FindDeltaAngleDegrees(A.Roll, B.Roll)) <= SecretAngleTolerance;
 	}
 
-	// TODO: unlock the memory tied to SecretViewAngles[SecretIndex].
 	private void UnlockMemory(int SecretIndex)
 	{
-		Print("Examine: secret " + SecretIndex + " found on " + Interactable.GetOwner().GetName());
+		if (!SecretMemories.IsValidIndex(SecretIndex) || SecretMemories[SecretIndex] == nullptr)
+		{
+			return;
+		}
+
+		UFVMemorySubsystem Memories = UFVMemorySubsystem::Get();
+
+		if (IsValid(Memories))
+		{
+			Memories.DiscoverMemory(SecretMemories[SecretIndex], GetAvatarActorFromActorInfo());
+		}
 	}
 
 	private void EndExamine(bool bWasCancelled)

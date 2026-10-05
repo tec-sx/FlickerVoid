@@ -6,6 +6,8 @@
 
 #include "FVInteractableResponseComponent_Toggle.generated.h"
 
+class UFVLockComponent;
+
 UCLASS(ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
 class FVINTERACTIONSYSTEM_API UFVInteractableResponseComponent_Toggle : public UFVInteractableResponseComponent
 {
@@ -18,10 +20,7 @@ public:
 	bool IsOpen() const { return bIsOpen; }
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|Toggle")
-	bool IsLocked() const { return bIsLocked; }
-
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Toggle")
-	void SetLocked(bool bLocked);
+	bool IsLocked() const;
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
@@ -36,12 +35,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Interaction|Toggle")
 	bool bStartOpen = false;
 
-	UPROPERTY(EditAnywhere, Category = "Interaction|Toggle")
-	bool bStartLocked = false;
-
 private:
 	virtual void ExecuteAction_Implementation(UFVInteractorComponent* Interactor) override;
 
+	UFUNCTION()
+	void HandleLockStateChanged(bool bLocked, AActor* Instigator);
+
+	UPROPERTY(Transient)
+	TObjectPtr<UFVLockComponent> LockComponent;
+
 	bool bIsOpen = false;
-	bool bIsLocked = false;
 };

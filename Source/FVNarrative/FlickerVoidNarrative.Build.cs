@@ -24,6 +24,7 @@ public class FlickerVoidNarrative : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "GameplayMessageRuntime",
+            "FlickerVoidWorld",
             "CinematicCamera",
             "LevelSequence"
         });

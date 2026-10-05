@@ -6,6 +6,7 @@
 #include "Abilities/FVAbilitySystemComponent.h"
 #include "Components/FVInteractableComponent.h"
 #include "Components/FVInteractorComponent.h"
+#include "FVGameplayTags.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerCharacter)
 
@@ -14,6 +15,9 @@ AFVPlayerCharacter::AFVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 {
 	AbilitySystemComponent = CreateDefaultSubobject<UFVAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	InteractorComponent = CreateDefaultSubobject<UFVInteractorComponent>(TEXT("InteractorComponent"));
+
+	MovementBlockingTags.AddTag(FVGameplayTags::Status_Death);
+	MovementBlockingTags.AddTag(FVGameplayTags::Status_Interacting);
 }
 
 UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const

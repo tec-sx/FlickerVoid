@@ -1,6 +1,9 @@
 #include "Character/FVCharacter.h"
 
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "FlowComponent.h"
+#include "FVCharacterTags.h"
 #include "FVCharacterTypes.h"
 #include "FVCoreTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -22,6 +25,8 @@ AFVCharacter::AFVCharacter(const FObjectInitializer& ObjectInitializer)
 	{
 		FlowComponent->IdentityTags = FGameplayTagContainer(FVCoreTags::Player_Pawn);
 	}
+
+	MovementBlockingTags.AddTag(FVCharacterTags::Status_Movement_Blocked);
 }
 
 
@@ -97,6 +102,27 @@ FFVCharacterRuntimeState AFVCharacter::GetRuntimeState() const
 	RuntimeState.GroundNormal = GetCharacterMovement()->CurrentFloor.HitResult.ImpactNormal;
 	
 	return RuntimeState;
+}
+
+bool AFVCharacter::CanMove() const
+{
+	if (IsMoveInputIgnored() || GetCharacterMovement()->MovementMode == MOVE_None)
+	{
+		return false;
+	}
+
+	if (MovementBlockingTags.IsEmpty())
+	{
+		return true;
+	}
+
+	if (OwnedTags.HasAny(MovementBlockingTags))
+	{
+		return false;
+	}
+
+	const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(this);
+	return !ASC || !ASC->HasAnyMatchingGameplayTags(MovementBlockingTags);
 }
 
 bool AFVCharacter::CanSprint() const

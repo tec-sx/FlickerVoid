@@ -6,8 +6,10 @@ class UFVLockpickAbility : UFVInteractAbility
 	UPROPERTY(EditDefaultsOnly, Category = "Lockpick")
 	UAnimMontage LockpickMontage;
 
+	default ActivationOwnedTags.AddTag(GameplayTags::Status_Interacting);
+
 	private FGameplayMessageListenerHandle LockpickEndedHandle;
-	
+
 	UFUNCTION(BlueprintOverride)
 	void ActivateAbility()
 	{
@@ -25,7 +27,7 @@ class UFVLockpickAbility : UFVInteractAbility
 
 		FFVInteractionLockpickMessage Started;
 		Started.LockedActor = Interactable.GetOwner();
-		Started.Difficulty = Difficulty;
+		Started.Difficulty = GetLockDifficulty();
 
 		UGameplayMessageSubsystem::Get().BroadcastMessage(GameplayTags::Interaction_Event_LockpickStarted, Started);
 	}
@@ -38,8 +40,29 @@ class UFVLockpickAbility : UFVInteractAbility
 			return;
 		}
 
-		// TODO: apply the unlock to the target once a lock component exists.
+		if (Message.bSucceeded)
+		{
+			UFVLockComponent Lock = UFVLockComponent::Get(Interactable.GetOwner());
+
+			if (IsValid(Lock))
+			{
+				Lock.Unlock(GetAvatarActorFromActorInfo());
+			}
+		}
+
 		EndLockpick(!Message.bSucceeded);
+	}
+
+	private float GetLockDifficulty()
+	{
+		UFVLockComponent Lock = UFVLockComponent::Get(Interactable.GetOwner());
+
+		if (IsValid(Lock))
+		{
+			return Lock.GetDifficulty();
+		}
+
+		return Difficulty;
 	}
 
 	private void EndLockpick(bool bWasCancelled)
@@ -50,7 +73,7 @@ class UFVLockpickAbility : UFVInteractAbility
 		{
 			FFVInteractionLockpickMessage Aborted;
 			Aborted.LockedActor = Interactable.GetOwner();
-			Aborted.Difficulty = Difficulty;
+			Aborted.Difficulty = GetLockDifficulty();
 
 			UGameplayMessageSubsystem::Get().BroadcastMessage(GameplayTags::Interaction_Event_LockpickEnded, Aborted);
 		}

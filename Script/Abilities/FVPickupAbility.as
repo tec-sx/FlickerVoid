@@ -3,9 +3,14 @@
 	UPROPERTY(EditDefaultsOnly, Category = "Pickup")
 	UAnimMontage PickupMontage;
 
+	// Captured on activation so a focus change during the montage can't redirect the pickup.
+	private AActor PickupTarget;
+
 	UFUNCTION(BlueprintOverride)
 	void ActivateAbility()
 	{
+		PickupTarget = IsValid(Interactable) ? Interactable.GetOwner() : nullptr;
+
 		if (PickupMontage == nullptr)
 		{
 			FinishPickup();
@@ -15,8 +20,8 @@
 		UAbilityTask_PlayMontageAndWait MontageTask = AngelscriptAbilityTask::PlayMontageAndWait(this, n"Pickup", PickupMontage); 
 
 		MontageTask.OnCompleted.AddUFunction(this, n"HandleMontageFinished");
-		MontageTask.OnInterrupted.AddUFunction(this, n"HandleMontageFinished");
-		MontageTask.OnCancelled.AddUFunction(this, n"HandleMontageFinished");
+		MontageTask.OnInterrupted.AddUFunction(this, n"HandleMontageInterrupted");
+		MontageTask.OnCancelled.AddUFunction(this, n"HandleMontageInterrupted");
 		MontageTask.OnBlendOut.AddUFunction(this, n"HandleMontageFinished");
 		MontageTask.ReadyForActivation();
 	}
@@ -27,9 +32,27 @@
 		FinishPickup();
 	}
 
+	UFUNCTION()
+	void HandleMontageInterrupted()
+	{
+		PickupTarget = nullptr;
+		EndAbility();
+	}
+
 	private void FinishPickup()
 	{
-		// TODO: Route pickup through FVInventoryEquipmentSystem.
+		if (IsValid(PickupTarget))
+		{
+			UFVPickupComponent Pickup = UFVPickupComponent::Get(PickupTarget);
+
+			if (IsValid(Pickup))
+			{
+				Pickup.TryPickup(GetAvatarActorFromActorInfo());
+			}
+		}
+
+		PickupTarget = nullptr;
+
 		EndAbility();
 	}
 }
