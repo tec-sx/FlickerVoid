@@ -1,39 +1,44 @@
 {
-	"FileVersion": 3,
-	"Version": 1,
-	"VersionName": "1.0",
-	"FriendlyName": "FVStorySystem",
-	"Description": "FlickerVoid narrative layer: quests with optional Flow graphs, knowledge and save.",
-	"Category": "FlickerVoid",
-	"CreatedBy": "TecSX",
-	"CanContainContent": true,
-	"IsBetaVersion": false,
-	"Installed": false,
-	"Modules": [
-		{
-			"Name": "FVStorySystem",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		},
-		{
-			"Name": "FVStorySystemEditor",
-			"Type": "Editor",
-			"LoadingPhase": "PostEngineInit"
-		}
-	],
-	"Plugins": [
-		{
-			"Name": "FVFramework",
-			"Enabled": true
-		},
-		{
-			"Name": "Flow",
-			"Enabled": true
-		}
-	],
-	"CreatedByURL": "",
-	"DocsURL": "",
-	"MarketplaceURL": "",
-	"SupportURL": "",
-	"IsExperimentalVersion": false
+ "FileVersion": 3,
+ "Version": 1,
+ "VersionName": "1.0",
+ "FriendlyName": "FVStorySystem",
+ "Description": "FlickerVoid narrative layer: quests with optional Flow graphs, knowledge and save.",
+ "Category": "FlickerVoid",
+ "CreatedBy": "TecSX",
+ "CanContainContent": true,
+ "IsBetaVersion": false,
+ "Installed": false,
+ "Modules": [
+  {
+   "Name": "FVStorySystem",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVStorySystemEditor",
+   "Type": "Editor",
+   "LoadingPhase": "PostEngineInit"
+  },
+  {
+   "Name": "FVStorySystemDebug",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  }
+ ],
+ "Plugins": [
+  {
+   "Name": "FVFramework",
+   "Enabled": true
+  },
+  {
+   "Name": "Flow",
+   "Enabled": true
+  }
+ ],
+ "CreatedByURL": "",
+ "DocsURL": "",
+ "MarketplaceURL": "",
+ "SupportURL": "",
+ "IsExperimentalVersion": false
 }
