@@ -21,7 +21,7 @@ public class FlickerVoidAI : ModuleRules
             "StateTreeModule",
             "GameplayStateTreeModule",
             "FVCoreRuntime",
-            "FVStorySystem",
+            "FVSocialSystem",
         });
         
         PrivateDependencyModuleNames.AddRange(new string[]

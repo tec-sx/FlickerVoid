@@ -3,17 +3,37 @@ class UFVTalkAbility : UFVInteractAbility
 	UFUNCTION(BlueprintOverride)
 	void ActivateAbility()
 	{
-		Print("Talk ability activated!");
-		if (IsValid(Interactable))
+		if (!IsValid(Interactable))
 		{
-			UFlowComponent FlowComponent = Interactable.GetOwner().GetComponentByClass(UFlowComponent);
+			EndAbility();
+			return;
+		}
 
-			if (IsValid(FlowComponent))
-			{
-				FlowComponent.NotifyGraph(GameplayTags::Interaction_Action_Talk);
-			}
+		UFVDialogueParticipantComponent Participant = UFVDialogueParticipantComponent::Get(Interactable.GetOwner());
 
+		if (!IsValid(Participant) || !Participant.HasDialogue())
+		{
+			EndAbility();
+			return;
+		}
+
+		UFVDialogueSubsystem::Get().OnConversationEnded.AddUFunction(this, n"OnConversationEnded");
+
+		if (!Participant.StartDialogue(GetAvatarActorFromActorInfo()))
+		{
 			EndAbility();
 		}
+	}
+
+	UFUNCTION(BlueprintOverride)
+	void OnEndAbility(bool bWasCancelled)
+	{
+		UFVDialogueSubsystem::Get().OnConversationEnded.UnbindObject(this);
+	}
+
+	UFUNCTION()
+	private void OnConversationEnded()
+	{
+		EndAbility();
 	}
 }

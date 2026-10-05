@@ -3,4 +3,4 @@
 #include "CoreMinimal.h"
 #include "Logging/LogMacros.h"
 
-FVDIALOGUESYSTEM_API DECLARE_LOG_CATEGORY_EXTERN(LogFVDialogue, Log, All);
+FVDIALOGUESYSTEM_API DECLARE_LOG_CATEGORY_EXTERN(LogFVDialogueSystem, Log, All);

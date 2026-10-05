@@ -40,7 +40,7 @@ bool UFVDialogueSubsystem::StartConversation(UFlowAsset* InDialogue, AActor* InI
 	UFlowSubsystem* Flow = GameInstance ? GameInstance->GetSubsystem<UFlowSubsystem>() : nullptr;
 	if (bActive || !InDialogue || !InOwner || !Flow)
 	{
-		UE_LOG(LogFVDialogue, Warning, TEXT("Can't start conversation %s with %s."), *GetNameSafe(InDialogue), *GetNameSafe(InOwner));
+		UE_LOG(LogFVDialogueSystem, Warning, TEXT("Can't start conversation %s with %s."), *GetNameSafe(InDialogue), *GetNameSafe(InOwner));
 		return false;
 	}
 

@@ -18,7 +18,10 @@ class UCharacterDataAsset : UPrimaryDataAsset
     UFlowAsset FlowAsset;
 
     UPROPERTY(EditDefaultsOnly, Category = "Logic")
-    USUDSScript DialogueScript;
+    UFlowAsset Dialogue;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Identity")
+    UFVCharacterDefinition Definition;
 
     // Cosmetics
     UPROPERTY(EditDefaultsOnly, Category = "Cosmetics")

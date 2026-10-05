@@ -2,6 +2,6 @@
 
 #include "Modules/ModuleManager.h"
 
-DEFINE_LOG_CATEGORY(LogFVInventory);
+DEFINE_LOG_CATEGORY(LogFVInventorySystem);
 
 IMPLEMENT_MODULE(FDefaultModuleImpl, FVInventorySystem)

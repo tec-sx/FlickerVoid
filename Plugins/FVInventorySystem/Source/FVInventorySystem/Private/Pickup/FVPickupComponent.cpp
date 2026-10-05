@@ -17,14 +17,14 @@ bool UFVPickupComponent::TryPickup(AActor* Picker)
 {
 	if (!Item)
 	{
-		UE_LOG(LogFVInventory, Warning, TEXT("%s: pickup has no item."), *GetNameSafe(GetOwner()));
+		UE_LOG(LogFVInventorySystem, Warning, TEXT("%s: pickup has no item."), *GetNameSafe(GetOwner()));
 		return false;
 	}
 
 	UFVItemReceiverComponent* Receiver = UFVItemReceiverComponent::FindReceiver(Picker);
 	if (!Receiver)
 	{
-		UE_LOG(LogFVInventory, Warning, TEXT("%s: %s has no item receiver component."), *GetNameSafe(GetOwner()), *GetNameSafe(Picker));
+		UE_LOG(LogFVInventorySystem, Warning, TEXT("%s: %s has no item receiver component."), *GetNameSafe(GetOwner()), *GetNameSafe(Picker));
 		return false;
 	}
 
