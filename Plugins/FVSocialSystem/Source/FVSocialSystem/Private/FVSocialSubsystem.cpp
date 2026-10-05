@@ -1,10 +1,17 @@
 #include "FVSocialSubsystem.h"
 
-#include "FVFactionDefinition.h"
+#include "Facts/FVFactDatabase.h"
 #include "FVSocialStatics.h"
-#include "Time/FVWorldClock.h"
+#include "FVSocialTypes.h"
+#include "FVTitleDefinition.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVSocialSubsystem)
+
+UFVSocialSubsystem* UFVSocialSubsystem::Get(const UObject* WorldContext)
+{
+	const UWorld* World = WorldContext != nullptr ? WorldContext->GetWorld() : nullptr;
+	return World != nullptr ? World->GetSubsystem<UFVSocialSubsystem>() : nullptr;
+}
 
 bool UFVSocialSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
 {
@@ -15,37 +22,83 @@ void UFVSocialSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
-	if (UFVWorldClock* Clock = UFVWorldClock::Get(this))
+	for (const TSoftObjectPtr<UFVTitleDefinition>& Soft : UFVSocialSettings::Get().Titles)
 	{
-		Clock->OnHourChanged.AddUniqueDynamic(this, &UFVSocialSubsystem::HandleHourChanged);
+		if (const UFVTitleDefinition* Title = Soft.LoadSynchronous())
+		{
+			Titles.Add(Title);
+		}
 	}
+
+	if (UFVFactDatabase* Facts = UFVFactDatabase::Get(this))
+	{
+		FactChangedHandle = Facts->OnFactChangedNative().AddRaw(this, &UFVSocialSubsystem::HandleFactChanged);
+	}
+
+	EvaluateTitles();
 }
 
 void UFVSocialSubsystem::Deinitialize()
 {
-	if (UFVWorldClock* Clock = UFVWorldClock::Get(this))
+	if (UFVFactDatabase* Facts = UFVFactDatabase::Get(this))
 	{
-		Clock->OnHourChanged.RemoveDynamic(this, &UFVSocialSubsystem::HandleHourChanged);
+		Facts->OnFactChangedNative().Remove(FactChangedHandle);
 	}
+	FactChangedHandle.Reset();
+
 	Super::Deinitialize();
 }
 
-void UFVSocialSubsystem::HandleHourChanged()
+void UFVSocialSubsystem::HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue)
 {
-	const UFVSocialSettings* Settings = GetDefault<UFVSocialSettings>();
-	if (Settings->NotorietyDecayPerHour <= 0)
+	EvaluateTitles();
+}
+
+void UFVSocialSubsystem::EvaluateTitles()
+{
+	// Granting a title writes a fact, which calls back in here.
+	if (bEvaluating)
 	{
 		return;
 	}
 
-	for (const TSoftObjectPtr<UFVFactionDefinition>& Soft : Settings->Factions)
+	TGuardValue<bool> Guard(bEvaluating, true);
+
+	FFVConditionContext Context;
+	Context.WorldContext = this;
+
+	for (const TObjectPtr<const UFVTitleDefinition>& Title : Titles)
 	{
-		if (const UFVFactionDefinition* Faction = Soft.LoadSynchronous())
+		if (Title == nullptr)
 		{
-			if (UFVSocialStatics::GetNotoriety(this, Faction) > 0)
-			{
-				UFVSocialStatics::ModifyNotoriety(this, Faction, -Settings->NotorietyDecayPerHour);
-			}
+			continue;
+		}
+
+		const bool bHeld = UFVSocialStatics::HasTitle(this, Title);
+		const bool bEarned = Title->Conditions.Evaluate(Context);
+
+		if (bEarned && !bHeld)
+		{
+			UFVSocialStatics::GrantTitle(this, Title);
+			OnTitleEarned.Broadcast(Title);
+		}
+		else if (!bEarned && bHeld && Title->bTransient)
+		{
+			UFVSocialStatics::RevokeTitle(this, Title);
+			OnTitleLost.Broadcast(Title);
 		}
 	}
+}
+
+TArray<const UFVTitleDefinition*> UFVSocialSubsystem::GetHeldTitles() const
+{
+	TArray<const UFVTitleDefinition*> Held;
+	for (const TObjectPtr<const UFVTitleDefinition>& Title : Titles)
+	{
+		if (UFVSocialStatics::HasTitle(this, Title))
+		{
+			Held.Add(Title);
+		}
+	}
+	return Held;
 }

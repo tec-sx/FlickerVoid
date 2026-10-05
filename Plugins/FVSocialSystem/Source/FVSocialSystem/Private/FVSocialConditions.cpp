@@ -2,6 +2,7 @@
 
 #include "FVFactionDefinition.h"
 #include "FVSocialStatics.h"
+#include "FVTitleDefinition.h"
 #include "Identity/FVIdentityComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVSocialConditions)
@@ -65,14 +66,38 @@ FText FFVCondition_Notoriety::GetDescription() const
 	return FText::Format(LOCTEXT("Notoriety", "{0} notoriety {1} {2}"), FVSocialConditions::Name(Faction), FVSocialConditions::Op(Compare), Value);
 }
 
-bool FFVCondition_PersonalReputation::EvaluateImpl(const FFVConditionContext& Context) const
+bool FFVCondition_Fame::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return FVSocialConditions::Compare(UFVSocialStatics::GetPersonalReputation(Context.WorldContext), Compare, Value);
+	const int32 Fame = bIgnoreDisguise
+		? UFVSocialStatics::GetFame(Context.WorldContext)
+		: UFVSocialStatics::GetRecognizedFame(Context.Instigator);
+
+	return FVSocialConditions::Compare(Fame, Compare, Value);
 }
 
-FText FFVCondition_PersonalReputation::GetDescription() const
+FText FFVCondition_Fame::GetDescription() const
 {
-	return FText::Format(LOCTEXT("Personal", "Reputation {0} {1}"), FVSocialConditions::Op(Compare), Value);
+	return FText::Format(LOCTEXT("Fame", "Fame {0} {1}"), FVSocialConditions::Op(Compare), Value);
+}
+
+bool FFVCondition_GlobalNotoriety::EvaluateImpl(const FFVConditionContext& Context) const
+{
+	return FVSocialConditions::Compare(UFVSocialStatics::GetGlobalNotoriety(Context.WorldContext), Compare, Value);
+}
+
+FText FFVCondition_GlobalNotoriety::GetDescription() const
+{
+	return FText::Format(LOCTEXT("GlobalNotoriety", "Notoriety {0} {1}"), FVSocialConditions::Op(Compare), Value);
+}
+
+bool FFVCondition_HasTitle::EvaluateImpl(const FFVConditionContext& Context) const
+{
+	return UFVSocialStatics::HasTitle(Context.WorldContext, Title);
+}
+
+FText FFVCondition_HasTitle::GetDescription() const
+{
+	return Title != nullptr ? Title->Display.Name : FText::GetEmpty();
 }
 
 bool FFVCondition_Relationship::EvaluateImpl(const FFVConditionContext& Context) const
@@ -131,14 +156,24 @@ FText FFVEffect_ModifyNotoriety::GetDescription() const
 	return FText::Format(LOCTEXT("ModNotoriety", "{0} notoriety {1}"), FVSocialConditions::Name(Faction), FText::AsNumber(Delta));
 }
 
-void FFVEffect_ModifyPersonalReputation::Apply(const FFVConditionContext& Context) const
+void FFVEffect_ModifyFame::Apply(const FFVConditionContext& Context) const
 {
-	UFVSocialStatics::ModifyPersonalReputation(Context.WorldContext, Delta);
+	UFVSocialStatics::ModifyFame(Context.WorldContext, Delta);
 }
 
-FText FFVEffect_ModifyPersonalReputation::GetDescription() const
+FText FFVEffect_ModifyFame::GetDescription() const
 {
-	return FText::Format(LOCTEXT("ModPersonal", "Reputation {0}"), FText::AsNumber(Delta));
+	return FText::Format(LOCTEXT("ModFame", "Fame {0}"), FText::AsNumber(Delta));
+}
+
+void FFVEffect_ModifyGlobalNotoriety::Apply(const FFVConditionContext& Context) const
+{
+	UFVSocialStatics::ModifyGlobalNotoriety(Context.WorldContext, Delta);
+}
+
+FText FFVEffect_ModifyGlobalNotoriety::GetDescription() const
+{
+	return FText::Format(LOCTEXT("ModGlobalNotoriety", "Notoriety {0}"), FText::AsNumber(Delta));
 }
 
 void FFVEffect_ModifyRelationship::Apply(const FFVConditionContext& Context) const

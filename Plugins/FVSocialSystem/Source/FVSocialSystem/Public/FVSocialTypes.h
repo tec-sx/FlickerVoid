@@ -8,6 +8,7 @@
 #include "FVSocialTypes.generated.h"
 
 class UFVFactionDefinition;
+class UFVTitleDefinition;
 
 UENUM(BlueprintType)
 enum class EFVAttitude : uint8
@@ -48,15 +49,29 @@ class FVSOCIALSYSTEM_API UFVSocialSettings : public UDeveloperSettings
 public:
 	virtual FName GetCategoryName() const override { return FV::Names::SettingsCategory; }
 
-	/** Fact holding the player's personal reputation, independent of factions. */
-	UPROPERTY(Config, EditAnywhere, Category = "Reputation", meta = (Categories = "Fact"))
-	FGameplayTag PersonalReputationFact;
+	static const UFVSocialSettings& Get() { return *GetDefault<UFVSocialSettings>(); }
 
-	/** Factions whose notoriety decays over game time. */
-	UPROPERTY(Config, EditAnywhere, Category = "Notoriety")
+	/** Fact holding how widely the player is talked about, whatever factions think of them. */
+	UPROPERTY(Config, EditAnywhere, Category = "Fame", meta = (Categories = "Fact"))
+	FGameplayTag FameFact;
+
+	/** Fact holding how wanted the player is overall. Faction standing feeds into it. */
+	UPROPERTY(Config, EditAnywhere, Category = "Fame", meta = (Categories = "Fact"))
+	FGameplayTag NotorietyFact;
+
+	/** Titles the player can earn; each one watches the facts its conditions read. */
+	UPROPERTY(Config, EditAnywhere, Category = "Fame")
+	TArray<TSoftObjectPtr<UFVTitleDefinition>> Titles;
+
+	/** Factions registered for debug commands and title evaluation. */
+	UPROPERTY(Config, EditAnywhere, Category = "Fame")
 	TArray<TSoftObjectPtr<UFVFactionDefinition>> Factions;
 
-	/** Notoriety removed per in-game hour. */
-	UPROPERTY(Config, EditAnywhere, Category = "Notoriety", meta = (ClampMin = 0))
-	int32 NotorietyDecayPerHour = 5;
+	/** Wearing anything tagged under this root hides who the player is. */
+	UPROPERTY(Config, EditAnywhere, Category = "Appearance", meta = (Categories = "Disguise"))
+	FGameplayTag DisguiseRoot;
+
+	/** Fame and notoriety others read while the player is disguised, as a fraction of the real value. */
+	UPROPERTY(Config, EditAnywhere, Category = "Appearance", meta = (ClampMin = 0, ClampMax = 1))
+	float DisguiseRecognition = 0.25f;
 };

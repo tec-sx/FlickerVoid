@@ -9,6 +9,7 @@
 
 class UFVCharacterDefinition;
 class UFVFactionDefinition;
+class UFVTitleDefinition;
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Faction Standing"))
 struct FVSOCIALSYSTEM_API FFVCondition_Standing : public FFVConditionBase
@@ -50,8 +51,9 @@ protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
 };
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Personal Reputation"))
-struct FVSOCIALSYSTEM_API FFVCondition_PersonalReputation : public FFVConditionBase
+/** How widely the player is talked about. Checks what an onlooker reads, so a disguise hides most of it. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Fame"))
+struct FVSOCIALSYSTEM_API FFVCondition_Fame : public FFVConditionBase
 {
 	GENERATED_BODY()
 
@@ -60,6 +62,43 @@ struct FVSOCIALSYSTEM_API FFVCondition_PersonalReputation : public FFVConditionB
 
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	int32 Value = 0;
+
+	/** Ignore any disguise and test the real value. */
+	UPROPERTY(EditAnywhere, Category = "Condition")
+	bool bIgnoreDisguise = false;
+
+	virtual FText GetDescription() const override;
+
+protected:
+	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+};
+
+/** How wanted the player is overall, across every faction. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Global Notoriety"))
+struct FVSOCIALSYSTEM_API FFVCondition_GlobalNotoriety : public FFVConditionBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Condition")
+	EFVFactCompare Compare = EFVFactCompare::GreaterOrEqual;
+
+	UPROPERTY(EditAnywhere, Category = "Condition", meta = (ClampMin = 0, ClampMax = 100))
+	int32 Value = 50;
+
+	virtual FText GetDescription() const override;
+
+protected:
+	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+};
+
+/** The player holds a title. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Has Title"))
+struct FVSOCIALSYSTEM_API FFVCondition_HasTitle : public FFVConditionBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Condition")
+	TObjectPtr<UFVTitleDefinition> Title;
 
 	virtual FText GetDescription() const override;
 
@@ -161,8 +200,20 @@ struct FVSOCIALSYSTEM_API FFVEffect_ModifyNotoriety : public FFVEffectBase
 	virtual FText GetDescription() const override;
 };
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Modify Personal Reputation"))
-struct FVSOCIALSYSTEM_API FFVEffect_ModifyPersonalReputation : public FFVEffectBase
+USTRUCT(BlueprintType, meta = (DisplayName = "Modify Fame"))
+struct FVSOCIALSYSTEM_API FFVEffect_ModifyFame : public FFVEffectBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Effect")
+	int32 Delta = 0;
+
+	virtual void Apply(const FFVConditionContext& Context) const override;
+	virtual FText GetDescription() const override;
+};
+
+USTRUCT(BlueprintType, meta = (DisplayName = "Modify Global Notoriety"))
+struct FVSOCIALSYSTEM_API FFVEffect_ModifyGlobalNotoriety : public FFVEffectBase
 {
 	GENERATED_BODY()
 

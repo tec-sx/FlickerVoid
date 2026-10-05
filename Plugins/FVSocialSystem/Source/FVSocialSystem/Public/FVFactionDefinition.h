@@ -45,6 +45,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Reputation")
 	TMap<TObjectPtr<UFVFactionDefinition>, float> Relations;
 
+	/** How much standing gained here feeds the player's fame. Negative for factions nobody admires. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Reputation")
+	float FameContribution = 1.f;
+
+	/** How much standing gained here feeds global notoriety: raise it for criminal factions. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Notoriety")
+	float NotorietyContribution = 0.f;
+
 	/** Fact holding how wanted the player is by this faction (0-100). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Notoriety", meta = (Categories = "Fact"))
 	FGameplayTag NotorietyFact;
@@ -57,7 +65,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Disguise", meta = (Categories = "Disguise"))
 	FGameplayTag DisguiseTag;
 
-	/** Disguises stop working at or above this notoriety. */
+	/** Disguises stop working at or above the notoriety this faction reads. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Disguise", meta = (ClampMin = 0, ClampMax = 100))
 	int32 DisguiseNotorietyLimit = 50;
 

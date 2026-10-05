@@ -32,11 +32,30 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FV|Social", meta = (WorldContext = "WorldContext"))
 	static void ModifyNotoriety(UObject* WorldContext, const UFVFactionDefinition* Faction, int32 Delta);
 
+	/** How widely the player is talked about. Standing changes feed it through FameContribution. */
 	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (WorldContext = "WorldContext"))
-	static int32 GetPersonalReputation(const UObject* WorldContext);
+	static int32 GetFame(const UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Social", meta = (WorldContext = "WorldContext"))
-	static void ModifyPersonalReputation(UObject* WorldContext, int32 Delta);
+	static void ModifyFame(UObject* WorldContext, int32 Delta);
+
+	/** How wanted the player is overall, across factions. */
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (WorldContext = "WorldContext"))
+	static int32 GetGlobalNotoriety(const UObject* WorldContext);
+
+	UFUNCTION(BlueprintCallable, Category = "FV|Social", meta = (WorldContext = "WorldContext"))
+	static void ModifyGlobalNotoriety(UObject* WorldContext, int32 Delta);
+
+	/** Fame as an onlooker reads it: a disguise hides most of it. */
+	UFUNCTION(BlueprintPure, Category = "FV|Social")
+	static int32 GetRecognizedFame(const AActor* Actor);
+
+	/** Notoriety a faction reads on this actor: their own plus the global one, less any disguise. */
+	UFUNCTION(BlueprintPure, Category = "FV|Social")
+	static int32 GetRecognizedNotoriety(const AActor* Actor, const UFVFactionDefinition* Faction);
+
+	UFUNCTION(BlueprintPure, Category = "FV|Social")
+	static bool IsDisguised(const AActor* Actor);
 
 	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (WorldContext = "WorldContext"))
 	static int32 GetRelationship(const UObject* WorldContext, const UFVCharacterDefinition* Character);
@@ -60,6 +79,13 @@ public:
 	static EFVAttitude GetAttitude(const UFVFactionDefinition* Faction, const AActor* Subject);
 
 	static const FFVCharacterFragment_Social* FindSocialFragment(const AActor* Actor);
+
+	/** Writes the title's fact and applies its effects. Returns false if it was already held. */
+	static bool GrantTitle(UObject* WorldContext, const UFVTitleDefinition* Title);
+	static void RevokeTitle(UObject* WorldContext, const UFVTitleDefinition* Title);
+
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (WorldContext = "WorldContext"))
+	static bool HasTitle(const UObject* WorldContext, const UFVTitleDefinition* Title);
 
 private:
 	static void AddClamped(UObject* WorldContext, FGameplayTag Fact, int32 Delta, int32 Min, int32 Max);
