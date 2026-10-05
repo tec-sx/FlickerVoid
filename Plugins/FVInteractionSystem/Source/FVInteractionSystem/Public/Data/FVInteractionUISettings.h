@@ -4,22 +4,22 @@
 #include "Engine/DataAsset.h"
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
+#include "Styling/SlateBrush.h"
 
 #include "FVInteractionUISettings.generated.h"
 
 #define UE_API FVINTERACTIONSYSTEM_API
 
 class UUserWidget;
-class UTexture2D;
 
-/** Crosshair override. Row name = interactable type tag (e.g. Interactable.Door). */
+/** Focus indicator brush override. Row name = interactable type tag (e.g. Interactable.Door). */
 USTRUCT(BlueprintType)
-struct FFVInteractionCrosshairRow : public FTableRowBase
+struct FFVInteractionFocusIndicatorRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
-	TSoftObjectPtr<UTexture2D> Icon;
+	FSlateBrush Brush;
 };
 
 UCLASS(MinimalAPI, BlueprintType, meta = (DisplayName = "Interaction UI Settings"))
@@ -32,11 +32,11 @@ public:
 	TSoftClassPtr<UUserWidget> WidgetClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
-	TSoftObjectPtr<UTexture2D> DefaultCrosshair;
+	FSlateBrush DefaultFocusIndicatorBrush;
 
-	/** Per interactable type crosshair overrides. Parent tags are used as fallback. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI", meta = (RequiredAssetDataTags = "RowStructure=/Script/FVInteractionSystem.FVInteractionCrosshairRow"))
-	TSoftObjectPtr<UDataTable> CrosshairOverrides;
+	/** Per interactable type focus indicator brushes. Parent tags are used as fallback. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI", meta = (RequiredAssetDataTags = "RowStructure=/Script/FVInteractionSystem.FVInteractionFocusIndicatorRow"))
+	TSoftObjectPtr<UDataTable> FocusIndicatorOverrides;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI", meta = (Categories = "UI.Layer"))
 	FGameplayTag LayerTag;

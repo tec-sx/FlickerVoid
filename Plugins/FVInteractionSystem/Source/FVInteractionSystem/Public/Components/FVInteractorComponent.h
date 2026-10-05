@@ -181,7 +181,6 @@ private:
 
 	void SetState(const EFVInteractorState NewState);
 	void PerformTrace();
-	void GetCameraViewPoint(FVector& OutLocation, FRotator& OutRotation) const;
 	float ScoreCandidate(const UFVInteractableComponent* Candidate, const FHitResult& Hit, const FVector& ViewLocation, const FVector& ViewDirection) const;
 	bool PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target) const;
 	void ReleaseTargetInteractable();

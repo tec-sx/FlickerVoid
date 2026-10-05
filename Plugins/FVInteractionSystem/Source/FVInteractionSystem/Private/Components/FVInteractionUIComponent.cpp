@@ -50,9 +50,8 @@ void UFVInteractionUIComponent::BeginPlay()
 	Interactor->InteractionCommitEnded.AddDynamic(this, &UFVInteractionUIComponent::OnInteractionEnded);
 	Interactor->InteractorModeChanged.AddDynamic(this, &UFVInteractionUIComponent::OnModeChanged);
 
-	CacheCrosshairs();
-	CurrentCrosshair = DefaultCrosshair;
-	bReticleVisible = Interactor->GetActiveDetection().bShowReticle;
+	CacheFocusIndicators();
+	CurrentFocusIndicatorBrush = DefaultFocusIndicatorBrush;
 
 	if (APawn* Pawn = Cast<APawn>(GetOwner()))
 	{
@@ -111,10 +110,11 @@ void UFVInteractionUIComponent::ShowWidget()
 	if (UFVInteractionWidget* InteractionWidget = GetInteractionWidget())
 	{
 		InteractionWidget->OnInteractionInitialized(Interactor);
-		InteractionWidget->OnCrosshairChanged(CurrentCrosshair, CurrentInteractableType);
-		InteractionWidget->OnReticleVisibilityChanged(bReticleVisible);
+		InteractionWidget->OnFocusIndicatorChanged(CurrentFocusIndicatorBrush, CurrentInteractableType);
 		InteractionWidget->OnOffersChanged(Offers);
 	}
+
+	UpdateOverlay();
 }
 
 void UFVInteractionUIComponent::HideWidget()
@@ -129,9 +129,15 @@ void UFVInteractionUIComponent::HideWidget()
 		if (UFVUIManagerSubsystem* UIManager = LocalPlayer->GetSubsystem<UFVUIManagerSubsystem>())
 		{
 			UIManager->PopUserWidget(Widget);
+			if (OverlayWidget)
+			{
+				UIManager->PopUserWidget(OverlayWidget);
+			}
 		}
 	}
 	Widget = nullptr;
+	OverlayWidget = nullptr;
+	OverlayClass = nullptr;
 }
 
 void UFVInteractionUIComponent::OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController)
@@ -145,78 +151,89 @@ UFVInteractionWidget* UFVInteractionUIComponent::GetInteractionWidget() const
 	return Cast<UFVInteractionWidget>(Widget);
 }
 
-void UFVInteractionUIComponent::CacheCrosshairs()
+void UFVInteractionUIComponent::CacheFocusIndicators()
 {
-	CrosshairOverrides.Reset();
+	FocusIndicatorOverrides.Reset();
 	const UFVInteractionUISettings* Settings = GetUISettings();
 	if (!Settings)
 	{
 		return;
 	}
 
-	DefaultCrosshair = Settings->DefaultCrosshair.LoadSynchronous();
+	DefaultFocusIndicatorBrush = Settings->DefaultFocusIndicatorBrush;
 
-	if (const UDataTable* Table = Settings->CrosshairOverrides.LoadSynchronous())
+	if (const UDataTable* Table = Settings->FocusIndicatorOverrides.LoadSynchronous())
 	{
-		Table->ForeachRow<FFVInteractionCrosshairRow>(TEXT("FVInteractionCrosshair"), [this](const FName& RowName, const FFVInteractionCrosshairRow& Row)
+		Table->ForeachRow<FFVInteractionFocusIndicatorRow>(TEXT("FVInteractionFocusIndicator"), [this](const FName& RowName, const FFVInteractionFocusIndicatorRow& Row)
 		{
-			if (UTexture2D* Icon = Row.Icon.LoadSynchronous())
-			{
-				CrosshairOverrides.Add(RowName, Icon);
-			}
+			FocusIndicatorOverrides.Add(RowName, Row.Brush);
 		});
 	}
 }
 
-UTexture2D* UFVInteractionUIComponent::ResolveCrosshair(const FGameplayTag& InteractableType) const
+const FSlateBrush& UFVInteractionUIComponent::ResolveFocusIndicator(const FGameplayTag& InteractableType) const
 {
 	for (FGameplayTag Tag = InteractableType; Tag.IsValid(); Tag = Tag.RequestDirectParent())
 	{
-		if (const TObjectPtr<UTexture2D>* Found = CrosshairOverrides.Find(Tag.GetTagName()))
+		if (const FSlateBrush* Found = FocusIndicatorOverrides.Find(Tag.GetTagName()))
 		{
 			return *Found;
 		}
 	}
-	return DefaultCrosshair;
+	return DefaultFocusIndicatorBrush;
 }
 
-void UFVInteractionUIComponent::UpdateCrosshair()
+void UFVInteractionUIComponent::UpdateFocusIndicator()
 {
 	const FGameplayTag NewType = FocusedTarget ? FocusedTarget->GetInteractableType() : FGameplayTag();
-	UTexture2D* NewCrosshair = ResolveCrosshair(NewType);
-	if (NewCrosshair == CurrentCrosshair && NewType == CurrentInteractableType)
+	const FSlateBrush& NewBrush = ResolveFocusIndicator(NewType);
+	if (NewBrush == CurrentFocusIndicatorBrush && NewType == CurrentInteractableType)
 	{
 		return;
 	}
 
-	CurrentCrosshair = NewCrosshair;
+	CurrentFocusIndicatorBrush = NewBrush;
 	CurrentInteractableType = NewType;
 
 	if (UFVInteractionWidget* InteractionWidget = GetInteractionWidget())
 	{
-		InteractionWidget->OnCrosshairChanged(CurrentCrosshair, CurrentInteractableType);
+		InteractionWidget->OnFocusIndicatorChanged(CurrentFocusIndicatorBrush, CurrentInteractableType);
 	}
 }
 
-void UFVInteractionUIComponent::UpdateReticle()
+void UFVInteractionUIComponent::UpdateOverlay()
 {
-	const bool bNewVisible = Interactor && Interactor->GetActiveDetection().bShowReticle;
-	if (bNewVisible == bReticleVisible)
+	const UFVInteractionUISettings* Settings = GetUISettings();
+	const ULocalPlayer* LocalPlayer = Widget ? Widget->GetOwningLocalPlayer() : nullptr;
+	UFVUIManagerSubsystem* UIManager = LocalPlayer ? LocalPlayer->GetSubsystem<UFVUIManagerSubsystem>() : nullptr;
+	if (!Interactor || !Settings || !UIManager)
 	{
 		return;
 	}
 
-	bReticleVisible = bNewVisible;
-
-	if (UFVInteractionWidget* InteractionWidget = GetInteractionWidget())
+	const FFVInteractorDetectionSettings& Detection = Interactor->GetActiveDetection();
+	const TSubclassOf<UUserWidget> NewClass = Detection.bShowOverlay ? Detection.OverlayWidgetClass.LoadSynchronous() : nullptr;
+	if (NewClass == OverlayClass)
 	{
-		InteractionWidget->OnReticleVisibilityChanged(bReticleVisible);
+		return;
+	}
+
+	if (OverlayWidget)
+	{
+		UIManager->PopUserWidget(OverlayWidget);
+		OverlayWidget = nullptr;
+	}
+
+	OverlayClass = NewClass;
+	if (OverlayClass)
+	{
+		OverlayWidget = UIManager->PushUserWidget(Settings->LayerTag, OverlayClass);
 	}
 }
 
 void UFVInteractionUIComponent::OnModeChanged(FGameplayTag NewMode, FGameplayTag OldMode)
 {
-	UpdateReticle();
+	UpdateOverlay();
 }
 
 FVector UFVInteractionUIComponent::GetFocusWorldLocation() const
@@ -230,13 +247,21 @@ FVector UFVInteractionUIComponent::GetFocusWorldLocation() const
 		}
 	}
 
+	const AActor* TargetActor = FocusedTarget->GetOwner();
+	FVector Location = TargetActor ? TargetActor->GetActorLocation() : FVector::ZeroVector;
 	if (Bounds.IsValid)
 	{
-		return Bounds.GetCenter();
+		Location = Bounds.GetCenter();
+		switch (FocusedTarget->GetFocusIndicatorAnchor())
+		{
+		case EFVFocusIndicatorAnchor::Top: Location.Z = Bounds.Max.Z; break;
+		case EFVFocusIndicatorAnchor::Bottom: Location.Z = Bounds.Min.Z; break;
+		default: break;
+		}
 	}
 
-	const AActor* TargetActor = FocusedTarget->GetOwner();
-	return TargetActor ? TargetActor->GetActorLocation() : FVector::ZeroVector;
+	const FVector Offset = FocusedTarget->GetFocusIndicatorOffset();
+	return Location + (TargetActor ? TargetActor->GetActorQuat().RotateVector(Offset) : Offset);
 }
 
 bool UFVInteractionUIComponent::GetFocusWidgetPosition(FVector2D& OutPosition) const
@@ -264,7 +289,7 @@ void UFVInteractionUIComponent::PushOffersToWidget()
 void UFVInteractionUIComponent::OnFocusChanged(UFVInteractableComponent* NewTarget)
 {
 	FocusedTarget = NewTarget;
-	UpdateCrosshair();
+	UpdateFocusIndicator();
 
 	if (!FocusedTarget)
 	{

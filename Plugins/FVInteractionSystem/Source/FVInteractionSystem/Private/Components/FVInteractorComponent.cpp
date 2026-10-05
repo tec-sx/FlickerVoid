@@ -313,7 +313,8 @@ void UFVInteractorComponent::ApplyTopMode()
 		ActiveDetection.OcclusionChannel = BlendTarget.OcclusionChannel;
 		ActiveDetection.TickInterval = BlendTarget.TickInterval;
 		ActiveDetection.TraceOrigin = BlendTarget.TraceOrigin;
-		ActiveDetection.bShowReticle = BlendTarget.bShowReticle;
+		ActiveDetection.bShowOverlay = BlendTarget.bShowOverlay;
+		ActiveDetection.OverlayWidgetClass = BlendTarget.OverlayWidgetClass;
 	}
 
 	if (State != EFVInteractorState::Interacting)
@@ -573,26 +574,45 @@ bool UFVInteractorComponent::PushInput(const FGameplayTag InputTag, const EFVInp
 
 void UFVInteractorComponent::PerformTrace()
 {
+	const APawn* Pawn = Cast<APawn>(GetOwner());
+	const APlayerController* PC = Pawn ? Pawn->GetController<APlayerController>() : nullptr;
+
+	if (!PC)
+	{
+		ReleaseTargetInteractable();
+		RefreshOffers();
+
+		return;
+	}
+
+	FVector PawnViewLocation;
+	FRotator PawnViewRotation;
+	Pawn->GetActorEyesViewPoint(PawnViewLocation, PawnViewRotation);
+	
+	FVector CameraViewLocation;
+	FRotator CameraViewRotation;
+	PC->GetPlayerViewPoint(CameraViewLocation, CameraViewRotation);
+
 	FTraceData TraceData;
 	{
 		TraceData.CollisionChannel = ActiveDetection.CollisionChannel;
-		TraceData.CollisionParams.AddIgnoredActor(GetOwner());
+		TraceData.CollisionParams.AddIgnoredActor(Pawn);
 		TraceData.CollisionParams.AddIgnoredActors(IgnoredActors);
 		TraceData.CollisionParams.MobilityType = EQueryMobilityType::Any;
 		TraceData.CollisionParams.bReturnPhysicalMaterial = true;
 		
 		if (ActiveDetection.TraceOrigin == EFVInteractorTraceOrigin::Camera)
 		{
-			GetCameraViewPoint(TraceData.StartLocation, TraceData.TraceRotation);
+			const FVector Forward = CameraViewRotation.Vector();
+			const float DistanceToPawn = FVector::DotProduct(PawnViewLocation - CameraViewLocation, Forward);
 
-			// Start level with the pawn so nothing between the camera and the character is picked up.
-			const FVector Forward = TraceData.TraceRotation.Vector();
-			const float DistanceToPawn = FVector::DotProduct(GetOwner()->GetActorLocation() - TraceData.StartLocation, Forward);
-			TraceData.StartLocation += Forward * FMath::Max(DistanceToPawn, 0.f);
+			TraceData.StartLocation = CameraViewLocation + Forward * FMath::Max(DistanceToPawn, 0.f);
+			TraceData.TraceRotation = CameraViewRotation;
 		}
 		else
 		{
-			GetOwner()->GetActorEyesViewPoint(TraceData.StartLocation, TraceData.TraceRotation);
+			TraceData.StartLocation = PawnViewLocation;
+			TraceData.TraceRotation = PawnViewRotation;
 		}
 
 		TraceData.StartLocation += TraceData.TraceRotation.RotateVector(ActiveDetection.TraceOffset);
@@ -611,11 +631,6 @@ void UFVInteractorComponent::PerformTrace()
 		CollisionShape,
 		TraceData.CollisionParams
 	);
-
-	FVector ViewLocation;
-	FRotator ViewRotation;
-	GetCameraViewPoint(ViewLocation, ViewRotation);
-	const FVector ViewDirection = ViewRotation.Vector();
 
 	UFVInteractableComponent* BestInteractableCandidate = nullptr;
 	float BestScore = -1.f;
@@ -641,11 +656,14 @@ void UFVInteractorComponent::PerformTrace()
 		if (!InteractableCandidate->GetCompatibleInteractorTags().HasTag(GetInteractorTag()))
 			continue;
 			
-		float CandidateScore = ScoreCandidate(InteractableCandidate, HitResult, ViewLocation, ViewDirection);
+		const FVector ViewDirection = CameraViewRotation.Vector();
+		float CandidateScore = ScoreCandidate(InteractableCandidate, HitResult, CameraViewLocation, ViewDirection);
 
 		// Small bias toward the current target so focus doesn't flicker between near-equal candidates.
 		if (InteractableCandidate == TargetInteractable.Get())
+		{
 			CandidateScore *= 1.1f;
+		}
 
 		if (CandidateScore <= BestScore)
 			continue;
@@ -677,20 +695,6 @@ void UFVInteractorComponent::PerformTrace()
 		Debug->DebugTrace(TraceData.HitResults);
 	}
 #endif
-}
-
-void UFVInteractorComponent::GetCameraViewPoint(FVector& OutLocation, FRotator& OutRotation) const
-{
-	const APawn* Pawn = Cast<APawn>(GetOwner());
-	const APlayerController* PC = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
-
-	if (PC && PC->PlayerCameraManager)
-	{
-		PC->GetPlayerViewPoint(OutLocation, OutRotation);
-		return;
-	}
-
-	GetOwner()->GetActorEyesViewPoint(OutLocation, OutRotation);
 }
 
 float UFVInteractorComponent::ScoreCandidate(const UFVInteractableComponent* Candidate, const FHitResult& Hit, const FVector& ViewLocation, const FVector& ViewDirection) const

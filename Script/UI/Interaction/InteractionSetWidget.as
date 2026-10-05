@@ -6,10 +6,7 @@ class UInteractionSetWidget : UFVInteractionWidget
 
     // Drawn on the focused interactable. Place it centered in the widget; Tick offsets it from there.
     UPROPERTY(BindWidgetOptional)
-    UImage FocusIcon;
-
-    UPROPERTY(BindWidgetOptional)
-    UWidget CenterReticle;
+    UImage FocusIndicator;
 
     UPROPERTY(EditDefaultsOnly, Category = "Interaction|Configuration")
     TSubclassOf<UInteractionSlotWidget> SlotFirstWidgetClass;
@@ -27,6 +24,7 @@ class UInteractionSetWidget : UFVInteractionWidget
     private UFVInteractorComponent Interactor;
     private UFVInteractionUIComponent InteractionUI;
     private TArray<UInteractionSlotWidget> OfferPool;
+    private bool bHasFocusIndicatorBrush = false;
 
     UFUNCTION(BlueprintOverride)
     void OnInteractionInitialized(UFVInteractorComponent InInteractor)
@@ -35,29 +33,29 @@ class UInteractionSetWidget : UFVInteractionWidget
         InteractionUI = UFVInteractionUIComponent::Get(InInteractor.Owner);
         OfferPool.Empty();
 
-        if (FocusIcon != nullptr)
+        if (FocusIndicator != nullptr)
         {
-            FocusIcon.SetVisibility(ESlateVisibility::Collapsed);
+            FocusIndicator.SetVisibility(ESlateVisibility::Collapsed);
         }
     }
 
     UFUNCTION(BlueprintOverride)
     void Tick(FGeometry MyGeometry, float InDeltaTime)
     {
-        if (FocusIcon == nullptr)
+        if (FocusIndicator == nullptr)
         {
             return;
         }
 
         FVector2D FocusPosition;
-        if (InteractionUI == nullptr || !InteractionUI.GetFocusWidgetPosition(FocusPosition))
+        if (!bHasFocusIndicatorBrush || InteractionUI == nullptr || !InteractionUI.GetFocusWidgetPosition(FocusPosition))
         {
-            FocusIcon.SetVisibility(ESlateVisibility::Collapsed);
+            FocusIndicator.SetVisibility(ESlateVisibility::Collapsed);
             return;
         }
 
-        FocusIcon.SetRenderTranslation(FocusPosition - Slate::GetLocalSize(MyGeometry) * 0.5);
-        FocusIcon.SetVisibility(ESlateVisibility::HitTestInvisible);
+        FocusIndicator.SetRenderTranslation(FocusPosition - Slate::GetLocalSize(MyGeometry) * 0.5);
+        FocusIndicator.SetVisibility(ESlateVisibility::HitTestInvisible);
     }
 
     UFUNCTION(BlueprintOverride)
@@ -97,20 +95,12 @@ class UInteractionSetWidget : UFVInteractionWidget
     }
 
     UFUNCTION(BlueprintOverride)
-    void OnCrosshairChanged(UTexture2D Icon, FGameplayTag InteractableType)
+    void OnFocusIndicatorChanged(const FSlateBrush&in Brush, FGameplayTag InteractableType)
     {
-        if (FocusIcon != nullptr && Icon != nullptr)
+        bHasFocusIndicatorBrush = Brush.HasUObject();
+        if (FocusIndicator != nullptr)
         {
-            FocusIcon.SetBrushFromTexture(Icon);
-        }
-    }
-
-    UFUNCTION(BlueprintOverride)
-    void OnReticleVisibilityChanged(bool bVisible)
-    {
-        if (CenterReticle != nullptr)
-        {
-            CenterReticle.SetVisibility(bVisible ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+            FocusIndicator.SetBrush(Brush);
         }
     }
 

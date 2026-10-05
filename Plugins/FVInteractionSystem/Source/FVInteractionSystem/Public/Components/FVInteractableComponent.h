@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Core/FVInteractionTypes.h"
+#include "Data/FVInteractableDefinition.h"
 #include "GameplayTags.h"
 #include "FVInteractableComponent.generated.h"
 
@@ -44,9 +45,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interactable")
 	UE_API FGameplayTag GetInteractableType() const;
 
-	/** False for simple interactables that only change the crosshair. */
+	/** False for simple interactables that only show the focus indicator. */
 	UFUNCTION(BlueprintPure, Category = "Interactable")
 	UE_API bool ShouldShowOffers() const;
+
+	UFUNCTION(BlueprintPure, Category = "Interactable")
+	UE_API EFVFocusIndicatorAnchor GetFocusIndicatorAnchor() const;
+
+	UFUNCTION(BlueprintPure, Category = "Interactable")
+	UE_API FVector GetFocusIndicatorOffset() const;
 
 	UFUNCTION(BlueprintPure, Category = "Interactable")
 	UE_API float GetCooldownPeriod() const;
