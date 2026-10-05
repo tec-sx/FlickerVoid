@@ -1,8 +1,8 @@
 using UnrealBuildTool;
 
-public class FVStorySystem : ModuleRules
+public class FVSocialSystem : ModuleRules
 {
-    public FVStorySystem(ReadOnlyTargetRules Target) : base(Target)
+    public FVSocialSystem(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
@@ -13,8 +13,12 @@ public class FVStorySystem : ModuleRules
             "Engine",
             "GameplayTags",
             "DeveloperSettings",
-            "FVCoreRuntime",
-            "Flow"
+            "FVCoreRuntime"
+        });
+
+        PrivateDependencyModuleNames.AddRange(new string[]
+        {
+            "GameplayAbilities"
         });
     }
 }

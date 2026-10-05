@@ -3,7 +3,7 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "FVStorySystem",
-	"Description": "FlickerVoid narrative layer: knowledge, reputation, quests and Yap/Flow dialogue bridge.",
+	"Description": "FlickerVoid narrative layer: quests with optional Flow graphs, knowledge and save.",
 	"Category": "FlickerVoid",
 	"CreatedBy": "TecSX",
 	"CanContainContent": true,
@@ -28,14 +28,6 @@
 		},
 		{
 			"Name": "Flow",
-			"Enabled": true
-		},
-		{
-			"Name": "Yap",
-			"Enabled": true
-		},
-		{
-			"Name": "GameplayMessageRouter",
 			"Enabled": true
 		}
 	],

@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "AddOns/FlowNodeAddOn.h"
-#include "Conditions/FVCondition.h"
 #include "Interfaces/FlowPredicateInterface.h"
 #include "Nodes/FlowNode.h"
 #include "Quest/FVQuest.h"
@@ -99,21 +98,6 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Quest")
 	EFVQuestState State = EFVQuestState::Active;
-
-	virtual bool EvaluatePredicate_Implementation() const override;
-};
-
-/** Predicate add-on: any FlickerVoid condition set (facts, knowledge, reputation, quests...). */
-UCLASS(NotBlueprintable, meta = (DisplayName = "FV Conditions Predicate"))
-class FVSTORYSYSTEM_API UFVFlowNodeAddOn_ConditionPredicate : public UFlowNodeAddOn, public IFlowPredicateInterface
-{
-	GENERATED_BODY()
-
-public:
-	UFVFlowNodeAddOn_ConditionPredicate();
-
-	UPROPERTY(EditAnywhere, Category = "Conditions")
-	FFVConditionSet Conditions;
 
 	virtual bool EvaluatePredicate_Implementation() const override;
 };

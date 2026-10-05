@@ -1,7 +1,12 @@
 #include "Quest/FVQuest.h"
 
+#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
+#include "FlowAsset.h"
+#include "FlowSubsystem.h"
+#include "Interfaces/FlowDataPinValueSupplierInterface.h"
+#include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/DataValidation.h"
 
@@ -53,6 +58,7 @@ if (UFVFactDatabase* Facts = GetFacts())
 FactHandle = Facts->OnFactChangedNative().AddUObject(this, &UFVQuestSubsystem::HandleFactChanged);
 }
 Evaluate();
+StartActiveQuestFlows();
 }
 
 void UFVQuestSubsystem::Deinitialize()
@@ -88,6 +94,7 @@ if (!SetState(Quest, EFVQuestState::Active, EFVQuestState::NotStarted))
 return false;
 }
 Quest->OnStarted.Apply(MakeContext());
+StartQuestFlow(Quest);
 Evaluate();
 return true;
 }
@@ -99,6 +106,7 @@ if (!SetState(Quest, EFVQuestState::Completed, EFVQuestState::Active))
 return false;
 }
 Quest->OnCompleted.Apply(MakeContext());
+StopQuestFlow(Quest, false);
 return true;
 }
 
@@ -109,6 +117,7 @@ if (!SetState(Quest, EFVQuestState::Failed, EFVQuestState::Active))
 return false;
 }
 Quest->OnFailed.Apply(MakeContext());
+StopQuestFlow(Quest, true);
 return true;
 }
 
@@ -165,6 +174,7 @@ void UFVQuestSubsystem::RestoreTrackedQuests(const TArray<FSoftObjectPath>& Path
 		}
 	}
 	Evaluate();
+	StartActiveQuestFlows();
 	OnQuestsChanged.Broadcast();
 }
 
@@ -266,6 +276,56 @@ void UFVQuestSubsystem::Notify(UFVQuestDefinition* Quest)
 {
 LastChanged = Quest;
 OnQuestsChanged.Broadcast();
+}
+
+void UFVQuestSubsystem::StartQuestFlow(UFVQuestDefinition* Quest)
+{
+UGameInstance* GameInstance = GetWorld()->GetGameInstance();
+UFlowSubsystem* FlowSubsystem = GameInstance ? GameInstance->GetSubsystem<UFlowSubsystem>() : nullptr;
+UFlowAsset* Flow = Quest ? Quest->Flow.LoadSynchronous() : nullptr;
+if (!FlowSubsystem || !Flow)
+{
+return;
+}
+
+for (const UFlowAsset* Running : FlowSubsystem->GetRootInstancesByOwner(this))
+{
+if (Running && Running->GetTemplateAsset() == Flow)
+{
+return;
+}
+}
+FlowSubsystem->StartRootFlow(this, Flow, TScriptInterface<IFlowDataPinValueSupplierInterface>(), false);
+}
+
+void UFVQuestSubsystem::StopQuestFlow(UFVQuestDefinition* Quest, const bool bAbort)
+{
+UFlowAsset* Flow = Quest ? Quest->Flow.Get() : nullptr;
+if (!Flow)
+{
+return;
+}
+
+// Deferred: the quest's own graph is often the one completing it.
+TWeakObjectPtr<UFVQuestSubsystem> WeakThis = this;
+TWeakObjectPtr<UFlowAsset> WeakFlow = Flow;
+GetWorld()->GetTimerManager().SetTimerForNextTick([WeakThis, WeakFlow, bAbort]()
+{
+const UWorld* World = WeakThis.IsValid() ? WeakThis->GetWorld() : nullptr;
+UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
+if (UFlowSubsystem* FlowSubsystem = GameInstance ? GameInstance->GetSubsystem<UFlowSubsystem>() : nullptr; FlowSubsystem && WeakFlow.IsValid())
+{
+FlowSubsystem->FinishRootFlow(WeakThis.Get(), WeakFlow.Get(), bAbort ? EFlowFinishPolicy::Abort : EFlowFinishPolicy::Keep);
+}
+});
+}
+
+void UFVQuestSubsystem::StartActiveQuestFlows()
+{
+for (UFVQuestDefinition* Quest : GetQuests(EFVQuestState::Active))
+{
+StartQuestFlow(Quest);
+}
 }
 
 FFVConditionContext UFVQuestSubsystem::MakeContext() const
