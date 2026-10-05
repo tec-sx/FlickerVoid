@@ -9,13 +9,7 @@ class UFVMemoryFragment;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFVOnMemoryDiscovered, const UFVMemoryFragment*, Memory, AActor*, Discoverer);
 
-/**
- * UFVMemorySubsystem
- *
- * Tracks which memory fragments the protagonist has recovered and applies their impact:
- * fragment count and sanity on the discoverer's attributes, identity recovery, and world state tags.
- * Quest unlocks and presentation are left to OnMemoryDiscovered listeners.
- */
+/** Tracks recovered memory fragments and applies their impact. */
 UCLASS()
 class FLICKERVOIDNARRATIVE_API UFVMemorySubsystem : public UGameInstanceSubsystem
 {

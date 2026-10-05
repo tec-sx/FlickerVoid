@@ -53,7 +53,6 @@ class UFVLockpickAbility : UFVInteractAbility
 		EndLockpick(!Message.bSucceeded);
 	}
 
-	// The target's lock decides the difficulty; the ability default covers actors without one.
 	private float GetLockDifficulty()
 	{
 		UFVLockComponent Lock = UFVLockComponent::Get(Interactable.GetOwner());

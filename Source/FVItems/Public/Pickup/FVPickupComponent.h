@@ -5,14 +5,11 @@
 
 #define UE_API FLICKERVOIDITEMS_API
 
-class UFVItemDataAsset;
+class UFVItemDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnPickedUp, AActor*, Picker);
 
-/**
- * Makes the owning actor collectable. The item goes to the picker's UFVItemReceiverComponent.
- * The pickup ability calls TryPickup on the interactable's owner when its montage finishes.
- */
+/** Makes the owning actor collectable into the picker's UFVItemReceiverComponent. */
 UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
 class UFVPickupComponent : public UActorComponent
 {
@@ -28,7 +25,7 @@ public:
 	UE_API bool CanBePickedUpBy(AActor* Picker) const;
 
 	UFUNCTION(BlueprintPure, Category = "Pickup")
-	UFVItemDataAsset* GetItem() const { return Item; }
+	UFVItemDefinition* GetItem() const { return Item; }
 
 	UFUNCTION(BlueprintPure, Category = "Pickup")
 	int32 GetQuantity() const { return Quantity; }
@@ -38,7 +35,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup")
-	TObjectPtr<UFVItemDataAsset> Item;
+	TObjectPtr<UFVItemDefinition> Item;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (ClampMin = "1"))
 	int32 Quantity = 1;

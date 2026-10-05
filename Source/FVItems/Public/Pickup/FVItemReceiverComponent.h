@@ -5,15 +5,11 @@
 
 #define UE_API FLICKERVOIDITEMS_API
 
-class UFVItemDataAsset;
+class UFVItemDefinition;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFVOnItemReceived, UFVItemDataAsset*, Item, int32, Quantity, AActor*, Source);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFVOnItemReceived, UFVItemDefinition*, Item, int32, Quantity, AActor*, Source);
 
-/**
- * Marks an actor as able to take items from the world (the player, a container, a quest tracker).
- * Pickups find this component and broadcast OnItemReceived; whatever inventory exists binds to it,
- * so pickups stay independent of the inventory implementation.
- */
+/** Lets an actor take items from the world; inventories bind to OnItemReceived. */
 UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
 class UFVItemReceiverComponent : public UActorComponent
 {
@@ -26,7 +22,7 @@ public:
 	static UE_API UFVItemReceiverComponent* FindReceiver(AActor* Actor);
 
 	UFUNCTION(BlueprintCallable, Category = "Item")
-	UE_API bool ReceiveItem(UFVItemDataAsset* Item, int32 Quantity, AActor* Source);
+	UE_API bool ReceiveItem(UFVItemDefinition* Item, int32 Quantity, AActor* Source);
 
 	UFUNCTION(BlueprintPure, Category = "Item")
 	bool IsAcceptingItems() const { return bAcceptingItems; }

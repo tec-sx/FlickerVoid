@@ -43,7 +43,7 @@ UFVItemReceiverComponent* UFVItemReceiverComponent::FindReceiver(AActor* Actor)
 	return nullptr;
 }
 
-bool UFVItemReceiverComponent::ReceiveItem(UFVItemDataAsset* Item, const int32 Quantity, AActor* Source)
+bool UFVItemReceiverComponent::ReceiveItem(UFVItemDefinition* Item, const int32 Quantity, AActor* Source)
 {
 	if (!Item || Quantity <= 0 || !bAcceptingItems)
 	{

@@ -93,7 +93,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
 	FGameplayTagContainer OwnedTags;
 
-	/** Owning any of these tags (on the ability system or OwnedTags) blocks movement. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Movement")
 	FGameplayTagContainer MovementBlockingTags;
 private:

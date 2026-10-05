@@ -19,7 +19,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interaction|Toggle")
 	bool IsOpen() const { return bIsOpen; }
 
-	/** Locked state comes from a UFVLockComponent on the owner; without one the toggle is never locked. */
 	UFUNCTION(BlueprintPure, Category = "Interaction|Toggle")
 	bool IsLocked() const;
 
