@@ -22,18 +22,15 @@ class UFVItemReceiverComponent : public UActorComponent
 public:
 	UFVItemReceiverComponent() { PrimaryComponentTick.bCanEverTick = false; }
 
-	/** Finds the receiver on the actor, or on its controller or player state when the actor is a pawn. */
 	UFUNCTION(BlueprintPure, Category = "Item")
 	static UE_API UFVItemReceiverComponent* FindReceiver(AActor* Actor);
 
-	/** Broadcasts OnItemReceived. Returns false when the receiver isn't accepting items. */
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	UE_API bool ReceiveItem(UFVItemDataAsset* Item, int32 Quantity, AActor* Source);
 
 	UFUNCTION(BlueprintPure, Category = "Item")
 	bool IsAcceptingItems() const { return bAcceptingItems; }
 
-	/** Lets listeners refuse items, e.g. while the inventory is full or during a cutscene. */
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	void SetAcceptingItems(const bool bAccepting) { bAcceptingItems = bAccepting; }
 

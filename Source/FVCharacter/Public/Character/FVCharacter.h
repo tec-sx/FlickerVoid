@@ -56,7 +56,6 @@ public:
 	UFUNCTION(BlueprintPure)
 	FFVCharacterRuntimeState GetRuntimeState() const;
 	
-	/** False while movement input is ignored, movement is disabled, or a MovementBlockingTags tag is owned. */
 	UFUNCTION(BlueprintPure)
 	bool CanMove() const;
 	

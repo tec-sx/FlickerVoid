@@ -10,8 +10,7 @@ class UFVItemDataAsset;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnPickedUp, AActor*, Picker);
 
 /**
- * Makes the owning actor collectable. The item goes to the picker's UFVItemReceiverComponent,
- * so the inventory behind it can change without touching pickups.
+ * Makes the owning actor collectable. The item goes to the picker's UFVItemReceiverComponent.
  * The pickup ability calls TryPickup on the interactable's owner when its montage finishes.
  */
 UCLASS(MinimalAPI, ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
@@ -22,7 +21,6 @@ class UFVPickupComponent : public UActorComponent
 public:
 	UFVPickupComponent() { PrimaryComponentTick.bCanEverTick = false; }
 
-	/** Hands the item to the picker's receiver and, on success, removes the owner from the world. */
 	UFUNCTION(BlueprintCallable, Category = "Pickup")
 	UE_API bool TryPickup(AActor* Picker);
 
