@@ -4,9 +4,9 @@ class UFVExamineAbility : UFVInteractAbility
 	UPROPERTY(EditDefaultsOnly, Category = "Examine")
 	TArray<FRotator> SecretViewAngles;
 
-	// Memory recovered when the matching SecretViewAngles entry is found (same index).
+	// Knowledge learned when the matching SecretViewAngles entry is found (same index).
 	UPROPERTY(EditDefaultsOnly, Category = "Examine")
-	TArray<UFVMemoryFragment> SecretMemories;
+	TArray<UFVKnowledgeDefinition> SecretKnowledge;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Examine")
 	float SecretAngleTolerance = 12.f;
@@ -59,7 +59,7 @@ class UFVExamineAbility : UFVInteractAbility
 			if (IsWithinTolerance(ViewRotation, SecretViewAngles[Index]))
 			{
 				FoundSecrets.Add(Index);
-				UnlockMemory(Index);
+				LearnSecret(Index);
 			}
 		}
 	}
@@ -71,19 +71,14 @@ class UFVExamineAbility : UFVInteractAbility
 			&& Math::Abs(Math::FindDeltaAngleDegrees(A.Roll, B.Roll)) <= SecretAngleTolerance;
 	}
 
-	private void UnlockMemory(int SecretIndex)
+	private void LearnSecret(int SecretIndex)
 	{
-		if (!SecretMemories.IsValidIndex(SecretIndex) || SecretMemories[SecretIndex] == nullptr)
+		if (!SecretKnowledge.IsValidIndex(SecretIndex) || SecretKnowledge[SecretIndex] == nullptr)
 		{
 			return;
 		}
 
-		UFVMemorySubsystem Memories = UFVMemorySubsystem::Get();
-
-		if (IsValid(Memories))
-		{
-			Memories.DiscoverMemory(SecretMemories[SecretIndex], GetAvatarActorFromActorInfo());
-		}
+		UFVKnowledgeStatics::Learn(GetAvatarActorFromActorInfo(), SecretKnowledge[SecretIndex]);
 	}
 
 	private void EndExamine(bool bWasCancelled)

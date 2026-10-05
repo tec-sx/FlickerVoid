@@ -1,45 +1,65 @@
 {
-"FileVersion": 3,
-"Version": 1,
-"VersionName": "1.0",
-"FriendlyName": "FVFramework",
-"Description": "FlickerVoid framework core: definitions, fragments, identity, conditions, effects, facts, input, world clock, cinematics, StateTree and Flow nodes, saveable component, easing.",
-"Category": "FlickerVoid",
-"CreatedBy": "TecSX",
-"CreatedByURL": "",
-"DocsURL": "",
-"MarketplaceURL": "",
-"SupportURL": "",
-"CanContainContent": false,
-"IsBetaVersion": false,
-"Installed": false,
-"Plugins": [
-{ "Name": "DataValidation", "Enabled": true },
-{ "Name": "EnhancedInput", "Enabled": true },
-{ "Name": "StateTree", "Enabled": true },
-{ "Name": "CommonUI", "Enabled": true },
-{ "Name": "Flow", "Enabled": true }
-],
-"Modules": [
-{
-"Name": "FVCoreRuntime",
-"Type": "Runtime",
-"LoadingPhase": "PreDefault"
-},
-{
-"Name": "FVCoreFlow",
-"Type": "Runtime",
-"LoadingPhase": "Default"
-},
-{
-"Name": "FVCoreUI",
-"Type": "Runtime",
-"LoadingPhase": "Default"
-},
-{
-"Name": "FVCoreEditor",
-"Type": "Editor",
-"LoadingPhase": "PostEngineInit"
-}
-]
+ "FileVersion": 3,
+ "Version": 1,
+ "VersionName": "1.0",
+ "FriendlyName": "FVFramework",
+ "Description": "FlickerVoid framework core: definitions, fragments, identity, conditions, effects, facts, input, world clock, cinematics, StateTree and Flow nodes, saveable component, easing.",
+ "Category": "FlickerVoid",
+ "CreatedBy": "TecSX",
+ "CreatedByURL": "",
+ "DocsURL": "",
+ "MarketplaceURL": "",
+ "SupportURL": "",
+ "CanContainContent": false,
+ "IsBetaVersion": false,
+ "Installed": false,
+ "Plugins": [
+  {
+   "Name": "DataValidation",
+   "Enabled": true
+  },
+  {
+   "Name": "EnhancedInput",
+   "Enabled": true
+  },
+  {
+   "Name": "StateTree",
+   "Enabled": true
+  },
+  {
+   "Name": "CommonUI",
+   "Enabled": true
+  },
+  {
+   "Name": "Flow",
+   "Enabled": true
+  }
+ ],
+ "Modules": [
+  {
+   "Name": "FVCoreRuntime",
+   "Type": "Runtime",
+   "LoadingPhase": "PreDefault"
+  },
+  {
+   "Name": "FVCoreFlow",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVCoreDebug",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVCoreUI",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVCoreEditor",
+   "Type": "Editor",
+   "LoadingPhase": "PostEngineInit"
+  }
+ ]
 }

@@ -26,4 +26,4 @@ Plugins/*
 !Plugins/FVInventorySystem
 !Plugins/FVDialogueSystem
 !Plugins/FVSocialSystem
-!Plugins/FVScannerSystem
+!Plugins/FVAttributeSystem
