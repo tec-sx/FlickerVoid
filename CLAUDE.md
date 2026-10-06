@@ -4,7 +4,7 @@ Third-person narrative RPG/adventure (references: Witcher 3, Tomb Raider, Cyberp
 
 The project builds against the owner's custom Unreal Engine fork with AngelScript. Builds and tests happen locally; don't assume a stock engine.
 
-Full design: `Docs/Framework/FrameworkDesign.md`.
+Full design: `Docs/Framework/FrameworkDesign.md`. Per-plugin setup guides: `Docs/Setup/` (keep them in sync when a plugin's assets, settings or components change).
 
 ## Layers
 
