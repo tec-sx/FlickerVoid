@@ -16,11 +16,15 @@ namespace FVDebug
 	/** Loads the first definition of Class whose Id tag or asset name matches IdOrName. */
 	FVCOREDEBUG_API UFVDefinition* FindDefinition(const UClass* Class, const FString& IdOrName);
 
-	template<typename T>
+	template <typename T>
 	T* FindDefinition(const FString& IdOrName)
 	{
 		return Cast<T>(FindDefinition(T::StaticClass(), IdOrName));
 	}
 }
 
-DECLARE_LOG_CATEGORY_EXTERN(LogFVDebug, Log, All);
+extern FVCOREDEBUG_API class FLogCategoryLogFVDebug : public FLogCategory<ELogVerbosity::Log, ELogVerbosity::All>
+{
+public:
+	FORCEINLINE FLogCategoryLogFVDebug() : FLogCategory(TEXT("LogFVDebug")) { }
+} LogFVDebug;

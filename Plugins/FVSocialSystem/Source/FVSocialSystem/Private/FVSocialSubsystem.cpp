@@ -32,7 +32,7 @@ void UFVSocialSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 	if (UFVFactDatabase* Facts = UFVFactDatabase::Get(this))
 	{
-		FactChangedHandle = Facts->OnFactChangedNative().AddRaw(this, &UFVSocialSubsystem::HandleFactChanged);
+		FactChangedHandle = Facts->OnFactChangedNative().AddUObject(this, &UFVSocialSubsystem::HandleFactChanged);
 	}
 
 	EvaluateTitles();
@@ -90,14 +90,14 @@ void UFVSocialSubsystem::EvaluateTitles()
 	}
 }
 
-TArray<const UFVTitleDefinition*> UFVSocialSubsystem::GetHeldTitles() const
+TArray<UFVTitleDefinition*> UFVSocialSubsystem::GetHeldTitles() const
 {
-	TArray<const UFVTitleDefinition*> Held;
+	TArray<UFVTitleDefinition*> Held;
 	for (const TObjectPtr<const UFVTitleDefinition>& Title : Titles)
 	{
 		if (UFVSocialStatics::HasTitle(this, Title))
 		{
-			Held.Add(Title);
+			Held.Add(const_cast<UFVTitleDefinition*>(Title.Get()));
 		}
 	}
 	return Held;

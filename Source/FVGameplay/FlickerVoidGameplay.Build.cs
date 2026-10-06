@@ -32,6 +32,7 @@ public class FlickerVoidGameplay : ModuleRules
 			"FVCoreDebug",
 			"FlickerVoidCharacter",
 			"Flow",
+			"DeveloperSettings"
 		});
 
 		if (Target.bBuildEditor)

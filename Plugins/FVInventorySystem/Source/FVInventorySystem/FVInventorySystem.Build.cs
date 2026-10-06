@@ -17,7 +17,8 @@ public class FVInventorySystem : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "GameplayAbilities"
+            "GameplayAbilities",
+            "DeveloperSettings",
         });
     }
 }

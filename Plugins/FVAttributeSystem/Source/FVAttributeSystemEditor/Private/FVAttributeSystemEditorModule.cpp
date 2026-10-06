@@ -1,3 +1,4 @@
+#include "Attributes/FVAttributeDefinition.h"
 #include "FVAttributeSettings.h"
 #include "FVCoreEditor.h"
 #include "Modules/ModuleManager.h"
@@ -20,7 +21,7 @@ public:
 			FFVCoreEditorModule::AddAssetMenuAction(AttributeMenuSection, SectionLabel, "DefaultSet",
 				LOCTEXT("DefaultSet", "Default Attribute Set"), []() -> UObject*
 				{
-					UObject* Asset = UFVAttributeSettings::Get().DefaultAttributeSet.LoadSynchronous();
+					UObject* Asset = Cast<UObject>(UFVAttributeSettings::Get().DefaultAttributeSet.LoadSynchronous());
 					if (Asset == nullptr)
 					{
 						FFVCoreEditorModule::OpenSettings(UFVAttributeSettings::StaticClass());

@@ -134,14 +134,14 @@ void UFVAttributeComponent::RemoveModifiersFromSource(FGameplayTag Source)
 	}
 }
 
-TArray<const UFVAttributeDefinition*> UFVAttributeComponent::GetKnownAttributes() const
+TArray<UFVAttributeDefinition*> UFVAttributeComponent::GetKnownAttributes() const
 {
-	TArray<const UFVAttributeDefinition*> Out;
+	TArray<UFVAttributeDefinition*> Out;
 	for (const TPair<TObjectPtr<const UFVAttributeDefinition>, float>& Pair : BaseValues)
 	{
 		if (Pair.Key != nullptr)
 		{
-			Out.Add(Pair.Key);
+			Out.Add(const_cast<UFVAttributeDefinition*>(Pair.Key.Get()));
 		}
 	}
 	return Out;

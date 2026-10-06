@@ -92,8 +92,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FV|Check", meta = (DefaultToSelf = "Instigator"))
 	static float SuccessChance(const UFVCheckDefinition* Check, AActor* Instigator, AActor* Target, int32 Difficulty);
 
-private:
 	static FFVCheckResult Build(const UFVCheckDefinition* Check, const FFVConditionContext& Context, int32 Difficulty, bool bRoll);
+
+private:
 	static int32 Roll(EFVCheckRoll InRoll);
 };
 

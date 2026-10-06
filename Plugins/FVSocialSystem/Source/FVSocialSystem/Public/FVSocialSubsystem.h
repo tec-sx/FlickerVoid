@@ -26,7 +26,7 @@ public:
 	void EvaluateTitles();
 
 	UFUNCTION(BlueprintPure, Category = "FV|Social")
-	TArray<const UFVTitleDefinition*> GetHeldTitles() const;
+	TArray<UFVTitleDefinition*> GetHeldTitles() const;
 
 	UPROPERTY(BlueprintAssignable, Category = "FV|Social")
 	FFVOnTitleChanged OnTitleEarned;

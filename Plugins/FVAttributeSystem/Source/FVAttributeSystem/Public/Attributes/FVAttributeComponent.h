@@ -74,7 +74,7 @@ public:
 	void RemoveModifiersFromSource(FGameplayTag Source);
 
 	UFUNCTION(BlueprintPure, Category = "FV|Attributes")
-	TArray<const UFVAttributeDefinition*> GetKnownAttributes() const;
+	TArray<UFVAttributeDefinition*> GetKnownAttributes() const;
 
 	UPROPERTY(BlueprintAssignable, Category = "FV|Attributes")
 	FFVOnAttributeChanged OnAttributeChanged;

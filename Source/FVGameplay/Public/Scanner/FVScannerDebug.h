@@ -4,7 +4,6 @@
 #include "HAL/IConsoleManager.h"
 #include "Scanner/FVScannableComponent.h"
 #include "Scanner/FVScannerComponent.h"
-#include "Scanner/FVScannerSubsystem.h"
 
 #include "FVScannerDebug.generated.h"
 

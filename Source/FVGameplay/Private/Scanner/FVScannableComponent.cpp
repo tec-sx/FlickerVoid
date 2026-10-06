@@ -78,7 +78,7 @@ void UFVScannableComponent::SetRevealed(const bool bInRevealed)
 			{
 				continue;
 			}
-			SavedStates.Add({ Primitive, Primitive->bRenderCustomDepth, Primitive->CustomDepthStencilValue });
+			SavedStates.Add({ Primitive, Primitive->bRenderCustomDepth != 0, Primitive->CustomDepthStencilValue });
 			Primitive->SetRenderCustomDepth(true);
 			Primitive->SetCustomDepthStencilValue(Stencil);
 		}
