@@ -58,7 +58,7 @@ class AInteractableAICharacter : AFVAICharacter
     }
 
     UFUNCTION()
-    private void UpdateFloatingTextBar(FText Text, float Duration)
+    private void UpdateFloatingTextBar(const FText&in Text, float32 Duration)
     {
         UFloatingTextBar FloatingTextBar = Cast<UFloatingTextBar>(FloatingTextBarComponent.GetUserWidgetObject());
 

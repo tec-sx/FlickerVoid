@@ -1,4 +1,4 @@
-class AFVHUD : AHUD
+class AFVHUDOld : AHUD
 {
 	UPROPERTY(EditAnywhere, Category = "Configuration")
     TSubclassOf<UInteractionSetWidget> InteractionOptionsWidgetClass;

@@ -6,7 +6,7 @@ class UFVExamineAbility : UFVInteractAbility
 
 	// Knowledge learned when the matching SecretViewAngles entry is found (same index).
 	UPROPERTY(EditDefaultsOnly, Category = "Examine")
-	TArray<UFVKnowledgeDefinition> SecretKnowledge;
+	TArray<const UFVKnowledgeDefinition> SecretKnowledge;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Examine")
 	float SecretAngleTolerance = 12.f;
@@ -78,7 +78,7 @@ class UFVExamineAbility : UFVInteractAbility
 			return;
 		}
 
-		UFVKnowledgeStatics::Learn(GetAvatarActorFromActorInfo(), SecretKnowledge[SecretIndex]);
+		FVKnowledge::Learn(SecretKnowledge[SecretIndex]);
 	}
 
 	private void EndExamine(bool bWasCancelled)
