@@ -26,6 +26,7 @@ Much older code in `Source/` is experimental or obsolete; don't assume it should
 | FVStorySystem | Quests, knowledge |
 | FVSocialSystem | Factions, standing, fame, notoriety, titles, disguise, affinity |
 | FVInteractionSystem | Interaction offers, registry subsystem, focus |
+| FVNavigationSystem | Maps and layers, map markers, discovery, waypoint and tracking, minimap/world map/compass view logic, map capture tool |
 | Flow | FlowGraph (MothCocoon), external git submodule; don't edit |
 
 Every plugin has three modules: runtime, `<Plugin>Debug` and `<Plugin>Editor`. FVInteractionSystemEditor is the reference pattern.

@@ -1,0 +1,40 @@
+{
+ "FileVersion": 3,
+ "Version": 1,
+ "VersionName": "1.0",
+ "FriendlyName": "FVNavigationSystem",
+ "Description": "FlickerVoid maps, markers, discovery, waypoints and the driving logic for minimap, world map and compass, plus an editor tool that captures map images.",
+ "Category": "FlickerVoid",
+ "CreatedBy": "TecSX",
+ "CreatedByURL": "",
+ "DocsURL": "",
+ "MarketplaceURL": "",
+ "SupportURL": "",
+ "CanContainContent": true,
+ "IsBetaVersion": false,
+ "IsExperimentalVersion": false,
+ "Installed": false,
+ "Modules": [
+  {
+   "Name": "FVNavigationSystem",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVNavigationSystemDebug",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVNavigationSystemEditor",
+   "Type": "Editor",
+   "LoadingPhase": "PostEngineInit"
+  }
+ ],
+ "Plugins": [
+  {
+   "Name": "FVFramework",
+   "Enabled": true
+  }
+ ]
+}

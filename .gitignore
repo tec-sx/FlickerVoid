@@ -27,4 +27,5 @@ Plugins/*
 !Plugins/FVDialogueSystem
 !Plugins/FVSocialSystem
 !Plugins/FVAttributeSystem
+!Plugins/FVNavigationSystem
 !Plugins/Flow

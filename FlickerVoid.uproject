@@ -586,6 +586,10 @@
 		{
 			"Name": "FVAttributeSystem",
 			"Enabled": true
+		},
+		{
+			"Name": "FVNavigationSystem",
+			"Enabled": true
 		}
 	]
 }

@@ -18,6 +18,7 @@ Status: implemented in `feature/framework-dev`, revised after the owner's answer
 | Hitman | Disguises are tags; some NPCs (enforcers) see through them; suspicion builds rather than flipping. | Outfits grant gameplay tags (`Disguise.Faction.*`). `FVSocialSystem` resolves attitude from standing tier, notoriety and disguise, and a disguise lowers the fame onlookers read. Suspicion meter is phase 2 (stealth). |
 | Lyra / modern UE5 | Item fragments, instanced structs, data assets, GAS, StateTree, modular components. | Fragments on definitions (`TInstancedStruct`), components found on actors instead of interfaces. |
 | Tarkov / Resident Evil | Carrying is a decision: weight and container space, no free stacking. | Items carry weight and a grid footprint; bags and backpacks grant both. |
+| Witcher 3 / Cyberpunk / Horizon maps | One registry of map markers feeds every view (minimap, world map, compass). Places are discovered by proximity, interiors and floors swap the map, the tracked objective is pinned to the minimap and compass edges, the legend filters categories, the player places one waypoint. | `FVNavigationSystem`: marker definitions with per-view fragments, marker components on actors, `UFVNavigationSubsystem` as the registry, `UFVNavigatorComponent` builds the views. Discovery is a fact, so it saves. Map images come from an orthographic capture tool, the same way marketplace minimap kits and Lyra-style indicator managers split data from presentation. |
 
 ## Layers
 
@@ -36,6 +37,7 @@ Plugins (FV*System, feature based)  ->  Game modules (domain based)  ->  AngelSc
 | **FVDialogueSystem** | new (replaces the Yap fork) | Flow-based conversations: Line, Choice, End Conversation, Bark nodes; dialogue subsystem for UI; participant component for animation/voice. |
 | **FVStorySystem** | reworked | Quests (+ optional quest Flow graph), knowledge, save. Yap bridge removed; reputation moved to Social. |
 | **FVSocialSystem** | new | Factions and standing tiers, one global fame and one global notoriety, titles, relationships, disguise-aware recognition. |
+| **FVNavigationSystem** | new | Map definitions with layers (floors, interiors), marker definitions with view fragments, marker component, discovery, tracked marker, waypoint, driving logic for minimap, world map and compass. Editor: Map Capture panel and capture actor that render layer images. |
 | FVStealthSystem | phase 2 (proposed) | Visibility (light, stance, disguise), hiding spots, suspicion meters for NPCs (StateTree + AI perception). |
 
 Every plugin depends only on FVFramework (and Flow where it has graph nodes). Plugins never depend on each other; they meet through **facts, gameplay tags, conditions/effects and components on actors**.
@@ -72,7 +74,13 @@ UFVDefinition (Id tag, Display, Tags)                        FVFramework
  ├─ UFVTitleDefinition      { Conditions, OnEarned, Replaces }   FVSocialSystem
  ├─ UFVScanDefinition       { Category, Duration, Entries, OnScanned effects }  FVGameplay
  ├─ UFVQuestDefinition      { objectives, auto start/fail, effects, Flow }      FVStorySystem
- └─ UFVKnowledgeDefinition  { kind, prerequisites, OnLearned }                  FVStorySystem
+ ├─ UFVKnowledgeDefinition  { kind, prerequisites, OnLearned }                  FVStorySystem
+ ├─ UFVMapDefinition        { Priority, AvailableWhen, Layers{Texture, WorldMin/Max, MinZ/MaxZ} } + Fragments<FFVMapFragment>  FVNavigationSystem
+ └─ UFVMarkerDefinition     { Priority, VisibleWhen } + Fragments<FFVMarkerFragment>  FVNavigationSystem
+       FFVMarkerFragment_Minimap   { bClampToEdge, MaxDistance, bRotateWithActor }
+       FFVMarkerFragment_WorldMap  { MinZoom, bRotateWithActor }
+       FFVMarkerFragment_Compass   { MaxDistance }
+       FFVMarkerFragment_Discovery { Radius, bHiddenUntilDiscovered, UndiscoveredIcon, OnDiscovered }
 ```
 
 Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)` in AngelScript):
@@ -86,6 +94,9 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | `UFVAttributeComponent` | Attributes | any character with attributes |
 | `UFVScannerComponent` | FVGameplay | player |
 | `UFVScannableComponent` | FVGameplay | anything scannable (needs an interactable component too) |
+| `UFVMapMarkerComponent` | Navigation | anything shown on the map, minimap or compass (shops, quest givers, points of interest) |
+| `UFVNavigatorComponent` | Navigation | player pawn: active map, discovery, minimap/compass/world map views |
+| `AFVMapCaptureActor` | Navigation | editor-only camera placed over an area to capture a map layer image |
 
 ## Key flows
 
@@ -118,6 +129,14 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 2. Pockets (`BasePocketCells`) plus the container fragments of equipped bags and backpacks give the space; the base limit plus their `WeightBonus` gives the weight allowance.
 3. The game layer adds allowance from attributes with `SetBonuses`, which keeps the inventory plugin independent of the attribute plugin.
 4. A pickup that does not fit is refused, or takes only part of the pile and leaves the rest in the world.
+
+**Navigation**
+1. Maps are listed in Navigation settings. The navigator finds the highest-priority available map with a layer under the player, so walking into a building swaps to its interior map and climbing stairs swaps the floor (`OnActiveMapChanged`).
+2. Marker components register with `UFVNavigationSubsystem`. `VisibleWhen` is re-checked whenever a fact changes, so a quest marker appears and disappears with the quest state.
+3. A marker appears in a view only when its definition has that view's fragment. The HUD calls `BuildMinimapView`, `BuildCompassView` or `BuildWorldMapView` and draws the returned positions; it holds no logic of its own.
+4. Coming within a Discovery fragment's radius discovers the place: its fact is set (so it saves), its `OnDiscovered` effects run and `OnMarkerDiscovered` fires.
+5. The tracked marker (a quest objective or the player's waypoint) ignores distance and category filters and stays pinned to the minimap and compass edges.
+6. Map images: place an `AFVMapCaptureActor` (or a Blueprint of it), fit its box and pick a map and layer, then capture from Tools > Map Capture or the FlickerVoid menu. The texture is saved to the capture folder and the layer gets the texture and the exact captured area. Pawns and actors tagged `MapCaptureIgnore` are left out by default.
 
 **Linear and non-linear story**
 - Linear: the main story Flow graph (world settings root flow) runs chapters with Sub Graph nodes and `Set Quest State`.
@@ -164,3 +183,4 @@ A CVar that changes a rule (such as the two inventory limits) reads `-1` by defa
 - 2D grid placement: space is counted in cells rather than packed into a layout. Real placement (rotation, per-slot grids) can come later if the game needs it.
 - Outfit meshes are not applied visually yet; the equipment component broadcasts and the game layer dresses the character.
 - Quest flow graphs restart from their beginning after a load.
+- Navigation: the waypoint and the tracked marker are not saved yet; there is no fog of war over unexplored map areas; navigation HUD widgets come later.

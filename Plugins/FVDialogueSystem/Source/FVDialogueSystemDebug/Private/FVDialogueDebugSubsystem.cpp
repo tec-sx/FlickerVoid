@@ -26,9 +26,9 @@ void UFVDialogueDebugSubsystem::CollectLines(TArray<FString>& OutLines) const
 	}
 
 	const FFVDialogueLine& Line = Dialogue->GetCurrentLine();
-
+	
 	OutLines.Add(FString::Printf(TEXT("with %s"), *GetNameSafe(Dialogue->GetOwnerActor())));
-	OutLines.Add(FString::Printf(TEXT("%s: %s"), *GetNameSafe(Line.Speaker), *Line.Text.ToString()));
+	OutLines.Add(FString::Printf(TEXT("%s: %s"), *Line.Speaker.GetName(), *Line.Text.ToString()));
 
 	for (const FFVDialogueChoice& Choice : Dialogue->GetChoices())
 	{
