@@ -14,9 +14,7 @@ public class FVStorySystem : ModuleRules
             "GameplayTags",
             "DeveloperSettings",
             "FVCoreRuntime",
-            "Flow",
-            "Yap",
-            "GameplayMessageRuntime"
+            "Flow"
         });
     }
 }

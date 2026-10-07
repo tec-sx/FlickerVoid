@@ -10,6 +10,7 @@
 #include "FVQuest.generated.h"
 
 class UFVFactDatabase;
+class UFlowAsset;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFVOnQuestsChanged);
 
@@ -73,9 +74,16 @@ FFVEffectList OnCompleted;
 UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Quest")
 FFVEffectList OnFailed;
 
+/** Optional graph that runs while the quest is active (owned by the quest subsystem). Restarts from its start after loading. */
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Quest")
+TSoftObjectPtr<UFlowAsset> Flow;
+
 #if WITH_EDITOR
 virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 #endif
+
+protected:
+virtual bool RequiresId() const override { return true; }
 };
 
 UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Quests"))
@@ -147,6 +155,9 @@ void EvaluateQuest(UFVQuestDefinition* Quest);
 bool UpdateObjectives(const UFVQuestDefinition* Quest);
 bool AreRequiredObjectivesDone(const UFVQuestDefinition* Quest) const;
 void Notify(UFVQuestDefinition* Quest);
+void StartQuestFlow(UFVQuestDefinition* Quest);
+void StopQuestFlow(UFVQuestDefinition* Quest, bool bAbort);
+void StartActiveQuestFlows();
 FFVConditionContext MakeContext() const;
 UFVFactDatabase* GetFacts() const;
 

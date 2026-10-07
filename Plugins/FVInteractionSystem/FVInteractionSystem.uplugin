@@ -1,35 +1,40 @@
 {
-	"FileVersion": 3,
-	"Version": 1,
-	"VersionName": "1.0",
-	"FriendlyName": "FVInteractionSystem",
-	"Description": "FV Interaction System.",
-	"Category": "",
-	"CreatedBy": "TecSX",
-	"CreatedByURL": "",
-	"DocsURL": "",
-	"MarketplaceURL": "",
-	"SupportURL": "",
-	"CanContainContent": true,
-	"IsBetaVersion": false,
-	"Installed": false,
-	"Modules": [
-		{
-			"Name": "FVInteractionSystem",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		},
-		{
-			"Name": "FVInteractionSystemEditor",
-			"Type": "Editor",
-			"LoadingPhase": "Default"
-		}
-	],
-	"Plugins": [
-		{
-			"Name": "FVFramework",
-			"Enabled": true
-		}
-	],
-	"IsExperimentalVersion": false
+ "FileVersion": 3,
+ "Version": 1,
+ "VersionName": "1.0",
+ "FriendlyName": "FVInteractionSystem",
+ "Description": "FV Interaction System.",
+ "Category": "",
+ "CreatedBy": "TecSX",
+ "CreatedByURL": "",
+ "DocsURL": "",
+ "MarketplaceURL": "",
+ "SupportURL": "",
+ "CanContainContent": true,
+ "IsBetaVersion": false,
+ "Installed": false,
+ "Modules": [
+  {
+   "Name": "FVInteractionSystem",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVInteractionSystemEditor",
+   "Type": "Editor",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVInteractionSystemDebug",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  }
+ ],
+ "Plugins": [
+  {
+   "Name": "FVFramework",
+   "Enabled": true
+  }
+ ],
+ "IsExperimentalVersion": false
 }

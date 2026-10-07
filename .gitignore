@@ -22,4 +22,17 @@ Plugins/*
 !Plugins/FVInteractionSystem
 !Plugins/FVInteractionSystem/Content
 !Plugins/FVFramework
+!Plugins/FVFramework/Content
 !Plugins/FVStorySystem
+!Plugins/FVStorySystem/Content
+!Plugins/FVInventorySystem
+!Plugins/FVInventorySystem/Content
+!Plugins/FVDialogueSystem
+!Plugins/FVDialogueSystem/Content
+!Plugins/FVSocialSystem
+!Plugins/FVSocialSystem/Content
+!Plugins/FVAttributeSystem
+!Plugins/FVAttributeSystem/Content
+!Plugins/FVNavigationSystem
+!Plugins/FVNavigationSystem/Content
+!Plugins/Flow

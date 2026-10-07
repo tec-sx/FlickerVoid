@@ -1,0 +1,39 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.9",
+	"FriendlyName": "Yap",
+	"Description": "Conversation Plugin built on top of FlowGraph",
+	"Category": "Flow",
+	"CreatedBy": "Ghost Pepper Games Inc.",
+	"CreatedByURL": "https://github.com/HomerJohnston",
+	"DocsURL": "https://github.com/HomerJohnston/Yap/wiki",
+	"MarketplaceURL": "",
+	"SupportURL": "https://github.com/HomerJohnston/Yap/issues",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "Yap",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "YapEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "Flow",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayTagsEditor",
+			"Enabled": true
+		}
+	]
+}

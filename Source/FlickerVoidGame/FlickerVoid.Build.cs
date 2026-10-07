@@ -24,7 +24,6 @@ public class FlickerVoid : ModuleRules
 			"EnhancedInput",
 			"FlickerVoidCore",
 			"FlickerVoidGameplay",
-			"FlickerVoidItems",
 			"FlickerVoidNarrative",
 			"FlickerVoidCharacter",
 			"FlickerVoidWorld",

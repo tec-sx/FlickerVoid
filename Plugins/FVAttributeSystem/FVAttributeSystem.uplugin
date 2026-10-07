@@ -1,0 +1,20 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "FVAttributeSystem",
+	"Description": "Data-driven attributes, modifiers and skill checks. Attributes are definitions, so game code and AngelScript can add new ones without touching C++.",
+	"Category": "FlickerVoid",
+	"CreatedBy": "TecSX",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Plugins": [
+		{ "Name": "FVFramework", "Enabled": true }
+	],
+	"Modules": [
+		{ "Name": "FVAttributeSystem", "Type": "Runtime", "LoadingPhase": "Default" },
+		{ "Name": "FVAttributeSystemDebug", "Type": "Runtime", "LoadingPhase": "Default" },
+		{ "Name": "FVAttributeSystemEditor", "Type": "Editor", "LoadingPhase": "PostEngineInit" }
+	]
+}

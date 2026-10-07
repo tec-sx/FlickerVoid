@@ -140,35 +140,3 @@ void UFVFactDatabase::Notify(FGameplayTag Tag, int32 OldValue, int32 NewValue)
 	FactChangedNative.Broadcast(Tag, OldValue, NewValue);
 	OnFactsChanged.Broadcast();
 }
-
-#if !UE_BUILD_SHIPPING
-static FAutoConsoleCommandWithWorldAndArgs GFVFactSet(
-	TEXT("FV.Facts.Set"),
-	TEXT("FV.Facts.Set <Tag> <Value>"),
-	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
-	{
-		UFVFactDatabase* Database = UFVFactDatabase::Get(World);
-		if (!Database || Args.Num() < 2)
-		{
-			return;
-		}
-		const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(Args[0]), false);
-		Database->SetFact(Tag, FCString::Atoi(*Args[1]));
-	}));
-
-static FAutoConsoleCommandWithWorld GFVFactDump(
-	TEXT("FV.Facts.Dump"),
-	TEXT("Prints all defined facts."),
-	FConsoleCommandWithWorldDelegate::CreateLambda([](UWorld* World)
-	{
-		const UFVFactDatabase* Database = UFVFactDatabase::Get(World);
-		if (!Database)
-		{
-			return;
-		}
-		for (const TPair<FGameplayTag, int32>& Pair : Database->GetAllFacts())
-		{
-			UE_LOG(LogFVFacts, Display, TEXT("%s = %d"), *Pair.Key.ToString(), Pair.Value);
-		}
-	}));
-#endif

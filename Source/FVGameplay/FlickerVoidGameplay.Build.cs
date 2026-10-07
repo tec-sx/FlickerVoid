@@ -23,13 +23,16 @@ public class FlickerVoidGameplay : ModuleRules
 			"GameplayStateTreeModule",
 			"FVInteractionSystem",
 			"FVCoreRuntime",
+			"FVAttributeSystem",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"UMG",
 			"GameplayMessageRuntime",
+			"FVCoreDebug",
 			"FlickerVoidCharacter",
 			"Flow",
+			"DeveloperSettings"
 		});
 
 		if (Target.bBuildEditor)

@@ -1,6 +1,5 @@
 #include "Quest/Flow/FVQuestFlowNodes.h"
 
-#include "Dialogue/FVDialogueBridge.h"
 #include "Facts/FVFactDatabase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVQuestFlowNodes)
@@ -177,17 +176,4 @@ bool UFVFlowNodeAddOn_QuestStatePredicate::EvaluatePredicate_Implementation() co
 {
 	const UFVQuestSubsystem* Subsystem = UFVQuestSubsystem::Get(this);
 	return Subsystem && Quest && Subsystem->GetState(Quest) == State;
-}
-
-UFVFlowNodeAddOn_ConditionPredicate::UFVFlowNodeAddOn_ConditionPredicate()
-{
-#if WITH_EDITOR
-	Category = TEXT("FlickerVoid");
-	NodeDisplayStyle = FlowNodeStyle::AddOn_Predicate;
-#endif
-}
-
-bool UFVFlowNodeAddOn_ConditionPredicate::EvaluatePredicate_Implementation() const
-{
-	return Conditions.Evaluate(FVDialogueBridge::MakeContext(GetWorld()));
 }

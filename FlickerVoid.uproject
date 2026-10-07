@@ -28,11 +28,6 @@
 			"LoadingPhase": "Default"
 		},
 		{
-			"Name": "FlickerVoidItems",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		},
-		{
 			"Name": "FlickerVoidNarrative",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
@@ -565,14 +560,6 @@
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/46d407c1917d4575bfc2a8bb1cb5185d"
 		},
 		{
-			"Name": "MounteaAdvancedInventorySystem",
-			"Enabled": false
-		},
-		{
-			"Name": "Yap",
-			"Enabled": true
-		},
-		{
 			"Name": "WebBrowserWidget",
 			"Enabled": true
 		},
@@ -582,6 +569,26 @@
 		},
 		{
 			"Name": "FVStorySystem",
+			"Enabled": true
+		},
+		{
+			"Name": "FVInventorySystem",
+			"Enabled": true
+		},
+		{
+			"Name": "FVDialogueSystem",
+			"Enabled": true
+		},
+		{
+			"Name": "FVSocialSystem",
+			"Enabled": true
+		},
+		{
+			"Name": "FVAttributeSystem",
+			"Enabled": true
+		},
+		{
+			"Name": "FVNavigationSystem",
 			"Enabled": true
 		}
 	]

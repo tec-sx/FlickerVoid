@@ -37,38 +37,4 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Default Gameplay Effects")
 	TSoftClassPtr<UGameplayEffect> DynamicTagGameplayEffect;
 
-	// ========================================================================
-	// NARRATIVE EFFECTS
-	// ========================================================================
-
-	UPROPERTY(EditDefaultsOnly, Category = "Narrative Effects")
-	TSoftClassPtr<UGameplayEffect> SanityDamageEffect;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Narrative Effects")
-	TSoftClassPtr<UGameplayEffect> SanityRecoveryEffect;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Narrative Effects")
-	TSoftClassPtr<UGameplayEffect> WithdrawalEffect;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Narrative Effects")
-	TMap<FGameplayTag, TSoftClassPtr<UGameplayEffect>> SubstanceEffects;
-
-	// ========================================================================
-	// NARRATIVE THRESHOLDS
-	// ========================================================================
-
-	UPROPERTY(EditDefaultsOnly, Category = "Narrative Thresholds", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float SanityDisturbedThreshold = 0.6f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Narrative Thresholds", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float SanityUnstableThreshold = 0.3f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Narrative Thresholds", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float SanityProgressionBlockThreshold = 0.2f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Narrative Thresholds", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float AddictionDependencyThreshold = 0.5f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Narrative Thresholds")
-	float DaysCleanForRecovery = 7.0f;
 };
