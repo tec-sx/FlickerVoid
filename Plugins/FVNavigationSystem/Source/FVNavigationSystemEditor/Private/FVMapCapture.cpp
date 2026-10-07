@@ -1,5 +1,6 @@
 #include "FVMapCapture.h"
 
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Editor.h"
 #include "Engine/Texture2D.h"
@@ -11,6 +12,7 @@
 #include "FVNavigationSystem.h"
 #include "FVNavigationTypes.h"
 #include "Kismet/KismetRenderingLibrary.h"
+#include "Misc/PackageName.h"
 #include "ObjectTools.h"
 #include "RenderingThread.h"
 #include "ScopedTransaction.h"
@@ -62,23 +64,36 @@ namespace FVMapCapture
 		return Target;
 	}
 
-	static UTexture2D* SaveTexture(AFVMapCaptureActor& Actor, UTextureRenderTarget2D* Target, const FFVMapLayer* Layer, FName LayerName)
+	/** Finds the texture asset at the capture path, or creates an empty one configured for map images. */
+	static UTexture2D* FindOrCreateTexture(const AFVMapCaptureActor& Actor, FName LayerName)
 	{
-		if (UTexture2D* Existing = Layer ? Layer->Texture.LoadSynchronous() : nullptr)
+		const FString PackageName = MakeTexturePath(Actor, LayerName);
+		const FString AssetName = FPackageName::GetLongPackageAssetName(PackageName);
+
+		if (UTexture2D* Existing = LoadObject<UTexture2D>(nullptr, *(PackageName + TEXT(".") + AssetName), nullptr, LOAD_NoWarn | LOAD_Quiet))
 		{
-			UKismetRenderingLibrary::ConvertRenderTargetToTexture2DEditorOnly(&Actor, Target, Existing);
 			return Existing;
 		}
 
-		UTexture2D* Texture = UKismetRenderingLibrary::RenderTargetCreateStaticTexture2DEditorOnly(
-			Target, MakeTexturePath(Actor, LayerName), TC_Default, TMGS_FromTextureGroup);
-		if (Texture != nullptr)
-		{
-			Texture->LODGroup = TEXTUREGROUP_UI;
-			Texture->CompressionNoAlpha = true;
-			Texture->PostEditChange();
-		}
+		UPackage* Package = CreatePackage(*PackageName);
+		UTexture2D* Texture = NewObject<UTexture2D>(Package, *AssetName, RF_Public | RF_Standalone | RF_Transactional);
+		Texture->LODGroup = TEXTUREGROUP_UI;
+		Texture->CompressionNoAlpha = true;
+		FAssetRegistryModule::AssetCreated(Texture);
 		return Texture;
+	}
+
+	/** Writes the render target into the layer's texture, or a texture asset at the capture path, in one texture build. */
+	static UTexture2D* SaveTexture(AFVMapCaptureActor& Actor, UTextureRenderTarget2D* Target, const FFVMapLayer* Layer, FName LayerName)
+	{
+		UTexture2D* Texture = Layer ? Layer->Texture.LoadSynchronous() : nullptr;
+		if (Texture == nullptr)
+		{
+			Texture = FindOrCreateTexture(Actor, LayerName);
+		}
+
+		UKismetRenderingLibrary::ConvertRenderTargetToTexture2DEditorOnly(&Actor, Target, Texture);
+		return Texture->Source.IsValid() ? Texture : nullptr;
 	}
 
 	FResult Capture(AFVMapCaptureActor& Actor)
