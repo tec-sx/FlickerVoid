@@ -70,4 +70,7 @@ public:
 	int32 DisguiseNotorietyLimit = 50;
 
 	const FFVReputationTier* FindTier(int32 Standing) const;
+
+protected:
+	virtual bool RequiresId() const override { return true; }
 };

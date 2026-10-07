@@ -1,7 +1,7 @@
 class APlayerCharacterController : AFVPlayerController
 {
     UPROPERTY(DefaultComponent)
-    UNarrativeNavigationComponent Navigation;
+    UFVNavigatorComponent NavigatorComponent;
     
     UPROPERTY()
     TSubclassOf<UUserWidget> HUDWidgetClass;

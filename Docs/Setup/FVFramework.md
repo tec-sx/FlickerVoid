@@ -22,31 +22,52 @@ Facts are integers keyed by gameplay tags, held by `UFVFactDatabase` (a game ins
 
 ## 3. UI layout and HUD (FVCoreUI)
 
-### Gameplay tags
-Create layer tags, for example:
+### How layers work
+
+The layout is a full-screen widget with a few **layers** placed on top of each other. Each layer is a `CommonActivatableWidgetStack`:
+- **All layers are visible at once**, bottom to top. A menu on a higher layer draws over the HUD on a lower one.
+- **Inside one layer only the top widget is visible.** Pushing a widget onto a layer hides the one under it until the new one is popped.
+
+So a layer is a *slot for one thing at a time*, not a folder per feature. Pick a layer by asking "what should this replace when it opens?":
+- Things that are on screen together (minimap, compass, quest tracker, health, notifications) go **inside one HUD widget** pushed once. Don't give each its own layer.
+- Things that replace each other (world map, inventory, journal) are screens on a **menu layer**: opening the inventory from the map hides the map, closing it shows the map again.
+
+### Recommended layers
+
 ```
-UI.Layer.Game        // HUD elements, interaction prompts, mode overlays
-UI.Layer.GameMenu    // inventory, journal, map
-UI.Layer.Menu        // pause and main menu
-UI.Layer.Modal       // confirmations, popups
+UI.Layer.HUD        // WBP_GameHUD only: the always-on HUD, pushed once
+UI.Layer.Game       // transient gameplay overlays: interaction prompt, aim reticle, scanner overlay
+UI.Layer.GameMenu   // in-game screens: world map, inventory, journal, character
+UI.Layer.Menu       // pause menu, settings, main menu
+UI.Layer.Modal      // confirmations, popups
 ```
+Create the tags (Project Settings > GameplayTags). A layer you don't register simply can't be pushed to.
 
 ### `WBP_FVUILayout` (parent class `FVUILayout`)
-The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own when you need different layers.
+The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own to change the layers.
 1. Root: an `Overlay` that fills the screen.
-2. Add one `CommonActivatableWidgetStack` per layer, bottom to top: `Stack_Game`, `Stack_GameMenu`, `Stack_Menu`, `Stack_Modal` (each *Is Variable*, fill alignment).
-3. In **Event Construct**, call `Register Layer` once per stack: `Register Layer(UI.Layer.Game, Stack_Game)`, and so on.
+2. Add one `CommonActivatableWidgetStack` per layer, **bottom to top in the hierarchy**: `Stack_HUD`, `Stack_Game`, `Stack_GameMenu`, `Stack_Menu`, `Stack_Modal` (each *Is Variable*, horizontal and vertical alignment *Fill*).
+3. In **Event Construct**, call `Register Layer` once per stack: `Register Layer(UI.Layer.HUD, Stack_HUD)`, `Register Layer(UI.Layer.Game, Stack_Game)`, and so on.
 4. Set it in *FlickerVoid > UI > Layout Class*.
 
-### HUD
-- Set the game mode's **HUD Class** to `AFVHUD`. It creates the layout for the local player on BeginPlay and removes it on EndPlay.
-- Optional `BP_FVHUD` (parent `FVHUD`) when you want Blueprint logic on **On Layout Ready**, e.g. pushing a permanent HUD screen. Set it in *FlickerVoid > UI > Default HUD Class*.
-- Push widgets into a layer through `UFVUIManagerSubsystem` (a local player subsystem). Never add the layout to the viewport yourself.
+### The main HUD: `WBP_GameHUD`
+1. Create `WBP_GameHUD` with parent class **Common Activatable Widget**. Leave *Is Back Handler* off and set its input config to *Game* so it doesn't take the mouse.
+2. Lay out the always-on widgets in it: `WBP_Minimap`, `WBP_Compass`, quest tracker, notification area. Each child is a plain User Widget that finds its own data (the navigator, the quest subsystem...) in its Construct; the HUD widget itself holds no logic.
+3. Push it once when the layout is ready: make `BP_FVHUD` (parent `FVHUD`), and in **On Layout Ready** call `Get UFVUIManagerSubsystem > Push Screen(UI.Layer.HUD, WBP_GameHUD)`. Set `BP_FVHUD` as the game mode's HUD class (or in *FlickerVoid > UI > Default HUD Class*).
+4. Optional: hide the HUD while a menu is open. Bind the UI manager's **On Stack Changed** in `WBP_GameHUD` and set its visibility to *Collapsed* when `Layout > Get Layer(UI.Layer.GameMenu) > Get Active Widget` is valid.
+
+### Screens and menus
+- Screens (world map, inventory) are **Common Activatable Widgets**. Open one with `Push Screen(UI.Layer.GameMenu, WBP_WorldMap)` from an input action; close it with `Pop Screen(Widget)` or *Deactivate Widget* (e.g. from a Back action). Set their input config to *Menu* so the mouse shows and game input stops.
+- `Push User Widget` / `Pop User Widget` push a plain User Widget wrapped in a host; plugin UIs use this (the interaction prompt goes to the layer in `DA_InteractionUISettings`, `UI.Layer.Game` by default).
+- Never add widgets or the layout to the viewport yourself; always go through `UFVUIManagerSubsystem`.
+
+### HUD class
+- Set the game mode's **HUD Class** to `AFVHUD` or `BP_FVHUD`. It creates the layout for the local player on BeginPlay and removes it on EndPlay.
 
 | Setting (*FlickerVoid > UI*) | Value |
 |---|---|
 | Layout Class | `WBP_FVUILayout` |
-| Default HUD Class | `FVHUD` or `BP_FVHUD` |
+| Default HUD Class | `BP_FVHUD` |
 | Warn If HUD Missing | on |
 
 ## 4. Characters and identity
@@ -87,7 +108,7 @@ Use the **Time of Day** condition for schedules and the **Advance Time** effect 
 
 | Asset | Class | Fields |
 |---|---|---|
-| `DA_Cinematic_<Name>` | `FVCinematicDefinition` | Sequence, Skippable, Disable Player Input, Hide Player, On Finished effects. Id = fact set to 1 once watched |
+| `DA_Cinematic_<Name>` | `FVCinematicDefinition` | Sequence, Skippable, Disable Player Input, Hide Player, On Finished effects. Optional Id = fact set to 1 once watched |
 
 Play one with the **Play Cinematic** effect (from quests, dialogue, Flow) or `UFVCinematicSubsystem::Play`.
 
@@ -132,4 +153,4 @@ Every plugin's debug readout stacks on the same on-screen panel (`UFVDebugHUDSub
 | Nothing on screen, log says `LayoutClass is not set` | Set *FlickerVoid > UI > Layout Class* |
 | Log says `HUD is not an AFVHUD` | Set the game mode's HUD Class to `AFVHUD` |
 | Widgets pushed but invisible | The layer tag isn't registered in the layout's Event Construct |
-| A definition fails validation with "has no Id tag" | Every definition needs an Id |
+| A definition fails validation with "has no Id tag" | Quests, knowledge, factions and titles store their state in the fact their Id names, so they need one |

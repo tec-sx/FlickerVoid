@@ -34,6 +34,7 @@ Every plugin has three modules: runtime, `<Plugin>Debug` and `<Plugin>Editor`. F
 ## Conventions
 
 - **Never expose interfaces to Blueprint/AngelScript.** Put a component with multicast delegates on the actor; callers find the component and broadcast. C++-only internal interfaces are OK when truly needed.
+- **Never modify, move, delete or create anything in Content folders** (project or plugin, any `.uasset`/`.umap`). Scan read-only and report each asset's path and problem; the owner handles it.
 - Definitions (items, characters, attributes, factions, titles...) derive from `UFVDefinition` (FVCoreRuntime) and extend through `TInstancedStruct` fragments. `UFVItemDataAsset` is outdated.
 - Data-driven, composition over inheritance, SOLID/KISS/YAGNI, open/closed. Reuse FVFramework before adding base types.
 - Rules extend through `FFVConditionSet` / `FFVEffectList`; AngelScript adds new ones via `UFVScriptCondition` / `UFVScriptEffect`.

@@ -18,7 +18,7 @@ Read [FVFramework](FVFramework.md) first; every other plugin builds on its defin
 ## Shared conventions
 
 - **Settings** live in *Project Settings > FlickerVoid > (plugin)*. The *FlickerVoid* button in the level editor toolbar and the *FlickerVoid* main menu open them directly.
-- **Definitions** are data assets of a `UFVDefinition` subclass (right-click in the Content Browser > *Miscellaneous > Data Asset*, then pick the class). Every definition has an **Id** tag, **Display** info (name, descriptions, icon, tint) and **Tags**. Many definitions use their Id as the fact that stores their state, so pick Ids under `Fact.`.
+- **Definitions** are data assets of a `UFVDefinition` subclass (right-click in the Content Browser > *Miscellaneous > Data Asset*, then pick the class). Every definition has an **Id** tag, **Display** info (name, descriptions, icon, tint) and **Tags**. The Id is optional, except for definitions that store their state in the fact it names (quests, knowledge, factions, titles); pick those Ids under `Fact.`.
 - **Fragments** add optional data to a definition: add an entry to its *Fragments* array and pick the fragment type.
 - **Conditions and effects** (`FFVConditionSet`, `FFVEffectList`) appear wherever a rule is needed (offers, quests, items, markers...). Every plugin adds its own types to the same pickers.
 - **Components, not interfaces**: systems find a component on an actor and call it or listen to its events. In AngelScript use `UFVSomethingComponent::Get(Actor)`.

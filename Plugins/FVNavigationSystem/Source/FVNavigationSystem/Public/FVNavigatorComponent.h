@@ -12,7 +12,7 @@ struct FFVMarker;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFVOnActiveMapChanged, UFVMapDefinition*, Map, int32, LayerIndex);
 
 /**
- * The player's view of the navigation data. Put it on the player pawn: it follows the map underfoot,
+ * The player's view of the navigation data. Put it on the player pawn or player controller: it follows the map underfoot,
  * discovers nearby places and builds the minimap, compass and world map views the HUD draws.
  */
 UCLASS(ClassGroup = (FV), meta = (BlueprintSpawnableComponent))
@@ -30,6 +30,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
 	int32 GetActiveLayer() const { return ActiveLayer; }
+
+	/** The actor the maps follow: the owner, or the possessed pawn when the owner is a controller. */
+	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
+	AActor* GetViewActor() const;
 
 	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
 	FVector GetViewLocation() const;

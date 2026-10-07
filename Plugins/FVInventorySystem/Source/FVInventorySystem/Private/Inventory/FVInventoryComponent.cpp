@@ -8,6 +8,7 @@
 #include "Items/FVItemDefinition.h"
 #include "Items/FVItemFragments.h"
 #include "Pickup/FVItemReceiverComponent.h"
+#include "Save/FVSaveableComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInventoryComponent)
 
@@ -54,7 +55,23 @@ void UFVInventoryComponent::BeginPlay()
 		Equipment->OnEquipmentChanged.AddUniqueDynamic(this, &UFVInventoryComponent::HandleEquipmentChanged);
 	}
 
+	if (UFVSaveableComponent* Saveable = UFVSaveableComponent::Find(GetOwner()))
+	{
+		Saveable->OnActorDataLoaded.AddUniqueDynamic(this, &UFVInventoryComponent::HandleActorDataLoaded);
+	}
+
 	RefreshContainers();
+}
+
+void UFVInventoryComponent::HandleActorDataLoaded()
+{
+	RefreshContainers();
+	OnCapacityChanged.Broadcast();
+
+	for (const FFVItemStack& Stack : Items)
+	{
+		OnItemChanged.Broadcast(Stack.Item, 0, Stack.Quantity);
+	}
 }
 
 void UFVInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)

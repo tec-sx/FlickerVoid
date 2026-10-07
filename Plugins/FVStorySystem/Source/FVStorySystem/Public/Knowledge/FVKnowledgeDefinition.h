@@ -29,4 +29,7 @@ TArray<TObjectPtr<UFVKnowledgeDefinition>> Prerequisites;
 
 UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Knowledge")
 FFVEffectList OnLearned;
+
+protected:
+virtual bool RequiresId() const override { return true; }
 };

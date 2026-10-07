@@ -81,5 +81,5 @@ Use *Is Wearing* with a granted tag for dress codes ("wear anything granting `Di
 
 ## Notes
 
-- Inventory and equipment contents are `SaveGame` properties; they are written to a save only when a save participant does it (see FVStorySystem, section 5).
+- Inventory and equipment contents are saved when the actor also has an **FV Saveable Component** (see FVStorySystem, section 5). After a load both components rebuild capacity and granted tags and broadcast their change events.
 - Outfit meshes are not applied by the plugin; bind **On Equipment Changed** in the game layer and set the mesh from the Equippable fragment.

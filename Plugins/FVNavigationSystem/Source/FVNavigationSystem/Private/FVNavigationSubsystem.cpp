@@ -85,7 +85,7 @@ UFVMapDefinition* UFVNavigationSubsystem::FindMapAt(const FVector& Location, int
 {
 	FFVConditionContext Context;
 	Context.WorldContext = const_cast<UFVNavigationSubsystem*>(this);
-	Context.Instigator = Navigator.IsValid() ? Navigator->GetOwner() : nullptr;
+	Context.Instigator = Navigator.IsValid() ? Navigator->GetViewActor() : nullptr;
 
 	UFVMapDefinition* Best = nullptr;
 	OutLayerIndex = INDEX_NONE;
@@ -237,7 +237,7 @@ bool UFVNavigationSubsystem::DiscoverMarker(FFVMarkerHandle Marker, AActor* Disc
 
 	// Writing the fact and applying effects can add or remove markers, so nothing below reads Found.
 	UFVMapMarkerComponent* Component = Found->Component.Get();
-	const FFVConditionContext Context = MakeContext(*Found, Discoverer ? Discoverer : (Navigator.IsValid() ? Navigator->GetOwner() : nullptr));
+	const FFVConditionContext Context = MakeContext(*Found, Discoverer ? Discoverer : (Navigator.IsValid() ? Navigator->GetViewActor() : nullptr));
 	const FFVEffectList& Effects = Discovery->OnDiscovered;
 
 	if (Component != nullptr && Component->GetDiscoveredFact().IsValid())
@@ -322,7 +322,7 @@ bool UFVNavigationSubsystem::UpdateMarker(FFVMarker& Marker)
 	Marker.bDiscovered = ReadDiscovered(Marker);
 
 	const bool bWasVisible = Marker.bVisible;
-	const FFVConditionContext Context = MakeContext(Marker, Navigator.IsValid() ? Navigator->GetOwner() : nullptr);
+	const FFVConditionContext Context = MakeContext(Marker, Navigator.IsValid() ? Navigator->GetViewActor() : nullptr);
 	Marker.bVisible = Marker.Definition != nullptr && Marker.Definition->VisibleWhen.Evaluate(Context);
 	return bWasVisible != Marker.bVisible;
 }

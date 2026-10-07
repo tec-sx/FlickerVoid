@@ -92,6 +92,9 @@ protected:
 private:
 	void Recompute(const UFVAttributeDefinition* Attribute);
 
+	UFUNCTION()
+	void HandleActorDataLoaded();
+
 	UPROPERTY(SaveGame)
 	TMap<TObjectPtr<const UFVAttributeDefinition>, float> BaseValues;
 

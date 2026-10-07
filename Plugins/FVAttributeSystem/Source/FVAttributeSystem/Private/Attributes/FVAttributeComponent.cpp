@@ -5,6 +5,7 @@
 #include "Attributes/FVAttributeFragments.h"
 #include "Identity/FVIdentityComponent.h"
 #include "GameFramework/Actor.h"
+#include "Save/FVSaveableComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVAttributeComponent)
 
@@ -40,6 +41,21 @@ void UFVAttributeComponent::BeginPlay()
 	for (const FFVAttributeValue& Value : StartingValues)
 	{
 		SetBaseValue(Value.Attribute, Value.Value);
+	}
+
+	if (UFVSaveableComponent* Saveable = UFVSaveableComponent::Find(GetOwner()))
+	{
+		Saveable->OnActorDataLoaded.AddUniqueDynamic(this, &UFVAttributeComponent::HandleActorDataLoaded);
+	}
+}
+
+void UFVAttributeComponent::HandleActorDataLoaded()
+{
+	TArray<TObjectPtr<const UFVAttributeDefinition>> Attributes;
+	BaseValues.GetKeys(Attributes);
+	for (const UFVAttributeDefinition* Attribute : Attributes)
+	{
+		Recompute(Attribute);
 	}
 }
 

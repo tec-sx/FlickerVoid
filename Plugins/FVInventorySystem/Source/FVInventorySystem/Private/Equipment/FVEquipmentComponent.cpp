@@ -7,6 +7,7 @@
 #include "Inventory/FVInventoryComponent.h"
 #include "Items/FVItemDefinition.h"
 #include "Items/FVItemFragments.h"
+#include "Save/FVSaveableComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVEquipmentComponent)
 
@@ -29,7 +30,23 @@ void UFVEquipmentComponent::BeginPlay()
 		Inventory->OnItemChanged.AddUniqueDynamic(this, &UFVEquipmentComponent::HandleInventoryChanged);
 	}
 
+	if (UFVSaveableComponent* Saveable = UFVSaveableComponent::Find(GetOwner()))
+	{
+		Saveable->OnActorDataLoaded.AddUniqueDynamic(this, &UFVEquipmentComponent::HandleActorDataLoaded);
+	}
+
 	RefreshGrantedTags();
+}
+
+void UFVEquipmentComponent::HandleActorDataLoaded()
+{
+	RefreshGrantedTags();
+
+	// Listeners (meshes, inventory capacity) rebuild from the restored slots.
+	for (const FFVEquippedItem& Entry : Equipped)
+	{
+		OnEquipmentChanged.Broadcast(Entry.Slot, nullptr, Entry.Item);
+	}
 }
 
 void UFVEquipmentComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)

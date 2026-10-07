@@ -61,13 +61,15 @@ Get `UFVQuestSubsystem`, bind **On Quests Changed** (read `Get Last Changed Ques
 
 `UFVSaveSubsystem` (game instance subsystem): `Save To Slot`, `Load From Slot`, `Save Checkpoint`, `Load Checkpoint`, `Delete Slot`, `Get Slots` (metadata for a load menu), `Set Pending Thumbnail`, and `Add/Remove Save Block` (e.g. no saving during a chase).
 
-A save holds: all facts (so quests, knowledge, reputation, titles, discoveries and time), Flow graph state, tracked quests and metadata.
+A save holds: all facts (so quests, knowledge, reputation, titles, discoveries and time), Flow graph state, tracked quests, **actor state** and metadata.
 
-Anything else (inventory, equipment, attribute base values, actor state) needs a **save participant**:
-1. Subclass `UFVSaveParticipant` and override **Write Save** / **Read Save**. In AngelScript or Blueprint, store values in the save game's **Custom Data** map (name to string).
-2. Add the class to *FlickerVoid > Save > Participants*; **Order** sets the sequence.
+### Actor state
+Add **FV Saveable Component** (FVFramework) to every placed actor whose state should persist: the player, containers, lockable doors, NPCs carrying items. On save, each one writes the `SaveGame` properties of its actor and all the actor's components (inventory items, equipment, attribute base values, lock state, and any `SaveGame` property you add in AngelScript). On load they're restored by the component's Save Id, and **On Actor Data Loaded** fires; inventory, equipment and attribute components use it to rebuild weight, granted tags and current values. Your own components can bind it too.
 
-For actors, `UFVSaveableComponent` (FVFramework) gives each placed actor a stable Save Id and serializes its `SaveGame` properties (inventory items, equipment, attribute base values, lock state) with `WriteActorData` / `ReadActorData`. Those two are C++ only today and produce bytes, so a participant that saves actors this way has to be written in C++ (or the functions exposed to script first).
+Limits: only actors placed in the level have a Save Id (actors spawned at runtime are skipped), loading restores into the level that is currently open, and placed actors destroyed during play (e.g. a picked-up item) are not destroyed again on load.
+
+### Custom data
+For anything else, subclass `UFVSaveParticipant` (AngelScript, Blueprint or C++), override **Write Save** / **Read Save** and store values in the save game's **Custom Data** map (name to string). Add the class to *FlickerVoid > Save > Participants*; **Order** sets the sequence.
 
 ## 6. Editor
 

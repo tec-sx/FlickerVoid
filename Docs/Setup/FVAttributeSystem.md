@@ -33,7 +33,7 @@ To give a named NPC unique stats, add the **Attributes** fragment to their `FVCh
 ### Modifiers
 `Add Modifier` takes an attribute, an operation (Add, Multiply, Override) and a **Source** tag. `Remove Modifiers From Source` removes them all, so whoever applies them (an outfit, a status, a quest) can clean up by tag. Final value = base, then Add, then Multiply; Override wins.
 
-Base values are `SaveGame` properties; modifiers are rebuilt at runtime by their owners.
+Base values are saved when the actor also has an **FV Saveable Component** (see FVStorySystem); modifiers are rebuilt at runtime by their owners.
 
 ## 4. Checks
 

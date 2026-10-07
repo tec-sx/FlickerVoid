@@ -81,6 +81,9 @@ TSoftObjectPtr<UFlowAsset> Flow;
 #if WITH_EDITOR
 virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 #endif
+
+protected:
+virtual bool RequiresId() const override { return true; }
 };
 
 UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Quests"))

@@ -3,6 +3,7 @@
 #include "FVMapDefinition.h"
 #include "FVMarkerDefinition.h"
 #include "FVNavigationSubsystem.h"
+#include "GameFramework/Controller.h"
 #include "GameFramework/Pawn.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVNavigatorComponent)
@@ -71,14 +72,29 @@ void UFVNavigatorComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	UpdateNavigation();
 }
 
+AActor* UFVNavigatorComponent::GetViewActor() const
+{
+	AActor* Owner = GetOwner();
+	if (const AController* Controller = Cast<AController>(Owner))
+	{
+		return Controller->GetPawn();
+	}
+	return Owner;
+}
+
 FVector UFVNavigatorComponent::GetViewLocation() const
 {
-	const AActor* Owner = GetOwner();
-	return Owner ? Owner->GetActorLocation() : FVector::ZeroVector;
+	const AActor* ViewActor = GetViewActor();
+	return ViewActor ? ViewActor->GetActorLocation() : FVector::ZeroVector;
 }
 
 float UFVNavigatorComponent::GetViewYaw() const
 {
+	if (const AController* Controller = Cast<AController>(GetOwner()))
+	{
+		return Controller->GetControlRotation().Yaw;
+	}
+
 	const APawn* Pawn = Cast<APawn>(GetOwner());
 	if (Pawn && Pawn->GetController())
 	{
@@ -89,8 +105,8 @@ float UFVNavigatorComponent::GetViewYaw() const
 
 float UFVNavigatorComponent::GetOwnerYaw() const
 {
-	const AActor* Owner = GetOwner();
-	return Owner ? Owner->GetActorRotation().Yaw : 0.f;
+	const AActor* ViewActor = GetViewActor();
+	return ViewActor ? ViewActor->GetActorRotation().Yaw : 0.f;
 }
 
 void UFVNavigatorComponent::SetMinimapRadius(float Radius)
@@ -169,7 +185,7 @@ void UFVNavigatorComponent::DiscoverNearbyMarkers()
 
 	for (const FFVMarkerHandle& Handle : Found)
 	{
-		Navigation->DiscoverMarker(Handle, GetOwner());
+		Navigation->DiscoverMarker(Handle, GetViewActor());
 	}
 }
 

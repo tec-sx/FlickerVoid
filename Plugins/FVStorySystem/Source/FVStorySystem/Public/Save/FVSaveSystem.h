@@ -35,6 +35,16 @@ UPROPERTY(SaveGame)
 TArray<uint8> ThumbnailPNG;
 };
 
+/** SaveGame properties of one placed actor and its components, written by its UFVSaveableComponent. */
+USTRUCT()
+struct FVSTORYSYSTEM_API FFVActorSaveRecord
+{
+GENERATED_BODY()
+
+UPROPERTY(SaveGame)
+TArray<uint8> Data;
+};
+
 UCLASS(BlueprintType)
 class FVSTORYSYSTEM_API UFVSaveGame : public UFlowSaveGame
 {
@@ -54,6 +64,10 @@ TMap<FName, FString> CustomData;
 
 UPROPERTY(SaveGame)
 TArray<FSoftObjectPath> TrackedQuests;
+
+/** Keyed by UFVSaveableComponent::GetSaveId. */
+UPROPERTY(SaveGame)
+TMap<FGuid, FFVActorSaveRecord> Actors;
 };
 
 UCLASS(Abstract, Blueprintable, EditInlineNew)

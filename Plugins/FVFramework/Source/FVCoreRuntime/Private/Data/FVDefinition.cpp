@@ -21,9 +21,9 @@ EDataValidationResult UFVDefinition::IsDataValid(FDataValidationContext& Context
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 
-	if (!Id.IsValid())
+	if (RequiresId() && !Id.IsValid())
 	{
-		Context.AddError(FText::Format(LOCTEXT("MissingId", "{0} has no Id tag."), FText::FromName(GetFName())));
+		Context.AddError(FText::Format(LOCTEXT("MissingId", "{0} has no Id tag; its state is stored in the fact it names."), FText::FromName(GetFName())));
 		Result = EDataValidationResult::Invalid;
 	}
 

@@ -83,6 +83,9 @@ private:
 	UFUNCTION()
 	void HandleInventoryChanged(UFVItemDefinition* Item, int32 OldQuantity, int32 NewQuantity);
 
+	UFUNCTION()
+	void HandleActorDataLoaded();
+
 	void SetSlot(FGameplayTag Slot, UFVItemDefinition* Item);
 	void RemoveAppliedTags();
 

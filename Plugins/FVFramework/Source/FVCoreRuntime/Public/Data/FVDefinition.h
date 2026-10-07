@@ -26,4 +26,8 @@ public:
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 #endif
+
+protected:
+	/** True for definitions whose state is stored in the fact named by Id (quests, factions...); validation then requires an Id. */
+	virtual bool RequiresId() const { return false; }
 };

@@ -30,4 +30,7 @@ public:
 	/** A title the player can lose again when its conditions stop holding. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title")
 	bool bTransient = false;
+
+protected:
+	virtual bool RequiresId() const override { return true; }
 };

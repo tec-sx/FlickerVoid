@@ -110,6 +110,9 @@ private:
 	void HandleItemReceived(UFVItemDefinition* Item, int32 Quantity, AActor* Source);
 
 	UFUNCTION()
+	void HandleActorDataLoaded();
+
+	UFUNCTION()
 	void HandleEquipmentChanged(FGameplayTag Slot, UFVItemDefinition* OldItem, UFVItemDefinition* NewItem);
 
 	FFVItemStack* FindStack(const UFVItemDefinition* Item);
