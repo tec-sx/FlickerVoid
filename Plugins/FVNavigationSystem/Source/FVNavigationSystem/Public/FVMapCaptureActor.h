@@ -79,6 +79,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Capture")
 	FString TextureName;
 
+	/**
+	 * The layer only covers the box's height range and wins over layers without it while the player is inside.
+	 * Use it for interiors and floors; leave it off for the outdoor ground layer.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Capture")
+	bool bLimitHeight = false;
+
 	/** Stop rendering at the bottom of the box, so floors below don't show through. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Capture")
 	bool bClipBelowBox = false;
