@@ -241,6 +241,8 @@ for each Marker in View.Markers:
 
 For a continuous tick strip instead of letters: a material with a horizontally tiling texture that covers 360°, offset and tiling from **Get Compass Strip UV**(`View.Heading`, FieldOfView), sampled at `U * Tiling + Offset`.
 
+**Ring compass** (a ring around the minimap instead of a strip): set the ring image's render angle to the minimap view's `MapRotation` each update. The strip nodes above aren't needed for it.
+
 ### 6.5 World map
 
 `WBP_WorldMap` (Common Activatable Widget; input mode *Menu*, shows the mouse cursor) pushed to `UI.Layer.GameMenu` by an *Open Map* input action and popped by *Back*.
