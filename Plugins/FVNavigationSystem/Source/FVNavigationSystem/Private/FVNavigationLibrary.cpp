@@ -1,4 +1,4 @@
-#include "FVNavigationBFL.h"
+#include "FVNavigationLibrary.h"
 
 #include "Engine/AssetManager.h"
 #include "Engine/Engine.h"
@@ -8,11 +8,11 @@
 #include "LatentActions.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FVNavigationBFL)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVNavigationLibrary)
 
-#define LOCTEXT_NAMESPACE "FVNavigationBFL"
+#define LOCTEXT_NAMESPACE "FVNavigationLibrary"
 
-namespace FVNavigationBFL
+namespace FVNavigationLibrary
 {
 	class FLoadTextureAction : public FPendingLatentAction
 	{
@@ -60,7 +60,7 @@ namespace FVNavigationBFL
 	}
 }
 
-bool UFVNavigationBFL::GetMapLayer(const UFVMapDefinition* Map, int32 LayerIndex, FFVMapLayer& OutLayer)
+bool UFVNavigationLibrary::GetMapLayer(const UFVMapDefinition* Map, int32 LayerIndex, FFVMapLayer& OutLayer)
 {
 	const FFVMapLayer* Layer = Map ? Map->GetLayer(LayerIndex) : nullptr;
 	if (Layer == nullptr)
@@ -73,7 +73,7 @@ bool UFVNavigationBFL::GetMapLayer(const UFVMapDefinition* Map, int32 LayerIndex
 	return true;
 }
 
-void UFVNavigationBFL::AsyncLoadMapLayer(UObject* WorldContextObject, const UFVMapDefinition* Map, int32 LayerIndex,
+void UFVNavigationLibrary::AsyncLoadMapLayer(UObject* WorldContextObject, const UFVMapDefinition* Map, int32 LayerIndex,
 	FFVMapLayer& OutLayer, UTexture2D*& OutTexture, EFVMapLoadResult& Result, FLatentActionInfo LatentInfo)
 {
 	OutTexture = nullptr;
@@ -87,26 +87,26 @@ void UFVNavigationBFL::AsyncLoadMapLayer(UObject* WorldContextObject, const UFVM
 	}
 
 	FLatentActionManager& LatentManager = World->GetLatentActionManager();
-	if (LatentManager.FindExistingAction<FVNavigationBFL::FLoadTextureAction>(LatentInfo.CallbackTarget, LatentInfo.UUID) == nullptr)
+	if (LatentManager.FindExistingAction<FVNavigationLibrary::FLoadTextureAction>(LatentInfo.CallbackTarget, LatentInfo.UUID) == nullptr)
 	{
 		LatentManager.AddNewAction(LatentInfo.CallbackTarget, LatentInfo.UUID,
-			new FVNavigationBFL::FLoadTextureAction(LatentInfo, OutLayer.Texture, OutTexture, Result));
+			new FVNavigationLibrary::FLoadTextureAction(LatentInfo, OutLayer.Texture, OutTexture, Result));
 	}
 }
 
-FVector2D UFVNavigationBFL::WorldToMapUV(const UFVMapDefinition* Map, int32 LayerIndex, FVector Location)
+FVector2D UFVNavigationLibrary::WorldToMapUV(const UFVMapDefinition* Map, int32 LayerIndex, FVector Location)
 {
 	const FFVMapLayer* Layer = Map ? Map->GetLayer(LayerIndex) : nullptr;
 	return Layer ? Layer->WorldToUV(Location) : FVector2D::ZeroVector;
 }
 
-FVector UFVNavigationBFL::MapUVToWorld(const UFVMapDefinition* Map, int32 LayerIndex, FVector2D UV, float Z)
+FVector UFVNavigationLibrary::MapUVToWorld(const UFVMapDefinition* Map, int32 LayerIndex, FVector2D UV, float Z)
 {
 	const FFVMapLayer* Layer = Map ? Map->GetLayer(LayerIndex) : nullptr;
 	return Layer ? Layer->UVToWorld(UV, Z) : FVector::ZeroVector;
 }
 
-bool UFVNavigationBFL::GetLayerViewArea(const UFVMapDefinition* Map, int32 LayerIndex, FVector Center, float Radius,
+bool UFVNavigationLibrary::GetLayerViewArea(const UFVMapDefinition* Map, int32 LayerIndex, FVector Center, float Radius,
 	FVector2D& OutCenterUV, FVector2D& OutExtentUV)
 {
 	const FFVMapLayer* Layer = Map ? Map->GetLayer(LayerIndex) : nullptr;
@@ -122,7 +122,7 @@ bool UFVNavigationBFL::GetLayerViewArea(const UFVMapDefinition* Map, int32 Layer
 	return true;
 }
 
-void UFVNavigationBFL::SetMaterialVector2D(UMaterialInstanceDynamic* Material, FName ParameterName, FVector2D Value)
+void UFVNavigationLibrary::SetMaterialVector2D(UMaterialInstanceDynamic* Material, FName ParameterName, FVector2D Value)
 {
 	if (Material != nullptr)
 	{
@@ -130,7 +130,7 @@ void UFVNavigationBFL::SetMaterialVector2D(UMaterialInstanceDynamic* Material, F
 	}
 }
 
-void UFVNavigationBFL::ApplyMapView(UMaterialInstanceDynamic* Material, FVector2D CenterUV, FVector2D ExtentUV, float MapRotation, FName Prefix)
+void UFVNavigationLibrary::ApplyMapView(UMaterialInstanceDynamic* Material, FVector2D CenterUV, FVector2D ExtentUV, float MapRotation, FName Prefix)
 {
 	if (Material == nullptr)
 	{
@@ -143,23 +143,23 @@ void UFVNavigationBFL::ApplyMapView(UMaterialInstanceDynamic* Material, FVector2
 	Material->SetScalarParameterValue(TEXT("MapRotation"), MapRotation);
 }
 
-FVector2D UFVNavigationBFL::MinimapToWidget(FVector2D MarkerPosition, FVector2D FrameSize, float EdgePadding)
+FVector2D UFVNavigationLibrary::MinimapToWidget(FVector2D MarkerPosition, FVector2D FrameSize, float EdgePadding)
 {
 	const FVector2D Half = FrameSize * 0.5;
 	return Half + MarkerPosition * (Half - FVector2D(EdgePadding));
 }
 
-float UFVNavigationBFL::GetMinimapEdgeAngle(FVector2D MarkerPosition)
+float UFVNavigationLibrary::GetMinimapEdgeAngle(FVector2D MarkerPosition)
 {
 	return FMath::RadiansToDegrees(FMath::Atan2(MarkerPosition.X, -MarkerPosition.Y));
 }
 
-float UFVNavigationBFL::CompassToWidget(float MarkerPositionX, float StripWidth)
+float UFVNavigationLibrary::CompassToWidget(float MarkerPositionX, float StripWidth)
 {
 	return (MarkerPositionX + 1.f) * 0.5f * StripWidth;
 }
 
-bool UFVNavigationBFL::GetCompassBearingPosition(float Bearing, float Heading, float FieldOfView, float& OutPosition)
+bool UFVNavigationLibrary::GetCompassBearingPosition(float Bearing, float Heading, float FieldOfView, float& OutPosition)
 {
 	const float Half = FMath::Max(FieldOfView * 0.5f, 1.f);
 	const float Relative = FRotator::NormalizeAxis(Bearing - Heading);
@@ -167,13 +167,13 @@ bool UFVNavigationBFL::GetCompassBearingPosition(float Bearing, float Heading, f
 	return FMath::Abs(Relative) <= Half;
 }
 
-void UFVNavigationBFL::GetCompassStripUV(float Heading, float FieldOfView, float& OutOffset, float& OutTiling)
+void UFVNavigationLibrary::GetCompassStripUV(float Heading, float FieldOfView, float& OutOffset, float& OutTiling)
 {
 	OutTiling = FieldOfView / 360.f;
 	OutOffset = FRotator::ClampAxis(Heading) / 360.f - OutTiling * 0.5f;
 }
 
-FVector2D UFVNavigationBFL::GetWorldMapExtent(const UFVMapDefinition* Map, int32 LayerIndex, FVector2D ViewSize, float Zoom)
+FVector2D UFVNavigationLibrary::GetWorldMapExtent(const UFVMapDefinition* Map, int32 LayerIndex, FVector2D ViewSize, float Zoom)
 {
 	const FFVMapLayer* Layer = Map ? Map->GetLayer(LayerIndex) : nullptr;
 	const FVector2D Size = Layer ? Layer->GetWorldSize() : FVector2D(1.);
@@ -184,42 +184,42 @@ FVector2D UFVNavigationBFL::GetWorldMapExtent(const UFVMapDefinition* Map, int32
 	return FVector2D(Half * FMath::Max(Aspect, 1.), Half * FMath::Max(1. / Aspect, 1.));
 }
 
-FVector2D UFVNavigationBFL::MapUVToScreen(FVector2D UV, FVector2D PanUV, FVector2D ExtentUV, FVector2D ViewSize)
+FVector2D UFVNavigationLibrary::MapUVToScreen(FVector2D UV, FVector2D PanUV, FVector2D ExtentUV, FVector2D ViewSize)
 {
-	return (FVNavigationBFL::SafeDivide(UV - PanUV, ExtentUV * 2.) + FVector2D(0.5)) * ViewSize;
+	return (FVNavigationLibrary::SafeDivide(UV - PanUV, ExtentUV * 2.) + FVector2D(0.5)) * ViewSize;
 }
 
-FVector2D UFVNavigationBFL::ScreenToMapUV(FVector2D ScreenPosition, FVector2D PanUV, FVector2D ExtentUV, FVector2D ViewSize)
+FVector2D UFVNavigationLibrary::ScreenToMapUV(FVector2D ScreenPosition, FVector2D PanUV, FVector2D ExtentUV, FVector2D ViewSize)
 {
-	return PanUV + (FVNavigationBFL::SafeDivide(ScreenPosition, ViewSize) - FVector2D(0.5)) * 2. * ExtentUV;
+	return PanUV + (FVNavigationLibrary::SafeDivide(ScreenPosition, ViewSize) - FVector2D(0.5)) * 2. * ExtentUV;
 }
 
-FVector UFVNavigationBFL::ScreenToWorld(const UFVMapDefinition* Map, int32 LayerIndex, FVector2D ScreenPosition, FVector2D PanUV,
+FVector UFVNavigationLibrary::ScreenToWorld(const UFVMapDefinition* Map, int32 LayerIndex, FVector2D ScreenPosition, FVector2D PanUV,
 	FVector2D ExtentUV, FVector2D ViewSize, float Z)
 {
 	return MapUVToWorld(Map, LayerIndex, ScreenToMapUV(ScreenPosition, PanUV, ExtentUV, ViewSize), Z);
 }
 
-FVector2D UFVNavigationBFL::ClampMapPan(FVector2D PanUV, FVector2D ExtentUV)
+FVector2D UFVNavigationLibrary::ClampMapPan(FVector2D PanUV, FVector2D ExtentUV)
 {
 	auto ClampAxis = [](double Pan, double Extent) { return Extent >= 0.5 ? 0.5 : FMath::Clamp(Pan, Extent, 1. - Extent); };
 	return FVector2D(ClampAxis(PanUV.X, ExtentUV.X), ClampAxis(PanUV.Y, ExtentUV.Y));
 }
 
-FVector2D UFVNavigationBFL::PanMap(FVector2D PanUV, FVector2D DeltaPixels, FVector2D ExtentUV, FVector2D ViewSize)
+FVector2D UFVNavigationLibrary::PanMap(FVector2D PanUV, FVector2D DeltaPixels, FVector2D ExtentUV, FVector2D ViewSize)
 {
-	return ClampMapPan(PanUV - FVNavigationBFL::SafeDivide(DeltaPixels, ViewSize) * 2. * ExtentUV, ExtentUV);
+	return ClampMapPan(PanUV - FVNavigationLibrary::SafeDivide(DeltaPixels, ViewSize) * 2. * ExtentUV, ExtentUV);
 }
 
-void UFVNavigationBFL::ZoomMapAt(const UFVMapDefinition* Map, int32 LayerIndex, FVector2D ViewSize, FVector2D ScreenPosition,
+void UFVNavigationLibrary::ZoomMapAt(const UFVMapDefinition* Map, int32 LayerIndex, FVector2D ViewSize, FVector2D ScreenPosition,
 	FVector2D PanUV, FVector2D ExtentUV, float NewZoom, FVector2D& OutPanUV, FVector2D& OutExtentUV)
 {
 	const FVector2D AnchorUV = ScreenToMapUV(ScreenPosition, PanUV, ExtentUV, ViewSize);
 	OutExtentUV = GetWorldMapExtent(Map, LayerIndex, ViewSize, NewZoom);
-	OutPanUV = ClampMapPan(AnchorUV - (FVNavigationBFL::SafeDivide(ScreenPosition, ViewSize) - FVector2D(0.5)) * 2. * OutExtentUV, OutExtentUV);
+	OutPanUV = ClampMapPan(AnchorUV - (FVNavigationLibrary::SafeDivide(ScreenPosition, ViewSize) - FVector2D(0.5)) * 2. * OutExtentUV, OutExtentUV);
 }
 
-bool UFVNavigationBFL::FindMarkerAtScreen(const TArray<FFVMarkerView>& Markers, FVector2D ScreenPosition, FVector2D PanUV,
+bool UFVNavigationLibrary::FindMarkerAtScreen(const TArray<FFVMarkerView>& Markers, FVector2D ScreenPosition, FVector2D PanUV,
 	FVector2D ExtentUV, FVector2D ViewSize, float MaxDistance, FFVMarkerView& OutMarker)
 {
 	const FFVMarkerView* Best = nullptr;
@@ -240,7 +240,7 @@ bool UFVNavigationBFL::FindMarkerAtScreen(const TArray<FFVMarkerView>& Markers, 
 	return Best != nullptr;
 }
 
-void UFVNavigationBFL::GetMarkerAppearance(const FFVMarkerView& Marker, TSoftObjectPtr<UTexture2D>& OutIcon, FLinearColor& OutTint)
+void UFVNavigationLibrary::GetMarkerAppearance(const FFVMarkerView& Marker, TSoftObjectPtr<UTexture2D>& OutIcon, FLinearColor& OutTint)
 {
 	OutIcon.Reset();
 	OutTint = FLinearColor::White;
@@ -264,7 +264,7 @@ void UFVNavigationBFL::GetMarkerAppearance(const FFVMarkerView& Marker, TSoftObj
 	}
 }
 
-FText UFVNavigationBFL::FormatDistance(float Distance)
+FText UFVNavigationLibrary::FormatDistance(float Distance)
 {
 	const float Metres = FMath::Max(Distance, 0.f) / 100.f;
 	if (Metres < 1000.f)

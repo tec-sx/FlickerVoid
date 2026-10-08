@@ -5,7 +5,7 @@
 #include "FVMapDefinition.h"
 #include "FVNavigationTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "FVNavigationBFL.generated.h"
+#include "FVNavigationLibrary.generated.h"
 
 class UMaterialInstanceDynamic;
 class UTexture2D;
@@ -25,7 +25,7 @@ enum class EFVMapLoadResult : uint8
  * texture shown, in UV) and ViewSize (the widget's size in pixels).
  */
 UCLASS()
-class FVNAVIGATIONSYSTEM_API UFVNavigationBFL : public UBlueprintFunctionLibrary
+class FVNAVIGATIONSYSTEM_API UFVNavigationLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 

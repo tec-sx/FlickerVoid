@@ -110,9 +110,9 @@ Event Construct (or when the owning pawn changes):
 
 Then update on a timer (every 0.03-0.05 s is plenty) or in Tick. Building a view is cheap; it only walks the registered markers.
 
-### 6.1a Blueprint helpers (FV Navigation BFL)
+### 6.1a Blueprint helpers (FV Navigation Library)
 
-`UFVNavigationBFL` holds the maths below as Blueprint nodes (search *FV Navigation* in the node menu), so the minimap, compass and world map widgets share it:
+`UFVNavigationLibrary` holds the maths below as Blueprint nodes (search *FV Navigation* in the node menu), so the minimap, compass and world map widgets share it:
 
 | Node | Use |
 |---|---|
