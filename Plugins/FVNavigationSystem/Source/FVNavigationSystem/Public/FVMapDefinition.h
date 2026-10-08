@@ -33,20 +33,21 @@ struct FVNAVIGATIONSYSTEM_API FFVMapLayer
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Layer")
 	TSoftObjectPtr<UTexture2D> Texture;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Layer")
+	/** Area and height range below are written by the map capture tool from its capture box. */
+	UPROPERTY(BlueprintReadOnly, Category = "Layer")
 	FVector2D WorldMin = FVector2D(-50000.f);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Layer")
+	UPROPERTY(BlueprintReadOnly, Category = "Layer")
 	FVector2D WorldMax = FVector2D(50000.f);
 
 	/** Only covers locations between MinZ and MaxZ, so floors of one building can share an area. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Layer")
+	UPROPERTY(BlueprintReadOnly, Category = "Layer")
 	bool bLimitHeight = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Layer", meta = (EditCondition = "bLimitHeight"))
+	UPROPERTY(BlueprintReadOnly, Category = "Layer")
 	float MinZ = -1000.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Layer", meta = (EditCondition = "bLimitHeight"))
+	UPROPERTY(BlueprintReadOnly, Category = "Layer")
 	float MaxZ = 1000.f;
 
 	bool ContainsXY(const FVector& Location) const;

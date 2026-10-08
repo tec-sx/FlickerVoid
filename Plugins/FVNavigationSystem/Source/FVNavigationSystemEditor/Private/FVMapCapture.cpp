@@ -153,6 +153,7 @@ namespace FVMapCapture
 		Layer.Texture = Texture;
 		Layer.WorldMin = Area.Min;
 		Layer.WorldMax = Area.Max;
+		Layer.bLimitHeight = Actor.bLimitHeight;
 		Layer.MinZ = Bounds.Min.Z;
 		Layer.MaxZ = Bounds.Max.Z;
 

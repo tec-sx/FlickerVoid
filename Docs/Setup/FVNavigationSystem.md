@@ -18,7 +18,7 @@ Modules: `FVNavigationSystem`, `FVNavigationSystemDebug`, `FVNavigationSystemEdi
 |---|---|---|
 | `DA_Map_<Area>` | `FVMapDefinition` | **Priority** (higher wins where maps overlap: interior > district > world), **Available When** (e.g. the player bought the map), **Layers** |
 
-Each **layer** is one image and the world area it covers: **Name** (e.g. `Ground`, `Floor1`), **Display Name**, **Texture**, **World Min / World Max** (world XY) and optional **Limit Height** with **Min Z / Max Z** for floors. The image top is north (+X) and its right edge east (+Y). The capture tool fills texture, area and height for you.
+Each **layer** is one image and the world area it covers: **Name** (e.g. `Ground`, `Floor1`), **Display Name** and **Texture**. The area (world XY rectangle), height range and whether the height counts are hidden in the editor: the capture tool writes them from its capture box (see Map capture below). The image top is north (+X) and its right edge east (+Y).
 
 How the active map is chosen: the navigator asks for the highest-priority available map with a layer containing the player; a height-limited layer wins over an unlimited one. So walking into a building swaps to its interior map, and taking the stairs swaps the floor.
 
@@ -65,12 +65,13 @@ Map and marker definitions don't need an Id; set one when you want to find the d
 | Layer | Layer name (dropdown of the map's layers); a missing layer is added |
 | Resolution | Pixels along the longer side of the box |
 | Texture Name | Asset name; empty uses `T_<Map>_<Layer>` |
+| Limit Height | The layer only covers the box's height range and wins over layers without it while the player is inside. On for interiors and floors (a bar, `Floor1`), off for the outdoor ground layer |
 | Clip Below Box | Stop rendering at the bottom of the box (unverified for orthographic captures; off by default) |
 | Filter | Actors left out: **Ignored Classes**, **Ignored Actor Tags**, **Ignored Actors**, **Ignore Actors Above Box** (roofs over an interior), **Use Project Defaults** |
 
 4. **Capture**: open *FlickerVoid menu > Navigation System > Map Capture* (or the level editor's *Window* menu). The panel lists every capture actor in the level with **Focus**, **Capture**, **Capture All** and the selected actor's details. The actor's Details panel also has a **Capture Map** button.
 
-A capture saves the texture to the capture folder (or updates the layer's existing texture), then writes the texture, the exact captured area and the box's height into the map layer. It can be undone, and a notification links to the texture. Characters are left out by default (`APawn` and the `MapCaptureIgnore` actor tag in project settings); tag anything else you don't want on the map with `MapCaptureIgnore`.
+A capture saves the texture to the capture folder (or updates the layer's existing texture), then writes the texture, the exact captured area, the box's height range and **Limit Height** into the map layer. To change where a layer applies, resize its capture box and capture again. It can be undone, and a notification links to the texture. Characters are left out by default (`APawn` and the `MapCaptureIgnore` actor tag in project settings); tag anything else you don't want on the map with `MapCaptureIgnore`.
 
 Capture actors are editor only and are stripped from cooked builds.
 
