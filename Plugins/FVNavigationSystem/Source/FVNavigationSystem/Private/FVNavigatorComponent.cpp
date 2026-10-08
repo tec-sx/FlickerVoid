@@ -231,9 +231,8 @@ FFVMinimapView UFVNavigatorComponent::BuildMinimapView() const
 
 	if (const FFVMapLayer* Layer = ActiveMap ? ActiveMap->GetLayer(ActiveLayer) : nullptr)
 	{
-		const FVector2D Size = Layer->GetWorldSize();
 		View.CenterUV = Layer->WorldToUV(Center);
-		View.ExtentUV = FVector2D(Radius / FMath::Max(Size.Y, 1.), Radius / FMath::Max(Size.X, 1.));
+		View.ExtentUV = Layer->RadiusToExtentUV(Radius);
 	}
 
 	const UFVNavigationSubsystem* Navigation = UFVNavigationSubsystem::Get(this);
