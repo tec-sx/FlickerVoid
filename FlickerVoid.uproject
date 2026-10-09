@@ -590,6 +590,10 @@
 		{
 			"Name": "FVNavigationSystem",
 			"Enabled": true
+		},
+		{
+			"Name": "ToneMapFX",
+			"Enabled":  true
 		}
 	]
 }
