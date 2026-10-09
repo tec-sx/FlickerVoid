@@ -40,7 +40,7 @@ Base values are saved when the actor also has an **FV Saveable Component** (see 
 ```
 Total = attribute value + passing modifier bonuses + roll; success when Total >= Difficulty
 ```
-- `Roll Check` (rolls), `Preview Check` (no roll, for UI) and `Success Chance` on `UFVCheckStatics` (`FVCheck::` in AngelScript). Each returns a breakdown for the UI.
+- `Roll Check` (rolls), `Preview Check` (no roll, for UI) and `Success Chance` on `UFVCheckLibrary` (`FVCheck::` in AngelScript). Each returns a breakdown for the UI.
 - **Skill Check (Passive)** condition: passes when the check succeeds without rolling. Use it on dialogue choices and interaction offers.
 
 ## 5. Conditions and effects

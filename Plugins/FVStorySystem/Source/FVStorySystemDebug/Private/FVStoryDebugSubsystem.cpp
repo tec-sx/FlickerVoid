@@ -78,6 +78,6 @@ static FAutoConsoleCommandWithWorldAndArgs CmdLearn(
 		const UFVKnowledgeDefinition* Knowledge = Args.Num() > 0 ? FVDebug::FindDefinition<UFVKnowledgeDefinition>(Args[0]) : nullptr;
 		if (Knowledge != nullptr)
 		{
-			UFVKnowledgeStatics::Learn(World, Knowledge);
+			UFVKnowledgeLibrary::Learn(World, Knowledge);
 		}
 	}));

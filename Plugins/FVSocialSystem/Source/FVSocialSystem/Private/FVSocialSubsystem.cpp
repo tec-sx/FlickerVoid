@@ -1,7 +1,7 @@
 #include "FVSocialSubsystem.h"
 
 #include "Facts/FVFactDatabase.h"
-#include "FVSocialStatics.h"
+#include "FVSocialLibrary.h"
 #include "FVSocialTypes.h"
 #include "FVTitleDefinition.h"
 
@@ -74,17 +74,17 @@ void UFVSocialSubsystem::EvaluateTitles()
 			continue;
 		}
 
-		const bool bHeld = UFVSocialStatics::HasTitle(this, Title);
+		const bool bHeld = UFVSocialLibrary::HasTitle(this, Title);
 		const bool bEarned = Title->Conditions.Evaluate(Context);
 
 		if (bEarned && !bHeld)
 		{
-			UFVSocialStatics::GrantTitle(this, Title);
+			UFVSocialLibrary::GrantTitle(this, Title);
 			OnTitleEarned.Broadcast(Title);
 		}
 		else if (!bEarned && bHeld && Title->bTransient)
 		{
-			UFVSocialStatics::RevokeTitle(this, Title);
+			UFVSocialLibrary::RevokeTitle(this, Title);
 			OnTitleLost.Broadcast(Title);
 		}
 	}
@@ -95,7 +95,7 @@ TArray<UFVTitleDefinition*> UFVSocialSubsystem::GetHeldTitles() const
 	TArray<UFVTitleDefinition*> Held;
 	for (const TObjectPtr<const UFVTitleDefinition>& Title : Titles)
 	{
-		if (UFVSocialStatics::HasTitle(this, Title))
+		if (UFVSocialLibrary::HasTitle(this, Title))
 		{
 			Held.Add(const_cast<UFVTitleDefinition*>(Title.Get()));
 		}

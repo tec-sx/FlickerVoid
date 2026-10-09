@@ -1,6 +1,6 @@
 #include "Inventory/FVInventoryComponent.h"
 
-#include "Conditions/FVConditionStatics.h"
+#include "Conditions/FVConditionLibrary.h"
 #include "Equipment/FVEquipmentComponent.h"
 #include "FVInventorySettings.h"
 #include "HAL/IConsoleManager.h"
@@ -254,7 +254,7 @@ bool UFVInventoryComponent::CanUseItem(const UFVItemDefinition* Item) const
 	{
 		return false;
 	}
-	return Usable->UseConditions.Evaluate(UFVConditionStatics::MakeContext(GetOwner(), GetOwner()));
+	return Usable->UseConditions.Evaluate(UFVConditionLibrary::MakeContext(GetOwner(), GetOwner()));
 }
 
 bool UFVInventoryComponent::UseItem(UFVItemDefinition* Item)
@@ -265,7 +265,7 @@ bool UFVInventoryComponent::UseItem(UFVItemDefinition* Item)
 	}
 
 	const FFVItemFragment_Usable* Usable = Item->FindFragment<FFVItemFragment_Usable>();
-	Usable->Effects.Apply(UFVConditionStatics::MakeContext(GetOwner(), GetOwner()));
+	Usable->Effects.Apply(UFVConditionLibrary::MakeContext(GetOwner(), GetOwner()));
 	if (Usable->bConsumeOnUse)
 	{
 		RemoveItem(Item, 1);

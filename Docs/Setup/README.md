@@ -22,7 +22,7 @@ Read [FVFramework](FVFramework.md) first; every other plugin builds on its defin
 - **Fragments** add optional data to a definition: add an entry to its *Fragments* array and pick the fragment type.
 - **Conditions and effects** (`FFVConditionSet`, `FFVEffectList`) appear wherever a rule is needed (offers, quests, items, markers...). Every plugin adds its own types to the same pickers.
 - **Components, not interfaces**: systems find a component on an actor and call it or listen to its events. In AngelScript use `UFVSomethingComponent::Get(Actor)`.
-- **AngelScript names**: a static library such as `UFVSocialStatics` is called as `FVSocial::Function(...)`, and a hidden `WorldContext` argument is filled in automatically.
+- **AngelScript names**: a static library such as `UFVSocialLibrary` is called as `FVSocial::Function(...)`, and a hidden `WorldContext` argument is filled in automatically.
 - **Debugging**: every plugin has `FVCvar.<System>.Debug.HUD` (an on-screen readout) and `FV.<System>.<Verb>` console commands.
 - **Naming used in these guides**: `DA_` data assets, `BP_` actor Blueprints, `WBP_` widgets, `DT_` data tables, `FA_` Flow assets. Use whatever suits you; nothing depends on the names.
 

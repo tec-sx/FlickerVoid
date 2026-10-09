@@ -2,7 +2,7 @@
 
 #include "FVDebugUtils.h"
 #include "FVFactionDefinition.h"
-#include "FVSocialStatics.h"
+#include "FVSocialLibrary.h"
 #include "FVSocialSubsystem.h"
 #include "FVSocialTypes.h"
 #include "FVTitleDefinition.h"
@@ -26,10 +26,10 @@ void UFVSocialDebugSubsystem::CollectLines(TArray<FString>& OutLines) const
 	const APawn* Pawn = FVDebug::GetPlayerPawn(GetWorld());
 
 	OutLines.Add(FString::Printf(TEXT("Fame %d (read as %d), notoriety %d%s"),
-		UFVSocialStatics::GetFame(this),
-		UFVSocialStatics::GetRecognizedFame(Pawn),
-		UFVSocialStatics::GetGlobalNotoriety(this),
-		UFVSocialStatics::IsDisguised(Pawn) ? TEXT(", disguised") : TEXT("")));
+		UFVSocialLibrary::GetFame(this),
+		UFVSocialLibrary::GetRecognizedFame(Pawn),
+		UFVSocialLibrary::GetGlobalNotoriety(this),
+		UFVSocialLibrary::IsDisguised(Pawn) ? TEXT(", disguised") : TEXT("")));
 
 	for (const TSoftObjectPtr<UFVFactionDefinition>& Soft : UFVSocialSettings::Get().Factions)
 	{
@@ -37,9 +37,9 @@ void UFVSocialDebugSubsystem::CollectLines(TArray<FString>& OutLines) const
 		{
 			OutLines.Add(FString::Printf(TEXT("  %s: standing %d, notoriety %d, attitude %d"),
 				*Faction->GetName(),
-				UFVSocialStatics::GetStanding(this, Faction),
-				UFVSocialStatics::GetNotoriety(this, Faction),
-				static_cast<int32>(UFVSocialStatics::GetAttitude(Faction, Pawn))));
+				UFVSocialLibrary::GetStanding(this, Faction),
+				UFVSocialLibrary::GetNotoriety(this, Faction),
+				static_cast<int32>(UFVSocialLibrary::GetAttitude(Faction, Pawn))));
 		}
 	}
 
@@ -60,7 +60,7 @@ static FAutoConsoleCommandWithWorldAndArgs CmdStanding(
 		const UFVFactionDefinition* Faction = Args.Num() > 0 ? FVDebug::FindDefinition<UFVFactionDefinition>(Args[0]) : nullptr;
 		if (Faction != nullptr)
 		{
-			UFVSocialStatics::ModifyStanding(World, Faction, Args.Num() > 1 ? FCString::Atoi(*Args[1]) : 10);
+			UFVSocialLibrary::ModifyStanding(World, Faction, Args.Num() > 1 ? FCString::Atoi(*Args[1]) : 10);
 		}
 	}));
 
@@ -69,7 +69,7 @@ static FAutoConsoleCommandWithWorldAndArgs CmdNotoriety(
 	TEXT("FV.Social.Notoriety <Delta> - change global notoriety."),
 	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
 	{
-		UFVSocialStatics::ModifyGlobalNotoriety(World, Args.Num() > 0 ? FCString::Atoi(*Args[0]) : 10);
+		UFVSocialLibrary::ModifyGlobalNotoriety(World, Args.Num() > 0 ? FCString::Atoi(*Args[0]) : 10);
 	}));
 
 static FAutoConsoleCommandWithWorldAndArgs CmdFame(
@@ -77,5 +77,5 @@ static FAutoConsoleCommandWithWorldAndArgs CmdFame(
 	TEXT("FV.Social.Fame <Delta> - change fame."),
 	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
 	{
-		UFVSocialStatics::ModifyFame(World, Args.Num() > 0 ? FCString::Atoi(*Args[0]) : 10);
+		UFVSocialLibrary::ModifyFame(World, Args.Num() > 0 ? FCString::Atoi(*Args[0]) : 10);
 	}));

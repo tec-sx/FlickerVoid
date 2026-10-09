@@ -61,7 +61,7 @@ static FAutoConsoleCommandWithWorldAndArgs CmdCheckRoll(
 
 		APawn* Pawn = FVDebug::GetPlayerPawn(World);
 		const int32 Difficulty = Args.Num() > 1 ? FCString::Atoi(*Args[1]) : 10;
-		const FFVCheckResult Result = UFVCheckStatics::RollCheck(Check, Pawn, nullptr, Difficulty);
+		const FFVCheckResult Result = UFVCheckLibrary::RollCheck(Check, Pawn, nullptr, Difficulty);
 
 		UE_LOG(LogFVDebug, Display, TEXT("%s: %s (%d vs %d)"), *Check->GetName(),
 			Result.bSuccess ? TEXT("success") : TEXT("failure"), Result.Total, Result.Difficulty);

@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "FVInteractionSystemBFL.generated.h"
+#include "FVInteractionLibrary.generated.h"
 
 
 UCLASS()
-class FVINTERACTIONSYSTEM_API UFVInteractionSystemBFL : public UBlueprintFunctionLibrary
+class FVINTERACTIONSYSTEM_API UFVInteractionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 	

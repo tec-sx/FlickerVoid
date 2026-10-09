@@ -78,7 +78,7 @@ struct FVATTRIBUTESYSTEM_API FFVCheckResult
 };
 
 UCLASS()
-class FVATTRIBUTESYSTEM_API UFVCheckStatics : public UBlueprintFunctionLibrary
+class FVATTRIBUTESYSTEM_API UFVCheckLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 

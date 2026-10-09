@@ -4,10 +4,10 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Conditions/FVCondition.h"
 #include "Conditions/FVEffect.h"
-#include "FVConditionStatics.generated.h"
+#include "FVConditionLibrary.generated.h"
 
 UCLASS()
-class FVCORERUNTIME_API UFVConditionStatics : public UBlueprintFunctionLibrary
+class FVCORERUNTIME_API UFVConditionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 

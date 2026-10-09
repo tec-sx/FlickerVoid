@@ -69,7 +69,7 @@ The player needs an Ability System Component for disguises to be read.
 
 In dialogue the observer for *Attitude* is the Target (the NPC); in an NPC's StateTree it is the Instigator (the NPC itself).
 
-From Blueprint/AngelScript use `UFVSocialStatics` (`FVSocial::` in AngelScript): `Get Standing`, `Get Tier`, `Get Attitude(Faction, Actor)`, `Get Recognized Fame`, `Is Disguised As`, `Get Actor Faction`, and the Modify functions. `UFVSocialSubsystem` fires **On Title Earned** and **On Title Lost** for notifications.
+From Blueprint/AngelScript use `UFVSocialLibrary` (`FVSocial::` in AngelScript): `Get Standing`, `Get Tier`, `Get Attitude(Faction, Actor)`, `Get Recognized Fame`, `Is Disguised As`, `Get Actor Faction`, and the Modify functions. `UFVSocialSubsystem` fires **On Title Earned** and **On Title Lost** for notifications.
 
 ## 7. Debug
 

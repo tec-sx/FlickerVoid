@@ -1,7 +1,7 @@
 #include "Scanner/FVScannableComponent.h"
 
 #include "Components/PrimitiveComponent.h"
-#include "Conditions/FVConditionStatics.h"
+#include "Conditions/FVConditionLibrary.h"
 #include "Scanner/FVScannerSubsystem.h"
 #include "GameFramework/Actor.h"
 
@@ -20,7 +20,7 @@ void UFVScannableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 bool UFVScannableComponent::CanBeScannedBy(AActor* Scanner) const
 {
-	return Definition && Definition->ScannableWhen.Evaluate(UFVConditionStatics::MakeContext(Scanner, GetOwner()));
+	return Definition && Definition->ScannableWhen.Evaluate(UFVConditionLibrary::MakeContext(Scanner, GetOwner()));
 }
 
 TArray<FFVScanEntry> UFVScannableComponent::GetVisibleEntries(AActor* Scanner) const
@@ -30,7 +30,7 @@ TArray<FFVScanEntry> UFVScannableComponent::GetVisibleEntries(AActor* Scanner) c
 		return {};
 	}
 
-	const FFVConditionContext Context = UFVConditionStatics::MakeContext(Scanner, GetOwner());
+	const FFVConditionContext Context = UFVConditionLibrary::MakeContext(Scanner, GetOwner());
 	return Definition->Entries.FilterByPredicate([&Context](const FFVScanEntry& Entry) { return Entry.VisibleWhen.Evaluate(Context); });
 }
 
@@ -52,7 +52,7 @@ void UFVScannableComponent::CompleteScan(AActor* Scanner)
 	if (!bScanned)
 	{
 		bScanned = true;
-		Definition->OnScanned.Apply(UFVConditionStatics::MakeContext(Scanner, GetOwner()));
+		Definition->OnScanned.Apply(UFVConditionLibrary::MakeContext(Scanner, GetOwner()));
 	}
 	OnScanned.Broadcast(Scanner);
 }
