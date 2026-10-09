@@ -1,7 +1,7 @@
 #include "FVSocialConditions.h"
 
 #include "FVFactionDefinition.h"
-#include "FVSocialStatics.h"
+#include "FVSocialLibrary.h"
 #include "FVTitleDefinition.h"
 #include "Identity/FVIdentityComponent.h"
 
@@ -48,7 +48,7 @@ namespace FVSocialConditions
 
 bool FFVCondition_Standing::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return Faction && FVSocialConditions::Compare(UFVSocialStatics::GetStanding(Context.WorldContext, Faction), Compare, Value);
+	return Faction && FVSocialConditions::Compare(UFVSocialLibrary::GetStanding(Context.WorldContext, Faction), Compare, Value);
 }
 
 FText FFVCondition_Standing::GetDescription() const
@@ -58,7 +58,7 @@ FText FFVCondition_Standing::GetDescription() const
 
 bool FFVCondition_Notoriety::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return Faction && FVSocialConditions::Compare(UFVSocialStatics::GetNotoriety(Context.WorldContext, Faction), Compare, Value);
+	return Faction && FVSocialConditions::Compare(UFVSocialLibrary::GetNotoriety(Context.WorldContext, Faction), Compare, Value);
 }
 
 FText FFVCondition_Notoriety::GetDescription() const
@@ -69,8 +69,8 @@ FText FFVCondition_Notoriety::GetDescription() const
 bool FFVCondition_Fame::EvaluateImpl(const FFVConditionContext& Context) const
 {
 	const int32 Fame = bIgnoreDisguise
-		? UFVSocialStatics::GetFame(Context.WorldContext)
-		: UFVSocialStatics::GetRecognizedFame(Context.Instigator);
+		? UFVSocialLibrary::GetFame(Context.WorldContext)
+		: UFVSocialLibrary::GetRecognizedFame(Context.Instigator);
 
 	return FVSocialConditions::Compare(Fame, Compare, Value);
 }
@@ -82,7 +82,7 @@ FText FFVCondition_Fame::GetDescription() const
 
 bool FFVCondition_GlobalNotoriety::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return FVSocialConditions::Compare(UFVSocialStatics::GetGlobalNotoriety(Context.WorldContext), Compare, Value);
+	return FVSocialConditions::Compare(UFVSocialLibrary::GetGlobalNotoriety(Context.WorldContext), Compare, Value);
 }
 
 FText FFVCondition_GlobalNotoriety::GetDescription() const
@@ -92,7 +92,7 @@ FText FFVCondition_GlobalNotoriety::GetDescription() const
 
 bool FFVCondition_HasTitle::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return UFVSocialStatics::HasTitle(Context.WorldContext, Title);
+	return UFVSocialLibrary::HasTitle(Context.WorldContext, Title);
 }
 
 FText FFVCondition_HasTitle::GetDescription() const
@@ -103,7 +103,7 @@ FText FFVCondition_HasTitle::GetDescription() const
 bool FFVCondition_Relationship::EvaluateImpl(const FFVConditionContext& Context) const
 {
 	const UFVCharacterDefinition* Resolved = FVSocialConditions::CharacterOrTarget(Character, Context);
-	return Resolved && FVSocialConditions::Compare(UFVSocialStatics::GetRelationship(Context.WorldContext, Resolved), Compare, Value);
+	return Resolved && FVSocialConditions::Compare(UFVSocialLibrary::GetRelationship(Context.WorldContext, Resolved), Compare, Value);
 }
 
 FText FFVCondition_Relationship::GetDescription() const
@@ -116,8 +116,8 @@ bool FFVCondition_Attitude::EvaluateImpl(const FFVConditionContext& Context) con
 {
 	const AActor* ObserverActor = FVSocialConditions::Pick(Context, Observer);
 	const AActor* Subject = FVSocialConditions::Pick(Context, Observer == EFVContextActor::Target ? EFVContextActor::Instigator : EFVContextActor::Target);
-	const UFVFactionDefinition* ObserverFaction = Faction ? Faction.Get() : UFVSocialStatics::GetActorFaction(ObserverActor);
-	return ObserverFaction && UFVSocialStatics::GetAttitude(ObserverFaction, Subject) >= AtLeast;
+	const UFVFactionDefinition* ObserverFaction = Faction ? Faction.Get() : UFVSocialLibrary::GetActorFaction(ObserverActor);
+	return ObserverFaction && UFVSocialLibrary::GetAttitude(ObserverFaction, Subject) >= AtLeast;
 }
 
 FText FFVCondition_Attitude::GetDescription() const
@@ -128,7 +128,7 @@ FText FFVCondition_Attitude::GetDescription() const
 
 bool FFVCondition_IsDisguised::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return UFVSocialStatics::IsDisguisedAs(FVSocialConditions::Pick(Context, Subject), Faction);
+	return UFVSocialLibrary::IsDisguisedAs(FVSocialConditions::Pick(Context, Subject), Faction);
 }
 
 FText FFVCondition_IsDisguised::GetDescription() const
@@ -138,7 +138,7 @@ FText FFVCondition_IsDisguised::GetDescription() const
 
 void FFVEffect_ModifyStanding::Apply(const FFVConditionContext& Context) const
 {
-	UFVSocialStatics::ModifyStanding(Context.WorldContext, Faction, Delta);
+	UFVSocialLibrary::ModifyStanding(Context.WorldContext, Faction, Delta);
 }
 
 FText FFVEffect_ModifyStanding::GetDescription() const
@@ -148,7 +148,7 @@ FText FFVEffect_ModifyStanding::GetDescription() const
 
 void FFVEffect_ModifyNotoriety::Apply(const FFVConditionContext& Context) const
 {
-	UFVSocialStatics::ModifyNotoriety(Context.WorldContext, Faction, Delta);
+	UFVSocialLibrary::ModifyNotoriety(Context.WorldContext, Faction, Delta);
 }
 
 FText FFVEffect_ModifyNotoriety::GetDescription() const
@@ -158,7 +158,7 @@ FText FFVEffect_ModifyNotoriety::GetDescription() const
 
 void FFVEffect_ModifyFame::Apply(const FFVConditionContext& Context) const
 {
-	UFVSocialStatics::ModifyFame(Context.WorldContext, Delta);
+	UFVSocialLibrary::ModifyFame(Context.WorldContext, Delta);
 }
 
 FText FFVEffect_ModifyFame::GetDescription() const
@@ -168,7 +168,7 @@ FText FFVEffect_ModifyFame::GetDescription() const
 
 void FFVEffect_ModifyGlobalNotoriety::Apply(const FFVConditionContext& Context) const
 {
-	UFVSocialStatics::ModifyGlobalNotoriety(Context.WorldContext, Delta);
+	UFVSocialLibrary::ModifyGlobalNotoriety(Context.WorldContext, Delta);
 }
 
 FText FFVEffect_ModifyGlobalNotoriety::GetDescription() const
@@ -178,7 +178,7 @@ FText FFVEffect_ModifyGlobalNotoriety::GetDescription() const
 
 void FFVEffect_ModifyRelationship::Apply(const FFVConditionContext& Context) const
 {
-	UFVSocialStatics::ModifyRelationship(Context.WorldContext, FVSocialConditions::CharacterOrTarget(Character, Context), Delta);
+	UFVSocialLibrary::ModifyRelationship(Context.WorldContext, FVSocialConditions::CharacterOrTarget(Character, Context), Delta);
 }
 
 FText FFVEffect_ModifyRelationship::GetDescription() const

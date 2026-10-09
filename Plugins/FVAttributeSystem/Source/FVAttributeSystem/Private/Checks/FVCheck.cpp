@@ -21,17 +21,17 @@ namespace
 	}
 }
 
-FFVCheckResult UFVCheckStatics::RollCheck(const UFVCheckDefinition* Check, AActor* Instigator, AActor* Target, int32 Difficulty)
+FFVCheckResult UFVCheckLibrary::RollCheck(const UFVCheckDefinition* Check, AActor* Instigator, AActor* Target, int32 Difficulty)
 {
 	return Build(Check, UFVConditionLibrary::MakeContext(Instigator, Target), Difficulty, true);
 }
 
-FFVCheckResult UFVCheckStatics::PreviewCheck(const UFVCheckDefinition* Check, AActor* Instigator, AActor* Target, int32 Difficulty)
+FFVCheckResult UFVCheckLibrary::PreviewCheck(const UFVCheckDefinition* Check, AActor* Instigator, AActor* Target, int32 Difficulty)
 {
 	return Build(Check, UFVConditionLibrary::MakeContext(Instigator, Target), Difficulty, false);
 }
 
-float UFVCheckStatics::SuccessChance(const UFVCheckDefinition* Check, AActor* Instigator, AActor* Target, int32 Difficulty)
+float UFVCheckLibrary::SuccessChance(const UFVCheckDefinition* Check, AActor* Instigator, AActor* Target, int32 Difficulty)
 {
 	if (Check == nullptr)
 	{
@@ -55,7 +55,7 @@ float UFVCheckStatics::SuccessChance(const UFVCheckDefinition* Check, AActor* In
 	return Needed > Faces ? 0.f : static_cast<float>(Faces - Needed + 1) / static_cast<float>(Faces);
 }
 
-FFVCheckResult UFVCheckStatics::Build(const UFVCheckDefinition* Check, const FFVConditionContext& Context, int32 Difficulty, bool bRoll)
+FFVCheckResult UFVCheckLibrary::Build(const UFVCheckDefinition* Check, const FFVConditionContext& Context, int32 Difficulty, bool bRoll)
 {
 	FFVCheckResult Result;
 	Result.Difficulty = Difficulty;
@@ -92,7 +92,7 @@ FFVCheckResult UFVCheckStatics::Build(const UFVCheckDefinition* Check, const FFV
 	return Result;
 }
 
-int32 UFVCheckStatics::Roll(EFVCheckRoll InRoll)
+int32 UFVCheckLibrary::Roll(EFVCheckRoll InRoll)
 {
 	switch (InRoll)
 	{
@@ -115,7 +115,7 @@ FText FFVCondition_PassiveCheck::GetDescription() const
 
 bool FFVCondition_PassiveCheck::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return UFVCheckStatics::Build(Check, Context, Difficulty, false).bSuccess;
+	return UFVCheckLibrary::Build(Check, Context, Difficulty, false).bSuccess;
 }
 
 #undef LOCTEXT_NAMESPACE

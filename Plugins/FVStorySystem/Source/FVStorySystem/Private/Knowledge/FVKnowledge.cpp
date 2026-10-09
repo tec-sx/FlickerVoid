@@ -7,13 +7,13 @@
 
 #define LOCTEXT_NAMESPACE "FVKnowledge"
 
-bool UFVKnowledgeStatics::Knows(const UObject* WorldContext, const UFVKnowledgeDefinition* Knowledge)
+bool UFVKnowledgeLibrary::Knows(const UObject* WorldContext, const UFVKnowledgeDefinition* Knowledge)
 {
 	const UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext);
 	return Database && Knowledge && Database->GetFact(Knowledge->Id) > 0;
 }
 
-bool UFVKnowledgeStatics::CanLearn(const UObject* WorldContext, const UFVKnowledgeDefinition* Knowledge)
+bool UFVKnowledgeLibrary::CanLearn(const UObject* WorldContext, const UFVKnowledgeDefinition* Knowledge)
 {
 	if (!Knowledge || Knows(WorldContext, Knowledge))
 	{
@@ -30,7 +30,7 @@ bool UFVKnowledgeStatics::CanLearn(const UObject* WorldContext, const UFVKnowled
 	return true;
 }
 
-bool UFVKnowledgeStatics::Learn(UObject* WorldContext, const UFVKnowledgeDefinition* Knowledge)
+bool UFVKnowledgeLibrary::Learn(UObject* WorldContext, const UFVKnowledgeDefinition* Knowledge)
 {
 	UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext);
 	if (!Database || !CanLearn(WorldContext, Knowledge))
@@ -46,7 +46,7 @@ bool UFVKnowledgeStatics::Learn(UObject* WorldContext, const UFVKnowledgeDefinit
 	return true;
 }
 
-void UFVKnowledgeStatics::Forget(UObject* WorldContext, const UFVKnowledgeDefinition* Knowledge)
+void UFVKnowledgeLibrary::Forget(UObject* WorldContext, const UFVKnowledgeDefinition* Knowledge)
 {
 	UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext);
 	if (!Database || !Knowledge)
@@ -58,7 +58,7 @@ void UFVKnowledgeStatics::Forget(UObject* WorldContext, const UFVKnowledgeDefini
 
 bool FFVCondition_Knows::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return UFVKnowledgeStatics::Knows(Context.WorldContext, Knowledge);
+	return UFVKnowledgeLibrary::Knows(Context.WorldContext, Knowledge);
 }
 
 FText FFVCondition_Knows::GetDescription() const
@@ -69,7 +69,7 @@ FText FFVCondition_Knows::GetDescription() const
 
 void FFVEffect_Learn::Apply(const FFVConditionContext& Context) const
 {
-	UFVKnowledgeStatics::Learn(Context.WorldContext, Knowledge);
+	UFVKnowledgeLibrary::Learn(Context.WorldContext, Knowledge);
 }
 
 FText FFVEffect_Learn::GetDescription() const

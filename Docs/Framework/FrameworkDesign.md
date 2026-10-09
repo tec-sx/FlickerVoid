@@ -114,7 +114,7 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 
 **Undercover**
 1. Equipping an outfit item adds its `GrantedTags` (e.g. `Disguise.Faction.Police`) to the owner's ASC.
-2. `UFVSocialStatics::GetAttitude(ObserverFaction, Actor)` treats a disguised actor as a member unless the notoriety it reads is above `DisguiseNotorietyLimit`.
+2. `UFVSocialLibrary::GetAttitude(ObserverFaction, Actor)` treats a disguised actor as a member unless the notoriety it reads is above `DisguiseNotorietyLimit`.
 3. While disguised, the fame and notoriety onlookers read drop to `DisguiseRecognition` of the real value, so a known face can pass unnoticed.
 4. Quests and interaction offers require outfits with `Is Wearing` / `Has Gameplay Tag` conditions.
 

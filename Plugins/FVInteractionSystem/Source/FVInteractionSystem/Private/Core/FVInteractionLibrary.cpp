@@ -1,8 +1,8 @@
-﻿#include "Core/FVInteractionSystemBFL.h"
+﻿#include "Core/FVInteractionLibrary.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionSystemBFL)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractionLibrary)
 
-UMeshComponent* UFVInteractionSystemBFL::FindMeshByTag(const FName Tag, const AActor* Actor)
+UMeshComponent* UFVInteractionLibrary::FindMeshByTag(const FName Tag, const AActor* Actor)
 {
 	if (!IsValid(Actor)) 
 		return nullptr;

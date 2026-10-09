@@ -3,14 +3,14 @@
 #include "CoreMinimal.h"
 #include "FVSocialTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "FVSocialStatics.generated.h"
+#include "FVSocialLibrary.generated.h"
 
 class UFVCharacterDefinition;
 class UFVFactionDefinition;
 
 /** Reads and writes social state. All values live in facts, so they save and work in conditions. */
 UCLASS()
-class FVSOCIALSYSTEM_API UFVSocialStatics : public UBlueprintFunctionLibrary
+class FVSOCIALSYSTEM_API UFVSocialLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 

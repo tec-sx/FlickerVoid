@@ -45,7 +45,7 @@ Get `UFVQuestSubsystem`, bind **On Quests Changed** (read `Get Last Changed Ques
 |---|---|---|
 | `DA_Knowledge_<Name>` | `FVKnowledgeDefinition` | **Id** = fact written when learned (e.g. `Knowledge.Clue.BloodOnCoat`), **Kind** (Clue, Topic, Thought), **Prerequisites**, **On Learned** effects |
 
-- Learn through the **Learn Knowledge** effect (dialogue choices, scans, examine abilities, Flow) or `UFVKnowledgeStatics::Learn` (`FVKnowledge::Learn(Knowledge)` in AngelScript; the world context is implicit).
+- Learn through the **Learn Knowledge** effect (dialogue choices, scans, examine abilities, Flow) or `UFVKnowledgeLibrary::Learn` (`FVKnowledge::Learn(Knowledge)` in AngelScript; the world context is implicit).
 - Test it with the **Knows** condition: unlock dialogue topics, interaction offers, objectives.
 - Knowledge whose prerequisites aren't known can't be learned yet; chain clues into deductions this way.
 

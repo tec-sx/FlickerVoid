@@ -9,7 +9,7 @@
 class UFVKnowledgeDefinition;
 
 UCLASS()
-class FVSTORYSYSTEM_API UFVKnowledgeStatics : public UBlueprintFunctionLibrary
+class FVSTORYSYSTEM_API UFVKnowledgeLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 

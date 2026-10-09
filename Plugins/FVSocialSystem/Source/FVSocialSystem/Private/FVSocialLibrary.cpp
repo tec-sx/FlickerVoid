@@ -1,4 +1,4 @@
-#include "FVSocialStatics.h"
+#include "FVSocialLibrary.h"
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
@@ -8,7 +8,7 @@
 #include "GameplayTagAssetInterface.h"
 #include "Identity/FVIdentityComponent.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FVSocialStatics)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVSocialLibrary)
 
 namespace FVSocial
 {
@@ -48,18 +48,18 @@ const FFVReputationTier* UFVFactionDefinition::FindTier(const int32 Standing) co
 	return Result;
 }
 
-int32 UFVSocialStatics::GetStanding(const UObject* WorldContext, const UFVFactionDefinition* Faction)
+int32 UFVSocialLibrary::GetStanding(const UObject* WorldContext, const UFVFactionDefinition* Faction)
 {
 	return Faction ? FVSocial::ReadFact(WorldContext, Faction->Id) : 0;
 }
 
-FGameplayTag UFVSocialStatics::GetTier(const UObject* WorldContext, const UFVFactionDefinition* Faction)
+FGameplayTag UFVSocialLibrary::GetTier(const UObject* WorldContext, const UFVFactionDefinition* Faction)
 {
 	const FFVReputationTier* Tier = Faction ? Faction->FindTier(GetStanding(WorldContext, Faction)) : nullptr;
 	return Tier ? Tier->Tier : FGameplayTag();
 }
 
-void UFVSocialStatics::ModifyStanding(UObject* WorldContext, const UFVFactionDefinition* Faction, const int32 Delta)
+void UFVSocialLibrary::ModifyStanding(UObject* WorldContext, const UFVFactionDefinition* Faction, const int32 Delta)
 {
 	if (!Faction || Delta == 0)
 	{
@@ -81,12 +81,12 @@ void UFVSocialStatics::ModifyStanding(UObject* WorldContext, const UFVFactionDef
 	}
 }
 
-int32 UFVSocialStatics::GetNotoriety(const UObject* WorldContext, const UFVFactionDefinition* Faction)
+int32 UFVSocialLibrary::GetNotoriety(const UObject* WorldContext, const UFVFactionDefinition* Faction)
 {
 	return Faction ? FVSocial::ReadFact(WorldContext, Faction->NotorietyFact) : 0;
 }
 
-void UFVSocialStatics::ModifyNotoriety(UObject* WorldContext, const UFVFactionDefinition* Faction, const int32 Delta)
+void UFVSocialLibrary::ModifyNotoriety(UObject* WorldContext, const UFVFactionDefinition* Faction, const int32 Delta)
 {
 	if (Faction)
 	{
@@ -94,50 +94,50 @@ void UFVSocialStatics::ModifyNotoriety(UObject* WorldContext, const UFVFactionDe
 	}
 }
 
-int32 UFVSocialStatics::GetFame(const UObject* WorldContext)
+int32 UFVSocialLibrary::GetFame(const UObject* WorldContext)
 {
 	return FVSocial::ReadFact(WorldContext, UFVSocialSettings::Get().FameFact);
 }
 
-void UFVSocialStatics::ModifyFame(UObject* WorldContext, const int32 Delta)
+void UFVSocialLibrary::ModifyFame(UObject* WorldContext, const int32 Delta)
 {
 	AddClamped(WorldContext, UFVSocialSettings::Get().FameFact, Delta, 0, MAX_int32);
 }
 
-int32 UFVSocialStatics::GetGlobalNotoriety(const UObject* WorldContext)
+int32 UFVSocialLibrary::GetGlobalNotoriety(const UObject* WorldContext)
 {
 	return FVSocial::ReadFact(WorldContext, UFVSocialSettings::Get().NotorietyFact);
 }
 
-void UFVSocialStatics::ModifyGlobalNotoriety(UObject* WorldContext, const int32 Delta)
+void UFVSocialLibrary::ModifyGlobalNotoriety(UObject* WorldContext, const int32 Delta)
 {
 	AddClamped(WorldContext, UFVSocialSettings::Get().NotorietyFact, Delta, 0, FVSocial::MaxNotoriety);
 }
 
-bool UFVSocialStatics::IsDisguised(const AActor* Actor)
+bool UFVSocialLibrary::IsDisguised(const AActor* Actor)
 {
 	const FGameplayTag Root = UFVSocialSettings::Get().DisguiseRoot;
 	return Root.IsValid() && FVSocial::HasTag(Actor, Root);
 }
 
-int32 UFVSocialStatics::GetRecognizedFame(const AActor* Actor)
+int32 UFVSocialLibrary::GetRecognizedFame(const AActor* Actor)
 {
 	const int32 Fame = GetFame(Actor);
 	return IsDisguised(Actor) ? FMath::RoundToInt(Fame * UFVSocialSettings::Get().DisguiseRecognition) : Fame;
 }
 
-int32 UFVSocialStatics::GetRecognizedNotoriety(const AActor* Actor, const UFVFactionDefinition* Faction)
+int32 UFVSocialLibrary::GetRecognizedNotoriety(const AActor* Actor, const UFVFactionDefinition* Faction)
 {
 	const int32 Notoriety = FMath::Max(GetNotoriety(Actor, Faction), GetGlobalNotoriety(Actor));
 	return IsDisguised(Actor) ? FMath::RoundToInt(Notoriety * UFVSocialSettings::Get().DisguiseRecognition) : Notoriety;
 }
 
-bool UFVSocialStatics::HasTitle(const UObject* WorldContext, const UFVTitleDefinition* Title)
+bool UFVSocialLibrary::HasTitle(const UObject* WorldContext, const UFVTitleDefinition* Title)
 {
 	return Title != nullptr && FVSocial::ReadFact(WorldContext, Title->Id) > 0;
 }
 
-bool UFVSocialStatics::GrantTitle(UObject* WorldContext, const UFVTitleDefinition* Title)
+bool UFVSocialLibrary::GrantTitle(UObject* WorldContext, const UFVTitleDefinition* Title)
 {
 	UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext);
 	if (Database == nullptr || Title == nullptr || !Title->Id.IsValid() || HasTitle(WorldContext, Title))
@@ -158,7 +158,7 @@ bool UFVSocialStatics::GrantTitle(UObject* WorldContext, const UFVTitleDefinitio
 	return true;
 }
 
-void UFVSocialStatics::RevokeTitle(UObject* WorldContext, const UFVTitleDefinition* Title)
+void UFVSocialLibrary::RevokeTitle(UObject* WorldContext, const UFVTitleDefinition* Title)
 {
 	if (UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext))
 	{
@@ -169,13 +169,13 @@ void UFVSocialStatics::RevokeTitle(UObject* WorldContext, const UFVTitleDefiniti
 	}
 }
 
-int32 UFVSocialStatics::GetRelationship(const UObject* WorldContext, const UFVCharacterDefinition* Character)
+int32 UFVSocialLibrary::GetRelationship(const UObject* WorldContext, const UFVCharacterDefinition* Character)
 {
 	const FFVCharacterFragment_Social* Social = Character ? Character->FindFragment<FFVCharacterFragment_Social>() : nullptr;
 	return Social ? FVSocial::ReadFact(WorldContext, Social->RelationshipFact) : 0;
 }
 
-void UFVSocialStatics::ModifyRelationship(UObject* WorldContext, const UFVCharacterDefinition* Character, const int32 Delta)
+void UFVSocialLibrary::ModifyRelationship(UObject* WorldContext, const UFVCharacterDefinition* Character, const int32 Delta)
 {
 	const FFVCharacterFragment_Social* Social = Character ? Character->FindFragment<FFVCharacterFragment_Social>() : nullptr;
 	if (Social)
@@ -184,26 +184,26 @@ void UFVSocialStatics::ModifyRelationship(UObject* WorldContext, const UFVCharac
 	}
 }
 
-const FFVCharacterFragment_Social* UFVSocialStatics::FindSocialFragment(const AActor* Actor)
+const FFVCharacterFragment_Social* UFVSocialLibrary::FindSocialFragment(const AActor* Actor)
 {
 	const UFVCharacterDefinition* Definition = UFVIdentityComponent::GetActorDefinition(Actor);
 	return Definition ? Definition->FindFragment<FFVCharacterFragment_Social>() : nullptr;
 }
 
-UFVFactionDefinition* UFVSocialStatics::GetActorFaction(const AActor* Actor)
+UFVFactionDefinition* UFVSocialLibrary::GetActorFaction(const AActor* Actor)
 {
 	const FFVCharacterFragment_Social* Social = FindSocialFragment(Actor);
 	return Social ? Social->Faction.Get() : nullptr;
 }
 
-bool UFVSocialStatics::IsDisguisedAs(const AActor* Actor, const UFVFactionDefinition* Faction)
+bool UFVSocialLibrary::IsDisguisedAs(const AActor* Actor, const UFVFactionDefinition* Faction)
 {
 	return Faction
 		&& FVSocial::HasTag(Actor, Faction->DisguiseTag)
 		&& FMath::Max(GetNotoriety(Actor, Faction), GetGlobalNotoriety(Actor)) < Faction->DisguiseNotorietyLimit;
 }
 
-EFVAttitude UFVSocialStatics::GetAttitude(const UFVFactionDefinition* Faction, const AActor* Subject)
+EFVAttitude UFVSocialLibrary::GetAttitude(const UFVFactionDefinition* Faction, const AActor* Subject)
 {
 	if (!Faction || !Subject)
 	{
@@ -224,7 +224,7 @@ EFVAttitude UFVSocialStatics::GetAttitude(const UFVFactionDefinition* Faction, c
 	return Tier ? Tier->Attitude : EFVAttitude::Neutral;
 }
 
-void UFVSocialStatics::AddClamped(UObject* WorldContext, const FGameplayTag Fact, const int32 Delta, const int32 Min, const int32 Max)
+void UFVSocialLibrary::AddClamped(UObject* WorldContext, const FGameplayTag Fact, const int32 Delta, const int32 Min, const int32 Max)
 {
 	UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext);
 	if (!Database || !Fact.IsValid() || Delta == 0)
