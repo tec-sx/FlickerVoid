@@ -42,6 +42,7 @@ Every plugin has three modules: runtime, `<Plugin>Debug` and `<Plugin>Editor`. F
 - Prefer FlowGraph (custom nodes) for story, quests and dialogue; StateTree and current UE5 features elsewhere.
 - Minimal comments: a short class description; comment a method only when its name or logic is unclear.
 - Log categories are `Log<PluginName>`; never reuse names from FVCore's `FVLogCategories.h`.
+- Follow engine naming: Blueprint function libraries are `UFV<Feature>Library` (like `UKismetMathLibrary`), never shorthand such as BFL.
 
 ### Where a setting belongs
 

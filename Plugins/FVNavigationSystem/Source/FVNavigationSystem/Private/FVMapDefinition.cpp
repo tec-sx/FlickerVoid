@@ -32,6 +32,13 @@ FVector2D FFVMapLayer::WorldToUV(const FVector& Location) const
 		(WorldMax.X - Location.X) / Size.X);
 }
 
+FVector2D FFVMapLayer::RadiusToExtentUV(float Radius) const
+{
+	// Image width runs along world Y, height along world X.
+	const FVector2D Size = GetWorldSize();
+	return FVector2D(Radius / FMath::Max(Size.Y, 1.), Radius / FMath::Max(Size.X, 1.));
+}
+
 FVector FFVMapLayer::UVToWorld(const FVector2D& UV, float Z) const
 {
 	const FVector2D Size = GetWorldSize();
@@ -60,6 +67,11 @@ int32 UFVMapDefinition::FindLayerAt(const FVector& Location) const
 		}
 	}
 	return Fallback;
+}
+
+int32 UFVMapDefinition::FindBaseLayerAt(const FVector& Location) const
+{
+	return Layers.IndexOfByPredicate([&Location](const FFVMapLayer& Layer) { return !Layer.bLimitHeight && Layer.ContainsXY(Location); });
 }
 
 int32 UFVMapDefinition::FindLayerByName(FName LayerName) const

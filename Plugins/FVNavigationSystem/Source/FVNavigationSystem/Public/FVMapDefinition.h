@@ -54,6 +54,9 @@ struct FVNAVIGATIONSYSTEM_API FFVMapLayer
 	bool Contains(const FVector& Location) const;
 	FVector2D GetWorldSize() const { return WorldMax - WorldMin; }
 	FVector2D WorldToUV(const FVector& Location) const;
+
+	/** Half of the texture, in UV, that shows Radius world units around a point. */
+	FVector2D RadiusToExtentUV(float Radius) const;
 	FVector UVToWorld(const FVector2D& UV, float Z) const;
 };
 
@@ -84,6 +87,10 @@ public:
 	/** Layer covering Location; a height-limited layer wins over an unlimited one. INDEX_NONE when none does. */
 	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
 	int32 FindLayerAt(const FVector& Location) const;
+
+	/** Layer covering Location with height ignored: the first layer without a height limit, e.g. the outdoor layer around an interior. */
+	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
+	int32 FindBaseLayerAt(const FVector& Location) const;
 
 	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
 	int32 FindLayerByName(FName LayerName) const;

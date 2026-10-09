@@ -110,16 +110,41 @@ Event Construct (or when the owning pawn changes):
 
 Then update on a timer (every 0.03-0.05 s is plenty) or in Tick. Building a view is cheap; it only walks the registered markers.
 
+### 6.1a Blueprint helpers (FV Navigation Library)
+
+`UFVNavigationLibrary` holds the maths below as Blueprint nodes (search *FV Navigation* in the node menu), so the minimap, compass and world map widgets share it:
+
+| Node | Use |
+|---|---|
+| **Async Load Map Layer** (Map, Layer Index) → Layer, Texture; *Loaded* / *Failed* | Swap the map image when **On Active Map Changed** fires, without a hitch |
+| **Get Map Layer** (Map, Layer Index) → Layer | Layer data (texture, area, height) without loading |
+| **World To Map UV** / **Map UV To World** | Between world locations and layer texture UV |
+| **Get Layer View Area** (Map, Layer Index, Center, Radius) → Center UV, Extent UV | Minimap values for any layer, e.g. the outdoor layer drawn under an interior (radius = the navigator's **Minimap > Radius**) |
+| **Find Base Layer At** (on the map definition) | The outdoor layer around an interior: the layer under a location with height ignored |
+| **Apply Map View** (Material, Center UV, Extent UV, Map Rotation, Prefix) | Sets `<Prefix>CenterUV`, `<Prefix>ExtentUV` and `MapRotation` on a map material; empty prefix for one layer, `World` / `Room` for a layered one |
+| **Set Material Vector 2D** | A 2D vector into a vector parameter's R and G |
+| **Minimap To Widget** (Marker Position, Frame Size, Edge Padding) | Pixel position of a minimap marker in the frame |
+| **Get Minimap Edge Angle** (Marker Position) | Angle for an arrow on the rim pointing at a clamped marker |
+| **Compass To Widget** (Marker Position X, Strip Width) | Pixel X of a compass marker |
+| **Get Compass Bearing Position** (Bearing, Heading, Field Of View) → Position, visible | Cardinal letters: N = 0, E = 90, S = 180, W = 270 |
+| **Get Compass Strip UV** (Heading, Field Of View) → Offset, Tiling | A tiling compass strip texture with north at U = 0: sample at `U * Tiling + Offset` |
+| **Get World Map Extent** (Map, Layer Index, View Size, Zoom) | World map Extent UV at a zoom, keeping the image's proportions |
+| **Map UV To Screen** / **Screen To Map UV** / **Screen To World** | World map placement, cursor picking, waypoints |
+| **Pan Map** / **Clamp Map Pan** | Dragging, kept inside the image |
+| **Zoom Map At** (…, Screen Position, New Zoom) → Pan UV, Extent UV | Zoom around the cursor |
+| **Find Marker At Screen** (Markers, Screen Position, …, Max Distance) | Hover and click on world map markers |
+| **Get Marker Appearance** (Marker) → Icon, Tint | Icon to draw, including the undiscovered icon |
+| **Format Distance** (Distance) | "85 m" / "1.2 km" |
+
 ### 6.2 Marker icon widget
 
 `WBP_MapMarker` (User Widget), reused by minimap, compass and world map:
 - An `Image` named **Icon**, and optional small images for **Above** / **Below** arrows and a **Tracked** highlight.
 - A function `SetMarker(FFVMarkerView View, float IconSize)`:
-  - Icon brush = `View.Definition.Display.Icon` (soft texture: load it once and cache it per definition), tint = `View.Definition.Display.Tint`.
-  - When `View.Discovered` is false, show your "unknown place" icon instead (the definition's Discovery fragment holds an **Undiscovered Icon** if you want it per marker; read it with *Get Instanced Struct Value* on `Definition.Fragments`).
+  - **Get Marker Appearance**(View) gives the icon (soft texture: load it once and cache it) and tint. For an undiscovered marker it returns the Discovery fragment's **Undiscovered Icon** when there is one.
   - Above arrow visible when `View.Elevation == Above`, Below arrow when `Below`.
   - Render angle = `View.Rotation` (only non-zero for markers set to rotate with their actor).
-  - Tooltip or label = `View.Label`, distance text = `View.Distance / 100` metres.
+  - Tooltip or label = `View.Label`, distance text = **Format Distance**(`View.Distance`).
 
 **Reuse icons instead of recreating them.** Keep a map `Handle -> WBP_MapMarker` in each parent widget. On each update: mark all as unused, then for every marker in the view, find or create its icon and mark it used; finally collapse (or remove) the icons still unused. `FFVMarkerHandle` is unique per marker for the whole session.
 
@@ -164,11 +189,11 @@ Why it is correct: UMG applies a widget's render transform about its pivot, in t
 
 **Markers.** The minimap view lists every marker that should show. For one that isn't clamped, place it in map space inside `MapRoot`, so it pans and rotates with the map:
 ```
-UV = FVNavigation::WorldToMapUV(View.Map, View.LayerIndex, Navigation.GetMarkerLocation(Marker.Handle))
+UV = World To Map UV(View.Map, View.LayerIndex, Navigation.GetMarkerLocation(Marker.Handle))
 Icon slot (in MapRoot):  Position = UV * Size, Alignment (0.5, 0.5)
 Icon:                    SetRenderTransformAngle(Marker.Rotation - View.MapRotation)   // counter-rotate so icons stay upright
 ```
-(`Navigation` = `UFVNavigationSubsystem::Get()`.) For a clamped marker (`Marker.Clamped`, e.g. the tracked quest target out of range), its map position is outside the frame, so put it in `EdgeMarkers` instead: `Position = FrameSize / 2 + Marker.Position * (FrameSize.X / 2 - EdgePadding)`, angle `atan2(Marker.Position.X, -Marker.Position.Y)` in degrees if you want it to point outward.
+(`Navigation` = `UFVNavigationSubsystem::Get()`.) For a clamped marker (`Marker.Clamped`, e.g. the tracked quest target out of range), its map position is outside the frame, so put it in `EdgeMarkers` instead at **Minimap To Widget**(`Marker.Position`, FrameSize, EdgePadding), turned by **Get Minimap Edge Angle**(`Marker.Position`) if you want it to point outward.
 
 Shortcut: you can place *every* marker in `EdgeMarkers` with that same formula (`Marker.Position` is already rotated and zoomed for the minimap) and skip `WorldToMapUV`; icons then stay upright without counter-rotation. Markers inside `MapRoot` only matter when you want them to scroll smoothly between view updates.
 
@@ -185,7 +210,7 @@ float2 q = float2(p.x * cos(a) + p.y * sin(a),   // undo the on-screen rotation
                   -p.x * sin(a) + p.y * cos(a));
 return CenterUV + q * ExtentUV;
 ```
-Sample `MapTexture` with that UV (sampler *Clamp*); opacity mask `length(p) <= 1` for a round map. Set the four parameters from the view on a dynamic material instance each update, use it as the brush of a fixed, centred `MapImage`, and place markers with the `EdgeMarkers` formula above.
+Sample `MapTexture` with that UV (sampler *Clamp*); opacity mask `length(p) <= 1` for a round map. Set the parameters from the view on a dynamic material instance each update with **Apply Map View** (and *Set Texture Parameter Value* when **Async Load Map Layer** finishes), use it as the brush of a fixed, centred `MapImage`, and place markers with the `EdgeMarkers` formula above.
 
 ### 6.4 Compass
 
@@ -206,16 +231,17 @@ Half = Navigator.Compass.FieldOfView / 2
 Width = strip width in pixels
 
 for each (Letter, Bearing) in [(N,0), (NE,45), (E,90), (SE,135), (S,180), (SW,225), (W,270), (NW,315)]:
-    Relative = NormalizeAxis(Bearing - View.Heading)        // -180..180
-    visible when abs(Relative) <= Half
-    X = Width / 2 + Relative / Half * Width / 2
+    visible = Get Compass Bearing Position(Bearing, View.Heading, FieldOfView) -> Position
+    X = Compass To Widget(Position, Width)
 
 for each Marker in View.Markers:
-    X = Width / 2 + Marker.Position.X * Width / 2
+    X = Compass To Widget(Marker.Position.X, Width)
     Icon.SetMarker(Marker, 20); show Marker.Distance under it; dim it when Marker.Clamped (the tracked target is behind you)
 ```
 
-For a continuous tick strip instead of letters: a material with a horizontally tiling texture that covers 360°, U offset = `View.Heading / 360` and tiling = `FieldOfView / 360`.
+For a continuous tick strip instead of letters: a material with a horizontally tiling texture that covers 360°, offset and tiling from **Get Compass Strip UV**(`View.Heading`, FieldOfView), sampled at `U * Tiling + Offset`.
+
+**Ring compass** (a ring around the minimap instead of a strip): set the ring image's render angle to the minimap view's `MapRotation` each update. The strip nodes above aren't needed for it.
 
 ### 6.5 World map
 
@@ -242,33 +268,27 @@ PanUV = player UV (from BuildWorldMapView) ; Zoom = 1
 build one floor button per Map.Layers entry (DisplayName); clicking sets LayerIndex
 ```
 
-Extent (the half-size of the view in texture UV), keeping the image's proportions:
-```
-Size     = Layer.WorldMax - Layer.WorldMin            // world size; image width runs along Size.Y
-Aspect   = (ViewWidth / ViewHeight) / (Size.Y / Size.X) // view aspect / image aspect
-ExtentUV = (0.5 / Zoom * max(Aspect, 1), 0.5 / Zoom * max(1 / Aspect, 1))
-MID: CenterUV = PanUV, ExtentUV, MapRotation = 0, MapTexture = layer texture
-```
+Extent (the half-size of the view in texture UV), keeping the image's proportions: `ExtentUV = Get World Map Extent(Map, LayerIndex, ViewSize, Zoom)`. Then **Apply Map View**(MID, PanUV, ExtentUV, 0, prefix) and set the layer texture.
 
-Converting between the screen and the map:
+Converting between the screen and the map: **Map UV To Screen**(UV, PanUV, ExtentUV, ViewSize) and **Screen To Map UV**(Pixel, PanUV, ExtentUV, ViewSize). The maths, for reference:
 ```
 UVToScreen(UV)     = ((UV - PanUV) / (2 * ExtentUV) + 0.5) * ViewSize
 ScreenToUV(Pixel)  = PanUV + (Pixel / ViewSize - 0.5) * 2 * ExtentUV
 ```
 
 Input (override *On Mouse Button Down/Up*, *On Mouse Move*, *On Mouse Wheel* in the widget, or use Enhanced Input actions for gamepad sticks):
-- **Pan** (drag or right stick): `PanUV -= DeltaPixels / ViewSize * 2 * ExtentUV`, then clamp each axis of `PanUV` to `[ExtentUV, 1 - ExtentUV]`; on an axis where `ExtentUV >= 0.5` (the whole image already fits) keep it at 0.5.
-- **Zoom** (wheel or triggers) around the cursor: `CursorUV = ScreenToUV(Cursor)`; `Zoom = clamp(Zoom * 1.15^WheelDelta, 1, 8)`; recompute `ExtentUV`; `PanUV = CursorUV - (Cursor / ViewSize - 0.5) * 2 * ExtentUV`.
-- **Place waypoint** (click or a button): `UV = ScreenToUV(Cursor)`; `Location = FVNavigation::MapUVToWorld(Map, LayerIndex, UV, PlayerZ)`; `UFVNavigationSubsystem.SetWaypoint(Location)`. Clicking the waypoint again calls `ClearWaypoint`.
-- **Hover a marker**: the marker whose screen position is closest to the cursor within ~20 px; show its `Label` and the definition's `Display.ShortDescription`.
+- **Pan** (drag or right stick): `PanUV = Pan Map(PanUV, DeltaPixels, ExtentUV, ViewSize)`; it stays inside the image and centres an axis the whole image already fits on.
+- **Zoom** (wheel or triggers) around the cursor: `NewZoom = clamp(Zoom * 1.15^WheelDelta, MinZoom, MaxZoom)`; `Zoom Map At(Map, LayerIndex, ViewSize, Cursor, PanUV, ExtentUV, NewZoom) -> PanUV, ExtentUV`; `Zoom = NewZoom`.
+- **Place waypoint** (click or a button): `Location = Screen To World(Map, LayerIndex, Cursor, PanUV, ExtentUV, ViewSize, PlayerZ)`; `UFVNavigationSubsystem.SetWaypoint(Location)`. Clicking the waypoint again calls `ClearWaypoint`.
+- **Hover a marker**: **Find Marker At Screen**(View.Markers, Cursor, PanUV, ExtentUV, ViewSize, 20); show its `Label` and the definition's `Display.ShortDescription`.
 - **Track a marker** (click on it): `SetTrackedMarker(Marker.Handle)`.
 
 Each frame (or on any change):
 ```
 View = Navigator.BuildWorldMapView(Map, LayerIndex, Zoom)
-PlayerIcon visible when View.PlayerOnLayer; position = UVToScreen(View.PlayerUV); angle = View.PlayerRotation
+PlayerIcon visible when View.PlayerOnLayer; position = Map UV To Screen(View.PlayerUV, PanUV, ExtentUV, ViewSize); angle = View.PlayerRotation
 for each Marker in View.Markers:
-    Pos = UVToScreen(Marker.Position); skip when outside the view
+    Pos = Map UV To Screen(Marker.Position, PanUV, ExtentUV, ViewSize); skip when outside the view
     Icon.SetMarker(Marker, 32) at Pos
 ```
 Markers with a World Map fragment **Min Zoom** only come back once `Zoom` reaches it, so towns can show only the inn and the shop until the player zooms in.
