@@ -4,6 +4,9 @@ Intermediate
 Saved
 Content
 Plugins/*
+Script/Binds.Cache*
+*.DotSettings.user
+Config/User*.ini
 .vscode
 .vs
 .idea
