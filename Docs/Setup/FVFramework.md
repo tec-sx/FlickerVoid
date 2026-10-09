@@ -89,7 +89,7 @@ Built-in types you can pick anywhere a rule appears:
 
 - A condition set has **Mode** (All or Any) and **Failure Presentation** (Hidden, Show Locked, Show Locked With Reason), which UIs use for offers and dialogue choices.
 - **Custom rules in AngelScript**: subclass `UFVScriptCondition` (override `Evaluate` and `GetDescription`) or `UFVScriptEffect` (override `Apply`), then pick the **Script** condition or effect in data and choose your class.
-- From Blueprint/AngelScript: `UFVConditionStatics` > `Evaluate Condition Set`, `Apply Effects`, `Describe Condition Set`.
+- From Blueprint/AngelScript: `UFVConditionLibrary` > `Evaluate Condition Set`, `Apply Effects`, `Describe Condition Set`.
 
 ## 6. World clock
 

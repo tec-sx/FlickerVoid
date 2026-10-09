@@ -1,6 +1,6 @@
 #include "Components/FVInteractorComponent.h"
 #include "Components/FVInteractableComponent.h"
-#include "Conditions/FVConditionStatics.h"
+#include "Conditions/FVConditionLibrary.h"
 #include "Data/FVInteractorDefinition.h"
 
 #if WITH_EDITOR
@@ -526,7 +526,7 @@ bool UFVInteractorComponent::IsOfferAvailable(const FFVInteractionOffer& Offer) 
 	}
 
 	const UFVInteractableComponent* Target = TargetInteractable.Get();
-	return Offer.Conditions.Evaluate(UFVConditionStatics::MakeContext(GetOwner(), Target ? Target->GetOwner() : nullptr));
+	return Offer.Conditions.Evaluate(UFVConditionLibrary::MakeContext(GetOwner(), Target ? Target->GetOwner() : nullptr));
 }
 
 void UFVInteractorComponent::HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue)

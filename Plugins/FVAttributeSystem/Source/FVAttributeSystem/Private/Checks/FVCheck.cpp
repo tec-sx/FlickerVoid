@@ -1,7 +1,7 @@
 #include "Checks/FVCheck.h"
 
 #include "Attributes/FVAttributeComponent.h"
-#include "Conditions/FVConditionStatics.h"
+#include "Conditions/FVConditionLibrary.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVCheck)
 
@@ -23,12 +23,12 @@ namespace
 
 FFVCheckResult UFVCheckStatics::RollCheck(const UFVCheckDefinition* Check, AActor* Instigator, AActor* Target, int32 Difficulty)
 {
-	return Build(Check, UFVConditionStatics::MakeContext(Instigator, Target), Difficulty, true);
+	return Build(Check, UFVConditionLibrary::MakeContext(Instigator, Target), Difficulty, true);
 }
 
 FFVCheckResult UFVCheckStatics::PreviewCheck(const UFVCheckDefinition* Check, AActor* Instigator, AActor* Target, int32 Difficulty)
 {
-	return Build(Check, UFVConditionStatics::MakeContext(Instigator, Target), Difficulty, false);
+	return Build(Check, UFVConditionLibrary::MakeContext(Instigator, Target), Difficulty, false);
 }
 
 float UFVCheckStatics::SuccessChance(const UFVCheckDefinition* Check, AActor* Instigator, AActor* Target, int32 Difficulty)

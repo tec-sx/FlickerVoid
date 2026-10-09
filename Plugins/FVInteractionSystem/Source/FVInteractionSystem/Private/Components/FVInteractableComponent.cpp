@@ -2,7 +2,7 @@
 #include "Components/FVInteractableResponseComponent.h"
 #include "Components/FVInteractorComponent.h"
 #include "Components/PrimitiveComponent.h"
-#include "Conditions/FVConditionStatics.h"
+#include "Conditions/FVConditionLibrary.h"
 #include "Core/FVInteractionGameplayTags.h"
 #include "Data/FVInteractableDefinition.h"
 #include "FVInteractionSystem.h"
@@ -388,7 +388,7 @@ void UFVInteractableComponent::ApplyOfferEffects(const FGameplayTag& ActionTag, 
 
 	if (Offer && !Offer->Effects.IsEmpty())
 	{
-		Offer->Effects.Apply(UFVConditionStatics::MakeContext(Interactor ? Interactor->GetOwner() : nullptr, GetOwner()));
+		Offer->Effects.Apply(UFVConditionLibrary::MakeContext(Interactor ? Interactor->GetOwner() : nullptr, GetOwner()));
 	}
 }
 

@@ -2,7 +2,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
-#include "Conditions/FVConditionStatics.h"
+#include "Conditions/FVConditionLibrary.h"
 #include "GameFramework/Actor.h"
 #include "Inventory/FVInventoryComponent.h"
 #include "Items/FVItemDefinition.h"
@@ -77,7 +77,7 @@ bool UFVEquipmentComponent::CanEquip(const UFVItemDefinition* Item) const
 		}
 	}
 
-	return Equippable->EquipConditions.Evaluate(UFVConditionStatics::MakeContext(GetOwner(), GetOwner()));
+	return Equippable->EquipConditions.Evaluate(UFVConditionLibrary::MakeContext(GetOwner(), GetOwner()));
 }
 
 bool UFVEquipmentComponent::Equip(UFVItemDefinition* Item)
