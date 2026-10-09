@@ -7,7 +7,7 @@ Developed with Unreal Engine 5.7
 
 ## 1. Project Overview
 
-This is a **AAA-style, third-person, story-driven single-player game** built with **Unreal Engine 5.7**.
+This is a **third-person, story-driven single-player game** built with **Unreal Engine 5.7**.
 
 The project is written **primarily in C++**, with C++ providing robust, scalable systems and **Blueprints used strictly for game design and content assembly**, not complex logic. The goal is to minimize blueprint complexity while maintaining designer-friendly workflows.
 
