@@ -67,6 +67,9 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Fame")
 	TArray<TSoftObjectPtr<UFVFactionDefinition>> Factions;
 
+	UPROPERTY(Config, EditAnywhere, Category = "Relationships", meta = (ToolTip = "Characters the menus list once their relationship fact has been set."))
+	TArray<TSoftObjectPtr<UFVCharacterDefinition>> Relationships;
+
 	/** Wearing anything tagged under this root hides who the player is. */
 	UPROPERTY(Config, EditAnywhere, Category = "Appearance", meta = (Categories = "Disguise"))
 	FGameplayTag DisguiseRoot;

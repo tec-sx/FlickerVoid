@@ -48,6 +48,7 @@ Get `UFVQuestSubsystem`, bind **On Quests Changed** (read `Get Last Changed Ques
 - Learn through the **Learn Knowledge** effect (dialogue choices, scans, examine abilities, Flow) or `UFVKnowledgeLibrary::Learn` (`FVKnowledge::Learn(Knowledge)` in AngelScript; the world context is implicit).
 - Test it with the **Knows** condition: unlock dialogue topics, interaction offers, objectives.
 - Knowledge whose prerequisites aren't known can't be learned yet; chain clues into deductions this way.
+- `Get Known Knowledge(Kinds)` lists every known definition of the given kinds (all when empty), found through the asset registry; the journal's Notes and Memories use it.
 
 ## 4. Settings
 

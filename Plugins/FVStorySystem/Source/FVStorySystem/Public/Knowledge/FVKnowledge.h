@@ -4,6 +4,7 @@
 #include "Conditions/FVCondition.h"
 #include "Conditions/FVEffect.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Knowledge/FVKnowledgeDefinition.h"
 #include "FVKnowledge.generated.h"
 
 class UFVKnowledgeDefinition;
@@ -26,6 +27,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Knowledge", meta = (WorldContext = "WorldContext"))
 	static void Forget(UObject* WorldContext, const UFVKnowledgeDefinition* Knowledge);
+
+	UFUNCTION(BlueprintCallable, Category = "Knowledge", meta = (WorldContext = "WorldContext", ToolTip = "Every known knowledge definition of the given kinds (all kinds when empty), found through the asset registry."))
+	static TArray<UFVKnowledgeDefinition*> GetKnownKnowledge(const UObject* WorldContext, const TArray<EFVKnowledgeKind>& Kinds);
 };
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Knows"))
