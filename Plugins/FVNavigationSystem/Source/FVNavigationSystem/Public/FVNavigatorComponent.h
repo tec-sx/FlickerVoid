@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "FVNavigatorComponent.generated.h"
 
+class APlayerController;
 class UFVMapDefinition;
 struct FFVMarker;
 
@@ -24,6 +25,10 @@ public:
 	UFVNavigatorComponent();
 
 	static UFVNavigatorComponent* Find(const AActor* Actor);
+
+	/** The navigator on the player's controller, or on their pawn. */
+	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
+	static UFVNavigatorComponent* FindForPlayer(const APlayerController* Player);
 
 	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
 	UFVMapDefinition* GetActiveMap() const { return ActiveMap; }
@@ -55,8 +60,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
 	bool IsCategoryHidden(FGameplayTag Category) const { return HiddenCategories.HasTagExact(Category); }
 
+	/** Minimap radius for the current layer: Minimap.Radius, or less inside a room (see RoomRadiusScale). */
+	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
+	float GetMinimapRadius() const;
+
+	/** Radius 0 uses GetMinimapRadius; pass a smoothed radius to animate zoom changes. */
 	UFUNCTION(BlueprintCallable, Category = "FV|Navigation")
-	FFVMinimapView BuildMinimapView() const;
+	FFVMinimapView BuildMinimapView(float Radius = 0.f) const;
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Navigation")
 	FFVCompassView BuildCompassView() const;

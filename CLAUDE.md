@@ -11,7 +11,7 @@ Full design: `Docs/Framework/FrameworkDesign.md`. Per-plugin setup guides: `Docs
 1. **Plugins** (`Plugins/FV*System`, FVFramework): feature-based, generic building blocks only. Nothing game-specific.
 2. **Game modules** (`Source/FV*`): domain-based (World, Narrative, Gameplay, ...), core setup and RPG blocks for this game. The scanner lives here (`Source/FVGameplay/.../Scanner`).
 3. **AngelScript**: game-specific reusable objects.
-4. **Blueprints**: data assets and cosmetics only. No settings in Blueprints beyond occasional overrides.
+4. **Blueprints**: data assets and cosmetics only. No settings in Blueprints beyond occasional overrides. Widget Blueprints derive from the plugins' C++ widget classes and add only layout and looks.
 
 Much older code in `Source/` is experimental or obsolete; don't assume it should be kept.
 
