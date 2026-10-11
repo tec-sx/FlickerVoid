@@ -15,6 +15,9 @@ public class FVCoreUI : ModuleRules
             "DeveloperSettings",
             "UMG",
             "CommonUI",
+            "CommonInput",
+            "EnhancedInput",
+            "InputCore",
             "FVCoreRuntime"
         });
 
