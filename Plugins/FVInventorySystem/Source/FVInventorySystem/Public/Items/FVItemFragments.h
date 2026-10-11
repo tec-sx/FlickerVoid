@@ -9,25 +9,29 @@
 
 class USkeletalMesh;
 
-/** Wearable in an equipment slot. Granted tags (e.g. Disguise.Faction.Police) are added to the wearer while equipped. */
+/** Wearable in one of its slots. Granted tags (e.g. Disguise.Faction.Police) are added to the wearer while equipped. */
 USTRUCT(BlueprintType, meta = (DisplayName = "Equippable"))
 struct FVINVENTORYSYSTEM_API FFVItemFragment_Equippable : public FFVItemFragment
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (Categories = "Equipment.Slot"))
-	FGameplayTag Slot;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (Categories = "Equipment.Slot", ToolTip = "Worn in any one of these, e.g. either arm for a bracelet."))
+	FGameplayTagContainer Slots;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (Categories = "Equipment.Slot", ToolTip = "Covered while worn: whatever is worn there comes off and they stay empty."))
+	FGameplayTagContainer BlockedSlots;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable")
 	FGameplayTagContainer GrantedTags;
 
-	/** Story gating, e.g. an outfit that can't be worn before a quest step. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (ToolTip = "Story gating, e.g. an outfit that can't be worn before a quest step."))
 	FFVConditionSet EquipConditions;
 
-	/** Applied by the game layer on equipment change. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (ToolTip = "Applied by the game layer on equipment change."))
 	TSoftObjectPtr<USkeletalMesh> Mesh;
+
+	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Moved into Slots on load."))
+	FGameplayTag Slot_DEPRECATED;
 };
 
 /** A bag or backpack: adds carrying space and weight allowance while equipped. */

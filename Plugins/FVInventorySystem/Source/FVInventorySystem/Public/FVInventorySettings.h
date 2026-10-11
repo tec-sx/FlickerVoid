@@ -15,23 +15,15 @@ public:
 
 	virtual FName GetCategoryName() const override { return FV::Names::SettingsCategory; }
 
-	/** Carried weight is limited. Override at runtime with FVCvar.Inventory.EnforceWeight. */
-	UPROPERTY(Config, EditAnywhere, Category = "Limits")
+	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ToolTip = "Carried weight is limited. Override at runtime with FVCvar.Inventory.EnforceWeight."))
 	bool bEnforceWeight = true;
 
-	/** Items take up space from equipped containers. Override at runtime with FVCvar.Inventory.EnforceSpace. */
-	UPROPERTY(Config, EditAnywhere, Category = "Limits")
+	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ToolTip = "Items take up space from equipped containers. Override at runtime with FVCvar.Inventory.EnforceSpace."))
 	bool bEnforceSpace = true;
 
-	/** Weight the character can carry with nothing equipped. */
-	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ClampMin = 0, Units = "kg"))
+	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ClampMin = 0, Units = "kg", ToolTip = "Weight the character can carry with nothing equipped."))
 	float BaseWeightLimit = 20.f;
 
-	/** Grid cells available with no bag or backpack: pockets. */
-	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ClampMin = 0))
+	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ClampMin = 0, ToolTip = "Cells available with no bag or backpack: pockets."))
 	int32 BasePocketCells = 6;
-
-	/** Width of the inventory grid in cells; item footprints are measured against it. */
-	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ClampMin = 1))
-	int32 GridWidth = 6;
 };

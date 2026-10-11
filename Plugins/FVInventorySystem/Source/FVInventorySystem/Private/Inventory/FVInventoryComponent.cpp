@@ -1,5 +1,6 @@
 #include "Inventory/FVInventoryComponent.h"
 
+#include "Algo/StableSort.h"
 #include "Conditions/FVConditionLibrary.h"
 #include "Equipment/FVEquipmentComponent.h"
 #include "FVInventorySettings.h"
@@ -29,16 +30,28 @@ namespace
 		const int32 Override = CVar.GetValueOnGameThread();
 		return Override < 0 ? bSetting : Override > 0;
 	}
+
+	bool CanMerge(const FFVItemStack& Stack, const UFVItemDefinition* Item)
+	{
+		return Stack.Item == Item && Stack.InstanceData.IsEmpty();
+	}
 }
 
 UFVInventoryComponent::UFVInventoryComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	bWantsInitializeComponent = true;
 }
 
 UFVInventoryComponent* UFVInventoryComponent::Find(const AActor* Actor)
 {
 	return Actor ? Actor->FindComponentByClass<UFVInventoryComponent>() : nullptr;
+}
+
+void UFVInventoryComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+	AssignMissingIds();
 }
 
 void UFVInventoryComponent::BeginPlay()
@@ -53,6 +66,7 @@ void UFVInventoryComponent::BeginPlay()
 	if (UFVEquipmentComponent* Equipment = UFVEquipmentComponent::Find(GetOwner()))
 	{
 		Equipment->OnEquipmentChanged.AddUniqueDynamic(this, &UFVInventoryComponent::HandleEquipmentChanged);
+		Equipment->OnEquipmentReset.AddUniqueDynamic(this, &UFVInventoryComponent::HandleEquipmentReset);
 	}
 
 	if (UFVSaveableComponent* Saveable = UFVSaveableComponent::Find(GetOwner()))
@@ -65,13 +79,10 @@ void UFVInventoryComponent::BeginPlay()
 
 void UFVInventoryComponent::HandleActorDataLoaded()
 {
+	AssignMissingIds();
 	RefreshContainers();
+	OnInventoryReset.Broadcast();
 	OnCapacityChanged.Broadcast();
-
-	for (const FFVItemStack& Stack : Items)
-	{
-		OnItemChanged.Broadcast(Stack.Item, 0, Stack.Quantity);
-	}
 }
 
 void UFVInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -84,9 +95,21 @@ void UFVInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (UFVEquipmentComponent* Equipment = UFVEquipmentComponent::Find(GetOwner()))
 	{
 		Equipment->OnEquipmentChanged.RemoveDynamic(this, &UFVInventoryComponent::HandleEquipmentChanged);
+		Equipment->OnEquipmentReset.RemoveDynamic(this, &UFVInventoryComponent::HandleEquipmentReset);
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void UFVInventoryComponent::AssignMissingIds()
+{
+	for (FFVItemStack& Stack : Items)
+	{
+		if (!Stack.InstanceId.IsValid())
+		{
+			Stack.InstanceId = FGuid::NewGuid();
+		}
+	}
 }
 
 void UFVInventoryComponent::HandleItemReceived(UFVItemDefinition* Item, const int32 Quantity, AActor* Source)
@@ -98,6 +121,11 @@ void UFVInventoryComponent::HandleItemReceived(UFVItemDefinition* Item, const in
 }
 
 void UFVInventoryComponent::HandleEquipmentChanged(FGameplayTag Slot, UFVItemDefinition* OldItem, UFVItemDefinition* NewItem)
+{
+	RefreshContainers();
+}
+
+void UFVInventoryComponent::HandleEquipmentReset()
 {
 	RefreshContainers();
 }
@@ -181,6 +209,25 @@ void UFVInventoryComponent::SetBonuses(const float InWeightBonus, const int32 In
 	OnCapacityChanged.Broadcast();
 }
 
+bool UFVInventoryComponent::FitsAfterChange(const float WeightLimitChange, const int32 CellCapacityChange, const float WeightChange, const int32 UsedCellChange) const
+{
+	const UFVInventorySettings& Settings = UFVInventorySettings::Get();
+
+	if (WeightLimitChange < 0.f && IsEnforced(CVarEnforceWeight, Settings.bEnforceWeight)
+		&& GetTotalWeight() + WeightChange > GetWeightLimit() + WeightLimitChange + KINDA_SMALL_NUMBER)
+	{
+		return false;
+	}
+
+	if (CellCapacityChange < 0 && IsEnforced(CVarEnforceSpace, Settings.bEnforceSpace)
+		&& GetUsedCells() + UsedCellChange > GetCellCapacity() + CellCapacityChange)
+	{
+		return false;
+	}
+
+	return true;
+}
+
 int32 UFVInventoryComponent::GetAcceptedQuantity(const UFVItemDefinition* Item, const int32 Quantity) const
 {
 	if (Item == nullptr || Quantity <= 0)
@@ -189,54 +236,247 @@ int32 UFVInventoryComponent::GetAcceptedQuantity(const UFVItemDefinition* Item, 
 	}
 
 	const UFVInventorySettings& Settings = UFVInventorySettings::Get();
-	const int32 Current = GetQuantity(Item);
+	int32 Accepted = Quantity;
 
-	int32 Accepted = Item->MaxQuantity > 0 ? FMath::Clamp(Item->MaxQuantity - Current, 0, Quantity) : Quantity;
-
-	if (Accepted > 0 && IsEnforced(CVarEnforceWeight, Settings.bEnforceWeight) && Item->Weight > 0.f)
+	if (IsEnforced(CVarEnforceWeight, Settings.bEnforceWeight) && Item->Weight > 0.f)
 	{
 		const float Room = GetWeightLimit() - GetTotalWeight();
 		Accepted = FMath::Clamp(FMath::FloorToInt32(Room / Item->Weight), 0, Accepted);
 	}
 
-	// A new stack claims its footprint once; adding to an existing stack claims nothing more.
-	if (Accepted > 0 && Current == 0 && IsEnforced(CVarEnforceSpace, Settings.bEnforceSpace))
+	if (Accepted <= 0 || !IsEnforced(CVarEnforceSpace, Settings.bEnforceSpace))
 	{
-		if (GetUsedCells() + Item->GetCellCount() > GetCellCapacity())
+		return Accepted;
+	}
+
+	// Units first fill existing stacks for free; every new stack claims the footprint.
+	const int32 MaxPerStack = Item->MaxQuantity;
+	int64 Room = 0;
+	for (const FFVItemStack& Stack : Items)
+	{
+		if (CanMerge(Stack, Item))
 		{
-			Accepted = 0;
+			if (MaxPerStack <= 0)
+			{
+				return Accepted;
+			}
+			Room += FMath::Max(0, MaxPerStack - Stack.Quantity);
 		}
 	}
 
-	return Accepted;
+	if (Accepted <= Room)
+	{
+		return Accepted;
+	}
+
+	const int32 NewStacks = FMath::Max(0, GetCellCapacity() - GetUsedCells()) / Item->GetCellCount();
+	const int64 NewRoom = MaxPerStack <= 0 ? (NewStacks > 0 ? Accepted : 0) : int64(NewStacks) * MaxPerStack;
+	return static_cast<int32>(FMath::Min<int64>(Accepted, Room + NewRoom));
 }
 
 int32 UFVInventoryComponent::AddItem(UFVItemDefinition* Item, const int32 Quantity)
 {
 	const int32 Added = GetAcceptedQuantity(Item, Quantity);
-	if (Added > 0)
+	if (Added <= 0)
 	{
-		SetQuantity(Item, GetQuantity(Item) + Added);
+		return 0;
 	}
+
+	const int32 OldTotal = GetQuantity(Item);
+	const int32 MaxPerStack = Item->MaxQuantity;
+	int32 Left = Added;
+	TArray<FGuid> Changed;
+
+	for (FFVItemStack& Stack : Items)
+	{
+		if (Left > 0 && CanMerge(Stack, Item))
+		{
+			const int32 Taken = MaxPerStack <= 0 ? Left : FMath::Min(Left, MaxPerStack - Stack.Quantity);
+			if (Taken > 0)
+			{
+				Stack.Quantity += Taken;
+				Left -= Taken;
+				Changed.Add(Stack.InstanceId);
+			}
+		}
+	}
+
+	while (Left > 0)
+	{
+		FFVItemStack& NewStack = Items.AddDefaulted_GetRef();
+		NewStack.InstanceId = FGuid::NewGuid();
+		NewStack.Item = Item;
+		NewStack.Quantity = MaxPerStack <= 0 ? Left : FMath::Min(Left, MaxPerStack);
+		Left -= NewStack.Quantity;
+		Changed.Add(NewStack.InstanceId);
+	}
+
+	for (const FGuid& Id : Changed)
+	{
+		OnStackChanged.Broadcast(Id);
+	}
+	BroadcastItemChanged(Item, OldTotal);
 	return Added;
+}
+
+FGuid UFVInventoryComponent::AddStack(FFVItemStack Stack)
+{
+	UFVItemDefinition* Item = Stack.Item;
+	if (Item == nullptr || Stack.Quantity <= 0 || (Item->MaxQuantity > 0 && Stack.Quantity > Item->MaxQuantity))
+	{
+		return FGuid();
+	}
+
+	const UFVInventorySettings& Settings = UFVInventorySettings::Get();
+	if (IsEnforced(CVarEnforceWeight, Settings.bEnforceWeight)
+		&& GetTotalWeight() + Item->Weight * Stack.Quantity > GetWeightLimit() + KINDA_SMALL_NUMBER)
+	{
+		return FGuid();
+	}
+
+	if (IsEnforced(CVarEnforceSpace, Settings.bEnforceSpace) && GetUsedCells() + Item->GetCellCount() > GetCellCapacity())
+	{
+		return FGuid();
+	}
+
+	const int32 OldTotal = GetQuantity(Item);
+	Stack.InstanceId = FGuid::NewGuid();
+	Items.Add(Stack);
+
+	OnStackChanged.Broadcast(Stack.InstanceId);
+	BroadcastItemChanged(Item, OldTotal);
+	return Stack.InstanceId;
 }
 
 bool UFVInventoryComponent::RemoveItem(UFVItemDefinition* Item, const int32 Quantity)
 {
-	const int32 Current = GetQuantity(Item);
-	if (!Item || Quantity <= 0 || Current < Quantity)
+	if (!Item || Quantity <= 0 || GetQuantity(Item) < Quantity)
 	{
 		return false;
 	}
 
-	SetQuantity(Item, Current - Quantity);
+	// Plain stacks before customized ones, and worn ones last.
+	const UFVEquipmentComponent* Equipment = UFVEquipmentComponent::Find(GetOwner());
+	auto Priority = [Equipment](const FFVItemStack& Stack)
+	{
+		const bool bWorn = Equipment && Equipment->IsInstanceEquipped(Stack.InstanceId);
+		return (bWorn ? 2 : 0) + (Stack.InstanceData.IsEmpty() ? 0 : 1);
+	};
+
+	TArray<const FFVItemStack*> Candidates;
+	for (const FFVItemStack& Stack : Items)
+	{
+		if (Stack.Item == Item)
+		{
+			Candidates.Add(&Stack);
+		}
+	}
+	Algo::StableSortBy(Candidates, [&Priority](const FFVItemStack* Stack) { return Priority(*Stack); });
+
+	TArray<TPair<FGuid, int32>> Plan;
+	int32 Left = Quantity;
+	for (const FFVItemStack* Stack : Candidates)
+	{
+		if (Left <= 0)
+		{
+			break;
+		}
+
+		const int32 Taken = FMath::Min(Left, Stack->Quantity);
+		if (!CanRemoveFromStack(*Stack, Taken))
+		{
+			return false;
+		}
+		Plan.Emplace(Stack->InstanceId, Stack->Quantity - Taken);
+		Left -= Taken;
+	}
+
+	const int32 OldTotal = GetQuantity(Item);
+	for (const TPair<FGuid, int32>& Step : Plan)
+	{
+		SetStackQuantity(Step.Key, Step.Value);
+	}
+	BroadcastItemChanged(Item, OldTotal);
+	return true;
+}
+
+bool UFVInventoryComponent::RemoveStack(const FGuid InstanceId, const int32 Quantity)
+{
+	const FFVItemStack* Stack = FindStack(InstanceId);
+	if (!Stack || Quantity <= 0 || Stack->Quantity < Quantity || !CanRemoveFromStack(*Stack, Quantity))
+	{
+		return false;
+	}
+
+	UFVItemDefinition* Item = Stack->Item;
+	const int32 OldTotal = GetQuantity(Item);
+	SetStackQuantity(InstanceId, Stack->Quantity - Quantity);
+	BroadcastItemChanged(Item, OldTotal);
+	return true;
+}
+
+bool UFVInventoryComponent::CanRemoveFromStack(const FFVItemStack& Stack, const int32 Quantity) const
+{
+	if (Quantity < Stack.Quantity || Stack.Item == nullptr)
+	{
+		return true;
+	}
+
+	const UFVEquipmentComponent* Equipment = UFVEquipmentComponent::Find(GetOwner());
+	const FFVItemFragment_Container* Container = Stack.Item->FindFragment<FFVItemFragment_Container>();
+	if (!Container || !Equipment || !Equipment->IsInstanceEquipped(Stack.InstanceId))
+	{
+		return true;
+	}
+
+	// Dropping a worn bag loses its allowance but also its own weight and footprint.
+	return FitsAfterChange(-Container->WeightBonus, -Container->Cells, -Stack.Item->Weight * Stack.Quantity, -Stack.Item->GetCellCount());
+}
+
+bool UFVInventoryComponent::SetInstanceData(const FFVItemStack& Stack)
+{
+	FFVItemStack* Existing = FindMutableStack(Stack.InstanceId);
+	if (!Existing)
+	{
+		return false;
+	}
+
+	Existing->InstanceData = Stack.InstanceData;
+	OnStackChanged.Broadcast(Stack.InstanceId);
 	return true;
 }
 
 int32 UFVInventoryComponent::GetQuantity(const UFVItemDefinition* Item) const
 {
-	const FFVItemStack* Stack = Items.FindByPredicate([Item](const FFVItemStack& Entry) { return Entry.Item == Item; });
-	return Stack ? Stack->Quantity : 0;
+	int32 Total = 0;
+	for (const FFVItemStack& Stack : Items)
+	{
+		if (Item && Stack.Item == Item)
+		{
+			Total += Stack.Quantity;
+		}
+	}
+	return Total;
+}
+
+bool UFVInventoryComponent::GetStack(const FGuid InstanceId, FFVItemStack& OutStack) const
+{
+	const FFVItemStack* Stack = FindStack(InstanceId);
+	if (Stack)
+	{
+		OutStack = *Stack;
+	}
+	return Stack != nullptr;
+}
+
+const FFVItemStack* UFVInventoryComponent::FindStack(const FGuid& InstanceId) const
+{
+	return InstanceId.IsValid() ? Items.FindByPredicate([&InstanceId](const FFVItemStack& Entry) { return Entry.InstanceId == InstanceId; }) : nullptr;
+}
+
+FFVItemStack* UFVInventoryComponent::FindMutableStack(const FGuid& InstanceId)
+{
+	return const_cast<FFVItemStack*>(FindStack(InstanceId));
 }
 
 TArray<FFVItemStack> UFVInventoryComponent::GetItemsInCategory(const FGameplayTag Category) const
@@ -275,35 +515,28 @@ bool UFVInventoryComponent::UseItem(UFVItemDefinition* Item)
 	return true;
 }
 
-FFVItemStack* UFVInventoryComponent::FindStack(const UFVItemDefinition* Item)
+void UFVInventoryComponent::SetStackQuantity(const FGuid& InstanceId, const int32 NewQuantity)
 {
-	return Items.FindByPredicate([Item](const FFVItemStack& Entry) { return Entry.Item == Item; });
-}
-
-void UFVInventoryComponent::SetQuantity(UFVItemDefinition* Item, const int32 NewQuantity)
-{
-	FFVItemStack* Stack = FindStack(Item);
-	const int32 OldQuantity = Stack ? Stack->Quantity : 0;
-	if (OldQuantity == NewQuantity)
+	FFVItemStack* Stack = FindMutableStack(InstanceId);
+	if (!Stack || Stack->Quantity == NewQuantity)
 	{
 		return;
 	}
 
 	if (NewQuantity <= 0)
 	{
-		Items.RemoveAll([Item](const FFVItemStack& Entry) { return Entry.Item == Item; });
-	}
-	else if (Stack)
-	{
-		Stack->Quantity = NewQuantity;
+		Items.RemoveAll([&InstanceId](const FFVItemStack& Entry) { return Entry.InstanceId == InstanceId; });
 	}
 	else
 	{
-		FFVItemStack& NewStack = Items.AddDefaulted_GetRef();
-		NewStack.Item = Item;
-		NewStack.Quantity = NewQuantity;
+		Stack->Quantity = NewQuantity;
 	}
 
-	OnItemChanged.Broadcast(Item, OldQuantity, FMath::Max(NewQuantity, 0));
+	OnStackChanged.Broadcast(InstanceId);
+}
+
+void UFVInventoryComponent::BroadcastItemChanged(UFVItemDefinition* Item, const int32 OldTotal)
+{
+	OnItemChanged.Broadcast(Item, OldTotal, GetQuantity(Item));
 	OnCapacityChanged.Broadcast();
 }

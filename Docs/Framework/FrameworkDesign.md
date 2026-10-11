@@ -67,9 +67,10 @@ UFVDefinition (Id tag, Display, Tags)                        FVFramework
  ├─ UFVAttributeSetDefinition { Parents, Attributes }           FVAttributeSystem
  ├─ UFVCheckDefinition      { Attribute, Roll, Modifiers<Conditions> }  FVAttributeSystem
  ├─ UFVItemDefinition       { Weight, GridSize, MaxQuantity } + Fragments<FFVItemFragment>  FVInventorySystem
- │     FFVItemFragment_Equippable { Slot, GrantedTags }
+ │     FFVItemFragment_Equippable { Slots, BlockedSlots, GrantedTags }
  │     FFVItemFragment_Usable     { Effects, bConsume }
  │     FFVItemFragment_Container  { Cells, WeightBonus }
+ │     (inventory stacks: InstanceId + InstanceData<FFVItemInstanceFragment>)
  ├─ UFVFactionDefinition    { standing range, tiers->attitude, relations, NotorietyFact, DisguiseTag }  FVSocialSystem
  ├─ UFVTitleDefinition      { Conditions, OnEarned, Replaces }   FVSocialSystem
  ├─ UFVScanDefinition       { Category, Duration, Entries, OnScanned effects }  FVGameplay
