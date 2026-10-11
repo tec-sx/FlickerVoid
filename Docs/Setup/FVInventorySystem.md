@@ -26,6 +26,7 @@ Display info (name, description, icon) comes from the definition's **Display**.
 | Equippable | Clothes, accessories, outfits | **Slots** (worn in any one of them, e.g. either arm), **Blocked Slots** (covered while worn: what is there comes off and they stay empty), **Granted Tags** (e.g. `Disguise.Faction.Police`), **Equip Conditions** (story gating), **Mesh** (applied by the game layer) |
 | Container | Bags and backpacks | **Cells** and **Weight Bonus** added while equipped |
 | Usable | Consumables, readables | **Use Conditions**, **Effects**, **Consume On Use** |
+| Pickup | Items that can be dropped | **World Mesh** (shown by `FVItemPickup` actors holding the item), **Pickup Class** (spawned on drop; empty uses *Default Pickup Class*) |
 
 Saving *Validate Data* on a definition checks that an Equippable has slots under `Equipment.Slot` and doesn't block its own slots, and warns about a Container that isn't equippable.
 
@@ -49,13 +50,14 @@ Add, rename or remove categories and slots in *Project Settings > GameplayTags* 
 | FV Inventory Component | Player, containers, NPCs | **Items** = starting stacks (and the saved state). See section 3.1. `Set Bonuses` lets the game layer add allowance (e.g. from an Athletics attribute) |
 | FV Equipment Component | Player, NPCs | **Equipped** = starting outfit (and the saved state); starting items are linked to carried stacks at BeginPlay. **Require Inventory** = only carried items can be worn. See section 3.2 |
 | FV Item Receiver Component | Anything that can take items | The inventory on the same actor listens to it |
-| FV Pickup Component | World items | **Item**, **Quantity**, **Destroy Owner On Pickup**. `Try Pickup(Picker)` hands the item to the picker's receiver; a pickup that doesn't fully fit leaves the rest in the world |
+| FV Pickup Component | World items | **Item**, **Quantity**, **Destroy Owner On Pickup**. `Try Pickup(Picker)` hands the item to the picker's receiver; a pickup that doesn't fully fit leaves the rest in the world. `Set Item` changes what it holds (used for dropped items) |
 
 ### 3.1 Inventory stacks
 - Every entry is a stack with an **Instance Id**, the item, a quantity and optional **Instance Data**. Units of an item without instance data merge into its stacks up to **Max Quantity**, then start new stacks. Each stack claims the item's footprint in cells.
 - **Instance data** makes copies of an item differ (dye, wear, a stolen flag, story customization). Derive a struct from `FFVItemInstanceFragment` and mark its fields `SaveGame` so they are saved. Stacks with instance data never merge. `Add Stack` adds one with its data; `Set Instance Data` replaces a stack's data; `Get Stack` reads one by id.
 - Item-based calls (`Add Item`, `Remove Item`, `Get Quantity`, `Has Item`, `Use Item`) work across all stacks of the item. `Remove Item` takes from unworn plain stacks first. `Remove Stack` removes from one stack.
-- Events: **On Item Changed** (totals of an item), **On Stack Changed** (a stack was added, changed or removed; `Get Stack` fails for a removed one), **On Inventory Reset** (contents replaced by a load; rebuild the UI from `Get Items`), **On Capacity Changed**, **On Item Used**.
+- **Dropping**: `Drop Stack(Id, Quantity)` removes units from a stack and spawns them as a pickup in front of the owner (on the ground below the drop point), returning the actor; `Can Drop Stack` tells the UI whether it would work. Quest items can't be dropped, and a worn bag follows the overflow rule below. Instance data is not carried over to the pickup.
+- Events: **On Item Changed** (totals of an item), **On Stack Changed** (a stack was added, changed or removed; `Get Stack` fails for a removed one), **On Inventory Reset** (contents replaced by a load; rebuild the UI from `Get Items`), **On Capacity Changed**, **On Item Used**, **On Item Dropped** (item, quantity, spawned pickup).
 - Space is a cell count: pockets plus equipped containers plus bonuses. Items have no positions; the UI lists them and shows cells used.
 
 ### 3.2 Equipment
@@ -75,6 +77,9 @@ Add, rename or remove categories and slots in *Project Settings > GameplayTags* 
 
 One generic `BP_Pickup` with an editable item works for most items; make specific Blueprints only for special meshes or behaviour.
 
+### Dropped items
+Make the generic pickup a Blueprint of **FVItemPickup** (an actor with a static mesh root and an FV Pickup Component that shows the item's *Pickup* fragment **World Mesh**), add the interactable component from step 3, and set it as *FlickerVoid > Inventory > Default Pickup Class*. Dropped items spawn as that Blueprint unless their Pickup fragment names another class.
+
 ## 5. Conditions and effects
 
 | Conditions | Effects |
@@ -92,6 +97,8 @@ Use *Is Wearing* with a granted tag for dress codes ("wear anything granting `Di
 | Enforce Weight / Enforce Space | Switch each limit on or off |
 | Base Weight Limit | kg carried with nothing equipped |
 | Base Pocket Cells | Cells available without a bag |
+| Default Pickup Class | Actor spawned for dropped items (a Blueprint of `FVItemPickup`) |
+| Drop Distance | How far in front of the player dropped items land (cm) |
 
 ## 7. Debug
 
