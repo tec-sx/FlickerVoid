@@ -11,7 +11,7 @@ Full design: `Docs/Framework/FrameworkDesign.md`. Per-plugin setup guides: `Docs
 1. **Plugins** (`Plugins/FV*System`, FVFramework): feature-based, generic building blocks only. Nothing game-specific.
 2. **Game modules** (`Source/FV*`): domain-based (World, Narrative, Gameplay, ...), core setup and RPG blocks for this game. The scanner lives here (`Source/FVGameplay/.../Scanner`).
 3. **AngelScript**: game-specific reusable objects.
-4. **Blueprints**: data assets and cosmetics only. No settings in Blueprints beyond occasional overrides.
+4. **Blueprints**: data assets and cosmetics only. No settings in Blueprints beyond occasional overrides. Widget Blueprints derive from the plugins' C++ widget classes and add only layout and looks.
 
 Much older code in `Source/` is experimental or obsolete; don't assume it should be kept.
 
@@ -41,6 +41,8 @@ Every plugin has three modules: runtime, `<Plugin>Debug` and `<Plugin>Editor`. F
 - Plugins stay independent of each other; they meet through facts, gameplay tags, conditions/effects and components on actors.
 - Prefer FlowGraph (custom nodes) for story, quests and dialogue; StateTree and current UE5 features elsewhere.
 - Minimal comments: a short class description; comment a method only when its name or logic is unclear.
+- Headers list functions before properties: first what the class does, then what it needs to work. Short descriptions of UFUNCTIONs and UPROPERTYs go in `meta = (ToolTip = "...")`, not in comments.
+- Enum values are described with `UMETA(...)`, not comments, and the UENUM gets `meta = (ScriptName = "...")` without the `EFV` prefix (`EFVMapViewMode` is `MapViewMode`).
 - Log categories are `Log<PluginName>`; never reuse names from FVCore's `FVLogCategories.h`.
 - Follow engine naming: Blueprint function libraries are `UFV<Feature>Library` (like `UKismetMathLibrary`), never shorthand such as BFL.
 

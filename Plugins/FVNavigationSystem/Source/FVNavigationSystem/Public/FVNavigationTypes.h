@@ -100,6 +100,18 @@ struct FVNAVIGATIONSYSTEM_API FFVMinimapView
 	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
 	FVector2D ExtentUV = FVector2D(0.5f);
 
+	UPROPERTY(BlueprintReadOnly, Category = "Navigation", meta = (ToolTip = "Layer drawn under a room layer, e.g. the street around a bar. Same as LayerIndex outdoors."))
+	int32 BaseLayerIndex = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
+	FVector2D BaseCenterUV = FVector2D(0.5f);
+
+	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
+	FVector2D BaseExtentUV = FVector2D(0.5f);
+
+	UPROPERTY(BlueprintReadOnly, Category = "Navigation", meta = (ToolTip = "World distance from the centre to the edge."))
+	float Radius = 0.f;
+
 	/** Degrees clockwise to rotate the map image by. */
 	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
 	float MapRotation = 0.f;
@@ -167,6 +179,9 @@ struct FVNAVIGATIONSYSTEM_API FFVMinimapSettings
 	/** Turn the map with the camera so the view direction points up; otherwise north stays up. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Minimap")
 	bool bRotateWithView = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Minimap", meta = (ClampMin = 0, ToolTip = "In a room the radius shrinks to the room's half-size times this; 0 turns it off."))
+	float RoomRadiusScale = 1.2f;
 };
 
 USTRUCT(BlueprintType)

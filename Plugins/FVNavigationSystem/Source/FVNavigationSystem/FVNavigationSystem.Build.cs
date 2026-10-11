@@ -13,7 +13,15 @@ public class FVNavigationSystem : ModuleRules
             "Engine",
             "GameplayTags",
             "DeveloperSettings",
+            "SlateCore",
+            "UMG",
             "FVCoreRuntime"
+        });
+
+        PrivateDependencyModuleNames.AddRange(new string[]
+        {
+            "InputCore",
+            "Slate"
         });
     }
 }

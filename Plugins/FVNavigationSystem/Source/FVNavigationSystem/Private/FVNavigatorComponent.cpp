@@ -4,6 +4,7 @@
 #include "FVMarkerDefinition.h"
 #include "FVNavigationSubsystem.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVNavigatorComponent)
@@ -70,6 +71,17 @@ void UFVNavigatorComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	UpdateNavigation();
+}
+
+UFVNavigatorComponent* UFVNavigatorComponent::FindForPlayer(const APlayerController* Player)
+{
+	if (Player == nullptr)
+	{
+		return nullptr;
+	}
+
+	UFVNavigatorComponent* Navigator = Find(Player);
+	return Navigator ? Navigator : Find(Player->GetPawn());
 }
 
 AActor* UFVNavigatorComponent::GetViewActor() const
@@ -217,15 +229,30 @@ void UFVNavigatorComponent::FillView(FFVMarkerView& View, const FFVMarker& Marke
 	View.bTracked = bTracked;
 }
 
-FFVMinimapView UFVNavigatorComponent::BuildMinimapView() const
+float UFVNavigatorComponent::GetMinimapRadius() const
+{
+	const FFVMapLayer* Layer = ActiveMap ? ActiveMap->GetLayer(ActiveLayer) : nullptr;
+	if (Layer == nullptr || !Layer->bLimitHeight || Minimap.RoomRadiusScale <= 0.f)
+	{
+		return Minimap.Radius;
+	}
+
+	const FVector2D Size = Layer->GetWorldSize();
+	const float RoomRadius = static_cast<float>(0.5 * FMath::Max(Size.X, Size.Y)) * Minimap.RoomRadiusScale;
+	return FMath::Min(FMath::Max(RoomRadius, Minimap.MinRadius), Minimap.Radius);
+}
+
+FFVMinimapView UFVNavigatorComponent::BuildMinimapView(float Radius) const
 {
 	FFVMinimapView View;
 	View.Map = ActiveMap;
 	View.LayerIndex = ActiveLayer;
+	View.BaseLayerIndex = ActiveLayer;
 
 	const FVector Center = GetViewLocation();
 	const float MapYaw = Minimap.bRotateWithView ? GetViewYaw() : 0.f;
-	const float Radius = FMath::Max(Minimap.Radius, 1.f);
+	Radius = FMath::Max(Radius > 0.f ? Radius : GetMinimapRadius(), 1.f);
+	View.Radius = Radius;
 	View.MapRotation = -MapYaw;
 	View.PlayerRotation = GetOwnerYaw() - MapYaw;
 
@@ -233,6 +260,16 @@ FFVMinimapView UFVNavigatorComponent::BuildMinimapView() const
 	{
 		View.CenterUV = Layer->WorldToUV(Center);
 		View.ExtentUV = Layer->RadiusToExtentUV(Radius);
+		View.BaseCenterUV = View.CenterUV;
+		View.BaseExtentUV = View.ExtentUV;
+
+		const int32 BaseLayerIndex = Layer->bLimitHeight ? ActiveMap->FindBaseLayerAt(Center) : INDEX_NONE;
+		if (const FFVMapLayer* BaseLayer = ActiveMap->GetLayer(BaseLayerIndex))
+		{
+			View.BaseLayerIndex = BaseLayerIndex;
+			View.BaseCenterUV = BaseLayer->WorldToUV(Center);
+			View.BaseExtentUV = BaseLayer->RadiusToExtentUV(Radius);
+		}
 	}
 
 	const UFVNavigationSubsystem* Navigation = UFVNavigationSubsystem::Get(this);
