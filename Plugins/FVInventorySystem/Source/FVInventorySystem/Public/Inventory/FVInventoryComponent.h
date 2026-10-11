@@ -40,6 +40,7 @@ struct FVINVENTORYSYSTEM_API FFVItemStack
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFVOnInventoryItemChanged, UFVItemDefinition*, Item, int32, OldQuantity, int32, NewQuantity);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnInventoryStackChanged, FGuid, InstanceId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnInventoryItemUsed, UFVItemDefinition*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFVOnInventoryItemDropped, UFVItemDefinition*, Item, int32, Quantity, AActor*, Pickup);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFVOnInventoryCapacityChanged);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFVOnInventoryReset);
 
@@ -74,6 +75,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Inventory", meta = (ToolTip = "Removes nothing and returns false if the stack holds less, or if dropping a worn container would overflow the inventory."))
 	bool RemoveStack(FGuid InstanceId, int32 Quantity = 1);
+
+	UFUNCTION(BlueprintPure, Category = "FV|Inventory", meta = (ToolTip = "False for quest items, missing stacks or quantities, and worn containers whose loss would overflow the inventory."))
+	bool CanDropStack(FGuid InstanceId, int32 Quantity = 1) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FV|Inventory", meta = (ToolTip = "Removes units from the stack and spawns them as a pickup in front of the owner; instance data is not carried over. Returns the pickup, or null if nothing was dropped."))
+	AActor* DropStack(FGuid InstanceId, int32 Quantity = 1);
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Inventory", meta = (ToolTip = "Replaces the instance data of the stack with Stack's InstanceId."))
 	bool SetInstanceData(const FFVItemStack& Stack);
@@ -142,6 +149,7 @@ private:
 	bool CanRemoveFromStack(const FFVItemStack& Stack, int32 Quantity) const;
 	void BroadcastItemChanged(UFVItemDefinition* Item, int32 OldTotal);
 	void RefreshContainers();
+	FTransform GetDropTransform() const;
 
 public:
 	UPROPERTY(BlueprintAssignable, Category = "FV|Inventory", meta = (ToolTip = "Units of an item were added or removed; quantities are totals across stacks."))
@@ -158,6 +166,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "FV|Inventory")
 	FFVOnInventoryItemUsed OnItemUsed;
+
+	UPROPERTY(BlueprintAssignable, Category = "FV|Inventory")
+	FFVOnInventoryItemDropped OnItemDropped;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, SaveGame, Category = "Inventory", meta = (TitleProperty = "Item", ToolTip = "Starting contents; also the saved state."))

@@ -2,13 +2,16 @@
 
 #include "Algo/StableSort.h"
 #include "Conditions/FVConditionLibrary.h"
+#include "Engine/World.h"
 #include "Equipment/FVEquipmentComponent.h"
 #include "FVInventorySettings.h"
+#include "FVInventorySystem.h"
 #include "HAL/IConsoleManager.h"
 #include "GameFramework/Actor.h"
 #include "Items/FVItemDefinition.h"
 #include "Items/FVItemFragments.h"
 #include "Pickup/FVItemReceiverComponent.h"
+#include "Pickup/FVPickupComponent.h"
 #include "Save/FVSaveableComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInventoryComponent)
@@ -431,6 +434,73 @@ bool UFVInventoryComponent::CanRemoveFromStack(const FFVItemStack& Stack, const 
 
 	// Dropping a worn bag loses its allowance but also its own weight and footprint.
 	return FitsAfterChange(-Container->WeightBonus, -Container->Cells, -Stack.Item->Weight * Stack.Quantity, -Stack.Item->GetCellCount());
+}
+
+bool UFVInventoryComponent::CanDropStack(const FGuid InstanceId, const int32 Quantity) const
+{
+	const FFVItemStack* Stack = FindStack(InstanceId);
+	return Stack && Stack->Item && !Stack->Item->bQuestItem && Quantity > 0 && Stack->Quantity >= Quantity
+		&& CanRemoveFromStack(*Stack, Quantity);
+}
+
+AActor* UFVInventoryComponent::DropStack(const FGuid InstanceId, const int32 Quantity)
+{
+	if (!CanDropStack(InstanceId, Quantity))
+	{
+		return nullptr;
+	}
+
+	UFVItemDefinition* Item = FindStack(InstanceId)->Item;
+	const FFVItemFragment_Pickup* PickupData = Item->FindFragment<FFVItemFragment_Pickup>();
+	const TSoftClassPtr<AActor> SoftClass = PickupData && !PickupData->PickupClass.IsNull() ? PickupData->PickupClass : UFVInventorySettings::Get().DefaultPickupClass;
+	UClass* PickupClass = SoftClass.LoadSynchronous();
+	UWorld* World = GetWorld();
+	if (!PickupClass || !World)
+	{
+		UE_LOG(LogFVInventorySystem, Warning, TEXT("%s: no pickup class to drop %s; set Default Pickup Class in the inventory settings."), *GetNameSafe(GetOwner()), *GetNameSafe(Item));
+		return nullptr;
+	}
+
+	const FTransform DropTransform = GetDropTransform();
+	AActor* Pickup = World->SpawnActorDeferred<AActor>(PickupClass, DropTransform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+	UFVPickupComponent* PickupComponent = Pickup ? Pickup->FindComponentByClass<UFVPickupComponent>() : nullptr;
+	if (!PickupComponent)
+	{
+		UE_LOG(LogFVInventorySystem, Warning, TEXT("%s: could not drop %s; %s has no FV Pickup Component."), *GetNameSafe(GetOwner()), *GetNameSafe(Item), *GetNameSafe(PickupClass));
+		if (Pickup)
+		{
+			Pickup->Destroy();
+		}
+		return nullptr;
+	}
+
+	PickupComponent->SetItem(Item, Quantity);
+	RemoveStack(InstanceId, Quantity);
+	Pickup->FinishSpawning(DropTransform);
+	OnItemDropped.Broadcast(Item, Quantity, Pickup);
+	return Pickup;
+}
+
+FTransform UFVInventoryComponent::GetDropTransform() const
+{
+	const AActor* Owner = GetOwner();
+	if (!Owner)
+	{
+		return FTransform::Identity;
+	}
+
+	const FVector Forward = Owner->GetActorForwardVector().GetSafeNormal2D();
+	FVector Location = Owner->GetActorLocation() + Forward * UFVInventorySettings::Get().DropDistance;
+
+	// Land on whatever is below the drop point rather than in the air at the owner's centre.
+	FHitResult Hit;
+	const FCollisionQueryParams Params(SCENE_QUERY_STAT(FVInventoryDrop), false, Owner);
+	if (GetWorld()->LineTraceSingleByChannel(Hit, Location + FVector(0.f, 0.f, 50.f), Location - FVector(0.f, 0.f, 500.f), ECC_Visibility, Params))
+	{
+		Location = Hit.ImpactPoint;
+	}
+
+	return FTransform(Forward.Rotation(), Location);
 }
 
 bool UFVInventoryComponent::SetInstanceData(const FFVItemStack& Stack)

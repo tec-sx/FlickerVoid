@@ -7,6 +7,13 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPickupComponent)
 
+void UFVPickupComponent::SetItem(UFVItemDefinition* InItem, const int32 InQuantity)
+{
+	Item = InItem;
+	Quantity = FMath::Max(1, InQuantity);
+	OnItemChanged.Broadcast();
+}
+
 bool UFVPickupComponent::CanBePickedUpBy(AActor* Picker) const
 {
 	const UFVItemReceiverComponent* Receiver = UFVItemReceiverComponent::FindReceiver(Picker);
