@@ -31,15 +31,18 @@ void UFVInventoryDebugSubsystem::CollectLines(TArray<FString>& OutLines) const
 	OutLines.Add(FString::Printf(TEXT("%.1f / %.1f kg, %d / %d cells"),
 		Inventory->GetTotalWeight(), Inventory->GetWeightLimit(), Inventory->GetUsedCells(), Inventory->GetCellCapacity()));
 
+	const UFVEquipmentComponent* Equipment = UFVEquipmentComponent::Find(Pawn);
 	for (const FFVItemStack& Stack : Inventory->GetItems())
 	{
 		if (Stack.Item != nullptr)
 		{
-			OutLines.Add(FString::Printf(TEXT("  %s x%d"), *Stack.Item->GetName(), Stack.Quantity));
+			OutLines.Add(FString::Printf(TEXT("  %s x%d%s%s"), *Stack.Item->GetName(), Stack.Quantity,
+				Stack.InstanceData.IsEmpty() ? TEXT("") : TEXT(" (custom)"),
+				Equipment && Equipment->IsInstanceEquipped(Stack.InstanceId) ? TEXT(" (worn)") : TEXT("")));
 		}
 	}
 
-	if (const UFVEquipmentComponent* Equipment = UFVEquipmentComponent::Find(Pawn))
+	if (Equipment)
 	{
 		for (const FFVEquippedItem& Entry : Equipment->GetAllEquipped())
 		{

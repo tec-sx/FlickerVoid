@@ -19,6 +19,7 @@ public class FVInventorySystem : ModuleRules
         {
             "GameplayAbilities",
             "DeveloperSettings",
+            "Projects",
         });
     }
 }

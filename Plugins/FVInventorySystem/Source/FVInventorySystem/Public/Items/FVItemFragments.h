@@ -9,14 +9,22 @@
 
 class USkeletalMesh;
 
-/** Wearable in an equipment slot. Granted tags (e.g. Disguise.Faction.Police) are added to the wearer while equipped. */
+/**
+ * Wearable in one of its Slots. Blocked Slots are covered while worn (a dress blocks the lower body, a full-body suit
+ * blocks underwear): whatever is worn there comes off and they stay empty. Granted tags (e.g. Disguise.Faction.Police)
+ * are added to the wearer while equipped.
+ */
 USTRUCT(BlueprintType, meta = (DisplayName = "Equippable"))
 struct FVINVENTORYSYSTEM_API FFVItemFragment_Equippable : public FFVItemFragment
 {
 	GENERATED_BODY()
 
+	/** Worn in any one of these, e.g. either arm for a bracelet. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (Categories = "Equipment.Slot"))
-	FGameplayTag Slot;
+	FGameplayTagContainer Slots;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (Categories = "Equipment.Slot"))
+	FGameplayTagContainer BlockedSlots;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable")
 	FGameplayTagContainer GrantedTags;
@@ -28,6 +36,10 @@ struct FVINVENTORYSYSTEM_API FFVItemFragment_Equippable : public FFVItemFragment
 	/** Applied by the game layer on equipment change. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable")
 	TSoftObjectPtr<USkeletalMesh> Mesh;
+
+	/** Single slot from before Slots existed; moved into Slots on load. */
+	UPROPERTY(meta = (DeprecatedProperty))
+	FGameplayTag Slot_DEPRECATED;
 };
 
 /** A bag or backpack: adds carrying space and weight allowance while equipped. */

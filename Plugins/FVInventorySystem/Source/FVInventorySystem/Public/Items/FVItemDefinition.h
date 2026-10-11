@@ -26,11 +26,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = 0, Units = "kg"))
 	float Weight = 0.1f;
 
-	/** Footprint in grid cells; one stack occupies this much space however many units it holds. */
+	/** Footprint in cells (Width x Height); each stack claims it once however many units it holds. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = 1))
 	FIntPoint GridSize = FIntPoint(1, 1);
 
-	/** Maximum quantity one stack can hold. 0 = unlimited. */
+	/** Units one stack can hold; more units start new stacks. 1 = every unit is its own entry, 0 = unlimited. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = 0))
 	int32 MaxQuantity = 0;
 
@@ -54,7 +54,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Item")
 	int32 GetCellCount() const { return FMath::Max(1, GridSize.X) * FMath::Max(1, GridSize.Y); }
 
-	/** Equipment slot, or None if not equippable. */
+	/** Slots the item can be worn in (any one of them); empty if not equippable. */
 	UFUNCTION(BlueprintPure, Category = "Item")
-	FGameplayTag GetEquipmentSlot() const;
+	FGameplayTagContainer GetEquipmentSlots() const;
+
+	virtual void PostLoad() override;
+
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
+#endif
 };

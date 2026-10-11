@@ -27,11 +27,7 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ClampMin = 0, Units = "kg"))
 	float BaseWeightLimit = 20.f;
 
-	/** Grid cells available with no bag or backpack: pockets. */
+	/** Cells available with no bag or backpack: pockets. */
 	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ClampMin = 0))
 	int32 BasePocketCells = 6;
-
-	/** Width of the inventory grid in cells; item footprints are measured against it. */
-	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ClampMin = 1))
-	int32 GridWidth = 6;
 };
