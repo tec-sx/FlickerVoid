@@ -9,36 +9,28 @@
 
 class USkeletalMesh;
 
-/**
- * Wearable in one of its Slots. Blocked Slots are covered while worn (a dress blocks the lower body, a full-body suit
- * blocks underwear): whatever is worn there comes off and they stay empty. Granted tags (e.g. Disguise.Faction.Police)
- * are added to the wearer while equipped.
- */
+/** Wearable in one of its slots. Granted tags (e.g. Disguise.Faction.Police) are added to the wearer while equipped. */
 USTRUCT(BlueprintType, meta = (DisplayName = "Equippable"))
 struct FVINVENTORYSYSTEM_API FFVItemFragment_Equippable : public FFVItemFragment
 {
 	GENERATED_BODY()
 
-	/** Worn in any one of these, e.g. either arm for a bracelet. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (Categories = "Equipment.Slot"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (Categories = "Equipment.Slot", ToolTip = "Worn in any one of these, e.g. either arm for a bracelet."))
 	FGameplayTagContainer Slots;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (Categories = "Equipment.Slot"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (Categories = "Equipment.Slot", ToolTip = "Covered while worn: whatever is worn there comes off and they stay empty."))
 	FGameplayTagContainer BlockedSlots;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable")
 	FGameplayTagContainer GrantedTags;
 
-	/** Story gating, e.g. an outfit that can't be worn before a quest step. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (ToolTip = "Story gating, e.g. an outfit that can't be worn before a quest step."))
 	FFVConditionSet EquipConditions;
 
-	/** Applied by the game layer on equipment change. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equippable", meta = (ToolTip = "Applied by the game layer on equipment change."))
 	TSoftObjectPtr<USkeletalMesh> Mesh;
 
-	/** Single slot from before Slots existed; moved into Slots on load. */
-	UPROPERTY(meta = (DeprecatedProperty))
+	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Moved into Slots on load."))
 	FGameplayTag Slot_DEPRECATED;
 };
 

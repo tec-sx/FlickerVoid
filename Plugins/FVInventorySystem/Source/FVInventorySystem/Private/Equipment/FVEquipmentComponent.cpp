@@ -18,7 +18,6 @@ namespace
 		return Item ? Item->FindFragment<FFVItemFragment_Equippable>() : nullptr;
 	}
 
-	/** Wearing NewItem in Slot conflicts with Entry if they share the slot or either covers the other's slot. */
 	bool Conflicts(const FFVEquippedItem& Entry, const FGameplayTag& Slot, const FFVItemFragment_Equippable& NewItem)
 	{
 		if (Entry.Slot == Slot || NewItem.BlockedSlots.HasTagExact(Entry.Slot))
@@ -409,7 +408,6 @@ void UFVEquipmentComponent::HandleStackChanged(const FGuid InstanceId)
 		return;
 	}
 
-	// The worn stack left the inventory.
 	if (bRequireInventory)
 	{
 		Apply(Entry->Slot, nullptr, FGuid(), {});
