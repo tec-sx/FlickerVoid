@@ -24,12 +24,10 @@ public:
 	FFVMarkerView GetMarker() const { return Marker; }
 
 protected:
-	/** Called on every view update, so distance and elevation stay current. */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FV|Navigation")
+	UFUNCTION(BlueprintImplementableEvent, Category = "FV|Navigation", meta = (ToolTip = "Called on every view update, so distance and elevation stay current."))
 	void OnMarkerChanged(const FFVMarkerView& InMarker);
 
-	/** Gets the definition's icon, or the Discovery fragment's Undiscovered Icon while undiscovered. */
-	UPROPERTY(BlueprintReadOnly, Category = "FV|Navigation", meta = (BindWidgetOptional))
+	UPROPERTY(BlueprintReadOnly, Category = "FV|Navigation", meta = (BindWidgetOptional, ToolTip = "Shows the marker's icon and tint, or its Undiscovered Icon."))
 	TObjectPtr<UImage> Icon;
 
 private:

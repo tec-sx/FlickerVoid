@@ -100,8 +100,7 @@ struct FVNAVIGATIONSYSTEM_API FFVMinimapView
 	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
 	FVector2D ExtentUV = FVector2D(0.5f);
 
-	/** Layer drawn under a height-limited layer, e.g. the street around a bar. Same as LayerIndex outdoors. */
-	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
+	UPROPERTY(BlueprintReadOnly, Category = "Navigation", meta = (ToolTip = "Layer drawn under a room layer, e.g. the street around a bar. Same as LayerIndex outdoors."))
 	int32 BaseLayerIndex = INDEX_NONE;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
@@ -110,8 +109,7 @@ struct FVNAVIGATIONSYSTEM_API FFVMinimapView
 	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
 	FVector2D BaseExtentUV = FVector2D(0.5f);
 
-	/** World distance from the centre to the edge this view was built for. */
-	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
+	UPROPERTY(BlueprintReadOnly, Category = "Navigation", meta = (ToolTip = "World distance from the centre to the edge."))
 	float Radius = 0.f;
 
 	/** Degrees clockwise to rotate the map image by. */
@@ -182,8 +180,7 @@ struct FVNAVIGATIONSYSTEM_API FFVMinimapSettings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Minimap")
 	bool bRotateWithView = true;
 
-	/** Inside a height-limited layer (a room) the radius shrinks to the room's half-size times this; 0 keeps Radius. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Minimap", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Minimap", meta = (ClampMin = 0, ToolTip = "In a room the radius shrinks to the room's half-size times this; 0 turns it off."))
 	float RoomRadiusScale = 1.2f;
 };
 

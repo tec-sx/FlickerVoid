@@ -26,8 +26,7 @@ public:
 
 	static UFVNavigatorComponent* Find(const AActor* Actor);
 
-	/** The navigator on the player's controller, or on their pawn. */
-	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
+	UFUNCTION(BlueprintPure, Category = "FV|Navigation", meta = (ToolTip = "The navigator on the player's controller, or on their pawn."))
 	static UFVNavigatorComponent* FindForPlayer(const APlayerController* Player);
 
 	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
@@ -60,12 +59,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
 	bool IsCategoryHidden(FGameplayTag Category) const { return HiddenCategories.HasTagExact(Category); }
 
-	/** Minimap radius for the current layer: Minimap.Radius, or less inside a room (see RoomRadiusScale). */
-	UFUNCTION(BlueprintPure, Category = "FV|Navigation")
+	UFUNCTION(BlueprintPure, Category = "FV|Navigation", meta = (ToolTip = "Minimap.Radius, or less inside a room (see Room Radius Scale)."))
 	float GetMinimapRadius() const;
 
-	/** Radius 0 uses GetMinimapRadius; pass a smoothed radius to animate zoom changes. */
-	UFUNCTION(BlueprintCallable, Category = "FV|Navigation")
+	UFUNCTION(BlueprintCallable, Category = "FV|Navigation", meta = (ToolTip = "Radius 0 uses Get Minimap Radius; pass an eased radius to animate zoom."))
 	FFVMinimapView BuildMinimapView(float Radius = 0.f) const;
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Navigation")

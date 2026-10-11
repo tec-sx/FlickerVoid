@@ -90,19 +90,24 @@ The plugin has C++ widget classes that do the work: they follow the navigator, l
 
 ```mermaid
 flowchart TD
-  Nav["FV Navigator Component: map, layer, zoom, markers"] --> MV["FV Map View Widget"]
-  Nav --> CP["FV Compass Widget"]
+  Nav["FV Navigator Component: map, layer, zoom, markers"] --> MV["FV Map View Widget (base)"]
+  Nav --> CP["FV Compass Widget (base)"]
+  MV --> Mini["FV Minimap Widget"] --> WMini["WBP_Minimap"]
+  MV --> World["FV World Map Widget"] --> WWorld["WBP_WorldMapView"]
+  CP --> Ring["FV Ring Compass Widget"] --> WRing["WBP_CompassRing"]
+  CP --> Strip["FV Strip Compass Widget"] --> WStrip["WBP_CompassStrip"]
   MV --> MK["FV Map Marker Widget (one per marker)"]
   CP --> MK
-  MV --> Mini["WBP_Minimap: Mode Minimap"]
-  MV --> WMV["WBP_WorldMapView: Mode World Map"]
-  CP --> Ring["WBP_CompassRing or WBP_CompassStrip"]
 ```
 
 | C++ class | What it does |
 |---|---|
-| `UFVMapViewWidget` | Draws a map through a material on `MapImage`, a room layer over its dimmed base layer, and places marker icons. **Minimap** mode follows the player; **World Map** mode pans and zooms. |
-| `UFVCompassWidget` | Turns a ring around the minimap or scrolls a strip, and places compass markers. |
+| `UFVMapViewWidget` | Base of the two map widgets: draws a map through a material on `MapImage`, a room layer over its dimmed base layer, and places marker icons. |
+| `UFVMinimapWidget` | Follows the player, turns with the camera and zooms into rooms. |
+| `UFVWorldMapWidget` | Shows a chosen map and floor; pans with a drag and zooms with the wheel. |
+| `UFVCompassWidget` | Base of the two compasses: places compass markers. |
+| `UFVRingCompassWidget` | A ring around the minimap that turns with it. |
+| `UFVStripCompassWidget` | A horizontal strip that scrolls with the heading. |
 | `UFVMapMarkerWidget` | One marker icon: sets its icon and tint, and calls **On Marker Changed** for the rest of its looks. |
 
 The classes find their widgets by name (`BindWidget`): a required widget missing from the designer is a compile error in the Widget Blueprint, an optional one just turns that feature off.
@@ -112,10 +117,10 @@ The classes find their widgets by name (`BindWidget`): a required widget missing
 | Widget | Parent class | Where |
 |---|---|---|
 | `WBP_GameHUD` | Common Activatable Widget | `UI.Layer.HUD`, pushed once when the layout is ready |
-| `WBP_Minimap` | FV Map View Widget (Mode *Minimap*) | Inside `WBP_GameHUD` |
-| `WBP_CompassRing` / `WBP_CompassStrip` | FV Compass Widget | The ring inside `WBP_Minimap`, the strip inside `WBP_GameHUD` |
+| `WBP_Minimap` | FV Minimap Widget | Inside `WBP_GameHUD` |
+| `WBP_CompassRing` / `WBP_CompassStrip` | FV Ring Compass Widget / FV Strip Compass Widget | The ring inside `WBP_Minimap`, the strip inside `WBP_GameHUD` |
 | `WBP_WorldMap` | Common Activatable Widget | `UI.Layer.GameMenu`, pushed by an *Open Map* action and popped by *Back* |
-| `WBP_WorldMapView` | FV Map View Widget (Mode *World Map*) | Inside `WBP_WorldMap` |
+| `WBP_WorldMapView` | FV World Map Widget | Inside `WBP_WorldMap` |
 | `WBP_MapMarker` | FV Map Marker Widget | Created by the map views and compasses, one per marker, reused |
 
 You do **not** need a Navigation layer: the minimap and compass are always-on HUD elements inside the one HUD widget, and the world map is a full-screen menu on the menu layer.
@@ -198,7 +203,7 @@ Set it as **Marker Widget Class** on the map views and compasses.
 
 ### 6.4 Minimap
 
-**`WBP_Minimap`**, parent **FV Map View Widget**, designer:
+**`WBP_Minimap`**, parent **FV Minimap Widget**, designer:
 ```
 Overlay                         the widget's size is the minimap's, e.g. 256 x 256 from the HUD slot
  ├ Image "MapImage"             Fill; brush = MI_Minimap
@@ -206,7 +211,7 @@ Overlay                         the widget's size is the minimap's, e.g. 256 x 2
  ├ WBP_CompassRing              Fill (optional, 6.5)
  └ Image "PlayerIcon"           Centre; arrow pointing up
 ```
-Class Defaults: **Mode** *Minimap*, **Marker Widget Class** `WBP_MapMarker`, **Room Dim** (how dark the street gets while a room shows), **Transition Speed** (zoom and dim easing), **Edge Padding** (pixels between the rim and pinned markers), **Rotate Player Icon** (off: the arrow always points up).
+Class Defaults: **Marker Widget Class** `WBP_MapMarker`, **Room Dim** (how dark the street gets while a room shows), **Transition Speed** (zoom and dim easing), **Edge Padding** (pixels between the rim and pinned markers), **Rotate Player Icon** (off: the arrow always points up).
 
 What it does on its own:
 - Follows the player on the active map and turns with the camera (navigator **Minimap > Rotate With View**; off keeps north up).
@@ -214,11 +219,11 @@ What it does on its own:
 - Places markers from the navigator's minimap view; out-of-range markers that clamp to the edge sit on the rim.
 - Hides `MapImage` while the player is outside every map, and shows the right map from the start, so nothing waits for **On Active Map Changed**.
 
-**Zoom** from input: `Zoom At(any position, 1.25)` zooms in and `0.8` out. On the minimap this changes the navigator's **Minimap > Radius**, clamped to **Min/Max Radius**.
+**Zoom** from input: `Zoom By(1.25)` zooms in and `Zoom By(0.8)` out. It changes the navigator's **Minimap > Radius**, clamped to **Min/Max Radius**.
 
 ### 6.5 Compass
 
-**Ring** (around the minimap): **`WBP_CompassRing`**, parent **FV Compass Widget**, **Style** *Ring*:
+**Ring** (around the minimap): **`WBP_CompassRing`**, parent **FV Ring Compass Widget**:
 ```
 Overlay
  ├ Image "Ring"                 Fill; ring art with N at the top
@@ -226,7 +231,7 @@ Overlay
 ```
 The ring turns with the minimap, or stays north-up when the minimap does. Markers sit around it at **Marker Radius** (0 is the edge). For markers all the way round, set the navigator's **Compass > Field Of View** to 360.
 
-**Strip**: **`WBP_CompassStrip`**, **Style** *Strip*:
+**Strip**: **`WBP_CompassStrip`**, parent **FV Strip Compass Widget**:
 ```
 SizeBox (e.g. 600 x 48)
  └ Overlay
@@ -238,7 +243,7 @@ The strip texture holds the ticks and letters with north at U = 0, tiling horizo
 
 ### 6.6 World map
 
-**`WBP_WorldMapView`**, parent **FV Map View Widget**, **Mode** *World Map*, same hierarchy as the minimap without the compass, with `MapImage` using `MI_WorldMap` and a player arrow as **PlayerIcon**. Class Defaults: **Max Zoom**, **Zoom Step** (per wheel notch), **Room Dim**, **Marker Widget Class**.
+**`WBP_WorldMapView`**, parent **FV World Map Widget**, same hierarchy as the minimap without the compass, with `MapImage` using `MI_WorldMap` and a player arrow as **PlayerIcon**. Class Defaults: **Max Zoom**, **Zoom Step** (per wheel notch), **Room Dim**, **Marker Widget Class**.
 
 **`WBP_WorldMap`** (Common Activatable Widget; input mode *Menu*, shows the cursor) holds `WBP_WorldMapView` filling the screen, plus a floor list, a legend and buttons.
 
@@ -274,7 +279,7 @@ On `UFVNavigationSubsystem` (`UFVNavigationSubsystem::Get()` in AngelScript, *Ge
 
 **FV Navigation Library**: **Format Distance**(cm) gives "85 m" or "1.2 km"; **Is Valid Marker** and **Equal (Marker Handle)** compare marker handles.
 
-For a widget the classes above don't cover, the navigator still builds the raw views: **Build Minimap View**(Radius), **Build Compass View** and **Build World Map View**(Map, Layer Index, Zoom), plus **Get Minimap Radius** for the zoom it wants. **Find For Player** gets the navigator from a player controller.
+For a widget the classes above don't cover, the navigator still builds the raw views: **Build Minimap View**(Radius), **Build Compass View** and **Build World Map View**(Map, Layer Index, Zoom), plus **Get Minimap Radius** for the zoom it wants. **Find For Player** gets the navigator from a player controller. Inside the map and compass Widget Blueprints, **Get Navigator** returns it directly.
 
 ## 7. Settings
 
