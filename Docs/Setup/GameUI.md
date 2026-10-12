@@ -84,13 +84,13 @@ Parent `FVHubMenuWidget`. Bound: **PageTabs** (`WBP_TabBar`), **PageSwitcher** (
 Class defaults: **Pages** = `WBP_Page_Inventory`, `WBP_Page_Character`, `WBP_Page_Journal`; **Next Page Action** `IA_NextPage`; **Previous Page Action** `IA_PreviousPage`; **Close Actions** `IA_HubMenu`.
 
 ### Pages
-Every page: parent `FVHubMenuPageWidget` (Inventory: `FVInventoryPageWidget`). Bound: **SectionPanel**, *SectionTabs* (`WBP_TabBar`). A **Widget Switcher** as SectionPanel shows the sections as tabs (use a **Common Animated Switcher** to animate the change); any other panel (Horizontal Box) shows them side by side. Class defaults: **Page Title**, **Sections** (up to 3).
+Every page: parent `FVHubMenuPageWidget` (Inventory: `FVInventoryPageWidget`). Bound: **SectionPanel**, *SectionTabs* (`WBP_TabBar`). A **Common Animated Switcher** as SectionPanel shows the sections as animated tabs (set its *Transition Type*, *Transition Curve Type* and *Transition Duration*); any other panel (Horizontal Box) shows them side by side. A plain Widget Switcher counts as "any other panel", so use the Common Animated Switcher for tabs. Class defaults: **Page Title**, **Sections** (up to 3).
 
 | Page | Parent | Sections | SectionPanel |
 |---|---|---|---|
 | `WBP_Page_Inventory` | `FVInventoryPageWidget` | `WBP_Inventory_Storage`, `WBP_Inventory_Outfit`, `WBP_Inventory_Information` | Horizontal Box |
-| `WBP_Page_Character` | `FVHubMenuPageWidget` | `WBP_Character_Identity`, `WBP_Character_Social`, `WBP_Character_Abilities` | Widget Switcher + SectionTabs |
-| `WBP_Page_Journal` | `FVHubMenuPageWidget` | `WBP_Journal_Quests`, `WBP_Journal_Notes`, `WBP_Journal_Memories` | Widget Switcher + SectionTabs |
+| `WBP_Page_Character` | `FVHubMenuPageWidget` | `WBP_Character_Identity`, `WBP_Character_Social`, `WBP_Character_Abilities` | Common Animated Switcher + SectionTabs |
+| `WBP_Page_Journal` | `FVHubMenuPageWidget` | `WBP_Journal_Quests`, `WBP_Journal_Notes`, `WBP_Journal_Memories` | Common Animated Switcher + SectionTabs |
 
 Every section has **Section Title** (its tab label).
 

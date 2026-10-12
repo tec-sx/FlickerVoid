@@ -1,5 +1,6 @@
 // One page of the hub menu (Inventory, Character, Journal). Builds its sections from the Sections class list into
-// SectionPanel: a Widget Switcher (or Common Animated Switcher) shows them as tabs (with SectionTabs), any other panel shows them side by side.
+// SectionPanel: a Common Animated Switcher shows them as animated tabs (with SectionTabs; transition set on the switcher
+// in the Widget Blueprint), any other panel shows them side by side.
 UCLASS(Abstract)
 class UFVHubMenuPageWidget : UFVActivatableWidget
 {
@@ -17,12 +18,13 @@ class UFVHubMenuPageWidget : UFVActivatableWidget
 
     private UFVHubMenuWidget OwningHub;
     private TArray<UFVHubMenuSectionWidget> SectionWidgets;
-    private UWidgetSwitcher SectionSwitcher;
+    private UCommonAnimatedSwitcher SectionSwitcher;
+    private int ShownSection = 0;
 
     UFUNCTION(BlueprintOverride)
     void OnInitialized()
     {
-        SectionSwitcher = Cast<UWidgetSwitcher>(SectionPanel);
+        SectionSwitcher = Cast<UCommonAnimatedSwitcher>(SectionPanel);
         SectionPanel.ClearChildren();
 
         TArray<FText> Titles;
@@ -105,13 +107,13 @@ class UFVHubMenuPageWidget : UFVActivatableWidget
         }
     }
 
-    // Shown section for tabbed pages, otherwise the first one.
+    // Shown section for tabbed pages (tracked here: the switcher swaps its active widget only mid-transition), otherwise the first one.
     UFUNCTION(BlueprintPure, Category = "FV|UI")
     UFVHubMenuSectionWidget GetActiveSection() const
     {
-        if (SectionSwitcher != nullptr)
+        if (SectionSwitcher != nullptr && SectionWidgets.IsValidIndex(ShownSection))
         {
-            return Cast<UFVHubMenuSectionWidget>(SectionSwitcher.GetActiveWidget());
+            return SectionWidgets[ShownSection];
         }
         return SectionWidgets.Num() > 0 ? SectionWidgets[0] : nullptr;
     }
@@ -132,6 +134,7 @@ class UFVHubMenuPageWidget : UFVActivatableWidget
     {
         if (SectionSwitcher != nullptr && SectionWidgets.IsValidIndex(Index))
         {
+            ShownSection = Index;
             SectionSwitcher.SetActiveWidgetIndex(Index);
             SectionWidgets[Index].Refresh();
             RequestRefreshFocus();
