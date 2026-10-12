@@ -26,7 +26,7 @@ Display info (name, description, icon) comes from the definition's **Display**.
 | Equippable | Clothes, accessories, outfits | **Slots** (worn in any one of them, e.g. either arm), **Blocked Slots** (covered while worn: what is there comes off and they stay empty), **Granted Tags** (e.g. `Disguise.Faction.Police`), **Equip Conditions** (story gating), **Mesh** (applied by the game layer) |
 | Container | Bags and backpacks | **Cells** and **Weight Bonus** added while equipped |
 | Usable | Consumables, readables | **Use Conditions**, **Effects**, **Consume On Use** |
-| Pickup | Items that can be dropped | **World Mesh** (shown by `FVItemPickup` actors holding the item), **Pickup Class** (spawned on drop; empty uses *Default Pickup Class*) |
+| Pickup | Items that can be dropped | **World Mesh** (shown by `AItemPickup` actors holding the item; `Load World Mesh` reads it), **Pickup Class** (spawned on drop; empty uses *Default Pickup Class*) |
 
 Saving *Validate Data* on a definition checks that an Equippable has slots under `Equipment.Slot` and doesn't block its own slots, and warns about a Container that isn't equippable.
 
@@ -78,7 +78,7 @@ Add, rename or remove categories and slots in *Project Settings > GameplayTags* 
 One generic `BP_Pickup` with an editable item works for most items; make specific Blueprints only for special meshes or behaviour.
 
 ### Dropped items
-Make the generic pickup a Blueprint of **FVItemPickup** (an actor with a static mesh root and an FV Pickup Component that shows the item's *Pickup* fragment **World Mesh**), add the interactable component from step 3, and set it as *FlickerVoid > Inventory > Default Pickup Class*. Dropped items spawn as that Blueprint unless their Pickup fragment names another class.
+Make the generic pickup a Blueprint of **AItemPickup** (AngelScript, `Script/World/Items/ItemPickup.as`: an `AItem` with an FV Pickup Component that shows the item's *Pickup* fragment **World Mesh**), set the interactable definition from step 3 on its Interactable component, and set it as *FlickerVoid > Inventory > Default Pickup Class*. Dropped items spawn as that Blueprint unless their Pickup fragment names another class. Any actor class works as long as it has an FV Pickup Component, including one added in Blueprint.
 
 ## 5. Conditions and effects
 
@@ -97,7 +97,7 @@ Use *Is Wearing* with a granted tag for dress codes ("wear anything granting `Di
 | Enforce Weight / Enforce Space | Switch each limit on or off |
 | Base Weight Limit | kg carried with nothing equipped |
 | Base Pocket Cells | Cells available without a bag |
-| Default Pickup Class | Actor spawned for dropped items (a Blueprint of `FVItemPickup`) |
+| Default Pickup Class | Actor spawned for dropped items (a Blueprint of `AItemPickup`) |
 | Drop Distance | How far in front of the player dropped items land (cm) |
 
 ## 7. Debug
