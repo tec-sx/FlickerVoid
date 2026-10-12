@@ -461,8 +461,10 @@ AActor* UFVInventoryComponent::DropStack(const FGuid InstanceId, const int32 Qua
 		return nullptr;
 	}
 
-	const FTransform DropTransform = GetDropTransform();
-	AActor* Pickup = World->SpawnActorDeferred<AActor>(PickupClass, DropTransform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+	// Spawned fully (not deferred) so components added in Blueprint exist before we look for the pickup component.
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	AActor* Pickup = World->SpawnActor<AActor>(PickupClass, GetDropTransform(), SpawnParams);
 	UFVPickupComponent* PickupComponent = Pickup ? Pickup->FindComponentByClass<UFVPickupComponent>() : nullptr;
 	if (!PickupComponent)
 	{
@@ -476,7 +478,6 @@ AActor* UFVInventoryComponent::DropStack(const FGuid InstanceId, const int32 Qua
 
 	PickupComponent->SetItem(Item, Quantity);
 	RemoveStack(InstanceId, Quantity);
-	Pickup->FinishSpawning(DropTransform);
 	OnItemDropped.Broadcast(Item, Quantity, Pickup);
 	return Pickup;
 }

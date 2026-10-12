@@ -71,7 +71,7 @@ struct FVINVENTORYSYSTEM_API FFVItemFragment_Pickup : public FFVItemFragment
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (ToolTip = "Shown by FVItemPickup actors holding this item."))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (ToolTip = "Shown by world pickup actors holding this item (see LoadWorldMesh)."))
 	TSoftObjectPtr<UStaticMesh> WorldMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (ToolTip = "Spawned when the item is dropped; empty uses Default Pickup Class from the inventory settings."))
