@@ -1,5 +1,5 @@
 // One page of the hub menu (Inventory, Character, Journal). Builds its sections from the Sections class list into
-// SectionPanel: a Widget Switcher shows them as tabs (with SectionTabs), any other panel shows them side by side.
+// SectionPanel: a Widget Switcher (or Common Animated Switcher) shows them as tabs (with SectionTabs), any other panel shows them side by side.
 UCLASS(Abstract)
 class UFVHubMenuPageWidget : UFVActivatableWidget
 {

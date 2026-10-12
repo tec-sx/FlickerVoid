@@ -1,4 +1,5 @@
-// The hub menu (Tab): pages from the Pages class list, switched by PageTabs or the Previous/Next Page actions (Q/E).
+// The hub menu (Tab): pages from the Pages class list, switched by PageTabs or the Previous/Next Page actions (Q/E)
+// through an animated switcher (transition type, curve and duration are set on PageSwitcher in the Widget Blueprint).
 // Closes on Back or on the key that opened it (Close Actions). Pushed on UI.Layer.GameMenu.
 UCLASS(Abstract)
 class UFVHubMenuWidget : UFVScreenWidget
@@ -16,7 +17,7 @@ class UFVHubMenuWidget : UFVScreenWidget
     UFVTabBarWidget PageTabs;
 
     UPROPERTY(BindWidget)
-    UCommonActivatableWidgetSwitcher PageSwitcher;
+    UCommonAnimatedSwitcher PageSwitcher;
 
     UPROPERTY(BindWidgetOptional)
     UTextBlock PageTitleText;
@@ -75,6 +76,7 @@ class UFVHubMenuWidget : UFVScreenWidget
         if (PageWidgets.IsValidIndex(ShownPage))
         {
             PageWidgets[ShownPage].HidePage();
+            PageWidgets[ShownPage].DeactivateWidget();
         }
         RequestedPage = Math::Max(ShownPage, 0);
     }
@@ -141,10 +143,15 @@ class UFVHubMenuWidget : UFVScreenWidget
         if (PageWidgets.IsValidIndex(ShownPage) && ShownPage != Index)
         {
             PageWidgets[ShownPage].HidePage();
+            PageWidgets[ShownPage].DeactivateWidget();
         }
 
         ShownPage = Index;
         PageSwitcher.SetActiveWidgetIndex(Index);
+        if (!PageWidgets[Index].IsActivated())
+        {
+            PageWidgets[Index].ActivateWidget();
+        }
 
         if (PageTitleText != nullptr)
         {

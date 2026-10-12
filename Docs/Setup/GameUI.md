@@ -80,11 +80,11 @@ Parent `FVGameHUDWidget` (input mode Game). Three areas, laid out as you like; t
 ## 6. Hub menu
 
 ### `WBP_HubMenu`
-Parent `FVHubMenuWidget`. Bound: **PageTabs** (`WBP_TabBar`), **PageSwitcher** (Common Activatable Widget Switcher, empty), *PageTitleText*.
+Parent `FVHubMenuWidget`. Bound: **PageTabs** (`WBP_TabBar`), **PageSwitcher** (Common Animated Switcher, empty; set its *Transition Type*, *Transition Curve Type* and *Transition Duration* for the page change animation), *PageTitleText*.
 Class defaults: **Pages** = `WBP_Page_Inventory`, `WBP_Page_Character`, `WBP_Page_Journal`; **Next Page Action** `IA_NextPage`; **Previous Page Action** `IA_PreviousPage`; **Close Actions** `IA_HubMenu`.
 
 ### Pages
-Every page: parent `FVHubMenuPageWidget` (Inventory: `FVInventoryPageWidget`). Bound: **SectionPanel**, *SectionTabs* (`WBP_TabBar`). A **Widget Switcher** as SectionPanel shows the sections as tabs; any other panel (Horizontal Box) shows them side by side. Class defaults: **Page Title**, **Sections** (up to 3).
+Every page: parent `FVHubMenuPageWidget` (Inventory: `FVInventoryPageWidget`). Bound: **SectionPanel**, *SectionTabs* (`WBP_TabBar`). A **Widget Switcher** as SectionPanel shows the sections as tabs (use a **Common Animated Switcher** to animate the change); any other panel (Horizontal Box) shows them side by side. Class defaults: **Page Title**, **Sections** (up to 3).
 
 | Page | Parent | Sections | SectionPanel |
 |---|---|---|---|
@@ -156,5 +156,5 @@ Parent `FVMapScreenWidget`. Bound: **WorldMap** (a `WBP_WorldMap`, see the FVNav
 - [ ] `WBP_HubMenu`, three pages, nine sections, `WBP_OutfitSlot`
 - [ ] `WBP_MapScreen`
 - [ ] `WBP_MainMenu`, `WBP_PauseMenu`, `WBP_Options`, a main menu level and game mode
-- [ ] *Inventory > Default Pickup Class* (Blueprint of `FVItemPickup` with an interactable), *Social > Relationships*, `Attribute.Skill/Perk/Kink` tags
+- [ ] *Inventory > Default Pickup Class* (Blueprint of the AngelScript `AItemPickup` with its interactable definition set), *Social > Relationships*, `Attribute.Skill/Perk/Kink` tags
 - [ ] The untracked `Script/UI/Menus/HubMenu` stubs (`UFVHubMenuLayoutWidget`, `UFVHubPageWidget`) are superseded by `Script/UI/Hub`; delete them when no Blueprint uses them
