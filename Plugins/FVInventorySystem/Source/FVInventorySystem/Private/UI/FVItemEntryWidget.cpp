@@ -51,8 +51,22 @@ void UFVItemEntryWidget::NativeDestruct()
 void UFVItemEntryWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
-	FocusFromMouse();
+
+	// Slate sends still mouse events while a list scrolls under the cursor; only a real move takes focus.
+	if (!InMouseEvent.GetCursorDelta().IsNearlyZero())
+	{
+		FocusFromMouse();
+	}
 	SetHoverState(true, bFocused);
+}
+
+FReply UFVItemEntryWidget::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	if (!InMouseEvent.GetCursorDelta().IsNearlyZero())
+	{
+		FocusFromMouse();
+	}
+	return Super::NativeOnMouseMove(InGeometry, InMouseEvent);
 }
 
 void UFVItemEntryWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)

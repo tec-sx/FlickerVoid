@@ -3,7 +3,6 @@
 #include "Components/PanelWidget.h"
 #include "Components/ScrollBox.h"
 #include "Components/UniformGridPanel.h"
-#include "Containers/Ticker.h"
 #include "FVInventorySystem.h"
 #include "UI/FVItemEntryWidget.h"
 
@@ -153,7 +152,14 @@ void UFVItemGridWidget::ScrollIntoView(UWidget* Entry) const
 			ScrollBox->ScrollWidgetIntoView(Entry, true, EDescendantScrollDestination::IntoView, static_cast<float>(Entry->GetDesiredSize().Y));
 			return;
 		}
-		Widget = Parent ? Parent : Widget->GetTypedOuter<UUserWidget>();
+		if (Parent)
+		{
+			Widget = Parent;
+		}
+		else
+		{
+			Widget = Widget->GetTypedOuter<UUserWidget>();
+		}
 	}
 }
 
@@ -299,22 +305,8 @@ void UFVItemGridWidget::HandleEntryUnhovered(UFVItemEntryWidget* Entry)
 		}
 	}
 
-	// Focus moving between cells unhovers the old cell before the new one is hovered, so "nothing hovered" waits a
-	// frame and is dropped if a cell takes over.
 	HoveredEntry = nullptr;
-	if (!bUnhoverPending)
-	{
-		bUnhoverPending = true;
-		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float)
-		{
-			bUnhoverPending = false;
-			if (!HoveredEntry.IsValid())
-			{
-				OnHoveredItemChanged.Broadcast(nullptr, FFVItemStack());
-			}
-			return false;
-		}));
-	}
+	OnHoveredItemChanged.Broadcast(nullptr, FFVItemStack());
 }
 
 void UFVItemGridWidget::HandleEntryClicked(UFVItemEntryWidget* Entry)

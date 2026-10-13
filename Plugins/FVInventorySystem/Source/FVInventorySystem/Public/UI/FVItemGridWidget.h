@@ -76,7 +76,7 @@ private:
 	void HandleEntryClicked(UFVItemEntryWidget* Entry);
 
 public:
-	UPROPERTY(BlueprintAssignable, Category = "FV|Inventory", meta = (ToolTip = "The hovered cell changed, or its item did. Entry is null when nothing is hovered; Item has no Item for an empty cell."))
+	UPROPERTY(BlueprintAssignable, Category = "FV|Inventory", meta = (ToolTip = "The hovered cell changed, or its item did. Entry is null when nothing is hovered, also briefly while focus moves between cells; Item has no Item for an empty cell."))
 	FFVOnItemGridEvent OnHoveredItemChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "FV|Inventory", meta = (ToolTip = "Click or accept on a cell, empty ones included. A filled cell is selected first."))
@@ -104,5 +104,4 @@ private:
 
 	TWeakObjectPtr<UFVItemEntryWidget> HoveredEntry;
 	FGuid SelectedId;
-	bool bUnhoverPending = false;
 };
