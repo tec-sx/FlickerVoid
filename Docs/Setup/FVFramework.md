@@ -58,7 +58,7 @@ The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own to c
 
 ### Screens and menus
 - Screens (world map, inventory) are **FV Activatable Widgets** (a Common Activatable Widget whose **Input Mode** property sets the CommonUI input config: Game, Game And Menu or Menu). Open one with `Push Screen(UI.Layer.GameMenu, WBP_WorldMap)` from an input action; close it with `Pop Screen(Widget)` or *Deactivate Widget* (e.g. from a Back action). Set **Input Mode** to *Menu* so the mouse shows and game input stops.
-- Screens in Menu mode don't pass keys to the game, so they close on their own key: `UFVUILibrary` (`FVUI::` in AngelScript) has `Is Key For Action`, `Get Keys For Action`, `Get Action Key Text` and `Get Context Mappings` for Enhanced Input lookups.
+- Screens in Menu mode don't pass keys to the game. While any of them is active, the UI manager adds *FlickerVoid > UI > Menu Input Context* (an `IMC_Menu` with the menu keys) and screens call **Bind Input Action** on their actions; CommonUI then calls **On Input Action** whatever has focus (needs *Common Input Settings > Enable Enhanced Input Support*). When the last Menu-mode widget closes, the context is removed and the Game input config is restored. `UFVUILibrary` (`FVUI::` in AngelScript) still has `Is Key For Action`, `Get Keys For Action`, `Get Action Key Text` and `Get Context Mappings` for key hints and control lists.
 - `Push User Widget` / `Pop User Widget` push a plain User Widget wrapped in a host; plugin UIs use this (the interaction prompt goes to the layer in `DA_InteractionUISettings`, `UI.Layer.Game` by default).
 - Never add widgets or the layout to the viewport yourself; always go through `UFVUIManagerSubsystem`.
 
@@ -70,6 +70,8 @@ The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own to c
 | Layout Class | `WBP_FVUILayout` |
 | Default HUD Class | `BP_FVHUD` |
 | Warn If HUD Missing | on |
+| Menu Input Context | `IMC_Menu` (added while a screen is open) |
+| Menu Input Context Priority | 100 |
 
 ## 4. Characters and identity
 

@@ -1,6 +1,6 @@
-// The hub menu (Tab): pages from the Pages class list, switched by PageTabs or the Previous/Next Page actions (Q/E)
+// The hub menu (Tab): pages from the Pages class list, switched by PageTabs or the Previous/Next Page actions (Tab/E, Q)
 // through an animated switcher (transition type, curve and duration are set on PageSwitcher in the Widget Blueprint).
-// Closes on Back or on the key that opened it (Close Actions). Pushed on UI.Layer.GameMenu.
+// Closes on Back (Escape) or its Close Actions. Pushed on UI.Layer.GameMenu.
 UCLASS(Abstract)
 class UFVHubMenuWidget : UFVScreenWidget
 {
@@ -29,6 +29,9 @@ class UFVHubMenuWidget : UFVScreenWidget
     UFUNCTION(BlueprintOverride)
     void OnInitialized()
     {
+        Super::OnInitialized();
+        BindInputAction(NextPageAction);
+        BindInputAction(PreviousPageAction);
         PageSwitcher.ClearChildren();
 
         TArray<FText> Titles;
@@ -105,19 +108,19 @@ class UFVHubMenuWidget : UFVScreenWidget
         return PageWidgets.IsValidIndex(ShownPage) ? PageWidgets[ShownPage] : nullptr;
     }
 
-    bool HandleKey(FKey Key) override
+    bool HandleAction(UInputAction Action) override
     {
-        if (IsKeyForAction(Key, NextPageAction))
+        if (Action != nullptr && Action == NextPageAction)
         {
             PageTabs.SelectNext();
             return true;
         }
-        if (IsKeyForAction(Key, PreviousPageAction))
+        if (Action != nullptr && Action == PreviousPageAction)
         {
             PageTabs.SelectPrevious();
             return true;
         }
-        return Super::HandleKey(Key);
+        return Super::HandleAction(Action);
     }
 
     UFUNCTION(BlueprintOverride)

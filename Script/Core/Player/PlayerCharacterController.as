@@ -1,6 +1,6 @@
 // The player's controller: navigation for the HUD maps, and the UI keys. The input config's actions tagged
 // InputTag.UI.* arrive in OnUIInputPressed: HubMenu toggles the hub menu and Map the world map (both on
-// UI.Layer.GameMenu), Pause opens the pause menu (UI.Layer.Menu). An open screen closes itself on the same key.
+// UI.Layer.GameMenu), Pause opens the pause menu (UI.Layer.Menu). Open screens take menu input only and close themselves (UFVScreenWidget).
 class APlayerCharacterController : AFVPlayerController
 {
     UPROPERTY(DefaultComponent)
