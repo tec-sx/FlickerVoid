@@ -12,6 +12,8 @@ public class FVInventorySystem : ModuleRules
             "CoreUObject",
             "Engine",
             "GameplayTags",
+            "SlateCore",
+            "UMG",
             "FVCoreRuntime"
         });
 
@@ -20,6 +22,8 @@ public class FVInventorySystem : ModuleRules
             "GameplayAbilities",
             "DeveloperSettings",
             "Projects",
+            "InputCore",
+            "Slate",
         });
     }
 }

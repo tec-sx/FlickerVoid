@@ -109,6 +109,18 @@ Use *Is Wearing* with a granted tag for dress codes ("wear anything granting `Di
 | `FV.Inventory.Give <ItemIdOrAsset> [Quantity]` | Give the player an item |
 | `FV.Inventory.Equip <ItemIdOrAsset>` | Equip a carried item |
 
+## 8. UI widgets
+
+C++ widget classes for any item screen (inventory, loot, trade). Make Widget Blueprints of them that add only layout and looks; the screen's graph decides what they show and what clicks do.
+
+| Class | Make | What it does |
+|---|---|---|
+| `FVItemEntryWidget` | `WBP_ItemEntry` | One stack or an empty cell; no bound widgets. Implement **On Item Changed** (Item, bEmpty), **On Hover Changed** and **On Selected Changed**. Hovered = under the mouse or holding keyboard/gamepad focus; with **Focus On Hover** the mouse moves focus along, so one entry is hovered at a time. A left click or the accept key/button fires **On Clicked** |
+| `FVItemGridWidget` | `WBP_ItemGrid` | Bind **ItemPanel** (Uniform Grid Panel or Wrap Box, in a Scroll Box for long lists). On each placed grid set **Entry Widget Class**, **Cell Count** (cells made up front, also in the designer) and **Columns** (Uniform Grid only). `Set Items` fills the cells in order and adds cells if there are more items. Events: **On Hovered Item Changed**, **On Item Clicked** (a filled cell is selected first), **On Selection Changed**. The selection is kept by instance id across `Set Items`; `Get Focus Target` gives the cell gamepad focus should start on |
+| `FVEquipmentSlotWidget` | `WBP_OutfitSlot` | An item entry for one slot: set **Equipment Slot** on each placed one. Shows what the owning player wears there (or the equipment given to `Set Equipment`) and refreshes itself; **On Slot Changed** gives the item covering an empty slot |
+
+Setting them up in the hub's inventory page, with the page's data and action functions, is in the [Game UI guide](GameUI.md#inventory-page).
+
 ## Notes
 
 - Inventory and equipment contents, including instance ids and instance data, are saved when the actor also has an **FV Saveable Component** (see FVStorySystem, section 5). After a load both components rebuild capacity and granted tags and broadcast **On Inventory Reset** and **On Equipment Reset**.
