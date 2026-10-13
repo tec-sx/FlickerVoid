@@ -22,22 +22,25 @@ At most three of anything: HUD areas, hub pages, page sections, filter tabs, men
 
 ## 2. Input
 
-The player controller forwards every *native* input action of its input config whose tag is under `InputTag.UI` to the script. The tags are declared in code: `InputTag.UI.HubMenu`, `InputTag.UI.Map`, `InputTag.UI.Pause`.
+Two mapping contexts: `IMC_UI` is part of gameplay and opens screens; `IMC_Menu` is added only while a screen is open and drives the screens.
 
 | Asset | Type | Settings |
 |---|---|---|
-| `IA_HubMenu` | Input Action | Digital (bool) |
-| `IA_Map` | Input Action | Digital (bool) |
-| `IA_Pause` | Input Action | Digital (bool) |
-| `IA_NextPage` | Input Action | Digital (bool) |
-| `IA_PreviousPage` | Input Action | Digital (bool) |
-| `IMC_UI` | Input Mapping Context | Tab → IA_HubMenu, M → IA_Map, Escape → IA_Pause, E → IA_NextPage, Q → IA_PreviousPage (add gamepad keys as wanted) |
+| `IA_HubMenu`, `IA_Map`, `IA_Pause` | Input Action | Digital (bool) |
+| `IA_NextPage`, `IA_PreviousPage`, `IA_Back` | Input Action | Digital (bool) |
+| `IMC_UI` | Input Mapping Context | Tab → IA_HubMenu, M → IA_Map, Escape → IA_Pause |
+| `IMC_Menu` | Input Mapping Context | Tab → IA_NextPage, E → IA_NextPage, Q → IA_PreviousPage, Escape → IA_Back, M → IA_Map (add gamepad keys as wanted) |
 
-1. In `DA_InputConfig` add to **Native Input Actions**: `IA_HubMenu` with `InputTag.UI.HubMenu`, `IA_Map` with `InputTag.UI.Map`, `IA_Pause` with `InputTag.UI.Pause`. Q/E don't go here; the hub reads them itself.
+1. In `DA_InputConfig` add to **Native Input Actions**: `IA_HubMenu` with `InputTag.UI.HubMenu`, `IA_Map` with `InputTag.UI.Map`, `IA_Pause` with `InputTag.UI.Pause`. The `IMC_Menu` actions don't go here.
 2. In the player controller Blueprint add `IMC_UI` to **Default Input Mappings**.
-3. Fill **Action Description** on each action: the Options controls list and the key hints show it.
+3. Set *Project Settings > FlickerVoid > UI > Menu Input Context* to `IMC_Menu` (priority 100 by default, above the gameplay contexts).
+4. *Project Settings > Common Input Settings > Enable Enhanced Input Support* must be on (this PR sets it in `DefaultGame.ini`).
+5. Fill **Action Description** on each action: the Options controls list and the key hints show it.
 
-Open screens take UI input only (CommonUI *Menu* mode), so they close themselves: each screen's **Close Actions** are checked against the keys mapped to them, and CommonUI's Back (Escape / gamepad B, from the CommonUI input data) closes them too.
+How it plays:
+- An open screen (CommonUI *Menu* mode) blocks gameplay input, so the player controller no longer hears Tab, M or Escape. Instead, while any screen is open `IMC_Menu` is active and each screen receives its actions through CommonUI action bindings (`Bind Input Action` on `FVActivatableWidget`). These work whatever has keyboard focus, so clicking around doesn't break the keys.
+- In the hub, Tab and E go to the next page, Q to the previous one, and Escape closes it. On the map, M or Escape closes it. In the pause and options menus, Escape goes back.
+- When the last screen closes, `IMC_Menu` is removed and the game input mode is restored, even when no Game-mode HUD is on screen.
 
 ## 3. Player controller and HUD actors
 
@@ -81,7 +84,7 @@ Parent `FVGameHUDWidget` (input mode Game). Three areas, laid out as you like; t
 
 ### `WBP_HubMenu`
 Parent `FVHubMenuWidget`. Bound: **PageTabs** (`WBP_TabBar`), **PageSwitcher** (Common Animated Switcher, empty; set its *Transition Type*, *Transition Curve Type* and *Transition Duration* for the page change animation), *PageTitleText*.
-Class defaults: **Pages** = `WBP_Page_Inventory`, `WBP_Page_Character`, `WBP_Page_Journal`; **Next Page Action** `IA_NextPage`; **Previous Page Action** `IA_PreviousPage`; **Close Actions** `IA_HubMenu`.
+Class defaults: **Pages** = `WBP_Page_Inventory`, `WBP_Page_Character`, `WBP_Page_Journal`; **Next Page Action** `IA_NextPage`; **Previous Page Action** `IA_PreviousPage`; **Close Actions** `IA_Back`. A close button can call **Close**.
 
 ### Pages
 Every page: parent `FVHubMenuPageWidget` (Inventory: `FVInventoryPageWidget`). Bound: **SectionPanel**, *SectionTabs* (`WBP_TabBar`). A **Common Animated Switcher** as SectionPanel shows the sections as animated tabs (set its *Transition Type*, *Transition Curve Type* and *Transition Duration*); any other panel (Horizontal Box) shows them side by side. A plain Widget Switcher counts as "any other panel", so use the Common Animated Switcher for tabs. Class defaults: **Page Title**, **Sections** (up to 3).
@@ -130,15 +133,15 @@ Quests come from the quest subsystem (tracked quests in *FlickerVoid > Quests*),
 
 ## 7. Map screen: `WBP_MapScreen`
 
-Parent `FVMapScreenWidget`. Bound: **WorldMap** (a `WBP_WorldMap`, see the FVNavigationSystem guide), *MapNameText*. Class defaults: **Close Actions** `IA_Map`.
+Parent `FVMapScreenWidget`. Bound: **WorldMap** (a `WBP_WorldMap`, see the FVNavigationSystem guide), *MapNameText*. Class defaults: **Close Actions** `IA_Back`, `IA_Map`.
 
 ## 8. Menus
 
 | Widget | Parent | Bound widgets | Class defaults |
 |---|---|---|---|
 | `WBP_MainMenu` | `FVMainMenuWidget` | **MenuSwitcher** (index 0: root panel with **PlayButton**, **OptionsButton**, **QuitButton**; index 1: play panel with **ContinueButton**, **NewGameButton**, **LoadButton**, *BackButton*) | **New Game Level**, **Options Class** `WBP_Options` |
-| `WBP_PauseMenu` | `FVPauseMenuWidget` | **ResumeButton**, **OptionsButton**, **QuitButton** | **Main Menu Level**, **Options Class** `WBP_Options`, **Close Actions** `IA_Pause` |
-| `WBP_Options` | `FVOptionsMenuWidget` | **SectionTabs** (`WBP_TabBar`), **SectionSwitcher** (index 0 Gameplay, 1 Audio and Video, 2 Controls), *SubtitlesCheck* (Check Box), *MasterVolumeSlider*, *WindowModeCombo*, *QualityCombo* (Combo Box String), *ControlsList* (Vertical Box) | Tab labels, **Master Sound Mix** + **Master Sound Class** (volume is disabled without them), **Window Mode Labels** (Fullscreen, Windowed Fullscreen, Windowed), **Quality Options** (up to 3, e.g. Low 0, Medium 2, High 3), **Control Contexts** (e.g. the gameplay IMC and `IMC_UI`), **Control Entry Class** |
+| `WBP_PauseMenu` | `FVPauseMenuWidget` | **ResumeButton**, **OptionsButton**, **QuitButton** | **Main Menu Level**, **Options Class** `WBP_Options`, **Close Actions** `IA_Back` |
+| `WBP_Options` | `FVOptionsMenuWidget` | **SectionTabs** (`WBP_TabBar`), **SectionSwitcher** (index 0 Gameplay, 1 Audio and Video, 2 Controls), *SubtitlesCheck* (Check Box), *MasterVolumeSlider*, *WindowModeCombo*, *QualityCombo* (Combo Box String), *ControlsList* (Vertical Box) | Tab labels, **Master Sound Mix** + **Master Sound Class** (volume is disabled without them), **Window Mode Labels** (Fullscreen, Windowed Fullscreen, Windowed), **Quality Options** (up to 3, e.g. Low 0, Medium 2, High 3), **Control Contexts** (e.g. the gameplay IMC, `IMC_UI` and `IMC_Menu`), **Control Entry Class**, **Close Actions** `IA_Back` |
 
 - New Game opens **New Game Level**; Quit quits; Quit to menu opens **Main Menu Level**.
 - **Continue and Load are disabled**: `UFVSaveSubsystem::LoadFromSlot` restores facts and actors in the current map but doesn't travel to the saved map yet. Enable them once loading can open the save's map first.
@@ -148,8 +151,8 @@ Parent `FVMapScreenWidget`. Bound: **WorldMap** (a `WBP_WorldMap`, see the FVNav
 ## 9. Checklist
 
 - [ ] Layout registers `UI.Layer.HUD`, `Game`, `GameMenu`, `Menu`, `Modal`
-- [ ] `IA_HubMenu`, `IA_Map`, `IA_Pause`, `IA_NextPage`, `IA_PreviousPage`, `IMC_UI`
-- [ ] `DA_InputConfig` native actions with `InputTag.UI.*`; `IMC_UI` in the controller's Default Input Mappings
+- [ ] `IA_HubMenu`, `IA_Map`, `IA_Pause`, `IA_NextPage`, `IA_PreviousPage`, `IA_Back`, `IMC_UI`, `IMC_Menu`
+- [ ] `DA_InputConfig` native actions with `InputTag.UI.*`; `IMC_UI` in the controller's Default Input Mappings; *FlickerVoid > UI > Menu Input Context* = `IMC_Menu`
 - [ ] `BP_PlayerController` screen classes; `BP_GameHUD` and `BP_MainMenuHUD` set on their game modes
 - [ ] `WBP_ListEntry`, `WBP_TabButton`, `WBP_TabBar`
 - [ ] `WBP_GameHUD`, `WBP_QuestTracker`, `WBP_Notifications`, `WBP_PlayerStatus`, `WBP_ScannerReadout`, `WBP_KeyHints`

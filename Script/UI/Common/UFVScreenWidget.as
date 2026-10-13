@@ -1,5 +1,6 @@
-// Base for full screens (hub menu, map, menus): takes UI input while active, closes on Back and on any key mapped
-// to one of its Close Actions, so the key that opened a screen also closes it.
+// Base for full screens (hub menu, map, menus): takes UI input while active and adds the menu mapping context
+// (FlickerVoid > UI > Menu Input Context). Its input actions arrive through CommonUI whatever has focus, so the
+// keys work even when the mouse moved focus away. Close Actions (e.g. IA_Back on Escape) and CommonUI Back go to Back().
 UCLASS(Abstract)
 class UFVScreenWidget : UFVActivatableWidget
 {
@@ -7,53 +8,58 @@ class UFVScreenWidget : UFVActivatableWidget
     default bIsBackHandler = true;
     default bIsFocusable = true;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Input")
+    UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (MaxEntries = 3))
     TArray<UInputAction> CloseActions;
 
     UFUNCTION(BlueprintOverride)
-    FEventReply OnKeyDown(FGeometry MyGeometry, FKeyEvent InKeyEvent)
+    void OnInitialized()
     {
-        if (!InKeyEvent.IsRepeat() && HandleKey(InKeyEvent.GetKey()))
+        for (UInputAction Action : CloseActions)
         {
-            return FEventReply::Handled();
+            BindInputAction(Action);
         }
-        return FEventReply::Unhandled();
+    }
+
+    UFUNCTION(BlueprintOverride)
+    void OnInputAction(UInputAction Action)
+    {
+        HandleAction(Action);
+    }
+
+    UFUNCTION(BlueprintOverride)
+    bool OnHandleBackAction()
+    {
+        Back();
+        return true;
     }
 
     UFUNCTION(BlueprintCallable, Category = "FV|UI")
     void Close()
     {
+        if (!IsActivated())
+        {
+            return;
+        }
         OnClosing();
         DeactivateWidget();
     }
 
-    // Runs before the screen deactivates through Close (Close Actions, buttons).
+    // Escape, gamepad B or a Close Action. Closes the screen; screens with inner panels go back a level first.
+    void Back()
+    {
+        Close();
+    }
+
+    // Runs before the screen deactivates through Close (Close Actions, Back, buttons).
     void OnClosing() {}
 
-    // Subclasses handle their own keys first and fall back to this.
-    bool HandleKey(FKey Key)
+    // Subclasses bind their own actions with BindInputAction, handle them here first and fall back to this.
+    bool HandleAction(UInputAction Action)
     {
-        if (IsKeyForAnyAction(Key, CloseActions))
+        if (CloseActions.Contains(Action))
         {
-            Close();
+            Back();
             return true;
-        }
-        return false;
-    }
-
-    bool IsKeyForAction(FKey Key, UInputAction Action) const
-    {
-        return Action != nullptr && FVUI::IsKeyForAction(GetOwningPlayer(), Action, Key);
-    }
-
-    bool IsKeyForAnyAction(FKey Key, TArray<UInputAction> Actions) const
-    {
-        for (UInputAction Action : Actions)
-        {
-            if (IsKeyForAction(Key, Action))
-            {
-                return true;
-            }
         }
         return false;
     }

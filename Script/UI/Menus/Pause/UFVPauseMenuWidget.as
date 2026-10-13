@@ -21,6 +21,7 @@ class UFVPauseMenuWidget : UFVScreenWidget
     UFUNCTION(BlueprintOverride)
     void OnInitialized()
     {
+        Super::OnInitialized();
         ResumeButton.OnClicked.AddUFunction(this, n"HandleResumeClicked");
         OptionsButton.OnClicked.AddUFunction(this, n"HandleOptionsClicked");
         QuitButton.OnClicked.AddUFunction(this, n"HandleQuitClicked");
@@ -30,13 +31,6 @@ class UFVPauseMenuWidget : UFVScreenWidget
     void OnActivated()
     {
         Gameplay::SetGamePaused(true);
-    }
-
-    UFUNCTION(BlueprintOverride)
-    bool OnHandleBackAction()
-    {
-        Close();
-        return true;
     }
 
     UFUNCTION(BlueprintOverride)

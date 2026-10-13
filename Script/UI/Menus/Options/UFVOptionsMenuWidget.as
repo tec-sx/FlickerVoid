@@ -81,6 +81,7 @@ class UFVOptionsMenuWidget : UFVScreenWidget
     UFUNCTION(BlueprintOverride)
     void OnInitialized()
     {
+        Super::OnInitialized();
         TArray<FText> Labels;
         Labels.Add(GameplayLabel);
         Labels.Add(AudioVideoLabel);
