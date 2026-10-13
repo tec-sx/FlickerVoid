@@ -11,7 +11,7 @@ Full design: `Docs/Framework/FrameworkDesign.md`. Per-plugin setup guides: `Docs
 1. **Plugins** (`Plugins/FV*System`, FVFramework): feature-based, generic building blocks only. Nothing game-specific.
 2. **Game modules** (`Source/FV*`): domain-based (World, Narrative, Gameplay, ...), core setup and RPG blocks for this game. The scanner lives here (`Source/FVGameplay/.../Scanner`).
 3. **AngelScript**: game-specific reusable objects.
-4. **Blueprints**: data assets and cosmetics only. No settings in Blueprints beyond occasional overrides. Widget Blueprints derive from the plugins' C++ widget classes and add only layout and looks.
+4. **Blueprints**: data assets and cosmetics only. No settings in Blueprints beyond occasional overrides. Widget Blueprints derive from the plugins' C++ widget classes and add layout and looks; screens are laid out by hand and wired in their graph, while code only gets/sets data, does the system actions and handles navigation.
 
 Much older code in `Source/` is experimental or obsolete; don't assume it should be kept.
 
@@ -33,7 +33,7 @@ Every plugin has three modules: runtime, `<Plugin>Debug` and `<Plugin>Editor`. F
 
 ## Conventions
 
-- **Never expose interfaces to Blueprint/AngelScript.** Put a component with multicast delegates on the actor; callers find the component and broadcast. C++-only internal interfaces are OK when truly needed.
+- **Never expose interfaces to Blueprint/AngelScript.** Put a component with multicast delegates on the actor; callers find the component and broadcast. C++-only internal interfaces are OK when truly needed. Widgets/UI are the exception: Blueprint interfaces are fine there.
 - **Never modify, move, delete or create anything in Content folders** (project or plugin, any `.uasset`/`.umap`). Scan read-only and report each asset's path and problem; the owner handles it.
 - Definitions (items, characters, attributes, factions, titles...) derive from `UFVDefinition` (FVCoreRuntime) and extend through `TInstancedStruct` fragments. `UFVItemDataAsset` is outdated.
 - **Rule of three**: the game is split in threes, at most 3 of anything (HUD sections, hub pages, page sections, menu entries, dialogue choices + cancel). Data-driven lists that must stay small get `meta = (MaxEntries = 3)`; the FVCoreEditor validator warns above it.
