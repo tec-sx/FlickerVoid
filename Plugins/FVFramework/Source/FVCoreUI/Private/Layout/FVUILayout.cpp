@@ -3,6 +3,7 @@
 #include "CommonActivatableWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/World.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Input/CommonUIActionRouterBase.h"
 #include "InputMappingContext.h"
@@ -10,6 +11,7 @@
 #include "HUD/FVHUD.h"
 #include "Layout/FVUserWidgetHost.h"
 #include "GameFramework/PlayerController.h"
+#include "TimerManager.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVUILayout)
@@ -144,6 +146,7 @@ void UFVUIManagerSubsystem::AddMenuInput()
 	{
 		Input->AddMappingContext(ActiveMenuContext, Settings->MenuInputContextPriority);
 	}
+	UE_LOG(LogFVCoreUI, Log, TEXT("Menu opened; menu input context %s."), *GetNameSafe(ActiveMenuContext));
 }
 
 void UFVUIManagerSubsystem::RemoveMenuInput()
@@ -160,20 +163,36 @@ void UFVUIManagerSubsystem::RemoveMenuInput()
 	}
 	ActiveMenuContext = nullptr;
 
-	RestoreGameInput();
+	// Next tick, so it runs after CommonUI has handled the closing screen and picked its next active widget.
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &ThisClass::RestoreGameInput));
+	}
 }
 
-void UFVUIManagerSubsystem::RestoreGameInput() const
+void UFVUIManagerSubsystem::RestoreGameInput()
 {
-	// CommonUI keeps the last input config when no active widget asks for one, so without a Game-mode HUD on screen
-	// the game would stay in Menu mode after the last menu closes.
-	if (UCommonUIActionRouterBase* Router = GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UCommonUIActionRouterBase>() : nullptr)
+	if (MenuInputCount > 0)
+	{
+		return;
+	}
+
+	UE_LOG(LogFVCoreUI, Log, TEXT("Last menu closed; restoring game input."));
+
+	// CommonUI keeps the last input config when no active widget asks for one.
+	ULocalPlayer* LocalPlayer = GetLocalPlayer();
+	if (UCommonUIActionRouterBase* Router = LocalPlayer ? LocalPlayer->GetSubsystem<UCommonUIActionRouterBase>() : nullptr)
 	{
 		Router->SetActiveUIInputConfig(FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently));
 	}
 
-	// A menu closed by a mouse click leaves keyboard focus on the clicked button, which is then removed with the
-	// menu; without this, keys reach nothing until the player clicks into the game.
+	if (APlayerController* PC = LocalPlayer ? LocalPlayer->GetPlayerController(GetWorld()) : nullptr)
+	{
+		PC->SetShowMouseCursor(false);
+		PC->SetInputMode(FInputModeGameOnly());
+	}
+
+	// A menu closed by a mouse click leaves keyboard focus on the clicked button, which is removed with the menu.
 	if (FSlateApplication::IsInitialized())
 	{
 		FSlateApplication::Get().SetAllUserFocusToGameViewport();

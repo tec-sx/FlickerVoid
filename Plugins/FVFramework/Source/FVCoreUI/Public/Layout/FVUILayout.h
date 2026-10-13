@@ -94,7 +94,7 @@ public:
 	FFVOnUIStackChanged OnStackChanged;
 
 private:
-	void RestoreGameInput() const;
+	void RestoreGameInput();
 
 	UPROPERTY(Transient)
 	TObjectPtr<UFVUILayout> Layout;
