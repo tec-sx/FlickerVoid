@@ -1,4 +1,4 @@
-// One section of a hub page (Storage, Identity, Quests...). Pages create their sections from a class list, show them
+// One section of a hub page (Identity, Social, Quests...). Pages create their sections from a class list, show them
 // side by side or as tabs, and call Refresh whenever the page is shown.
 UCLASS(Abstract)
 class UFVHubMenuSectionWidget : UUserWidget

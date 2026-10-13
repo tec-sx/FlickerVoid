@@ -2,6 +2,7 @@
 
 #include "Framework/Application/SlateApplication.h"
 #include "InputCoreTypes.h"
+#include "UI/FVItemGridWidget.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVItemEntryWidget)
 
@@ -33,15 +34,24 @@ void UFVItemEntryWidget::SetSelected(const bool bInSelected)
 	}
 }
 
+void UFVItemEntryWidget::SetGrid(UFVItemGridWidget* InGrid, const int32 InIndex)
+{
+	Grid = InGrid;
+	Index = InIndex;
+}
+
+void UFVItemEntryWidget::NativeDestruct()
+{
+	// The hub reuses this object after its Slate widget is gone, and no mouse leave arrives for a destroyed widget.
+	bPressed = false;
+	SetHoverState(false, false);
+	Super::NativeDestruct();
+}
+
 void UFVItemEntryWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
-
-	// Focus first, so the entry losing focus reports its unhover before this one reports its hover.
-	if (bFocusOnHover && IsFocusable() && !HasAnyUserFocus())
-	{
-		SetFocus();
-	}
+	FocusFromMouse();
 	SetHoverState(true, bFocused);
 }
 
@@ -56,6 +66,8 @@ FReply UFVItemEntryWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, 
 {
 	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && GetIsEnabled())
 	{
+		// The mouse may rest on this cell while keyboard focus moved on; the click brings it back.
+		FocusFromMouse();
 		bPressed = true;
 		return FReply::Handled();
 	}
@@ -73,6 +85,16 @@ FReply UFVItemEntryWidget::NativeOnMouseButtonUp(const FGeometry& InGeometry, co
 	return Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
 }
 
+FReply UFVItemEntryWidget::NativeOnMouseButtonDoubleClick(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	// The second press of a quick double click arrives here instead of Mouse Button Down.
+	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
+	{
+		return NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+	}
+	return Super::NativeOnMouseButtonDoubleClick(InGeometry, InMouseEvent);
+}
+
 FReply UFVItemEntryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
 	if (!InKeyEvent.IsRepeat() && GetIsEnabled() && FSlateApplication::Get().GetNavigationActionFromKey(InKeyEvent) == EUINavigationAction::Accept)
@@ -83,16 +105,47 @@ FReply UFVItemEntryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FK
 	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
 
+FNavigationReply UFVItemEntryWidget::NativeOnNavigation(const FGeometry& MyGeometry, const FNavigationEvent& InNavigationEvent, const FNavigationReply& InDefaultReply)
+{
+	if (const UFVItemGridWidget* OwningGrid = Grid.Get())
+	{
+		if (UWidget* Target = OwningGrid->FindNeighbour(Index, InNavigationEvent.GetNavigationType()))
+		{
+			return FNavigationReply::Explicit(Target->TakeWidget());
+		}
+	}
+	return Super::NativeOnNavigation(MyGeometry, InNavigationEvent, InDefaultReply);
+}
+
 void UFVItemEntryWidget::NativeOnAddedToFocusPath(const FFocusEvent& InFocusEvent)
 {
 	Super::NativeOnAddedToFocusPath(InFocusEvent);
 	SetHoverState(bMouseOver, true);
+
+	// Keys, gamepad and the screen's initial focus scroll the cell into view; the mouse doesn't, or the list would jump.
+	if (!bFocusingFromMouse && InFocusEvent.GetCause() != EFocusCause::Mouse)
+	{
+		if (const UFVItemGridWidget* OwningGrid = Grid.Get())
+		{
+			OwningGrid->ScrollIntoView(this);
+		}
+	}
 }
 
 void UFVItemEntryWidget::NativeOnRemovedFromFocusPath(const FFocusEvent& InFocusEvent)
 {
 	Super::NativeOnRemovedFromFocusPath(InFocusEvent);
 	SetHoverState(bMouseOver, false);
+}
+
+void UFVItemEntryWidget::FocusFromMouse()
+{
+	if (FollowsMouseWithFocus() && !HasAnyUserFocus())
+	{
+		bFocusingFromMouse = true;
+		SetFocus();
+		bFocusingFromMouse = false;
+	}
 }
 
 void UFVItemEntryWidget::SetHoverState(const bool bInMouseOver, const bool bInFocused)
