@@ -3,6 +3,7 @@
 #include "CommonActivatableWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Input/CommonUIActionRouterBase.h"
 #include "InputMappingContext.h"
 #include "FVCoreUI.h"
@@ -169,5 +170,12 @@ void UFVUIManagerSubsystem::RestoreGameInput() const
 	if (UCommonUIActionRouterBase* Router = GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UCommonUIActionRouterBase>() : nullptr)
 	{
 		Router->SetActiveUIInputConfig(FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently));
+	}
+
+	// A menu closed by a mouse click leaves keyboard focus on the clicked button, which is then removed with the
+	// menu; without this, keys reach nothing until the player clicks into the game.
+	if (FSlateApplication::IsInitialized())
+	{
+		FSlateApplication::Get().SetAllUserFocusToGameViewport();
 	}
 }
