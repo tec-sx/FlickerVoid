@@ -165,15 +165,11 @@ void UFVUIManagerSubsystem::RemoveMenuInput()
 
 void UFVUIManagerSubsystem::RestoreGameInput() const
 {
-	// CommonUI keeps the last input config when no active widget asks for one, so without a Game-mode HUD on screen
-	// the game would stay in Menu mode after the last menu closes.
 	if (UCommonUIActionRouterBase* Router = GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UCommonUIActionRouterBase>() : nullptr)
 	{
 		Router->SetActiveUIInputConfig(FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently));
 	}
-
-	// A menu closed by a mouse click leaves keyboard focus on the clicked button, which is then removed with the
-	// menu; without this, keys reach nothing until the player clicks into the game.
+	
 	if (FSlateApplication::IsInitialized())
 	{
 		FSlateApplication::Get().SetAllUserFocusToGameViewport();
