@@ -19,9 +19,23 @@ AFVGameModeBase::AFVGameModeBase()
 	DefaultPawnClass = AFVCharacter::StaticClass();
 
 	// The HUD creates the FV UI layout for each local player.
-	UClass* ConfiguredHUD = GetDefault<UFVUISettings>()->DefaultHUDClass.LoadSynchronous();
-	HUDClass = ConfiguredHUD ? ConfiguredHUD : AFVHUD::StaticClass();
+	HUDClass = AFVHUD::StaticClass();
 
 	// World clock and fact database are world/game-instance subsystems driven by
 	// Project Settings > FlickerVoid; add explicit bootstrapping here if needed.
+}
+
+void AFVGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	// Resolved here, not in the constructor: the CDO is built when this module loads, before plugin
+	// and AngelScript classes exist, so loading the HUD Blueprint then breaks its widget parents.
+	if (HUDClass == AFVHUD::StaticClass())
+	{
+		if (UClass* ConfiguredHUD = GetDefault<UFVUISettings>()->DefaultHUDClass.LoadSynchronous())
+		{
+			HUDClass = ConfiguredHUD;
+		}
+	}
+
+	Super::InitGame(MapName, Options, ErrorMessage);
 }
