@@ -1,6 +1,6 @@
-// One page of the hub menu (Inventory, Character, Journal). Either a free layout made in the Widget Blueprint, or built
-// from the Sections class list into SectionPanel: a Common Animated Switcher shows them as animated tabs (with
-// SectionTabs; transition set on the switcher in the Widget Blueprint), any other panel shows them side by side.
+// One page of the hub menu (Inventory, Character, Journal). Builds its sections from the Sections class list into
+// SectionPanel: a Common Animated Switcher shows them as animated tabs (with SectionTabs; transition set on the switcher
+// in the Widget Blueprint), any other panel shows them side by side.
 UCLASS(Abstract)
 class UFVHubMenuPageWidget : UFVActivatableWidget
 {
@@ -10,7 +10,7 @@ class UFVHubMenuPageWidget : UFVActivatableWidget
     UPROPERTY(EditDefaultsOnly, Category = "Page", meta = (MaxEntries = 3))
     TArray<TSubclassOf<UFVHubMenuSectionWidget>> Sections;
 
-    UPROPERTY(BindWidgetOptional)
+    UPROPERTY(BindWidget)
     UPanelWidget SectionPanel;
 
     UPROPERTY(BindWidgetOptional)
@@ -24,15 +24,6 @@ class UFVHubMenuPageWidget : UFVActivatableWidget
     UFUNCTION(BlueprintOverride)
     void OnInitialized()
     {
-        if (SectionPanel == nullptr)
-        {
-            if (Sections.Num() > 0)
-            {
-                Print(f"{GetName()}: Sections are set but there is no SectionPanel to show them in.");
-            }
-            return;
-        }
-
         SectionSwitcher = Cast<UCommonAnimatedSwitcher>(SectionPanel);
         SectionPanel.ClearChildren();
 
@@ -96,7 +87,6 @@ class UFVHubMenuPageWidget : UFVActivatableWidget
         {
             Section.OnSectionHidden();
         }
-        OnPageHidden();
     }
 
     UFUNCTION(BlueprintCallable, Category = "FV|UI")
@@ -128,27 +118,15 @@ class UFVHubMenuPageWidget : UFVActivatableWidget
         return SectionWidgets.Num() > 0 ? SectionWidgets[0] : nullptr;
     }
 
-    // Called whenever the hub shows this page, before its sections refresh. Fill a free layout here.
+    // Page-wide setup before the sections refresh, e.g. a shared model.
     UFUNCTION(BlueprintEvent, Category = "FV|UI")
     void OnPageShown() {}
-
-    // Called when the hub switches away from this page or closes.
-    UFUNCTION(BlueprintEvent, Category = "FV|UI")
-    void OnPageHidden() {}
-
-    // Where keyboard and gamepad focus lands when the page is shown: by default the shown section's focus target.
-    // Free layouts return their first widget to focus, e.g. an item grid's Get Focus Target.
-    UFUNCTION(BlueprintEvent, Category = "FV|UI")
-    UWidget GetPageFocusTarget() const
-    {
-        UFVHubMenuSectionWidget Section = GetActiveSection();
-        return Section != nullptr ? Section.GetFocusTarget() : nullptr;
-    }
 
     UFUNCTION(BlueprintOverride)
     UWidget BP_GetDesiredFocusTarget() const
     {
-        return GetPageFocusTarget();
+        UFVHubMenuSectionWidget Section = GetActiveSection();
+        return Section != nullptr ? Section.GetFocusTarget() : nullptr;
     }
 
     UFUNCTION()

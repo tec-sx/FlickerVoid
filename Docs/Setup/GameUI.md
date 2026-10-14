@@ -27,9 +27,9 @@ Two mapping contexts: `IMC_UI` is part of gameplay and opens screens; `IMC_Menu`
 | Asset | Type | Settings |
 |---|---|---|
 | `IA_HubMenu`, `IA_Map`, `IA_Pause` | Input Action | Digital (bool) |
-| `IA_Menu_NextPage`, `IA_Menu_PreviousPage`, `IA_Menu_Back` | Input Action | Digital (bool) |
+| `IA_NextPage`, `IA_PreviousPage`, `IA_Back` | Input Action | Digital (bool) |
 | `IMC_UI` | Input Mapping Context | Tab → IA_HubMenu, M → IA_Map, Escape → IA_Pause |
-| `IMC_Menu` (in `FVFramework/Content/Input`, with its actions) | Input Mapping Context | Tab → IA_Menu_NextPage, E → IA_Menu_NextPage, Q → IA_Menu_PreviousPage, Escape → IA_Menu_Back, M → IA_Map (add gamepad keys as wanted) |
+| `IMC_Menu` | Input Mapping Context | Tab → IA_NextPage, E → IA_NextPage, Q → IA_PreviousPage, Escape → IA_Back, M → IA_Map (add gamepad keys as wanted) |
 
 1. In `DA_InputConfig` add to **Native Input Actions**: `IA_HubMenu` with `InputTag.UI.HubMenu`, `IA_Map` with `InputTag.UI.Map`, `IA_Pause` with `InputTag.UI.Pause`. The `IMC_Menu` actions don't go here.
 2. In the player controller Blueprint add `IMC_UI` to **Default Input Mappings**.
@@ -84,43 +84,32 @@ Parent `FVGameHUDWidget` (input mode Game). Three areas, laid out as you like; t
 
 ### `WBP_HubMenu`
 Parent `FVHubMenuWidget`. Bound: **PageTabs** (`WBP_TabBar`), **PageSwitcher** (Common Animated Switcher, empty; set its *Transition Type*, *Transition Curve Type* and *Transition Duration* for the page change animation), *PageTitleText*.
-Class defaults: **Pages** = `WBP_Page_Inventory`, `WBP_Page_Character`, `WBP_Page_Journal`; **Next Page Action** `IA_Menu_NextPage`; **Previous Page Action** `IA_Menu_PreviousPage`; **Close Actions** `IA_Menu_Back`. A close button can call **Close**.
+Class defaults: **Pages** = `WBP_Page_Inventory`, `WBP_Page_Character`, `WBP_Page_Journal`; **Next Page Action** `IA_NextPage`; **Previous Page Action** `IA_PreviousPage`; **Close Actions** `IA_Back`. A close button can call **Close**.
 
 ### Pages
-Every page: parent `FVHubMenuPageWidget` (Inventory: `FVInventoryPageWidget`). Class defaults: **Page Title**. A page is either a free layout made in its Widget Blueprint (Inventory), or built from sections: bind **SectionPanel** and *SectionTabs* (`WBP_TabBar`) and fill **Sections** (up to 3). A **Common Animated Switcher** as SectionPanel shows the sections as animated tabs (set its *Transition Type*, *Transition Curve Type* and *Transition Duration*); any other panel (Horizontal Box) shows them side by side. A plain Widget Switcher counts as "any other panel", so use the Common Animated Switcher for tabs.
-
-Page events for the graph: **On Page Shown** (fill a free layout here), **On Page Hidden**, and **Get Page Focus Target** (override it in a free layout to return the widget that keyboard and gamepad focus should land on).
+Every page: parent `FVHubMenuPageWidget` (Inventory: `FVInventoryPageWidget`). Bound: **SectionPanel**, *SectionTabs* (`WBP_TabBar`). A **Common Animated Switcher** as SectionPanel shows the sections as animated tabs (set its *Transition Type*, *Transition Curve Type* and *Transition Duration*); any other panel (Horizontal Box) shows them side by side. A plain Widget Switcher counts as "any other panel", so use the Common Animated Switcher for tabs. Class defaults: **Page Title**, **Sections** (up to 3).
 
 | Page | Parent | Sections | SectionPanel |
 |---|---|---|---|
-| `WBP_Page_Inventory` | `FVInventoryPageWidget` | none: free layout, see below | none |
+| `WBP_Page_Inventory` | `FVInventoryPageWidget` | `WBP_Inventory_Storage`, `WBP_Inventory_Outfit`, `WBP_Inventory_Information` | Horizontal Box |
 | `WBP_Page_Character` | `FVHubMenuPageWidget` | `WBP_Character_Identity`, `WBP_Character_Social`, `WBP_Character_Abilities` | Common Animated Switcher + SectionTabs |
 | `WBP_Page_Journal` | `FVHubMenuPageWidget` | `WBP_Journal_Quests`, `WBP_Journal_Notes`, `WBP_Journal_Memories` | Common Animated Switcher + SectionTabs |
 
 Every section has **Section Title** (its tab label).
 
 ### List sections
-Social, Abilities, Quests, Notes and Memories share `FVHubListSectionWidget`'s bindings: **EntryList** (Vertical Box in a Scroll Box), *FilterTabs* (`WBP_TabBar`), *EmptyListText*, and a detail panel: *DetailPanel*, *DetailTitleText*, *DetailSubtitleText*, *DetailValueText*, *DetailDescriptionText*, *DetailIcon*, *DetailProgressBar*. Class defaults: **Entry Class** `WBP_ListEntry`, **Empty Text**.
+Storage, Social, Abilities, Quests, Notes and Memories share `FVHubListSectionWidget`'s bindings: **EntryList** (Vertical Box in a Scroll Box), *FilterTabs* (`WBP_TabBar`), *EmptyListText*, and a detail panel: *DetailPanel*, *DetailTitleText*, *DetailSubtitleText*, *DetailValueText*, *DetailDescriptionText*, *DetailIcon*, *DetailProgressBar*. Class defaults: **Entry Class** `WBP_ListEntry`, **Empty Text**.
 
-### Inventory page
+### Inventory sections
 
-The inventory page is laid out by hand: place the widgets below wherever the design wants them and wire them in the page's graph. Code only reads the inventory and does the actions; nothing is filled in automatically except the outfit slots.
-
-| Widget | Parent | Bound widgets | Notes |
+| Widget | Parent | Extra bound widgets | Class defaults |
 |---|---|---|---|
-| `WBP_ItemEntry` | `FVItemEntryWidget` (FVInventorySystem) | none required | Implement **On Item Changed** (Item, bEmpty: show the icon, quantity, anything), **On Hover Changed** and **On Selected Changed** for the looks. Hovered means under the mouse or holding keyboard/gamepad focus; the mouse moves focus with it (**Focus On Hover**), so one entry is hovered at a time |
-| `WBP_ItemGrid` | `FVItemGridWidget` (FVInventorySystem) | **ItemPanel**: a Uniform Grid Panel (cells placed by **Columns**) or a Wrap Box; put it in a Scroll Box for long lists | Set **Entry Widget Class** `WBP_ItemEntry`, **Cell Count** and **Columns** on each placed grid: many cells for the inventory, a few for loot. The cells show in the designer |
-| `WBP_OutfitSlot` | `FVEquipmentSlotWidget` (FVInventorySystem) | none required | An item entry for one outfit slot. Set **Equipment Slot** (and *Slot Label*) on each placed slot. It shows the player's worn item there and refreshes itself; **On Slot Changed** gives the item covering the slot when it is empty (a dress over Lower Body) |
+| `WBP_Inventory_Storage` | `FVInventoryStorageSection` | (list bindings; detail optional, Information shows the selection) | **Filters** (up to 3: label, item category, wearable only; e.g. All / Clothes `wearable` / Items), **Worn Label** |
+| `WBP_Inventory_Outfit` | `FVInventoryOutfitSection` | **SlotPanel** (Vertical Box or Wrap Box), *GroupTabs* (`WBP_TabBar`) | **Groups** (up to 3, e.g. Clothes: Head, Eyewear, Upper Body, Lower Body, Coat, Gloves, Shoes; Underwear: Underwear Top/Bottom, Socks; Accessories: Accessory slots, Bag, Backpack; each slot a tag and a label), **Slot Widget Class** `WBP_OutfitSlot` |
+| `WBP_OutfitSlot` | `FVOutfitSlotWidget` | **SlotButton**, **SlotLabelText**, *ItemNameText*, *ItemIcon* | Style worn / blocked (covered by another item) / selected / can take the selected item in **On Slot State Changed** |
+| `WBP_Inventory_Information` | `FVInventoryInfoSection` | *ItemPanel*, *NoSelectionPanel*, *ItemIcon*, *ItemNameText*, *CategoryText*, *DescriptionText*, *QuantityText*, *ItemWeightText*, *SizeText*, *StatusText*, *FeedbackText*, *UseButton*, *WearButton* + *WearButtonText*, *DropButton*, *DropQuantity* (Spin Box), *TotalWeightText*, *WeightBar*, *SpaceText*, *SpaceBar* | Labels: Wear, Take off, Worn in, Quest item; messages: cannot use / wear / drop |
 
-`WBP_Page_Inventory` (parent `FVInventoryPageWidget`) holds the layout, for example a `WBP_ItemGrid` named ItemGrid in a Scroll Box, `WBP_OutfitSlot`s around a figure, an information panel with the texts, icon and Use/Wear/Drop buttons, and weight and space bars. Wire it in the graph:
-
-1. **On Page Shown** and **On Inventory Changed**: `ItemGrid > Set Items (Get Inventory Items)` (or `Get Filtered Items` for filter tabs), then refresh the weight and space (`Get Total Weight`, `Get Weight Limit`, `Get Used Cells`, `Get Cell Capacity`) and the information panel.
-2. ItemGrid **On Hovered Item Changed** (Entry, Item): `Get Item Info (Item)` and put its Name, Description, Category, Icon, weights, Size and Worn Slot into the panel; show or enable the buttons from bUsable/bCanUse, bWearable/bCanWear/bCanTakeOff and bCanDrop. Entry is null when nothing is hovered: show the selected item (`ItemGrid > Get Selected Item`) or clear the panel.
-3. ItemGrid **On Item Clicked** (Entry, Item): the item is now selected; open a Use/Drop prompt next to the Entry, or act straight away. The actions take the stack's Instance Id: `Use Item`, `Wear` (Slot Tag None = first free slot), `Take Off (Slot Tag)`, `Toggle Worn`, `Drop Item (Id, Quantity)`; each returns false when it can't be done, so the graph can show a message. The page fires On Inventory Changed after each, so step 1 refreshes everything.
-4. Outfit slots: bind each slot's **On Clicked** (and **On Hovered** for the panel), for example from a Make Array of the slots and a For Each Loop with Bind Event. In the handler cast Entry to `FVEquipmentSlotWidget`: wear the grid's selected item in its **Equipment Slot** when `Can Wear` says it fits, otherwise `Take Off` that slot.
-5. Override **Get Page Focus Target** to return `ItemGrid > Get Focus Target`, so gamepad focus starts on the selected cell, or the first one.
-
-Get Item Info works for any stack, also ones the player doesn't carry (loot, a trader's stock); the action flags are then false. Drop spawns the item in front of the player (set *FlickerVoid > Inventory > Default Pickup Class*, see the FVInventorySystem guide). The same grid and entry widgets make loot and trade screens: give the grid the container's or trader's stacks instead.
+How it plays: select a stack in Storage; Information shows it with Use, Wear/Take off and Drop. Clicking an outfit slot wears the selected item there if it fits (slots that can take it are flagged), otherwise selects the slot and shows what is worn in it. Drop spawns the item in front of the player (set *FlickerVoid > Inventory > Default Pickup Class*, see the FVInventorySystem guide); the spin box picks how many of a stack.
 
 ### Character sections
 
@@ -144,15 +133,15 @@ Quests come from the quest subsystem (tracked quests in *FlickerVoid > Quests*),
 
 ## 7. Map screen: `WBP_MapScreen`
 
-Parent `FVMapScreenWidget`. Bound: **WorldMap** (a `WBP_WorldMap`, see the FVNavigationSystem guide), *MapNameText*. Class defaults: **Close Actions** `IA_Menu_Back`, `IA_Map`.
+Parent `FVMapScreenWidget`. Bound: **WorldMap** (a `WBP_WorldMap`, see the FVNavigationSystem guide), *MapNameText*. Class defaults: **Close Actions** `IA_Back`, `IA_Map`.
 
 ## 8. Menus
 
 | Widget | Parent | Bound widgets | Class defaults |
 |---|---|---|---|
 | `WBP_MainMenu` | `FVMainMenuWidget` | **MenuSwitcher** (index 0: root panel with **PlayButton**, **OptionsButton**, **QuitButton**; index 1: play panel with **ContinueButton**, **NewGameButton**, **LoadButton**, *BackButton*) | **New Game Level**, **Options Class** `WBP_Options` |
-| `WBP_PauseMenu` | `FVPauseMenuWidget` | **ResumeButton**, **OptionsButton**, **QuitButton** | **Main Menu Level**, **Options Class** `WBP_Options`, **Close Actions** `IA_Menu_Back` |
-| `WBP_Options` | `FVOptionsMenuWidget` | **SectionTabs** (`WBP_TabBar`), **SectionSwitcher** (index 0 Gameplay, 1 Audio and Video, 2 Controls), *SubtitlesCheck* (Check Box), *MasterVolumeSlider*, *WindowModeCombo*, *QualityCombo* (Combo Box String), *ControlsList* (Vertical Box) | Tab labels, **Master Sound Mix** + **Master Sound Class** (volume is disabled without them), **Window Mode Labels** (Fullscreen, Windowed Fullscreen, Windowed), **Quality Options** (up to 3, e.g. Low 0, Medium 2, High 3), **Control Contexts** (e.g. the gameplay IMC, `IMC_UI` and `IMC_Menu`), **Control Entry Class**, **Close Actions** `IA_Menu_Back` |
+| `WBP_PauseMenu` | `FVPauseMenuWidget` | **ResumeButton**, **OptionsButton**, **QuitButton** | **Main Menu Level**, **Options Class** `WBP_Options`, **Close Actions** `IA_Back` |
+| `WBP_Options` | `FVOptionsMenuWidget` | **SectionTabs** (`WBP_TabBar`), **SectionSwitcher** (index 0 Gameplay, 1 Audio and Video, 2 Controls), *SubtitlesCheck* (Check Box), *MasterVolumeSlider*, *WindowModeCombo*, *QualityCombo* (Combo Box String), *ControlsList* (Vertical Box) | Tab labels, **Master Sound Mix** + **Master Sound Class** (volume is disabled without them), **Window Mode Labels** (Fullscreen, Windowed Fullscreen, Windowed), **Quality Options** (up to 3, e.g. Low 0, Medium 2, High 3), **Control Contexts** (e.g. the gameplay IMC, `IMC_UI` and `IMC_Menu`), **Control Entry Class**, **Close Actions** `IA_Back` |
 
 - New Game opens **New Game Level**; Quit quits; Quit to menu opens **Main Menu Level**.
 - **Continue and Load are disabled**: `UFVSaveSubsystem::LoadFromSlot` restores facts and actors in the current map but doesn't travel to the saved map yet. Enable them once loading can open the save's map first.
@@ -162,12 +151,12 @@ Parent `FVMapScreenWidget`. Bound: **WorldMap** (a `WBP_WorldMap`, see the FVNav
 ## 9. Checklist
 
 - [ ] Layout registers `UI.Layer.HUD`, `Game`, `GameMenu`, `Menu`, `Modal`
-- [ ] `IA_HubMenu`, `IA_Map`, `IA_Pause`, `IA_Menu_NextPage`, `IA_Menu_PreviousPage`, `IA_Menu_Back`, `IMC_UI`, `IMC_Menu`
+- [ ] `IA_HubMenu`, `IA_Map`, `IA_Pause`, `IA_NextPage`, `IA_PreviousPage`, `IA_Back`, `IMC_UI`, `IMC_Menu`
 - [ ] `DA_InputConfig` native actions with `InputTag.UI.*`; `IMC_UI` in the controller's Default Input Mappings; *FlickerVoid > UI > Menu Input Context* = `IMC_Menu`
 - [ ] `BP_PlayerController` screen classes; `BP_GameHUD` and `BP_MainMenuHUD` set on their game modes
 - [ ] `WBP_ListEntry`, `WBP_TabButton`, `WBP_TabBar`
 - [ ] `WBP_GameHUD`, `WBP_QuestTracker`, `WBP_Notifications`, `WBP_PlayerStatus`, `WBP_ScannerReadout`, `WBP_KeyHints`
-- [ ] `WBP_HubMenu`, three pages, six sections; `WBP_ItemEntry`, `WBP_ItemGrid`, `WBP_OutfitSlot` placed in `WBP_Page_Inventory`
+- [ ] `WBP_HubMenu`, three pages, nine sections, `WBP_OutfitSlot`
 - [ ] `WBP_MapScreen`
 - [ ] `WBP_MainMenu`, `WBP_PauseMenu`, `WBP_Options`, a main menu level and game mode
 - [ ] *Inventory > Default Pickup Class* (Blueprint of the AngelScript `AItemPickup` with its interactable definition set), *Social > Relationships*, `Attribute.Skill/Perk/Kink` tags
