@@ -1,9 +1,7 @@
 #include "UI/FVItemGridWidget.h"
 
 #include "Components/PanelWidget.h"
-#include "Components/ScrollBox.h"
 #include "Components/UniformGridPanel.h"
-#include "Containers/Ticker.h"
 #include "FVInventorySystem.h"
 #include "UI/FVItemEntryWidget.h"
 
@@ -13,12 +11,6 @@ void UFVItemGridWidget::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 	EnsureCells(FMath::Max(CellCount, Entries.Num()));
-}
-
-void UFVItemGridWidget::NativeDestruct()
-{
-	HoveredEntry = nullptr;
-	Super::NativeDestruct();
 }
 
 void UFVItemGridWidget::SetItems(const TArray<FFVItemStack>& Items)
@@ -110,53 +102,6 @@ UWidget* UFVItemGridWidget::GetFocusTarget() const
 	return Entries.Num() > 0 ? Entries[0].Get() : nullptr;
 }
 
-UWidget* UFVItemGridWidget::FindNeighbour(const int32 Index, const EUINavigation Direction) const
-{
-	// Steps by index, so cells a Scroll Box has clipped are reachable; spatial navigation only sees painted widgets.
-	if (!Cast<UUniformGridPanel>(ItemPanel))
-	{
-		return nullptr;
-	}
-
-	const int32 RowLength = FMath::Max(1, Columns);
-	int32 Target = INDEX_NONE;
-	switch (Direction)
-	{
-	case EUINavigation::Left:
-		Target = Index % RowLength > 0 ? Index - 1 : INDEX_NONE;
-		break;
-	case EUINavigation::Right:
-		Target = Index % RowLength < RowLength - 1 ? Index + 1 : INDEX_NONE;
-		break;
-	case EUINavigation::Up:
-		Target = Index - RowLength;
-		break;
-	case EUINavigation::Down:
-		Target = Index + RowLength;
-		break;
-	default:
-		break;
-	}
-	return Entries.IsValidIndex(Target) ? Entries[Target].Get() : nullptr;
-}
-
-void UFVItemGridWidget::ScrollIntoView(UWidget* Entry) const
-{
-	// The nearest Scroll Box around the cells: inside this grid's layout, or around the grid in the page.
-	const UWidget* Widget = ItemPanel;
-	while (Widget)
-	{
-		UPanelWidget* Parent = Widget->GetParent();
-		if (UScrollBox* ScrollBox = Cast<UScrollBox>(Parent))
-		{
-			// One cell of padding keeps the next row on screen.
-			ScrollBox->ScrollWidgetIntoView(Entry, true, EDescendantScrollDestination::IntoView, static_cast<float>(Entry->GetDesiredSize().Y));
-			return;
-		}
-		Widget = Parent ? Parent : Widget->GetTypedOuter<UUserWidget>();
-	}
-}
-
 void UFVItemGridWidget::EnsureCells(const int32 Count)
 {
 	if (!ItemPanel)
@@ -190,7 +135,7 @@ void UFVItemGridWidget::EnsureCells(const int32 Count)
 		}
 
 		const int32 Index = Entries.Num();
-		Entry->SetGrid(this, Index);
+		Entry->SetIndex(Index);
 		Entry->OnHovered.AddDynamic(this, &ThisClass::HandleEntryHovered);
 		Entry->OnUnhovered.AddDynamic(this, &ThisClass::HandleEntryUnhovered);
 		Entry->OnClicked.AddDynamic(this, &ThisClass::HandleEntryClicked);
@@ -242,15 +187,13 @@ void UFVItemGridWidget::SetSelectedEntry(UFVItemEntryWidget* Entry)
 	}
 
 	const UFVItemEntryWidget* Previous = GetSelectedEntry();
-	const FGuid PreviousId = SelectedId;
 	SelectedId = Entry ? Entry->GetItem().InstanceId : FGuid();
 	for (UFVItemEntryWidget* Cell : Entries)
 	{
 		Cell->SetSelected(Cell == Entry);
 	}
 
-	// The id check covers a selected cell that was removed when the grid shrank.
-	if (Previous != Entry || PreviousId != SelectedId)
+	if (Previous != Entry)
 	{
 		OnSelectionChanged.Broadcast(Entry, Entry ? Entry->GetItem() : FFVItemStack());
 	}
@@ -288,33 +231,19 @@ void UFVItemGridWidget::HandleEntryUnhovered(UFVItemEntryWidget* Entry)
 		return;
 	}
 
-	// Without Focus On Hover the mouse can leave one cell while another still holds keyboard/gamepad focus.
+	// The mouse can leave one cell while another still holds keyboard/gamepad focus.
+	UFVItemEntryWidget* Next = nullptr;
 	for (UFVItemEntryWidget* Cell : Entries)
 	{
 		if (Cell != Entry && Cell->IsItemHovered())
 		{
-			HoveredEntry = Cell;
-			OnHoveredItemChanged.Broadcast(Cell, Cell->GetItem());
-			return;
+			Next = Cell;
+			break;
 		}
 	}
 
-	// Focus moving between cells unhovers the old cell before the new one is hovered, so "nothing hovered" waits a
-	// frame and is dropped if a cell takes over.
-	HoveredEntry = nullptr;
-	if (!bUnhoverPending)
-	{
-		bUnhoverPending = true;
-		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float)
-		{
-			bUnhoverPending = false;
-			if (!HoveredEntry.IsValid())
-			{
-				OnHoveredItemChanged.Broadcast(nullptr, FFVItemStack());
-			}
-			return false;
-		}));
-	}
+	HoveredEntry = Next;
+	OnHoveredItemChanged.Broadcast(Next, Next ? Next->GetItem() : FFVItemStack());
 }
 
 void UFVItemGridWidget::HandleEntryClicked(UFVItemEntryWidget* Entry)

@@ -59,8 +59,7 @@ struct FFVInventoryItemInfo
 
 // Hub page for the inventory, laid out freely in its Widget Blueprint: place an FV Item Grid, FV Equipment Slots and an
 // information panel and wire them in the graph. This class reads the player's inventory and equipment and does the
-// actions. While the page is shown, On Inventory Changed fires whenever the contents, the outfit or the capacity change,
-// and after an item is used.
+// actions. While the page is shown, On Inventory Changed fires whenever the contents, the outfit or the capacity change.
 UCLASS(Abstract)
 class UFVInventoryPageWidget : UFVHubMenuPageWidget
 {
@@ -79,8 +78,7 @@ class UFVInventoryPageWidget : UFVHubMenuPageWidget
         Unbind();
     }
 
-    // The contents, the outfit or the capacity changed, or an item was used, while the page is shown: refill the grid
-    // and panels here.
+    // The contents, the outfit or the capacity changed while the page is shown: refill the grid and panels here.
     UFUNCTION(BlueprintEvent, Category = "FV|Inventory")
     void OnInventoryChanged() {}
 
@@ -296,7 +294,6 @@ class UFVInventoryPageWidget : UFVHubMenuPageWidget
             Inventory.OnStackChanged.AddUFunction(this, n"HandleStackChanged");
             Inventory.OnInventoryReset.AddUFunction(this, n"HandleChanged");
             Inventory.OnCapacityChanged.AddUFunction(this, n"HandleChanged");
-            Inventory.OnItemUsed.AddUFunction(this, n"HandleItemUsed");
         }
         else
         {
@@ -317,7 +314,6 @@ class UFVInventoryPageWidget : UFVHubMenuPageWidget
             Inventory.OnStackChanged.UnbindObject(this);
             Inventory.OnInventoryReset.UnbindObject(this);
             Inventory.OnCapacityChanged.UnbindObject(this);
-            Inventory.OnItemUsed.UnbindObject(this);
         }
         if (Equipment != nullptr)
         {
@@ -330,13 +326,6 @@ class UFVInventoryPageWidget : UFVHubMenuPageWidget
 
     UFUNCTION()
     private void HandleStackChanged(FGuid InstanceId)
-    {
-        OnInventoryChanged();
-    }
-
-    // Items that aren't consumed change no stack when used, but their effects can change what the page shows.
-    UFUNCTION()
-    private void HandleItemUsed(UFVItemDefinition Item)
     {
         OnInventoryChanged();
     }
