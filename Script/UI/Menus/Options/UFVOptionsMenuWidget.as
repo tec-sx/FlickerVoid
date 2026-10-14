@@ -24,15 +24,6 @@ struct FFVQualityOption
 UCLASS(Abstract)
 class UFVOptionsMenuWidget : UFVScreenWidget
 {
-    UPROPERTY(EditDefaultsOnly, Category = "Options")
-    FText GameplayLabel;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Options")
-    FText AudioVideoLabel;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Options")
-    FText ControlsLabel;
-
     UPROPERTY(EditDefaultsOnly, Category = "Options|Audio", meta = (ToolTip = "Sound mix pushed to apply the master volume to Master Sound Class."))
     USoundMix MasterSoundMix;
 
@@ -53,12 +44,6 @@ class UFVOptionsMenuWidget : UFVScreenWidget
 
     UPROPERTY(EditDefaultsOnly, Category = "Options")
     FString SaveSlot = "FV_Options";
-
-    UPROPERTY(BindWidget)
-    UFVTabBarWidget SectionTabs;
-
-    UPROPERTY(BindWidget)
-    UWidgetSwitcher SectionSwitcher;
 
     UPROPERTY(BindWidgetOptional)
     UCheckBox SubtitlesCheck;
@@ -82,12 +67,6 @@ class UFVOptionsMenuWidget : UFVScreenWidget
     void OnInitialized()
     {
         Super::OnInitialized();
-        TArray<FText> Labels;
-        Labels.Add(GameplayLabel);
-        Labels.Add(AudioVideoLabel);
-        Labels.Add(ControlsLabel);
-        SectionTabs.OnTabSelected.AddUFunction(this, n"HandleSectionSelected");
-        SectionTabs.SetTabs(Labels);
 
         if (SubtitlesCheck != nullptr)
         {
@@ -124,10 +103,6 @@ class UFVOptionsMenuWidget : UFVScreenWidget
         LoadOptions();
         SyncControls();
         BuildControlsList();
-        if (SectionTabs.GetSelectedIndex() < 0)
-        {
-            SectionTabs.SelectTab(0);
-        }
     }
 
     // Loads the saved options and applies them; call once at startup so they hold before the menu is opened.
@@ -216,12 +191,6 @@ class UFVOptionsMenuWidget : UFVScreenWidget
                 Index++;
             }
         }
-    }
-
-    UFUNCTION()
-    private void HandleSectionSelected(int Index)
-    {
-        SectionSwitcher.SetActiveWidgetIndex(Index);
     }
 
     UFUNCTION()

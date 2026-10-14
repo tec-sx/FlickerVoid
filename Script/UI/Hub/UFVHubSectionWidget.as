@@ -1,21 +1,20 @@
-// One section of a hub page (Storage, Identity, Quests...). Pages create their sections from a class list, show them
-// side by side or as tabs, and call Refresh whenever the page is shown.
+// One section of a hub page (Storage, Identity, Quests...). sections are placed by hand in a page, or in a tab view inside one.
 UCLASS(Abstract)
-class UFVHubMenuSectionWidget : UUserWidget
+class UFVHubSectionWidget : UUserWidget
 {
     UPROPERTY(EditDefaultsOnly, Category = "Section")
     FText SectionTitle;
 
-    private UFVHubMenuPageWidget OwningPage;
+    private UFVHubPageWidget OwningPage;
 
-    void InitializeSection(UFVHubMenuPageWidget Page)
+    void InitializeSection(UFVHubPageWidget Page)
     {
         OwningPage = Page;
         OnSectionInitialized();
     }
 
     UFUNCTION(BlueprintPure, Category = "FV|UI")
-    UFVHubMenuPageWidget GetPage() const
+    UFVHubPageWidget GetPage() const
     {
         return OwningPage;
     }

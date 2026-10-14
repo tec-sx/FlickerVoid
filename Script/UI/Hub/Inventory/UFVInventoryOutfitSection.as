@@ -11,7 +11,7 @@ struct FFVOutfitSlotGroup
 // Inventory section showing what is worn, slot by slot, in up to three groups. Clicking a slot wears the item selected
 // in Storage there when it fits; otherwise it selects the slot so the Information section shows what is worn in it.
 UCLASS(Abstract)
-class UFVInventoryOutfitSection : UFVHubMenuSectionWidget
+class UFVInventoryOutfitSection : UFVHubSectionWidget
 {
     UPROPERTY(EditDefaultsOnly, Category = "Outfit", meta = (MaxEntries = 3, TitleProperty = "Label"))
     TArray<FFVOutfitSlotGroup> Groups;

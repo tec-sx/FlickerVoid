@@ -9,6 +9,8 @@
 class APlayerController;
 class UInputAction;
 class UInputMappingContext;
+class UUserWidget;
+class UWidget;
 
 /** Input queries for widgets: which keys trigger an Enhanced Input action, so screens can close or switch on rebindable keys. */
 UCLASS()
@@ -28,4 +30,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FV|UI", meta = (ToolTip = "The default key mappings of a mapping context, for a controls list."))
 	static TArray<FEnhancedActionKeyMapping> GetContextMappings(const UInputMappingContext* Context);
+	
+	UFUNCTION(BlueprintPure, Category = "FV|UI", meta = (DeterminesOutputType = "WidgetClass", ToolTip = "Widgets of the class placed in the user widget's own layout."))
+	static TArray<UWidget*> FindWidgetsOfClass(const UUserWidget* Owner, TSubclassOf<UWidget> WidgetClass);
+	
+	UFUNCTION(BlueprintPure, Category = "FV|UI", meta = (ToolTip = "True if the widget is the container or sits inside it."))
+	static bool IsWidgetInside(const UWidget* Widget, const UWidget* Container);
 };

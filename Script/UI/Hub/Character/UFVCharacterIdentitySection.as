@@ -1,7 +1,7 @@
 // Character section about how the world sees the player: who they are, what they wear, whether they pass as someone
 // else, fame, notoriety and titles. Reads the identity, equipment and FVSocialSystem; refreshes on fact and outfit changes.
 UCLASS(Abstract)
-class UFVCharacterIdentitySection : UFVHubMenuSectionWidget
+class UFVCharacterIdentitySection : UFVHubSectionWidget
 {
     UPROPERTY(EditDefaultsOnly, Category = "Identity")
     FText NotDisguisedText;

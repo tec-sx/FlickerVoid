@@ -1,7 +1,7 @@
 // Inventory section describing the selected stack (name, icon, description, category, quantity, weight, size,
 // where it is worn) with its three actions, Use, Wear/Take off and Drop, plus the carried weight and space.
 UCLASS(Abstract)
-class UFVInventoryInfoSection : UFVHubMenuSectionWidget
+class UFVInventoryInfoSection : UFVHubSectionWidget
 {
     UPROPERTY(EditDefaultsOnly, Category = "Information")
     FText WearLabel;
