@@ -38,7 +38,7 @@ class APlayerCharacterController : AFVPlayerController
 
     // Opens the hub on a given page, e.g. the journal from a quest notification.
     UFUNCTION(BlueprintCallable, Category = "FV|UI")
-    void OpenHubMenu(TSubclassOf<UFVHubMenuPageWidget> Page)
+    void OpenHubMenu(TSubclassOf<UFVHubPageWidget> Page)
     {
         if (!IsOpen(HubMenu))
         {

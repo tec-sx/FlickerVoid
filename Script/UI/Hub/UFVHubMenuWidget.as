@@ -1,30 +1,25 @@
-// The hub menu (Tab): pages from the Pages class list, switched by PageTabs or the Previous/Next Page actions (Tab/E, Q)
-// through an animated switcher (transition type, curve and duration are set on PageSwitcher in the Widget Blueprint).
-// Closes on Back (Escape) or its Close Actions. Pushed on UI.Layer.GameMenu.
+// The hub menu (Tab), laid out by hand: its pages are the FV Hub Menu Page widgets placed in the layout. With an FV Tab
+// View bound as PageTabView (the pages as the children of its switcher) one page shows at a time and the Previous/Next Page
+// actions (Tab/E, Q) switch them; without one every placed page shows. Closes on Back (Escape) or its Close Actions.
+// Pushed on UI.Layer.GameMenu.
 UCLASS(Abstract)
 class UFVHubMenuWidget : UFVScreenWidget
 {
-    UPROPERTY(EditDefaultsOnly, Category = "Hub", meta = (MaxEntries = 3))
-    TArray<TSubclassOf<UFVHubMenuPageWidget>> Pages;
-
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     UInputAction NextPageAction;
 
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     UInputAction PreviousPageAction;
 
-    UPROPERTY(BindWidget)
-    UFVTabBarWidget PageTabs;
-
-    UPROPERTY(BindWidget)
-    UCommonAnimatedSwitcher PageSwitcher;
+    UPROPERTY(BindWidgetOptional)
+    UFVTabViewWidget PageTabView;
 
     UPROPERTY(BindWidgetOptional)
     UTextBlock PageTitleText;
 
-    private TArray<UFVHubMenuPageWidget> PageWidgets;
-    private int ShownPage = -1;
-    private int RequestedPage = 0;
+    private TArray<UFVHubPageWidget> PageWidgets;
+    private TArray<UFVHubPageWidget> ShownPages;
+    private UFVHubPageWidget RequestedPage;
 
     UFUNCTION(BlueprintOverride)
     void OnInitialized()
@@ -32,25 +27,23 @@ class UFVHubMenuWidget : UFVScreenWidget
         Super::OnInitialized();
         BindInputAction(NextPageAction);
         BindInputAction(PreviousPageAction);
-        PageSwitcher.ClearChildren();
 
-        TArray<FText> Titles;
-        for (TSubclassOf<UFVHubMenuPageWidget> PageClass : Pages)
+        for (UWidget Widget : FVUI::FindWidgetsOfClass(this, UFVHubPageWidget))
         {
-            if (!PageClass.IsValid())
-            {
-                continue;
-            }
-
-            UFVHubMenuPageWidget Page = WidgetBlueprint::CreateWidget(PageClass, GetOwningPlayer());
+            UFVHubPageWidget Page = Cast<UFVHubPageWidget>(Widget);
             Page.SetHub(this);
-            PageSwitcher.AddChild(Page);
             PageWidgets.Add(Page);
-            Titles.Add(Page.PageTitle);
         }
 
-        PageTabs.OnTabSelected.AddUFunction(this, n"HandlePageSelected");
-        PageTabs.SetTabs(Titles);
+        if (PageWidgets.Num() > 3)
+        {
+            Print(f"{GetName()}: {PageWidgets.Num()} hub pages; keep it to 3 or fewer.");
+        }
+
+        if (PageTabView != nullptr)
+        {
+            PageTabView.OnTabChanged.AddUFunction(this, n"HandlePageTabChanged");
+        }
     }
 
     UFUNCTION(BlueprintOverride)
@@ -58,44 +51,49 @@ class UFVHubMenuWidget : UFVScreenWidget
     {
         if (PageWidgets.Num() == 0)
         {
-            Print(f"{GetName()}: no hub pages; fill Pages in the class defaults.");
+            Print(f"{GetName()}: no hub pages; place FV Hub Menu Page widgets in the layout.");
             return;
         }
 
-        int Page = Math::Clamp(RequestedPage, 0, PageWidgets.Num() - 1);
-        if (Page == PageTabs.GetSelectedIndex())
+        if (PageTabView == nullptr)
         {
-            ShowPage(Page);
+            for (UFVHubPageWidget Page : PageWidgets)
+            {
+                ActivatePage(Page);
+            }
+            RequestRefreshFocus();
+            return;
         }
-        else
-        {
-            PageTabs.SelectTab(Page);
-        }
+
+        UFVHubPageWidget Page = RequestedPage != nullptr ? RequestedPage : FindPageOnTab(PageTabView.GetSelectedIndex());
+        RequestedPage = nullptr;
+        SelectPage(Page != nullptr ? Page : PageWidgets[0]);
     }
 
     UFUNCTION(BlueprintOverride)
     void OnDeactivated()
     {
-        if (PageWidgets.IsValidIndex(ShownPage))
+        for (int i = ShownPages.Num() - 1; i >= 0; i--)
         {
-            PageWidgets[ShownPage].HidePage();
-            PageWidgets[ShownPage].DeactivateWidget();
+            DeactivatePage(ShownPages[i]);
         }
-        RequestedPage = Math::Max(ShownPage, 0);
     }
 
     // Opens on this page the next time the hub is shown, or switches now if it is open.
     UFUNCTION(BlueprintCallable, Category = "FV|UI")
-    void OpenPage(TSubclassOf<UFVHubMenuPageWidget> PageClass)
+    void OpenPage(TSubclassOf<UFVHubPageWidget> PageClass)
     {
-        for (int i = 0; i < PageWidgets.Num(); i++)
+        for (UFVHubPageWidget Page : PageWidgets)
         {
-            if (PageWidgets[i].Class == PageClass.Get())
+            if (Page.Class == PageClass.Get())
             {
-                RequestedPage = i;
-                if (IsActivated())
+                if (IsActivated() && PageTabView != nullptr)
                 {
-                    PageTabs.SelectTab(i);
+                    SelectPage(Page);
+                }
+                else
+                {
+                    RequestedPage = Page;
                 }
                 return;
             }
@@ -103,21 +101,27 @@ class UFVHubMenuWidget : UFVScreenWidget
     }
 
     UFUNCTION(BlueprintPure, Category = "FV|UI")
-    UFVHubMenuPageWidget GetShownPage() const
+    UFVHubPageWidget GetShownPage() const
     {
-        return PageWidgets.IsValidIndex(ShownPage) ? PageWidgets[ShownPage] : nullptr;
+        return ShownPages.Num() > 0 ? ShownPages[0] : nullptr;
+    }
+
+    UFUNCTION(BlueprintPure, Category = "FV|UI")
+    TArray<UFVHubPageWidget> GetPages() const
+    {
+        return PageWidgets;
     }
 
     bool HandleAction(UInputAction Action) override
     {
-        if (Action != nullptr && Action == NextPageAction)
+        if (Action != nullptr && Action == NextPageAction && PageTabView != nullptr)
         {
-            PageTabs.SelectNext();
+            PageTabView.SelectNext();
             return true;
         }
-        if (Action != nullptr && Action == PreviousPageAction)
+        if (Action != nullptr && Action == PreviousPageAction && PageTabView != nullptr)
         {
-            PageTabs.SelectPrevious();
+            PageTabView.SelectPrevious();
             return true;
         }
         return Super::HandleAction(Action);
@@ -126,42 +130,85 @@ class UFVHubMenuWidget : UFVScreenWidget
     UFUNCTION(BlueprintOverride)
     UWidget BP_GetDesiredFocusTarget() const
     {
-        UFVHubMenuPageWidget Page = GetShownPage();
+        UFVHubPageWidget Page = GetShownPage();
         return Page != nullptr ? Page.GetDesiredFocusTarget() : nullptr;
     }
 
+    // The tab view also selects its first tab when it is built, before the hub is active; OnActivated shows that page.
     UFUNCTION()
-    private void HandlePageSelected(int Index)
+    private void HandlePageTabChanged(int Index, UWidget Content)
     {
-        ShowPage(Index);
+        if (IsActivated())
+        {
+            ShowOnly(FindPageOnTab(Index));
+        }
     }
 
-    private void ShowPage(int Index)
+    private void SelectPage(UFVHubPageWidget Page)
     {
-        if (!PageWidgets.IsValidIndex(Index))
+        int Tab = PageTabView.FindTab(Page);
+        if (Tab >= 0 && Tab != PageTabView.GetSelectedIndex())
         {
-            return;
+            PageTabView.SelectTab(Tab);
+        }
+        else
+        {
+            ShowOnly(Page);
+        }
+    }
+
+    private void ShowOnly(UFVHubPageWidget Page)
+    {
+        for (int i = ShownPages.Num() - 1; i >= 0; i--)
+        {
+            if (ShownPages[i] != Page)
+            {
+                DeactivatePage(ShownPages[i]);
+            }
         }
 
-        if (PageWidgets.IsValidIndex(ShownPage) && ShownPage != Index)
+        if (Page != nullptr)
         {
-            PageWidgets[ShownPage].HidePage();
-            PageWidgets[ShownPage].DeactivateWidget();
+            ActivatePage(Page);
         }
+    }
 
-        ShownPage = Index;
-        PageSwitcher.SetActiveWidgetIndex(Index);
-        if (!PageWidgets[Index].IsActivated())
-        {
-            PageWidgets[Index].ActivateWidget();
-        }
-
+    private void ActivatePage(UFVHubPageWidget Page)
+    {
+        ShownPages.AddUnique(Page);
         if (PageTitleText != nullptr)
         {
-            PageTitleText.SetText(PageWidgets[Index].PageTitle);
+            PageTitleText.SetText(Page.PageTitle);
         }
 
-        PageWidgets[Index].ShowPage();
-        RequestRefreshFocus();
+        // Sections fill before activation, so the focus CommonUI sets on activation finds their rows.
+        Page.ShowPage();
+        if (!Page.IsActivated())
+        {
+            Page.ActivateWidget();
+        }
+        else
+        {
+            Page.RequestRefreshFocus();
+        }
+    }
+
+    private void DeactivatePage(UFVHubPageWidget Page)
+    {
+        ShownPages.Remove(Page);
+        Page.HidePage();
+        Page.DeactivateWidget();
+    }
+
+    private UFVHubPageWidget FindPageOnTab(int Index) const
+    {
+        for (UFVHubPageWidget Page : PageWidgets)
+        {
+            if (Index >= 0 && PageTabView.FindTab(Page) == Index)
+            {
+                return Page;
+            }
+        }
+        return nullptr;
     }
 }

@@ -1,7 +1,7 @@
 // A hub section that lists entries (quests, notes, factions, skills...) with up to three filter tabs and a detail
 // panel for the selected entry. Subclasses supply the filters and entries; selection, pooling and detail are handled here.
 UCLASS(Abstract)
-class UFVHubListSectionWidget : UFVHubMenuSectionWidget
+class UFVHubListSectionWidget : UFVHubSectionWidget
 {
     UPROPERTY(EditDefaultsOnly, Category = "List")
     TSubclassOf<UFVListEntryWidget> EntryClass;
@@ -165,6 +165,8 @@ class UFVHubListSectionWidget : UFVHubMenuSectionWidget
             return;
         }
 
+        Print(f"{GetName()}: selected entry {SelectedIndex}.");
+        Print(f"Entry Widgets: {EntryWidgets.Num()}, Entries: {Entries.Num()}");
         EntryWidgets[SelectedIndex].SetSelected(true);
         ShowDetail(Entries[SelectedIndex], true);
         OnEntrySelected(Entries[SelectedIndex]);
