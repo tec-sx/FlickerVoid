@@ -24,15 +24,9 @@ class UFVHubMenuPageWidget : UFVActivatableWidget
     UFUNCTION(BlueprintOverride)
     void OnInitialized()
     {
-        // A free layout has no sections; leave whatever it placed in a widget named SectionPanel alone.
-        bool bHasSections = false;
-        for (TSubclassOf<UFVHubMenuSectionWidget> SectionClass : Sections)
+        if (SectionPanel == nullptr)
         {
-            bHasSections = bHasSections || SectionClass.IsValid();
-        }
-        if (SectionPanel == nullptr || !bHasSections)
-        {
-            if (bHasSections)
+            if (Sections.Num() > 0)
             {
                 Print(f"{GetName()}: Sections are set but there is no SectionPanel to show them in.");
             }

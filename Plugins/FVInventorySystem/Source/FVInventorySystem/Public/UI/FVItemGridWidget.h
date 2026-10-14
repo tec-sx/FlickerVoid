@@ -14,8 +14,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFVOnItemGridEvent, UFVItemEntryWid
  * Cells of item entries for any list of stacks: the inventory, a container's loot, a trader's stock. Creates Cell Count
  * entries in ItemPanel up front (also in the designer) and fills them in order from Set Items; more items than cells add
  * cells. Tracks the hovered entry (mouse or keyboard/gamepad focus) and the selected one, kept by instance id when the
- * items change. Keys and gamepad step cell by cell in a Uniform Grid Panel (other panels use spatial navigation), and a
- * cell they focus scrolls into view in the nearest Scroll Box.
+ * items change. Keyboard and gamepad move between cells with the usual UI navigation.
  */
 UCLASS(Abstract)
 class FVINVENTORYSYSTEM_API UFVItemGridWidget : public UUserWidget
@@ -53,12 +52,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FV|Inventory", meta = (ToolTip = "Where keyboard/gamepad focus should land: the selected cell, else the first one. Return it from the page's focus target."))
 	UWidget* GetFocusTarget() const;
 
-	UWidget* FindNeighbour(int32 Index, EUINavigation Direction) const;
-	void ScrollIntoView(UWidget* Entry) const;
-
 protected:
 	virtual void NativePreConstruct() override;
-	virtual void NativeDestruct() override;
 
 private:
 	void EnsureCells(int32 Count);
@@ -95,7 +90,7 @@ public:
 	int32 Columns = 5;
 
 protected:
-	UPROPERTY(BlueprintReadOnly, Category = "FV|Inventory", meta = (BindWidget, ToolTip = "Holds the cells: a Uniform Grid Panel for cell-by-cell gamepad navigation, or a Wrap Box. Put it in a Scroll Box for long lists. Its children are replaced at runtime and in the designer."))
+	UPROPERTY(BlueprintReadOnly, Category = "FV|Inventory", meta = (BindWidget, ToolTip = "Holds the cells; put it in a Scroll Box for long lists. Its children are replaced at runtime and in the designer."))
 	TObjectPtr<UPanelWidget> ItemPanel;
 
 private:
@@ -104,5 +99,4 @@ private:
 
 	TWeakObjectPtr<UFVItemEntryWidget> HoveredEntry;
 	FGuid SelectedId;
-	bool bUnhoverPending = false;
 };
