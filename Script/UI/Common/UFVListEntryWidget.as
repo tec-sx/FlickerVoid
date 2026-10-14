@@ -44,9 +44,6 @@ class UFVListEntryWidget : UUserWidget
     UPROPERTY(BindWidget)
     UButton EntryButton;
 
-    UPROPERTY(BindWidget)
-    UTextBlock TitleText;
-
     UPROPERTY(BindWidgetOptional)
     UTextBlock SubtitleText;
 
@@ -78,7 +75,6 @@ class UFVListEntryWidget : UUserWidget
         Entry = InEntry;
         EntryIndex = InIndex;
 
-        TitleText.SetText(Entry.Title);
         SetOptionalText(SubtitleText, Entry.Subtitle);
         SetOptionalText(ValueText, Entry.Value);
 
@@ -131,6 +127,12 @@ class UFVListEntryWidget : UUserWidget
     bool IsSelected() const
     {
         return bSelected;
+    }
+
+    UFUNCTION(BlueprintPure, Category = "FV|UI")
+    bool IsEmpty() const
+    {
+        return Entry.Source == nullptr && !Entry.Id.IsValid() && Entry.Title.IsEmpty();
     }
 
     // Style highlighted and dimmed rows here.

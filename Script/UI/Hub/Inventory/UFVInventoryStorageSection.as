@@ -46,6 +46,13 @@ class UFVInventoryStorageSection : UFVHubListSectionWidget
         return Labels;
     }
 
+    UFUNCTION(BlueprintOverride)
+    int GetSlotCount()
+    {
+        int count = Model != nullptr ? Model.GetCellCapacity() : 0;
+        return Model != nullptr ? Model.GetCellCapacity() : 0;
+    }
+    
     TArray<FFVListEntry> BuildEntries(int FilterIndex) override
     {
         TArray<FFVListEntry> Result;

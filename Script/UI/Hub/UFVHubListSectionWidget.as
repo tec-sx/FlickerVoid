@@ -71,13 +71,17 @@ class UFVHubListSectionWidget : UFVHubSectionWidget
         return EntryWidgets.Num() > 0 ? EntryWidgets[0] : nullptr;
     }
 
-    // Labels of the filter tabs; at most three.
     TArray<FText> GetFilterLabels()
     {
         return TArray<FText>();
     }
 
-    // Entries for the filter, in display order.
+    UFUNCTION(BlueprintEvent)
+    int GetSlotCount()
+    {
+        return 0;
+    }
+
     TArray<FFVListEntry> BuildEntries(int Filter)
     {
         return TArray<FFVListEntry>();
@@ -113,16 +117,16 @@ class UFVHubListSectionWidget : UFVHubSectionWidget
         bool bHadSelection = GetSelectedEntry(Previous);
 
         Entries = BuildEntries(ActiveFilter);
-        EnsureEntryWidgets(Entries.Num());
+        int Rows = Math::Max(Entries.Num(), GetSlotCount());
+        EnsureEntryWidgets(Rows);
 
         for (int i = 0; i < EntryWidgets.Num(); i++)
         {
-            bool bUsed = i < Entries.Num();
-            EntryWidgets[i].SetVisibility(bUsed ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+            EntryWidgets[i].SetVisibility(i < Rows ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
             EntryWidgets[i].SetSelected(false);
-            if (bUsed)
+            if (i < Rows)
             {
-                EntryWidgets[i].SetEntry(Entries[i], i);
+                EntryWidgets[i].SetEntry(i < Entries.Num() ? Entries[i] : FFVListEntry(), i);
             }
         }
 
@@ -158,15 +162,14 @@ class UFVHubListSectionWidget : UFVHubSectionWidget
         }
 
         SelectedIndex = Entries.IsValidIndex(Index) ? Index : -1;
-        if (SelectedIndex < 0)
+        if (SelectedIndex < 0 || !EntryWidgets.IsValidIndex(SelectedIndex))
         {
+            SelectedIndex = -1;
             ShowDetail(FFVListEntry(), false);
             OnSelectionCleared();
             return;
         }
 
-        Print(f"{GetName()}: selected entry {SelectedIndex}.");
-        Print(f"Entry Widgets: {EntryWidgets.Num()}, Entries: {Entries.Num()}");
         EntryWidgets[SelectedIndex].SetSelected(true);
         ShowDetail(Entries[SelectedIndex], true);
         OnEntrySelected(Entries[SelectedIndex]);
