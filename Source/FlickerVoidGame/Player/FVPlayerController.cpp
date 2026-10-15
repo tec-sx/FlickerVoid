@@ -48,11 +48,6 @@ void AFVPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
 
-    InitializeInput();
-}
-
-void AFVPlayerController::InitializeInput()
-{
     if (!InputConfig)
     {
         FV_LOG_WARNING(LogFlickerVoid, "PlayerController has no InputConfig assigned!");

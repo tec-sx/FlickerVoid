@@ -49,7 +49,6 @@ public:
 
 protected:
     virtual void SetupInputComponent() override;
-    void InitializeInput();
     void AddInputMappingContexts();
     void RemoveInputMappingContexts();
 
