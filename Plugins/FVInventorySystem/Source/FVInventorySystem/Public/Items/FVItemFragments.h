@@ -7,7 +7,9 @@
 #include "Items/FVItemDefinition.h"
 #include "FVItemFragments.generated.h"
 
+class AActor;
 class USkeletalMesh;
+class UStaticMesh;
 
 /** Wearable in one of its slots. Granted tags (e.g. Disguise.Faction.Police) are added to the wearer while equipped. */
 USTRUCT(BlueprintType, meta = (DisplayName = "Equippable"))
@@ -61,4 +63,17 @@ struct FVINVENTORYSYSTEM_API FFVItemFragment_Usable : public FFVItemFragment
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Usable")
 	bool bConsumeOnUse = true;
+};
+
+/** How the item looks in the world and what spawns when it is dropped. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Pickup"))
+struct FVINVENTORYSYSTEM_API FFVItemFragment_Pickup : public FFVItemFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (ToolTip = "Shown by world pickup actors holding this item (see LoadWorldMesh)."))
+	TSoftObjectPtr<UStaticMesh> WorldMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (ToolTip = "Spawned when the item is dropped; empty uses Default Pickup Class from the inventory settings."))
+	TSoftClassPtr<AActor> PickupClass;
 };

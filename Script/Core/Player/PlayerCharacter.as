@@ -9,11 +9,14 @@ class APlayerCharacter : AFVPlayerCharacter
     UPROPERTY(DefaultComponent, Category = Camera)
     UGameplayCameraComponent GameplayCamera;
 
-    // UPROPERTY(DefaultComponent)
-    // UNavigationMarkerComponent NavigationMarker;
-    
     UPROPERTY(DefaultComponent)
     UFVInteractionUIComponent InteractionUIComponent;
+    
+    UPROPERTY(DefaultComponent)
+    UFVInventoryComponent InventoryComponent;
+
+    UPROPERTY(DefaultComponent)
+    UFVItemReceiverComponent ItemReceiverComponent;
     
     UPROPERTY()
     UFVTraversalComponent Traversal;

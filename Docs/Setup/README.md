@@ -14,6 +14,7 @@ Read [FVFramework](FVFramework.md) first; every other plugin builds on its defin
 | [FVStorySystem](FVStorySystem.md) | Quests, knowledge (clues, topics, thoughts), save and load |
 | [FVSocialSystem](FVSocialSystem.md) | Factions, standing, fame, notoriety, titles, relationships, disguise |
 | [FVNavigationSystem](FVNavigationSystem.md) | Maps, map markers, discovery, waypoint, minimap/compass/world map logic, map capture |
+| [Game UI](GameUI.md) | The game's HUD, hub menu (inventory, character, journal), map screen, main, pause and options menus: widgets, input and settings to create |
 
 ## Shared conventions
 
@@ -34,3 +35,4 @@ Read [FVFramework](FVFramework.md) first; every other plugin builds on its defin
 4. FVDialogueSystem + FVStorySystem: a talkable NPC, a quest, some knowledge.
 5. FVSocialSystem: factions and the player's reputation.
 6. FVNavigationSystem: map images, markers, minimap and compass.
+7. Game UI: HUD, hub menu and menus on top of all of the above.

@@ -57,7 +57,8 @@ The player needs an Ability System Component for disguises to be read.
 | Fame Fact | Fact holding fame |
 | Notoriety Fact | Fact holding global notoriety |
 | Titles | Every title evaluated on fact changes |
-| Factions | Factions listed by the debug HUD and commands |
+| Factions | Factions listed by the debug HUD and commands, the menus (`Get Factions`) and disguise lookups (`Get Disguise Faction`) |
+| Relationships | Character definitions the menus list once their relationship fact has been set (`Get Known Characters`) |
 | Disguise Root | Tags under this root count as disguises |
 | Disguise Recognition | Fraction of fame and notoriety onlookers read while the player is disguised |
 
