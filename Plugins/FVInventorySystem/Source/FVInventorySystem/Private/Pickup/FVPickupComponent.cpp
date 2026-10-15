@@ -10,7 +10,23 @@
 bool UFVPickupComponent::CanBePickedUpBy(AActor* Picker) const
 {
 	const UFVItemReceiverComponent* Receiver = UFVItemReceiverComponent::FindReceiver(Picker);
-	return Item && Receiver && Receiver->IsAcceptingItems();
+	return Item && !IsDepleted() && Receiver && Receiver->IsAcceptingItems();
+}
+
+FFVItemStack UFVPickupComponent::GetStack() const
+{
+	FFVItemStack Stack;
+	Stack.Item = Item;
+	Stack.Quantity = Quantity;
+	Stack.InstanceData = InstanceData;
+	return Stack;
+}
+
+void UFVPickupComponent::SetStack(const FFVItemStack& Stack)
+{
+	Item = Stack.Item;
+	Quantity = Stack.Quantity;
+	InstanceData = Stack.InstanceData;
 }
 
 bool UFVPickupComponent::TryPickup(AActor* Picker)
@@ -21,6 +37,11 @@ bool UFVPickupComponent::TryPickup(AActor* Picker)
 		return false;
 	}
 
+	if (IsDepleted())
+	{
+		return false;
+	}
+
 	UFVItemReceiverComponent* Receiver = UFVItemReceiverComponent::FindReceiver(Picker);
 	if (!Receiver)
 	{
@@ -28,23 +49,18 @@ bool UFVPickupComponent::TryPickup(AActor* Picker)
 		return false;
 	}
 
-	const int32 Taken = Receiver->ReceiveItem(Item, Quantity, GetOwner());
+	const int32 Taken = Receiver->ReceiveStack(GetStack(), GetOwner());
 	if (Taken <= 0)
 	{
 		UE_LOG(LogFVInventorySystem, Verbose, TEXT("%s: %s took nothing, likely out of room."), *GetNameSafe(GetOwner()), *GetNameSafe(Picker));
 		return false;
 	}
 
+	// A partial pickup leaves the rest in the world.
+	Quantity = FMath::Max(0, Quantity - Taken);
 	OnPickedUp.Broadcast(Picker);
 
-	// A partial pickup leaves the rest in the world.
-	if (Taken < Quantity)
-	{
-		Quantity -= Taken;
-		return true;
-	}
-
-	if (bDestroyOwnerOnPickup)
+	if (IsDepleted() && bDestroyOwnerOnPickup)
 	{
 		GetOwner()->Destroy();
 	}

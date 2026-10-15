@@ -62,3 +62,26 @@ struct FVINVENTORYSYSTEM_API FFVItemFragment_Usable : public FFVItemFragment
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Usable")
 	bool bConsumeOnUse = true;
 };
+
+/** Several uses per unit, e.g. sips in a bottle. Remaining uses are kept per stack. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Charges"))
+struct FVINVENTORYSYSTEM_API FFVItemFragment_Charges : public FFVItemFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Charges", meta = (ClampMin = 1, ToolTip = "Uses per unit. Each use applies the Usable effects; the unit is used up after the last one."))
+	int32 Charges = 4;
+};
+
+/** Base price for trading. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Value"))
+struct FVINVENTORYSYSTEM_API FFVItemFragment_Value : public FFVItemFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Value", meta = (ClampMin = 0, ToolTip = "Price of one unit before the merchant's multipliers."))
+	int32 BasePrice = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Value", meta = (ToolTip = "Merchants buy it."))
+	bool bSellable = true;
+};
