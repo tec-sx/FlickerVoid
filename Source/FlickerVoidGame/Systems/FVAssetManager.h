@@ -12,7 +12,6 @@
 
 class UPrimaryDataAsset;
 class UFVGameData;
-class UFVPawnData;
 
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnSoundAssetLoaded, USoundBase*, Asset, UObject*, Payload);
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnSkeletalMeshAssetLoaded, USkeletalMesh*, Asset,UObject*, Payload);
@@ -38,8 +37,6 @@ class UFVAssetManager : public UAssetManager
 	GENERATED_BODY()
 	
 public:
-	UE_API UFVAssetManager();
-
 	static UE_API UFVAssetManager& Get();
 
 	// Returns the asset referenced by a TSoftObjectPtr.  This will synchronously load the asset if it's not already loaded.
@@ -54,7 +51,6 @@ public:
 	static UE_API void DumpLoadedAssets();
 
 	UE_API const UFVGameData& GetGameData();
-	UE_API const UFVPawnData* GetDefaultPawnData() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "FV|AssetManager", meta = (WorldContext = "WorldContext"))
 	UE_API void AsyncLoadSound(
@@ -130,10 +126,6 @@ protected:
 
 	UPROPERTY(Transient)
 	TMap<TObjectPtr<UClass>, TObjectPtr<UPrimaryDataAsset>> GameDataMap;
-
-	// Pawn data used when spawning player pawns if there isn't one set on the player state.
-	UPROPERTY(Config)
-	TSoftObjectPtr<UFVPawnData> DefaultPawnData;
 
 private:
 	// Flushes the StartupJobs array. Processes all startup work.

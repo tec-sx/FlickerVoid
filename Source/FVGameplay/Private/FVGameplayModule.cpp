@@ -1,6 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+#include "FVGameplayModule.h"
 #include "Modules/ModuleManager.h"
+
+DEFINE_LOG_CATEGORY(LogFVGameplay);
 
 /**
  * FVGameplay Module Implementation

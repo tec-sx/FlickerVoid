@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Abilities/FVAbilitySet.h"
 #include "Abilities/FVGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "NativeGameplayTags.h"
@@ -32,6 +33,9 @@ public:
 	////~End of UActorComponent interface
 
 	UE_API virtual void InitAbilityActorInfo(AActor* InOwnerActor, AActor* InAvatarActor) override;
+
+	/** Grants the ability sets of the owner's character definition (Abilities fragment). Grants only once; later calls do nothing. */
+	UE_API void GrantDefinitionAbilities();
 
 	typedef TFunctionRef<bool(const UFVGameplayAbility* Ability, FGameplayAbilitySpecHandle Handle)> TShouldCancelAbilityFunc;
 	UE_API void CancelAbilitiesByFunc(TShouldCancelAbilityFunc ShouldCancelFunc);
@@ -79,6 +83,12 @@ protected:
 
 	// Number of abilities running in each activation group.
 	int32 ActivationGroupCounts[(uint8)EFVAbilityActivationGroup::MAX];
+
+private:
+	UPROPERTY()
+	FFVAbilitySet_GrantedHandles DefinitionGrantedHandles;
+
+	bool bDefinitionAbilitiesGranted = false;
 };
 
 #undef UE_API

@@ -4,10 +4,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "FlickerVoid.h"
 #include "FVPlayerCharacter.h"
-#include "FVPlayerState.h"
 #include "InputMappingContext.h"
-#include "Abilities/FVAbilitySet.h"
-#include "Character/FVPawnData.h"
 #include "Movement/FVCharacterMovementComponent.h"
 #include "Logging/FVLogSystem.h"
 #include "Input/Components/FVInputComponent.h"
@@ -30,49 +27,27 @@ void AFVPlayerController::OnPossess(APawn* InPawn)
 
     if (CachedCharacter.IsValid())
     {
-        InitializeInput();
-	}
+        AddInputMappingContexts();
+    }
     else
     {
-        FV_LOG_WARNING(LogFlickerVoid, "Possessed pawn is not AFVPlayerCharacter! Input will not be initialized.");
+        FV_LOG(LogFlickerVoid, Log, "Possessed pawn [%s] is not an AFVPlayerCharacter, so character input stays off.", *GetNameSafe(InPawn));
     }
-	
-	if (const AFVPlayerState* PS = GetPlayerState<AFVPlayerState>())
-	{
-		for (const UFVAbilitySet* AbilitySet : PS->GetPawnData<UFVPawnData>()->AbilitySets)
-		{
-			if (AbilitySet)
-			{
-				AbilitySet->PassToAbilitySystem(CachedCharacter->GetFVAbilitySystemComponent(), nullptr);
-			}
-		}
-	}
-	else
-	{
-		FV_LOG_ERROR(
-			LogFlickerVoid, 
-			"Player controller unable to set PawnData on the possessed pawn [%s].", 
-			*GetNameSafe(CachedCharacter.Get()));
-	}
 }
 
 void AFVPlayerController::OnUnPossess()
 {
     RemoveInputMappingContexts();
 
-    // Remove ability binds
-    if (UFVInputComponent* FVIC = Cast<UFVInputComponent>(InputComponent))
-    {
-        FVIC->RemoveBinds(AbilityBindHandles);
-    }
-
     CachedCharacter.Reset();
 
     Super::OnUnPossess();
 }
 
-void AFVPlayerController::InitializeInput()
+void AFVPlayerController::SetupInputComponent()
 {
+    Super::SetupInputComponent();
+
     if (!InputConfig)
     {
         FV_LOG_WARNING(LogFlickerVoid, "PlayerController has no InputConfig assigned!");
@@ -86,8 +61,7 @@ void AFVPlayerController::InitializeInput()
         return;
     }
 
-    AddInputMappingContexts();
-
+    TArray<uint32> AbilityBindHandles;
     FVIC->BindAbilityActions(
         InputConfig,
         this,
