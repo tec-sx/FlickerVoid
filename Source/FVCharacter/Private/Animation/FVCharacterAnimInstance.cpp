@@ -3,7 +3,7 @@
 #include "Animation/FVCharacterAnimInstance.h"
 #include "Animation/FVAnimationConfigData.h"
 #include "Character/FVCharacter.h"
-#include "Logging/FVLogCategories.h"
+#include "FVCharacterModule.h"
 #include "Logging/FVLogSystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVCharacterAnimInstance)

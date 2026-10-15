@@ -5,7 +5,7 @@
 #include "Movement/FVMovementHandlerBase.h"
 #include "Movement/FVMovementHandlerData.h"
 #include "Movement/FVMovementHandlerInfo.h"
-#include "Logging/FVLogCategories.h"
+#include "FVCharacterModule.h"
 #include "Logging/FVLogSystem.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"

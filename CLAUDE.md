@@ -43,7 +43,7 @@ Every plugin has three modules: runtime, `<Plugin>Debug` and `<Plugin>Editor`. F
 - Minimal comments: a short class description; comment a method only when its name or logic is unclear.
 - Headers list functions before properties: first what the class does, then what it needs to work. Short descriptions of UFUNCTIONs and UPROPERTYs go in `meta = (ToolTip = "...")`, not in comments.
 - Enum values are described with `UMETA(...)`, not comments, and the UENUM gets `meta = (ScriptName = "...")` without the `EFV` prefix (`EFVMapViewMode` is `MapViewMode`).
-- Log categories are `Log<PluginName>`; never reuse names from FVCore's `FVLogCategories.h`.
+- Log categories are `Log<PluginName>`, declared in the module header and defined in the module `.cpp`; reuse a plugin's category before adding one, and never declare the same name in two modules.
 - Follow engine naming: Blueprint function libraries are `UFV<Feature>Library` (like `UKismetMathLibrary`), never shorthand such as BFL.
 
 ### Where a setting belongs

@@ -21,6 +21,11 @@ public class FlickerVoidCore : ModuleRules
             "Flow"
         });
 
+        PrivateDependencyModuleNames.AddRange(new string[]
+        {
+            "FVCoreRuntime",
+        });
+
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
     }

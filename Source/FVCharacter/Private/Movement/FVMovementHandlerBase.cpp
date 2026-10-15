@@ -5,7 +5,7 @@
 #include "Movement/FVCharacterMovementComponent.h"
 #include "Movement/FVMovementHandlerInfo.h"
 #include "Movement/FVMovementHandlerConfigBase.h"
-#include "Logging/FVLogCategories.h"
+#include "FVCharacterModule.h"
 #include "Logging/FVLogSystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVMovementHandlerBase)

@@ -9,7 +9,6 @@
 #include "Abilities/FVAbilitySet.h"
 #include "Character/FVPawnData.h"
 #include "Movement/FVCharacterMovementComponent.h"
-#include "Logging/FVLogCategories.h"
 #include "Logging/FVLogSystem.h"
 #include "Input/Components/FVInputComponent.h"
 #include "Input/Components/FVGestureComponent.h"
@@ -35,7 +34,7 @@ void AFVPlayerController::OnPossess(APawn* InPawn)
 	}
     else
     {
-        FV_LOG_WARNING(LogFVInput, "Possessed pawn is not AFVPlayerCharacter! Input will not be initialized.");
+        FV_LOG_WARNING(LogFlickerVoid, "Possessed pawn is not AFVPlayerCharacter! Input will not be initialized.");
     }
 	
 	if (const AFVPlayerState* PS = GetPlayerState<AFVPlayerState>())
@@ -76,14 +75,14 @@ void AFVPlayerController::InitializeInput()
 {
     if (!InputConfig)
     {
-        FV_LOG_WARNING(LogFVInput, "PlayerController has no InputConfig assigned!");
+        FV_LOG_WARNING(LogFlickerVoid, "PlayerController has no InputConfig assigned!");
         return;
     }
 
     UFVInputComponent* FVIC = Cast<UFVInputComponent>(InputComponent);
     if (!FVIC)
     {
-        FV_LOG_ERROR(LogFVInput, "InputComponent is not UFVInputComponent! Cannot bind inputs.");
+        FV_LOG_ERROR(LogFlickerVoid, "InputComponent is not UFVInputComponent! Cannot bind inputs.");
         return;
     }
 

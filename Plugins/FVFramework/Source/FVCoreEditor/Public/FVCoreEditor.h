@@ -6,6 +6,8 @@
 
 class UDeveloperSettings;
 
+FVCOREEDITOR_API DECLARE_LOG_CATEGORY_EXTERN(LogFVCoreEditor, Log, All);
+
 class FVCOREEDITOR_API FFVCoreEditorModule : public IModuleInterface
 {
 public:

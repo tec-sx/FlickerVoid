@@ -17,6 +17,8 @@
 #include "WorkspaceMenuStructure.h"
 #include "WorkspaceMenuStructureModule.h"
 
+DEFINE_LOG_CATEGORY(LogFVCoreEditor);
+
 #define LOCTEXT_NAMESPACE "FVCoreEditor"
 
 static const FName ConditionSetStructName("FVConditionSet");
