@@ -13,7 +13,7 @@ void FFVLogSystem::Initialize()
 		return;
 	}
 
-	UE_LOG(LogFVCore, Log, TEXT("FlickerVoid Logging System Initialized"));
+	UE_LOG(LogFlickerVoidCore, Log, TEXT("FlickerVoid Logging System Initialized"));
 	bIsInitialized = true;
 }
 
@@ -24,7 +24,7 @@ void FFVLogSystem::Shutdown()
 		return;
 	}
 
-	UE_LOG(LogFVCore, Log, TEXT("FlickerVoid Logging System Shutdown"));
+	UE_LOG(LogFlickerVoidCore, Log, TEXT("FlickerVoid Logging System Shutdown"));
 	bIsInitialized = false;
 }
 

@@ -21,11 +21,6 @@ public class FlickerVoidCore : ModuleRules
             "Flow"
         });
 
-        PrivateDependencyModuleNames.AddRange(new string[]
-        {
-            "StateTreeEditorModule", "AITestSuite",
-        });
-
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
     }

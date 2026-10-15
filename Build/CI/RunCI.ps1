@@ -17,6 +17,7 @@ function Invoke-Step([string]$Name, [scriptblock]$Body) {
 }
 
 Invoke-Step 'Build editor' { & $Build FlickerVoidEditor Win64 $Configuration -Project="$Project" -WaitMutex }
+Invoke-Step 'Build game (Shipping)' { & $Build FlickerVoid Win64 Shipping -Project="$Project" -WaitMutex }
 Invoke-Step 'Validate data' { & $Editor "$Project" -run=DataValidation -unattended -nop4 -nosplash -NullRHI -abslog="$Logs\validation.log" }
 Invoke-Step 'Automation tests' { & $Editor "$Project" -ExecCmds="Automation RunTests FlickerVoid; Quit" -unattended -nop4 -nosplash -NullRHI -TestExit="Automation Test Queue Empty" -abslog="$Logs\tests.log" }
 

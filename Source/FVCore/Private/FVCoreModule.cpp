@@ -16,12 +16,12 @@ public:
         // Initialize the global logging system
         FFVLogSystem::Initialize();
 
-        UE_LOG(LogFVCore, Log, TEXT("FlickerVoid Core Module Started"));
+        UE_LOG(LogFlickerVoidCore, Log, TEXT("FlickerVoid Core Module Started"));
     }
 
     virtual void ShutdownModule() override
     {
-        UE_LOG(LogFVCore, Log, TEXT("FlickerVoid Core Module Shutdown"));
+        UE_LOG(LogFlickerVoidCore, Log, TEXT("FlickerVoid Core Module Shutdown"));
 
         // Shutdown the global logging system
         FFVLogSystem::Shutdown();

@@ -3,7 +3,7 @@
 #include "Logging/FVLogCategories.h"
 
 // Core System Logging
-DEFINE_LOG_CATEGORY(LogFVCore);
+DEFINE_LOG_CATEGORY(LogFlickerVoidCore);
 DEFINE_LOG_CATEGORY(LogFVCoreEditor);
 DEFINE_LOG_CATEGORY(LogFVSystem);
 DEFINE_LOG_CATEGORY(LogFVFlowGraph);
