@@ -23,11 +23,6 @@ public class FlickerVoidAI : ModuleRules
             "FVCoreRuntime",
             "FVSocialSystem",
         });
-        
-        PrivateDependencyModuleNames.AddRange(new string[]
-        {
-            "StateTreeEditorModule",
-        });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));

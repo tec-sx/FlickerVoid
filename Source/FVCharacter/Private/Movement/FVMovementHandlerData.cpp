@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Movement/FVMovementHandlerData.h"
-#include "Logging/FVLogCategories.h"
+#include "FVCharacterModule.h"
 #include "Logging/FVLogSystem.h"
 #include "Misc/DataValidation.h"
 #include "Movement/FVMovementHandlerBase.h"

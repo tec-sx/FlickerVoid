@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Logging/FVLogSystem.h"
-#include "Logging/FVLogCategories.h"
+#include "FVCoreRuntime.h"
 #include "Misc/OutputDeviceRedirector.h"
 
 bool FFVLogSystem::bIsInitialized = false;

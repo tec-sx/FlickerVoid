@@ -23,7 +23,7 @@ public class FlickerVoidCore : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            "StateTreeEditorModule", "AITestSuite",
+            "FVCoreRuntime",
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));

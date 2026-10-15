@@ -16,10 +16,10 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Input/Components/FVGestureComponent.h"
+#include "Facts/FVFactDatabase.h"
 
 #if !UE_BUILD_SHIPPING
 #include "Subsystems/FVInteractionDebugSubsystem.h"
-#include "Facts/FVFactDatabase.h"
 #endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractorComponent)

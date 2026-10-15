@@ -1,9 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+#include "FVAIModule.h"
 #include "Modules/ModuleManager.h"
 
-// Note: Log categories are defined in FVCore module (Logging/FVLogCategories.h)
-// Use LogFVAI, LogFVBehavior, or LogFVPerception for logging in this module
+DEFINE_LOG_CATEGORY(LogFVAI);
 
 /**
  * FVAI Module Implementation

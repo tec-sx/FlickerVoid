@@ -2,7 +2,7 @@
 
 #include "Modules/ModuleManager.h"
 #include "Logging/FVLogSystem.h"
-#include "Logging/FVLogCategories.h"
+#include "FVCoreRuntime.h"
 
 /**
  * FVCore Module Implementation

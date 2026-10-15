@@ -1,9 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+#include "FVGameplayModule.h"
 #include "Modules/ModuleManager.h"
 
-// Note: Log categories are defined in FVCore module (Logging/FVLogCategories.h)
-// Use LogFVGameplay, LogFVAbility, or LogFVCombat for logging in this module
+DEFINE_LOG_CATEGORY(LogFVGameplay);
 
 /**
  * FVGameplay Module Implementation

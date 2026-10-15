@@ -2,9 +2,12 @@
 
 
 #include "Abilities/FVAbilitySystemComponent.h"
+#include "Abilities/FVAbilityFragments.h"
 #include "Abilities/FVAbilityTagRelationshipMap.h"
 #include "AbilitySystemGlobals.h"
 #include "FVCoreTags.h"
+#include "FVGameplayModule.h"
+#include "Identity/FVIdentityComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVAbilitySystemComponent)
 
@@ -30,6 +33,34 @@ void UFVAbilitySystemComponent::InitAbilityActorInfo(AActor* InOwnerActor, AActo
 	Super::InitAbilityActorInfo(InOwnerActor, InAvatarActor);
 
 	TryActivateAbilitiesOnSpawn();
+}
+
+void UFVAbilitySystemComponent::GrantDefinitionAbilities()
+{
+	if (bDefinitionAbilitiesGranted || !IsOwnerActorAuthoritative())
+	{
+		return;
+	}
+
+	const UFVCharacterDefinition* Definition = UFVIdentityComponent::GetActorDefinition(GetOwner());
+	if (!Definition)
+	{
+		UE_LOG(LogFVGameplay, Warning, TEXT("[%s] has no character definition (FV Identity Component), so no abilities were granted."), *GetNameSafe(GetOwner()));
+		return;
+	}
+
+	bDefinitionAbilitiesGranted = true;
+
+	if (const FFVCharacterFragment_Abilities* Fragment = Definition->FindFragment<FFVCharacterFragment_Abilities>())
+	{
+		for (const UFVAbilitySet* AbilitySet : Fragment->AbilitySets)
+		{
+			if (AbilitySet)
+			{
+				AbilitySet->PassToAbilitySystem(this, &DefinitionGrantedHandles);
+			}
+		}
+	}
 }
 
 void UFVAbilitySystemComponent::TryActivateAbilitiesOnSpawn()

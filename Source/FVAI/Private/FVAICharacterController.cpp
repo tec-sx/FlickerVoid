@@ -8,7 +8,7 @@
 #include "Actors/FVAICharacter.h"
 #include "StateTree.h"
 #include "Components/BoxComponent.h"
-#include "Logging/FVLogCategories.h"
+#include "FVAIModule.h"
 #include "Logging/FVLogSystem.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig.h"

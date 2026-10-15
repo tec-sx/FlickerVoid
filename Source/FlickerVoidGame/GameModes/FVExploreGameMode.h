@@ -7,29 +7,9 @@
 
 #include "FVExploreGameMode.generated.h"
 
-#define UE_API FLICKERVOID_API
-
-class UFVPawnData;
-class APawn;
-class AActor;
-class AController;
-class APlayerController;
-
-UCLASS(MinimalAPI, Config = Game)
-class AFVExploreGameMode : public AFVGameModeBase
+/** Free roam without quest restrictions, for trying things out. */
+UCLASS(Config = Game)
+class FLICKERVOID_API AFVExploreGameMode : public AFVGameModeBase
 {
 	GENERATED_BODY()
-	
-public:
-	UE_API AFVExploreGameMode();
-
-	UE_API const UFVPawnData* GetPawnDataForController(const AController* InController) const;
-
-	//~AGameModeBase interface
-	UE_API virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
-	UE_API virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
-	UE_API virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform) override;
-	//~End of AGameModeBase interface
 };
-
-#undef UE_API
