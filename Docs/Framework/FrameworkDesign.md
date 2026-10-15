@@ -33,7 +33,7 @@ Plugins (FV*System, feature based)  ->  Game modules (domain based)  ->  AngelSc
 | **FVFramework** | kept, extended | Facts, conditions/effects, definitions, **fragments**, **character definition + identity component**, world clock, cinematics, spawner, input, UI layout, StateTree nodes. New module **FVCoreFlow**: generic Flow nodes (Branch, Apply Effects, Wait For Conditions, Conditions predicate). |
 | **FVInteractionSystem** | kept as is | Interactor/interactable, offers, focus. |
 | **FVAttributeSystem** | new | Attribute and attribute set definitions, attribute component with modifiers, skill checks, attribute conditions/effects. |
-| **FVInventorySystem** | new (replaces the Mountea fork) | Item definition + fragments (equippable, usable, container), inventory with weight and grid space, layered equipment slots, pickup and item receiver, item conditions/effects. |
+| **FVInventorySystem** | new (replaces the Mountea fork) | Item definition + fragments (equippable, usable, container, charges, value), inventory with weight and grid space, a Keys and Quest list without weight or space, money, stack instance data (charges left, stolen), layered equipment slots, pickup and item receiver, loot tables, item conditions/effects. |
 | **FVDialogueSystem** | new (replaces the Yap fork) | Flow-based conversations: Line, Choice, End Conversation, Bark nodes; dialogue subsystem for UI; participant component for animation/voice. |
 | **FVStorySystem** | reworked | Quests (+ optional quest Flow graph), knowledge, save. Yap bridge removed; reputation moved to Social. |
 | **FVSocialSystem** | new | Factions and standing tiers, one global fame and one global notoriety, titles, relationships, disguise-aware recognition. |
@@ -48,7 +48,7 @@ Every plugin depends only on FVFramework (and Flow where it has graph nodes). Pl
 | --- | --- | --- |
 | FVCore | logging, tags, flow triggers | kept |
 | FVCharacter | locomotion, animation, traversal | kept |
-| FVGameplay | GAS: ASC, abilities, interaction ability base, scanner | attribute sets, checks and the personality system removed |
+| FVGameplay | GAS: ASC, abilities, interaction ability base, scanner; items: game item fragments, item settings and library, item events and messages, Give Item Flow node | attribute sets, checks and the personality system removed |
 | FVAI | NPC config, StateTree tasks | faction now from FVSocialSystem |
 | FVNarrative | narrative tags | memory and psychology systems removed |
 | FVWorld | world objects (doors, hiding spots), world tags | `UFVWorldStateSubsystem` removed, facts and the clock are the single source |
@@ -70,7 +70,11 @@ UFVDefinition (Id tag, Display, Tags)                        FVFramework
  │     FFVItemFragment_Equippable { Slots, BlockedSlots, GrantedTags }
  │     FFVItemFragment_Usable     { Effects, bConsume }
  │     FFVItemFragment_Container  { Cells, WeightBonus }
- │     (inventory stacks: InstanceId + InstanceData<FFVItemInstanceFragment>)
+ │     FFVItemFragment_Charges    { Charges }
+ │     FFVItemFragment_Value      { BasePrice, bSellable }
+ │     FFVItemFragment_World / _Animation / _Throwable                          (FVGameplay)
+ │     (inventory stacks: InstanceId + InstanceData<FFVItemInstanceFragment>: Charges Left, Stolen)
+ ├─ UFVLootTableDefinition  { Entries{Item or Table, Min/Max, Chance, Conditions}, Min/MaxMoney }  FVInventorySystem
  ├─ UFVFactionDefinition    { standing range, tiers->attitude, relations, NotorietyFact, DisguiseTag }  FVSocialSystem
  ├─ UFVTitleDefinition      { Conditions, OnEarned, Replaces }   FVSocialSystem
  ├─ UFVScanDefinition       { Category, Duration, Entries, OnScanned effects }  FVGameplay
@@ -91,6 +95,7 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | `UFVIdentityComponent` | FVFramework | any character: links actor <-> `UFVCharacterDefinition` |
 | `UFVInventoryComponent`, `UFVEquipmentComponent`, `UFVItemReceiverComponent` | Inventory | player, containers, NPCs |
 | `UFVPickupComponent` | Inventory | world items |
+| `UFVLootComponent` | Inventory | containers, bodies: rolls a loot table into their inventory once |
 | `UFVDialogueParticipantComponent` | Dialogue | speakers: events for lines (anim, lip sync, barks) |
 | `UFVAttributeComponent` | Attributes | any character with attributes |
 | `UFVScannerComponent` | FVGameplay | player |
@@ -130,6 +135,13 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 2. Pockets (`BasePocketCells`) plus the container fragments of equipped bags and backpacks give the space; the base limit plus their `WeightBonus` gives the weight allowance.
 3. The game layer adds allowance from attributes with `SetBonuses`, which keeps the inventory plugin independent of the attribute plugin.
 4. A pickup that does not fit is refused, or takes only part of the pile and leaves the rest in the world.
+5. Keys and quest items (settings `KeyItemCategories`) sit in their own list and take no weight or space. Money is a number on the inventory, not an item.
+
+**Items in the world** (game layer, `Docs/Setup/Items.md`)
+1. An item is data: a category tag and fragments. One generic world actor (`AFVWorldItem`) takes its mesh and offers from the definition; notes are knowledge on an `AFVReadable`, never items.
+2. An offer's *Activate Ability* sends an `Event.Item.*` event; an AngelScript item ability (trigger event tag set in script) plays the montage from the character's item animation styles and acts on its `Event.Item.Notify.Apply` notify.
+3. Loot containers roll a loot table once; contents with an owner are marked stolen when taken. Merchants price items from the Value fragment, standing and disguise. Dialogue gives items through the *FV Give Item* Flow node, which waits for `Message.Item.GiveFinished`.
+4. Screens and other systems listen to `Message.Item.*` gameplay messages.
 
 **Navigation**
 1. Maps are listed in Navigation settings. The navigator finds the highest-priority available map with a layer under the player, so walking into a building swaps to its interior map and climbing stairs swaps the floor (`OnActiveMapChanged`).
@@ -183,5 +195,6 @@ A CVar that changes a rule (such as the two inventory limits) reads `-1` by defa
 
 - 2D grid placement: space is counted in cells rather than packed into a layout. Real placement (rotation, per-slot grids) can come later if the game needs it.
 - Outfit meshes are not applied visually yet; the equipment component broadcasts and the game layer dresses the character.
+- Item screens (take, trade, reader) and the hub's Use, Wear, Hold and Drop actions follow the hub menu PR (#55); the item layer already exposes the functions, events and messages they need.
 - Quest flow graphs restart from their beginning after a load.
 - Navigation: the waypoint and the tracked marker are not saved yet; there is no fog of war over unexplored map areas; navigation HUD widgets come later.

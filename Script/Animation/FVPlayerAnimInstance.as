@@ -47,6 +47,16 @@ class UFVPlayerAnimInstance : UFVCharacterAnimInstance
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite) FVector TrajectoryFutureVelocity;
 
+    // ========================================================================
+	// HELD ITEMS
+	// ========================================================================
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (ToolTip = "Upper body pose of the item in the right hand, set by UFVHeldItemComponent; none when the hand is empty or busy."))
+    UAnimSequenceBase RightHandHoldPose;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (ToolTip = "Upper body pose of the item in the left hand, set by UFVHeldItemComponent; none when the hand is empty or busy."))
+    UAnimSequenceBase LeftHandHoldPose;
+
     UFUNCTION()
     void SetInteractionTransform(FTransform InTransform)
     {
