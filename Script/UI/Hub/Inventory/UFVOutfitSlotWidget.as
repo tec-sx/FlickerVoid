@@ -18,10 +18,7 @@ class UFVOutfitSlotWidget : UUserWidget
     UButton SlotButton;
 
     UPROPERTY(BindWidget)
-    UTextBlock SlotLabelText;
-
-    UPROPERTY(BindWidgetOptional)
-    UTextBlock ItemNameText;
+    UTextBlock SlotLabel;
 
     UPROPERTY(BindWidgetOptional)
     UImage ItemIcon;
@@ -30,6 +27,7 @@ class UFVOutfitSlotWidget : UUserWidget
     FFVOnOutfitSlotClicked OnClicked;
 
     private FFVOutfitSlot SlotInfo;
+    private bool bEmpty = true;
 
     UFUNCTION(BlueprintOverride)
     void OnInitialized()
@@ -40,7 +38,7 @@ class UFVOutfitSlotWidget : UUserWidget
     void Setup(FFVOutfitSlot InSlot)
     {
         SlotInfo = InSlot;
-        SlotLabelText.SetText(SlotInfo.Label.IsEmpty() ? FVUIText::TagLeaf(SlotInfo.Slot) : SlotInfo.Label);
+        SlotLabel.SetText(SlotInfo.Label.IsEmpty() ? FVUIText::TagLeaf(SlotInfo.Slot) : SlotInfo.Label);
     }
 
     UFUNCTION(BlueprintPure, Category = "FV|UI")
@@ -49,22 +47,24 @@ class UFVOutfitSlotWidget : UUserWidget
         return SlotInfo.Slot;
     }
 
+    UFUNCTION(BlueprintPure, Category = "FV|UI")
+    bool IsEmpty() const
+    {
+        return bEmpty;
+    }
+
     // bCanTakeSelection: the item selected in Storage can be worn here.
     void Refresh(UFVInventoryModel Model, bool bSelected, bool bCanTakeSelection)
     {
         UFVItemDefinition Worn = Model.GetWornItem(SlotInfo.Slot);
         UFVItemDefinition Blocking = Worn == nullptr ? Model.GetBlockingItem(SlotInfo.Slot) : nullptr;
         UFVItemDefinition Shown = Worn != nullptr ? Worn : Blocking;
-
-        if (ItemNameText != nullptr)
-        {
-            ItemNameText.SetText(FVInventoryUI::GetItemName(Shown));
-        }
+        bEmpty = Shown == nullptr;
 
         if (ItemIcon != nullptr)
         {
             bool bHasIcon = Shown != nullptr && !Shown.Display.Icon.IsNull();
-            ItemIcon.SetVisibility(bHasIcon ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+            ItemIcon.SetVisibility(bHasIcon ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
             if (bHasIcon)
             {
                 ItemIcon.SetBrushFromSoftTexture(Shown.Display.Icon, false);
