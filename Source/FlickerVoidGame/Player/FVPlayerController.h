@@ -48,6 +48,7 @@ public:
 	AFVPlayerCharacter* GetControlledCharacter() const { return CachedCharacter.Get(); }
 
 protected:
+    virtual void SetupInputComponent() override;
     void InitializeInput();
     void AddInputMappingContexts();
     void RemoveInputMappingContexts();
@@ -81,7 +82,5 @@ private:
 
 	TWeakObjectPtr<AFVPlayerCharacter> CachedCharacter;
 
-    TArray<uint32> AbilityBindHandles;
-    
     bool bInputMappingsAdded = false;
 };

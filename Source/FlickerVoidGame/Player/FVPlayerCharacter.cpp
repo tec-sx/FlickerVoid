@@ -20,6 +20,14 @@ AFVPlayerCharacter::AFVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	MovementBlockingTags.AddTag(FVGameplayTags::Status_Interacting);
 }
 
+void AFVPlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	AbilitySystemComponent->RefreshAbilityActorInfo();
+	AbilitySystemComponent->GrantDefinitionAbilities();
+}
+
 UAbilitySystemComponent* AFVPlayerCharacter::GetAbilitySystemComponent() const
 {
 	return GetFVAbilitySystemComponent();

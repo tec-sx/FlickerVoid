@@ -20,6 +20,8 @@ class FLICKERVOID_API AFVPlayerCharacter : public AFVCharacter, public IAbilityS
 public:
 	AFVPlayerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	virtual void PossessedBy(AController* NewController) override;
+
 	UFUNCTION(BlueprintCallable, Category = "FlickerVoid|PlayerState")
 	UFVAbilitySystemComponent* GetFVAbilitySystemComponent() const { return AbilitySystemComponent; }
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;

@@ -6,9 +6,7 @@
 #include "FVGameModeBase.h"
 #include "FVStoryGameMode.generated.h"
 
-/**
- * 
- */
+/** The story playthrough. */
 UCLASS()
 class FLICKERVOID_API AFVStoryGameMode : public AFVGameModeBase
 {

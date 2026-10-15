@@ -1,7 +1,6 @@
 #include "FVAssetManager.h"
 #include "FVGameData.h"
 #include "AbilitySystemGlobals.h"
-#include "Character/FVPawnData.h"
 #include "Configuration/FlickerVoidDeveloperSettings.h"
 #include "Misc/App.h"
 #include "Stats/StatsMisc.h"
@@ -26,11 +25,6 @@ static FAutoConsoleCommand CVarDumpLoadedAssets(
 #define STARTUP_JOB(JobFunc) STARTUP_JOB_WEIGHTED(JobFunc, 1.f)
 
 //////////////////////////////////////////////////////////////////////
-
-UFVAssetManager::UFVAssetManager()
-{
-	DefaultPawnData = nullptr;
-}
 
 UFVAssetManager& UFVAssetManager::Get()
 {
@@ -63,11 +57,6 @@ void UFVAssetManager::DumpLoadedAssets()
 const UFVGameData& UFVAssetManager::GetGameData()
 {
 	return GetOrLoadTypedGameData<UFVGameData>(FVGameDataPath);
-}
-
-const UFVPawnData* UFVAssetManager::GetDefaultPawnData() const
-{
-	return GetAsset(DefaultPawnData);
 }
 
 UObject* UFVAssetManager::SynchronousLoadAsset(const FSoftObjectPath& AssetPath)
