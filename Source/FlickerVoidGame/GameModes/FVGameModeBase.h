@@ -9,9 +9,9 @@
 
 /**
  * Project base game mode. Wires the FlickerVoid framework defaults
- * (AFVHUD for the UI layout, FV GameState/PlayerController/PlayerState) and spawns
- * the player character from Project Settings > FlickerVoid > Game, unless a subclass
- * sets its own Default Pawn Class. Refuses to start without a player character.
+ * (AFVHUD for the UI layout, FV GameState/PlayerController/PlayerState).
+ * Serves as a reference for using the FV plugins in any game mode.
+ * Subclasses set the player character as Default Pawn Class; the game refuses to start without one.
  */
 UCLASS(Config = Game)
 class FLICKERVOID_API AFVGameModeBase : public AGameModeBase

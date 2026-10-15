@@ -4,10 +4,8 @@
 
 #include "FlickerVoid.h"
 #include "FVGameState.h"
-#include "Configuration/FlickerVoidDeveloperSettings.h"
 #include "HUD/FVHUD.h"
 #include "Layout/FVUILayout.h"
-#include "Player/FVPlayerCharacter.h"
 #include "Player/FVPlayerController.h"
 #include "Player/FVPlayerState.h"
 #include "Logging/MessageLog.h"
@@ -35,12 +33,7 @@ void AFVGameModeBase::InitGame(const FString& MapName, const FString& Options, F
 
 	if (!DefaultPawnClass)
 	{
-		DefaultPawnClass = GetDefault<UFlickerVoidDeveloperSettings>()->DefaultPlayerCharacterClass.LoadSynchronous();
-	}
-
-	if (!DefaultPawnClass)
-	{
-		const FString Message = TEXT("No player character to spawn. Set Project Settings > FlickerVoid > Game > Default Player Character Class.");
+		const FString Message = FString::Printf(TEXT("Game mode [%s] has no Default Pawn Class, so there is no player character to spawn."), *GetNameSafe(GetClass()));
 
 #if WITH_EDITOR
 		if (GIsEditor)
