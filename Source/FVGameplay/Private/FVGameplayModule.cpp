@@ -2,9 +2,6 @@
 
 #include "Modules/ModuleManager.h"
 
-// Note: Log categories are defined in FVCore module (Logging/FVLogCategories.h)
-// Use LogFVGameplay, LogFVAbility, or LogFVCombat for logging in this module
-
 /**
  * FVGameplay Module Implementation
  * Handles gameplay systems, abilities, and combat

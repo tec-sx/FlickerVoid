@@ -200,27 +200,37 @@ void UFVInteractionDebugSubsystem::DebugInteractionOutcome(const EFVDebugInterac
 	LastInteractionOutcome = Outcome;
 }
 
+#pragma endregion 
+
+#endif
+
+// UFUNCTIONs need a definition in every configuration for their generated thunks, so only their bodies are guarded.
+#pragma region Delegate Handlers
+
 void UFVInteractionDebugSubsystem::OnOffersChanged(const TArray<FFVInteractionOfferData>& Offers)
 {
-	AvailableOffers.Reset();
+#if !UE_BUILD_SHIPPING
 	AvailableOffers = Offers;
+#endif
 }
-
-#pragma region Delegate Handlers
 
 void UFVInteractionDebugSubsystem::OnInteractionCommitStarted(const FFVInteractionCommit& Commit)
 {
-	ActiveCommit = Commit;	
+#if !UE_BUILD_SHIPPING
+	ActiveCommit = Commit;
+#endif
 }
 
 void UFVInteractionDebugSubsystem::OnInteractionProgressed(const FFVInteractionCommit& Commit, float Progress)
 {
+#if !UE_BUILD_SHIPPING
 	InteractionProgress = Progress;
+#endif
 }
 
 #pragma endregion
 
-#pragma endregion 
+#if !UE_BUILD_SHIPPING
 
 void UFVInteractionDebugSubsystem::DrawHUD(UCanvas* Canvas, APlayerController* PC)
 {

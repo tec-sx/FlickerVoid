@@ -2,9 +2,6 @@
 
 #include "Modules/ModuleManager.h"
 
-// Note: Log categories are defined in FVCore module (Logging/FVLogCategories.h)
-// Use LogFVNarrative, LogFVDialogue, or LogFVQuest for logging in this module
-
 /**
  * FVNarrative Module Implementation
  * Handles narrative systems, dialogue, and quests

@@ -1,12 +1,13 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+#include "FVCharacterModule.h"
 #include "Character/FVCharacter.h"
 #include "Movement/FVCharacterMovementComponent.h"
 #include "Modules/ModuleManager.h"
 #include "RigVMCore/RigVMRegistry.h"
 
-// Note: Log categories are defined in FVCore module (Logging/FVLogCategories.h)
-// Use LogFVCharacter, LogFVMovement, or LogFVAnimation for logging in this module
+DEFINE_LOG_CATEGORY(LogFVMovement);
+DEFINE_LOG_CATEGORY(LogFVAnimation);
 
 /**
  * FVCharacter Module Implementation
