@@ -184,6 +184,41 @@ void UFVSocialLibrary::ModifyRelationship(UObject* WorldContext, const UFVCharac
 	}
 }
 
+int32 UFVSocialLibrary::GetGiftRelationshipChange(const AActor* Receiver, const FGameplayTagContainer& GiftTags)
+{
+	const UFVCharacterDefinition* Definition = UFVIdentityComponent::GetActorDefinition(Receiver);
+	const FFVCharacterFragment_Gifts* Gifts = Definition ? Definition->FindFragment<FFVCharacterFragment_Gifts>() : nullptr;
+	if (!Gifts)
+	{
+		return 0;
+	}
+
+	int32 Change = 0;
+	bool bMatched = false;
+	for (const FFVGiftPreference& Preference : Gifts->Preferences)
+	{
+		if (Preference.Tag.IsValid() && GiftTags.HasTag(Preference.Tag))
+		{
+			Change += Preference.RelationshipChange;
+			bMatched = true;
+		}
+	}
+	return bMatched ? Change : Gifts->DefaultRelationshipChange;
+}
+
+int32 UFVSocialLibrary::ReceiveGift(UObject* WorldContext, const AActor* Receiver, const FGameplayTagContainer& GiftTags)
+{
+	const FFVCharacterFragment_Social* Social = FindSocialFragment(Receiver);
+	if (!Social || !Social->RelationshipFact.IsValid())
+	{
+		return 0;
+	}
+
+	const int32 Change = GetGiftRelationshipChange(Receiver, GiftTags);
+	ModifyRelationship(WorldContext, UFVIdentityComponent::GetActorDefinition(Receiver), Change);
+	return Change;
+}
+
 const FFVCharacterFragment_Social* UFVSocialLibrary::FindSocialFragment(const AActor* Actor)
 {
 	const UFVCharacterDefinition* Definition = UFVIdentityComponent::GetActorDefinition(Actor);

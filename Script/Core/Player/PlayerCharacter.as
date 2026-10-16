@@ -14,7 +14,13 @@ class APlayerCharacter : AFVPlayerCharacter
     
     UPROPERTY(DefaultComponent)
     UFVInteractionUIComponent InteractionUIComponent;
-    
+
+    UPROPERTY(DefaultComponent, Category = Items)
+    UFVHeldItemComponent HeldItems;
+
+    UPROPERTY(DefaultComponent, Category = Items)
+    UFVIntoxicationComponent Intoxication;
+
     UPROPERTY()
     UFVTraversalComponent Traversal;
     

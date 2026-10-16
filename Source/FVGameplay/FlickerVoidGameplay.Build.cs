@@ -24,6 +24,7 @@ public class FlickerVoidGameplay : ModuleRules
 			"FVInteractionSystem",
 			"FVCoreRuntime",
 			"FVAttributeSystem",
+			"FVInventorySystem",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
@@ -32,7 +33,10 @@ public class FlickerVoidGameplay : ModuleRules
 			"FVCoreDebug",
 			"FlickerVoidCharacter",
 			"Flow",
-			"DeveloperSettings"
+			"DeveloperSettings",
+			"FVCoreFlow",
+			"FVStorySystem",
+			"FVSocialSystem"
 		});
 
 		if (Target.bBuildEditor)

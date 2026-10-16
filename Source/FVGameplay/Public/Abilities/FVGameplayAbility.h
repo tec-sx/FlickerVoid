@@ -44,6 +44,9 @@ public:
 	EFVAbilityActivationPolicy GetActivationPolicy() const { return ActivationPolicy; }
 	EFVAbilityActivationGroup GetActivationGroup() const { return ActivationGroup; }
 
+	UFUNCTION(BlueprintPure, Category = "FlickerVoid|Ability", meta = (ToolTip = "Gameplay event that activates the ability on top of its Ability Triggers; invalid when none."))
+	FGameplayTag GetTriggerEventTag() const { return TriggerEventTag; }
+
 	const FGameplayTagContainer& GetActivationRequiredTags() const { return ActivationRequiredTags; }
 	const FGameplayTagContainer& GetActivationBlockedTags() const { return ActivationBlockedTags; }
 
@@ -56,6 +59,9 @@ public:
 	}
 
 protected:
+	// TriggerEventTag unless an Ability Trigger already fires the ability on that gameplay event; the ability system component registers it.
+	UE_API FGameplayTag GetExtraTriggerEventTag() const;
+
 	// Called when the ability fails to activate
 	UE_API virtual void NativeOnAbilityFailedToActivate(const FGameplayTagContainer& FailedReason) const;
 
@@ -89,6 +95,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FlickerVoid|Ability Activation")
 	EFVAbilityActivationGroup ActivationGroup;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FlickerVoid|Ability Activation", meta = (Categories = "Event", ToolTip = "Gameplay event that activates the ability, with the event data as trigger payload. Same as an Ability Trigger, settable from script defaults."))
+	FGameplayTag TriggerEventTag;
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = Costs)
 	TArray<TObjectPtr<UFVAbilityCost>> AdditionalCosts;
