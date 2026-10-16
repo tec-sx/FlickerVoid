@@ -85,6 +85,11 @@ Moving a class to another module changes its `/Script/<Module>` path: add one `+
 4. AngelScript classes can't implement `IGameplayTagAssetInterface` or `IAbilitySystemInterface`. FVDialogueSystem (`FVDialogueFlowNodes.cpp`) and FVSocialSystem (`FVSocialLibrary.cpp`) cast actors to the tag interface and must read owned tags from a component instead. GAS's `GetAbilitySystemComponentFromActor` already falls back to a component lookup.
 5. `AFVPlayerController` stops casting to `AFVPlayerCharacter` and uses components.
 
+**Character looks.** Meshes assigned from a data asset at runtime (`BeginPlay`) don't show in the Blueprint editor, which makes character setups hard to tweak visually. So:
+
+- The skeletal mesh, anim blueprint and physics asset of a character are set directly on its Blueprint (Content layer), one Blueprint per distinct look. Definitions and data assets hold gameplay data only; the cosmetics in `UCharacterDataAsset.as` move onto the Blueprints.
+- Looks that must come from data, such as outfits on the body or variants of a resident, are applied in the construction script (AngelScript `ConstructionScript()`) or in a C++ component's `OnRegister()`. Both run in the Blueprint editor viewport and the level editor, so the result stays visible; `AInteractableAICharacter.as` and `FVWorldItem.as` (PR #59) already work this way. The data asset has to be set on the Blueprint's defaults (not only per placed instance) to show in the Blueprint editor, and soft references are loaded synchronously only in the editor.
+
 ## Ontology
 
 Decided 2026-10-16 (owner). The ontology is the game's vocabulary and the horizontal axis of the architecture. Every node has three children (rule of three). `Script/` folders follow it, and `Source/FlickerVoid` mirrors the same paths where C++ is needed.

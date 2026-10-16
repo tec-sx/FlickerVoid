@@ -13,7 +13,7 @@ Functional layers stack vertically and dependencies only point down: Content -> 
 1. **Plugins** (`Plugins/FV*System`, FVFramework): feature-based, generic building blocks only. Nothing game-specific. FVFramework is the ontological "Game": it provides the blocks for Gameplay, Interface and Presentation.
 2. **Game module** (`Source/FlickerVoid`, with `FlickerVoidDebug` and `FlickerVoidEditor`): C++ only where AngelScript can't do the job (see below).
 3. **AngelScript** (`Script/`): most of the game: actors, characters, game modes, abilities, rules, widget logic.
-4. **Content**: data assets, meshes, textures, materials, FX, Blueprint world actors, Widget Blueprints. Blueprints add only looks and layout on top of C++ or AngelScript classes; no settings beyond occasional overrides.
+4. **Content**: data assets, meshes, textures, materials, FX, Blueprint world actors, Widget Blueprints. Blueprints add only looks and layout on top of C++ or AngelScript classes; no settings beyond occasional overrides. Character looks (skeletal mesh, anim blueprint, physics asset) are set on the character Blueprint so they can be tweaked in its viewport; data assets hold gameplay data. Looks that must come from data (outfits, variants) are applied in the construction script or a component's `OnRegister`, which also run in the Blueprint editor viewport, and the data asset is set on the Blueprint's defaults.
 
 Refactor in progress: the old `Source/FV*` modules still exist and fold into `FlickerVoid` as described in the design doc's Module structure; until then the scanner lives in `Source/FVGameplay/.../Scanner`. Much older code in `Source/` is experimental or obsolete; don't assume it should be kept.
 
