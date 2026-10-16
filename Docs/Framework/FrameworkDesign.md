@@ -173,7 +173,14 @@ flowchart LR
 ## AngelScript and C++
 
 - **Components are always C++** (plugin or game module). AngelScript composes actors from them and never declares components.
-- AngelScript has no struct inheritance, so fragments, definitions and condition/effect structs are C++.
+- AngelScript has no struct inheritance, so definition fragments become instanced UObjects, the Lyra pattern:
+  - `UFVFragment` (FVFramework) is an abstract, `EditInlineNew`, `DefaultToInstanced`, Blueprintable `UObject`. Definitions hold `UPROPERTY(Instanced) TArray<TObjectPtr<UFVFragment>> Fragments`, and `UFVDefinition::FindFragment(TSubclassOf<UFVFragment>)` uses `DeterminesOutputType`, so AngelScript gets a typed result (`Definition.FindFragment(UWearableFragment)`).
+  - Fragments are subobjects of the definition asset: created when the asset loads, one per definition (not per item), never constructed by gameplay code, and released only with the definition. The memory cost is one small object per fragment per definition.
+  - Fragments are read-only and shared by everything that uses the definition. Mutable state never goes in a fragment.
+  - C++ fragment classes are the ones C++ systems read (equippable, container, abilities, map views...). AngelScript adds game-specific fragments that only AngelScript reads, so C++ still never names a script class.
+  - Runtime data stays in structs: item stacks and per-instance data (`FFVItemInstanceFragment`) are plain structs, saved through the save system. No UObject per stack; this game is single-player and needs no replication.
+  - Condition/effect structs keep their current form (`TInstancedStruct` plus the `UFVScriptCondition` / `UFVScriptEffect` wrapper for AngelScript).
+  - Migration: about 16 fragment structs (items, characters, map markers) become `UFVFragment` classes and about 30 `FVFragments::Find` call sites switch to `FindFragment`. Changing the property type drops the struct fragments saved on existing data assets, so those fragments are re-entered on the assets after the change. Renaming or deleting a fragment class (C++ or AngelScript) drops it from assets the same way unless a class redirect is added.
 - AngelScript can't implement interfaces, so C++ never casts an actor to an interface, engine interfaces included; it finds a component.
 - C++ never names an AngelScript class. It reaches script-built things in three ways:
   - **Find**: look up a C++ component on the actor and call it or broadcast its delegates.
