@@ -81,7 +81,7 @@ Moving a class to another module changes its `/Script/<Module>` path: add one `+
 
 1. Movement state now on `AFVCharacter` (walk, sprint, aim and traverse flags, move requests, runtime state for animation) moves into `UFVCharacterMovementComponent`. The anim instance, movement handlers and traversal component read the component instead of casting to `AFVCharacter`.
 2. Ability granting on first possession (`AFVPlayerCharacter::PossessedBy`, PR #58) moves into the ability system component, which listens for its pawn's controller change.
-3. Swapping in `UFVCharacterMovementComponent` (`SetDefaultSubobjectClass` today) needs AngelScript's `OverrideComponent` property specifier; confirm it on the fork. Without it, a minimal C++ base that only swaps the component stays as Setup.
+3. The AngelScript character base swaps in `UFVCharacterMovementComponent` with `UPROPERTY(OverrideComponent = CharacterMovement)` (supported by the fork), replacing `SetDefaultSubobjectClass` in `AFVCharacter`'s constructor; no C++ character base is needed.
 4. AngelScript classes can't implement `IGameplayTagAssetInterface` or `IAbilitySystemInterface`. FVDialogueSystem (`FVDialogueFlowNodes.cpp`) and FVSocialSystem (`FVSocialLibrary.cpp`) cast actors to the tag interface and must read owned tags from a component instead. GAS's `GetAbilitySystemComponentFromActor` already falls back to a component lookup.
 5. `AFVPlayerController` stops casting to `AFVPlayerCharacter` and uses components.
 
