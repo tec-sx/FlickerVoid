@@ -59,7 +59,7 @@ Target: one runtime module `FlickerVoid` plus `FlickerVoidDebug` and `FlickerVoi
 | Kind | What | Examples |
 | --- | --- | --- |
 | **Setup** | configures the game | game mode base (loads game data), game state, player state, player controller (forwards Enhanced Input, which the AngelScript fork can't bind), asset manager, settings |
-| **Shapes** | types C++ must know | components, fragments, definitions, data asset types, condition/effect structs |
+| **Shapes** | types C++ must know | components, definitions, data asset types, the fragments, conditions and effects C++ systems need, runtime item data |
 | **Hosts** | engine extension points AngelScript can't create | Flow nodes, struct-based StateTree tasks, rig units, anim instances, movement components |
 
 ### Module structure (refactor plan)
@@ -173,19 +173,21 @@ flowchart LR
 ## AngelScript and C++
 
 - **Components are always C++** (plugin or game module). AngelScript composes actors from them and never declares components.
-- AngelScript has no struct inheritance, so definition fragments become instanced UObjects, the Lyra pattern:
+- AngelScript has no struct inheritance, so definition fragments, conditions and effects become instanced UObjects, the Lyra pattern (owner, 2026-10-16):
   - `UFVFragment` (FVFramework) is an abstract, `EditInlineNew`, `DefaultToInstanced`, Blueprintable `UObject`. Definitions hold `UPROPERTY(Instanced) TArray<TObjectPtr<UFVFragment>> Fragments`, and `UFVDefinition::FindFragment(TSubclassOf<UFVFragment>)` uses `DeterminesOutputType`, so AngelScript gets a typed result (`Definition.FindFragment(UWearableFragment)`).
   - Fragments are subobjects of the definition asset: created when the asset loads, one per definition (not per item), never constructed by gameplay code, and released only with the definition. The memory cost is one small object per fragment per definition.
   - Fragments are read-only and shared by everything that uses the definition. Mutable state never goes in a fragment.
   - C++ fragment classes are the ones C++ systems read (equippable, container, abilities, map views...). AngelScript adds game-specific fragments that only AngelScript reads, so C++ still never names a script class.
   - Runtime data stays in structs: item stacks and per-instance data (`FFVItemInstanceFragment`) are plain structs, saved through the save system. No UObject per stack; this game is single-player and needs no replication.
-  - Condition/effect structs keep their current form (`TInstancedStruct` plus the `UFVScriptCondition` / `UFVScriptEffect` wrapper for AngelScript).
-  - Migration: about 16 fragment structs (items, characters, map markers) become `UFVFragment` classes and about 30 `FVFragments::Find` call sites switch to `FindFragment`. Changing the property type drops the struct fragments saved on existing data assets, so those fragments are re-entered on the assets after the change. Renaming or deleting a fragment class (C++ or AngelScript) drops it from assets the same way unless a class redirect is added.
+  - Conditions and effects follow the same pattern: abstract instanced `UFVCondition` / `UFVEffect` bases, held by `FFVConditionSet` / `FFVEffectList`. C++ and AngelScript subclass them directly, so the `FFVCondition_Script` / `FFVEffect_Script` structs and the `UFVScriptCondition` / `UFVScriptEffect` wrapper go away. They are stateless: anything an effect needs across frames lives in its host (Flow node, subsystem), not in the effect.
+  - Migration for conditions and effects: about 40 types (22 conditions, 20 effects) in about 40 properties across 8 plugins and the game modules; nothing builds them at runtime, so no `NewObject` calls appear. FVFramework's StateTree nodes (`FVStateTreeNodes.h`) hold condition sets inside StateTree node structs; check in a packaged build that instanced objects there survive cooking before migrating those nodes.
+  - Migration for fragments: about 16 fragment structs (items, characters, map markers) become `UFVFragment` classes and about 30 `FVFragments::Find` call sites switch to `FindFragment`.
+  - Content: changing a property from structs to objects drops what is saved in it, for fragments on data assets and for conditions and effects in dialogue, quests, Flow graphs, interaction offers and StateTrees. Either re-enter them after the change, or keep the old property as `_DEPRECATED` for one version and convert it in the owner's `PostLoad` (matching each struct to its class by name and copying properties by reflection), resave, then delete it. The converter pays off only if there is a lot of authored content. Renaming or deleting one of these classes (C++ or AngelScript) drops it from assets the same way unless a class redirect is added.
 - AngelScript can't implement interfaces, so C++ never casts an actor to an interface, engine interfaces included; it finds a component.
 - C++ never names an AngelScript class. It reaches script-built things in three ways:
   - **Find**: look up a C++ component on the actor and call it or broadcast its delegates.
   - **Spawn**: data or config holds a class typed as a C++ base (Default Pawn Class, ability sets on the character definition), and the engine or C++ instantiates the AngelScript subclass.
-  - **Host**: a generic C++ container holds an instanced, Blueprintable C++ base that AngelScript subclasses: `FFVCondition_Script` / `FFVEffect_Script` hold `UFVScriptCondition` / `UFVScriptEffect`; StateTree hosts tasks deriving from `UStateTreeTaskBlueprintBase`. The Branch, Apply Effects and Wait For Conditions Flow nodes host conditions and effects, so AngelScript logic already runs in Flow graphs; a new C++ Flow node is needed only for a new graph shape (pins, async waits, add-ons).
+  - **Host**: a generic C++ container holds an instanced, Blueprintable C++ base that AngelScript subclasses: fragments, conditions and effects (`UFVFragment`, `UFVCondition`, `UFVEffect`) are subclassed directly; StateTree hosts tasks deriving from `UStateTreeTaskBlueprintBase`. The Branch, Apply Effects and Wait For Conditions Flow nodes host conditions and effects, so AngelScript logic already runs in Flow graphs; a new C++ Flow node is needed only for a new graph shape (pins, async waits, add-ons).
 
 ## Folders and naming
 
@@ -294,7 +296,7 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 - No `UINTERFACE` exposed to Blueprint/AngelScript. Plugins talk through components with multicast delegates, facts, tags and instanced condition/effect structs.
 - New data types build on `UFVDefinition`; extensions are fragments, not subclasses.
 - Every plugin has three modules: runtime, `*Debug` (console variables, console commands, on-screen readouts) and `*Editor` (settings entry in the FlickerVoid menu, validation).
-- Extension points are open without editing existing code: new attributes, items, factions, titles, scans and checks are new data assets, and `UFVScriptCondition` / `UFVScriptEffect` let AngelScript add rules that plug into the same condition sets the offers use.
+- Extension points are open without editing existing code: new attributes, items, factions, titles, scans and checks are new data assets, and `UFVCondition` / `UFVEffect` subclasses, in C++ or AngelScript, add rules that plug into the same condition sets the offers use.
 - Comments minimal.
 
 ## Where a setting belongs

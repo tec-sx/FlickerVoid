@@ -19,10 +19,10 @@ Refactor in progress: the old `Source/FV*` modules still exist and fold into `Fl
 
 ## AngelScript and C++
 
-- C++ in the game module is only **Setup** (game mode base, game state, player state, player controller with Enhanced Input forwarding, game data, settings), **Shapes** (components, the fragments C++ reads, definitions, data asset types, condition/effect structs, runtime item data) and **Hosts** (what AngelScript can't create: Flow nodes, struct StateTree tasks, rig units, anim instances, movement components). Everything else is AngelScript.
+- C++ in the game module is only **Setup** (game mode base, game state, player state, player controller with Enhanced Input forwarding, game data, settings), **Shapes** (components, definitions, data asset types, the fragments, conditions and effects C++ systems need, runtime item data) and **Hosts** (what AngelScript can't create: Flow nodes, struct StateTree tasks, rig units, anim instances, movement components). Everything else is AngelScript.
 - **Components are always C++** (plugin or game module). AngelScript composes actors from them and never declares components.
-- AngelScript has no struct inheritance and can't implement interfaces. So definition fragments are instanced UObjects (`UFVFragment`, read-only and shared by everything using the definition), which lets AngelScript add game-specific fragments; condition/effect structs and runtime data (item stacks, instance data) stay C++ structs; and C++ never casts an actor to an interface (engine ones such as `IGameplayTagAssetInterface` included), it finds a component.
-- C++ never names an AngelScript class. It reaches script-built things by **Find** (a C++ component on the actor), **Spawn** (a class picked in data or config, typed as a C++ base: Default Pawn Class, ability sets) or **Host** (an instanced Blueprintable C++ base that AngelScript subclasses: `UFVScriptCondition`, `UFVScriptEffect`, Blueprint-base StateTree tasks).
+- AngelScript has no struct inheritance and can't implement interfaces. So fragments, conditions and effects are instanced UObjects (`UFVFragment`, `UFVCondition`, `UFVEffect`: read-only and shared by everything that uses the asset), which AngelScript subclasses directly; runtime data (item stacks, instance data) stays in C++ structs; and C++ never casts an actor to an interface (engine ones such as `IGameplayTagAssetInterface` included), it finds a component.
+- C++ never names an AngelScript class. It reaches script-built things by **Find** (a C++ component on the actor), **Spawn** (a class picked in data or config, typed as a C++ base: Default Pawn Class, ability sets) or **Host** (an instanced Blueprintable C++ base that AngelScript subclasses: `UFVFragment`, `UFVCondition`, `UFVEffect`, Blueprint-base StateTree tasks).
 - AngelScript calls plugin APIs directly; the game module doesn't wrap them.
 
 ## Folders and naming
@@ -55,7 +55,7 @@ Every plugin has three modules: runtime, `<Plugin>Debug` and `<Plugin>Editor`. F
 - **Never modify, move, delete or create anything in Content folders** (project or plugin, any `.uasset`/`.umap`). Scan read-only and report each asset's path and problem; the owner handles it.
 - Definitions (items, characters, attributes, factions, titles...) derive from `UFVDefinition` (FVCoreRuntime) and extend through instanced `UFVFragment` objects (being migrated from `TInstancedStruct`; see the design doc). `UFVItemDataAsset` is outdated.
 - Data-driven, composition over inheritance, SOLID/KISS/YAGNI, open/closed. Reuse FVFramework before adding base types.
-- Rules extend through `FFVConditionSet` / `FFVEffectList`; AngelScript adds new ones via `UFVScriptCondition` / `UFVScriptEffect`.
+- Rules extend through `FFVConditionSet` / `FFVEffectList`, which hold instanced `UFVCondition` / `UFVEffect` objects; C++ and AngelScript subclass them the same way (being migrated from `TInstancedStruct` and the `UFVScriptCondition` / `UFVScriptEffect` wrapper).
 - Plugins stay independent of each other; they meet through facts, gameplay tags, conditions/effects and components on actors.
 - Prefer FlowGraph (custom nodes) for story, quests and dialogue; StateTree and current UE5 features elsewhere.
 - Minimal comments: a short class description; comment a method only when its name or logic is unclear.
