@@ -1,6 +1,6 @@
 # FlickerVoid Framework Design
 
-Status: implemented in `feature/framework-dev`, revised after the owner's answers of 2026-10-05. The answers are recorded at the end; nothing has been compiled yet.
+Status: implemented in `feature/framework-dev`, revised after the owner's answers of 2026-10-05 (recorded at the end). The architecture decisions of 2026-10-16 (layers, ontology, AngelScript and C++ boundary, module and folder structure) are in Layers through Folders and naming; the code still has the old module layout until that refactor.
 
 ## Goals
 
@@ -22,9 +22,19 @@ Status: implemented in `feature/framework-dev`, revised after the owner's answer
 
 ## Layers
 
+Decided 2026-10-16. Functional layers stack vertically and dependencies only point down. The ontology domains (next section) cut across them horizontally.
+
 ```
-Plugins (FV*System, feature based)  ->  Game modules (domain based)  ->  AngelScript (game objects)  ->  Blueprints (data + cosmetics)
+Content (data assets, meshes, textures, materials, FX, Blueprint world actors, Widget Blueprints)
+  -> AngelScript (most of the game: actors, characters, game modes, abilities, rules, widget logic)
+    -> Game module (FlickerVoid: setup, components, hosts)
+      -> Plugins (FV*System, feature based, generic)
+        -> FVFramework (the ontological "Game": blocks for Gameplay, Interface and Presentation)
 ```
+
+- **Down only.** A layer depends only on the layers below it. AngelScript calls plugin APIs directly; the game module doesn't wrap them.
+- **Across only through the shared language.** Domains never call each other. They meet through definitions, tags, facts and conditions/effects: a quest uses Inventory's "has item" condition and "give item" effect instead of calling the inventory component. Interface and Presentation observe Gameplay (getters, delegates) and send intents back; Gameplay never knows them.
+- **One owner per node per layer.** Each ontology node has one plugin that owns its mechanism (a plugin can own several nodes) and one folder per layer named after the node.
 
 ### Plugins
 
@@ -42,20 +52,143 @@ Plugins (FV*System, feature based)  ->  Game modules (domain based)  ->  AngelSc
 
 Every plugin depends only on FVFramework (and Flow where it has graph nodes). Plugins never depend on each other; they meet through **facts, gameplay tags, conditions/effects and components on actors**.
 
-### Game modules
+### Game module
 
-| Module | Role | Change |
+Target: one runtime module `FlickerVoid` plus `FlickerVoidDebug` and `FlickerVoidEditor`, the same pattern as every plugin. C++ there is limited to three kinds; everything else is AngelScript.
+
+| Kind | What | Examples |
 | --- | --- | --- |
-| FVCore | logging, tags, flow triggers | kept |
-| FVCharacter | locomotion, animation, traversal | kept |
-| FVGameplay | GAS: ASC, abilities, interaction ability base, scanner | attribute sets, checks and the personality system removed |
-| FVAI | NPC config, StateTree tasks | faction now from FVSocialSystem |
-| FVNarrative | narrative tags | memory and psychology systems removed |
-| FVWorld | world objects (doors, hiding spots), world tags | `UFVWorldStateSubsystem` removed, facts and the clock are the single source |
-| FVUI | HUD, journal, dialogue, scanner widgets | kept |
-| FVGameplay | also owns the **scanner** now (`Scanner/`), built on the interaction registry | scanner moved in from a plugin |
-| FVItems | — | **removed**: pickup/receiver/item definition moved to FVInventorySystem |
-| FlickerVoidGame | game mode, player, asset manager | kept |
+| **Setup** | configures the game | game mode base (loads game data), game state, player state, player controller (forwards Enhanced Input, which the AngelScript fork can't bind), asset manager, settings |
+| **Shapes** | types C++ must know | components, fragments, definitions, data asset types, condition/effect structs |
+| **Hosts** | engine extension points AngelScript can't create | Flow nodes, struct-based StateTree tasks, rig units, anim instances, movement components |
+
+### Module structure (refactor plan)
+
+| Today | Goes to |
+| --- | --- |
+| FlickerVoid (`Source/FlickerVoidGame`) | stays as the game module. `AFVGameModeBase` keeps the data loading; Explore and Story game modes and the player character move to AngelScript. |
+| FlickerVoidCore | Flow trigger nodes and the trigger component are generic and move to FVFramework's FVCoreFlow; trigger box and sphere actors and Blueprint-base StateTree tasks/conditions move to AngelScript; the struct StateTree task and tagged physical material stay in the game module. |
+| FlickerVoidCharacter | **dropped** (owner, 2026-10-16). Movement component, movement handlers and traversal component go to `Gameplay/`; anim instance, rig units and animation/locomotion data go to `Presentation/`; `AFVTraversable` becomes an AngelScript actor with a C++ component the traversal component finds; `UFVCharacterDataAsset` is checked against `UFVCharacterDefinition` (likely obsolete); characters move to AngelScript (below). |
+| FlickerVoidGameplay | ability fragment, ability set, tag relationship map, scanner and the ActivateAbility effect stay in the game module; the debug StateTree task moves to AngelScript; scanner debug goes to FlickerVoidDebug. |
+| FlickerVoidAI | NPC fact conditions/effects, StateTree schema, StateTree AI component, AI controller and the random location task stay; the perception evaluator moves to AngelScript; `AFVAICharacter` becomes an AngelScript character. |
+| FlickerVoidWorld | world object actors move to AngelScript. |
+| FlickerVoidNarrative, FlickerVoidUI | deleted (the journal is AngelScript UI, PR #55). |
+| FlickerVoidCoreEditor | renamed FlickerVoidEditor. |
+
+Moving a class to another module changes its `/Script/<Module>` path: add one `+PackageRedirects=(OldName="/Script/<OldModule>",NewName="/Script/FlickerVoid")` per removed module to `Config/DefaultEngine.ini` (plus class redirects for renamed classes) so assets keep loading until they are resaved.
+
+**Characters.** Protagonist and residents are both characters: one AngelScript base composed of C++ components, with `Protagonist` and `Resident` classes on top. What has to change first:
+
+1. Movement state now on `AFVCharacter` (walk, sprint, aim and traverse flags, move requests, runtime state for animation) moves into `UFVCharacterMovementComponent`. The anim instance, movement handlers and traversal component read the component instead of casting to `AFVCharacter`.
+2. Ability granting on first possession (`AFVPlayerCharacter::PossessedBy`, PR #58) moves into the ability system component, which listens for its pawn's controller change.
+3. Swapping in `UFVCharacterMovementComponent` (`SetDefaultSubobjectClass` today) needs AngelScript's `OverrideComponent` property specifier; confirm it on the fork. Without it, a minimal C++ base that only swaps the component stays as Setup.
+4. AngelScript classes can't implement `IGameplayTagAssetInterface` or `IAbilitySystemInterface`. FVDialogueSystem (`FVDialogueFlowNodes.cpp`) and FVSocialSystem (`FVSocialLibrary.cpp`) cast actors to the tag interface and must read owned tags from a component instead. GAS's `GetAbilitySystemComponentFromActor` already falls back to a component lookup.
+5. `AFVPlayerController` stops casting to `AFVPlayerCharacter` and uses components.
+
+## Ontology
+
+Decided 2026-10-16 (owner). The ontology is the game's vocabulary and the horizontal axis of the architecture. Every node has three children (rule of three). `Script/` folders follow it, and `Source/FlickerVoid` mirrors the same paths where C++ is needed.
+
+```mermaid
+flowchart LR
+  GAM[Game] --> UI[Interface]
+  GAM --> GPL[Gameplay]
+  GAM --> PRN[Presentation]
+
+  UI --> MMN[MainMenu]
+  UI --> IGM[In-Game Menu]
+  UI --> HUD[HUD]
+
+  GPL --> PRT[Protagonist]
+  GPL --> WRD[World]
+  GPL --> NAR[Narrative]
+
+  PRT --> ID[Identity]
+  PRT --> STA[State]
+  PRT --> RSC[Resources]
+  ID --> APR[Appearance]
+  ID --> PRS[Personality]
+  ID --> SOC[Social]
+  PRS --> SKL[Skills]
+  PRS --> PRK[Perks]
+  PRS --> KNK[Kinks]
+  SOC --> AFF[Affiliation]
+  SOC --> REL[Relationships]
+  SOC --> FAM[Fame]
+  STA --> PHY[Physical]
+  STA --> MNT["Mental (Sanity)"]
+  STA --> SPI[Spiritual]
+  RSC --> POS[Possessions]
+  RSC --> KNW[Knowledge]
+  RSC --> CON[Connections]
+
+  WRD --> ENV[Environment]
+  WRD --> OBJ[Objects]
+  WRD --> SCT[Society]
+  ENV --> URB[Urban]
+  ENV --> SRB[Suburban]
+  ENV --> NTR[Nature]
+  URB --> ENT[Entertainment]
+  URB --> BSN[Business]
+  URB --> RSD[Residential]
+  SRB --> SLM[Slums]
+  SRB --> SQR[Square]
+  SRB --> IND[Industrial]
+  NTR --> MED[Meadow]
+  NTR --> SMT[Summit]
+  NTR --> FRS[Forest]
+  SCT --> FCT[Factions]
+  SCT --> RSN[Residents]
+  SCT --> ECN[Economy]
+
+  NAR --> PLT[Plot]
+  NAR --> EMT[Emotion]
+  NAR --> DSC[Discovery]
+  PLT --> MAR[MainArc]
+  PLT --> CAR[CharacterArc]
+  PLT --> HIS[WorldHistory]
+  EMT --> SMB[Symbolism]
+  EMT --> VSL[Visuals]
+  EMT --> MSC[Music]
+  DSC --> DIA[Dialogue]
+  DSC --> MFG[MemoryFragments]
+  DSC --> QST[Quests]
+  DIA --> EXC[Exchange]
+  DIA --> CHO[Choice]
+  DIA --> DREL[Relationship]
+  QST --> QMN[Main]
+  QST --> QSD[Side]
+  QST --> QPR[Progression]
+```
+
+- Dialogue's Exchange, Choice and Relationship are kinds of dialogue line; a Relationship line improves or reduces a relationship and helps discovery.
+- Quests' Progression means transit quests that only connect main quests.
+- Still open: the children of Presentation and Objects.
+
+## AngelScript and C++
+
+- **Components are always C++** (plugin or game module). AngelScript composes actors from them and never declares components.
+- AngelScript has no struct inheritance, so fragments, definitions and condition/effect structs are C++.
+- AngelScript can't implement interfaces, so C++ never casts an actor to an interface, engine interfaces included; it finds a component.
+- C++ never names an AngelScript class. It reaches script-built things in three ways:
+  - **Find**: look up a C++ component on the actor and call it or broadcast its delegates.
+  - **Spawn**: data or config holds a class typed as a C++ base (Default Pawn Class, ability sets on the character definition), and the engine or C++ instantiates the AngelScript subclass.
+  - **Host**: a generic C++ container holds an instanced, Blueprintable C++ base that AngelScript subclasses: `FFVCondition_Script` / `FFVEffect_Script` hold `UFVScriptCondition` / `UFVScriptEffect`; StateTree hosts tasks deriving from `UStateTreeTaskBlueprintBase`. The Branch, Apply Effects and Wait For Conditions Flow nodes host conditions and effects, so AngelScript logic already runs in Flow graphs; a new C++ Flow node is needed only for a new graph shape (pins, async waits, add-ons).
+
+## Folders and naming
+
+- Each ontology node is a **folder** (inner node with code below it), a **class** (leaf with behaviour, such as a door or a game mode) or **data** (a tag such as a district type, a definition such as an attribute or faction, or a fact such as fame). No empty folders or classes to complete the tree.
+- Files at the root of `Script/` belong to Game itself: game modes, player controller.
+- `Source/FlickerVoid/Public` and `Private` mirror the `Script/` paths, so the C++ half of a feature sits at the same path as its script half:
+
+  ```
+  Source/FlickerVoid/Public/Gameplay/World/Society/Residents/   NPC fact conditions and effects (structs)
+  Script/Gameplay/World/Society/Residents/                      resident character, AI behaviour
+  Script/Gameplay/World/Objects/Door.as                          composes the Interactable and Lock components
+  ```
+
+- Code used by several nodes lives at their lowest common ancestor: character movement and traversal (protagonist and residents) go in `Gameplay/`, animation and rig units in `Presentation/`.
+- C++ classes keep the `FV` prefix (`UFVTraversalComponent`). AngelScript classes drop it (`ADoor`, `AStoryGameMode`, `UTradeEffect`), and each `.as` file is named after its main class without the type prefix (`Door.as`, `StoryGameMode.as`). A class moving from C++ to AngelScript never clashes with its old name.
 
 ## Data model
 

@@ -8,12 +8,30 @@ Full design: `Docs/Framework/FrameworkDesign.md`. Per-plugin setup guides: `Docs
 
 ## Layers
 
-1. **Plugins** (`Plugins/FV*System`, FVFramework): feature-based, generic building blocks only. Nothing game-specific.
-2. **Game modules** (`Source/FV*`): domain-based (World, Narrative, Gameplay, ...), core setup and RPG blocks for this game. The scanner lives here (`Source/FVGameplay/.../Scanner`).
-3. **AngelScript**: game-specific reusable objects.
-4. **Blueprints**: data assets and cosmetics only. No settings in Blueprints beyond occasional overrides. Widget Blueprints derive from the plugins' C++ widget classes and add only layout and looks.
+Functional layers stack vertically and dependencies only point down: Content -> AngelScript -> game module -> plugins -> FVFramework. The ontology domains (see Folders and naming) cut across all layers; domains never call each other and meet only through definitions, tags, facts and conditions/effects.
 
-Much older code in `Source/` is experimental or obsolete; don't assume it should be kept.
+1. **Plugins** (`Plugins/FV*System`, FVFramework): feature-based, generic building blocks only. Nothing game-specific. FVFramework is the ontological "Game": it provides the blocks for Gameplay, Interface and Presentation.
+2. **Game module** (`Source/FlickerVoid`, with `FlickerVoidDebug` and `FlickerVoidEditor`): C++ only where AngelScript can't do the job (see below).
+3. **AngelScript** (`Script/`): most of the game: actors, characters, game modes, abilities, rules, widget logic.
+4. **Content**: data assets, meshes, textures, materials, FX, Blueprint world actors, Widget Blueprints. Blueprints add only looks and layout on top of C++ or AngelScript classes; no settings beyond occasional overrides.
+
+Refactor in progress: the old `Source/FV*` modules still exist and fold into `FlickerVoid` as described in the design doc's Module structure; until then the scanner lives in `Source/FVGameplay/.../Scanner`. Much older code in `Source/` is experimental or obsolete; don't assume it should be kept.
+
+## AngelScript and C++
+
+- C++ in the game module is only **Setup** (game mode base, game state, player state, player controller with Enhanced Input forwarding, game data, settings), **Shapes** (components, fragments, definitions, data asset types, condition/effect structs) and **Hosts** (what AngelScript can't create: Flow nodes, struct StateTree tasks, rig units, anim instances, movement components). Everything else is AngelScript.
+- **Components are always C++** (plugin or game module). AngelScript composes actors from them and never declares components.
+- AngelScript has no struct inheritance and can't implement interfaces, so fragments, definitions and condition/effect structs are C++, and C++ never casts an actor to an interface (engine ones such as `IGameplayTagAssetInterface` included); it finds a component.
+- C++ never names an AngelScript class. It reaches script-built things by **Find** (a C++ component on the actor), **Spawn** (a class picked in data or config, typed as a C++ base: Default Pawn Class, ability sets) or **Host** (an instanced Blueprintable C++ base that AngelScript subclasses: `UFVScriptCondition`, `UFVScriptEffect`, Blueprint-base StateTree tasks).
+- AngelScript calls plugin APIs directly; the game module doesn't wrap them.
+
+## Folders and naming
+
+- `Script/` follows the ontology tree (design doc, Ontology): Game -> Interface, Gameplay (Protagonist, World, Narrative), Presentation, three children per node. Files at the root of `Script/` belong to Game itself (game modes, player controller).
+- `Source/FlickerVoid/Public` and `Private` mirror the same paths, so a feature's C++ half sits at the same path as its script half. The C++ tree stays sparse.
+- Each node is a **folder** (inner node with code below it), a **class** (leaf with behaviour) or **data** (a tag, a definition or a fact). Don't create empty folders or classes to complete the tree.
+- Code used by several nodes lives at their lowest common ancestor (character movement, used by protagonist and residents, goes in `Gameplay/`).
+- C++ classes keep the `FV` prefix (`UFVTraversalComponent`). AngelScript classes drop it (`ADoor`, `AStoryGameMode`, `UTradeEffect`), and each `.as` file is named after its main class without the type prefix (`Door.as`, `StoryGameMode.as`).
 
 ## Plugins
 
