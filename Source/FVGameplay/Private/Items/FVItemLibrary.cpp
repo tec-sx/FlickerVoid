@@ -5,7 +5,6 @@
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Components/CapsuleComponent.h"
-#include "Conditions/FVConditionLibrary.h"
 #include "Data/FVCharacterDefinition.h"
 #include "Data/FVInteractableDefinition.h"
 #include "Engine/Engine.h"
@@ -20,7 +19,6 @@
 #include "Items/FVItemAnimationFragment.h"
 #include "Items/FVItemDefinition.h"
 #include "Items/FVItemEventPayload.h"
-#include "Items/FVItemFragments.h"
 #include "Items/FVItemSettings.h"
 #include "Pickup/FVPickupComponent.h"
 #include "Sound/SoundBase.h"
@@ -92,6 +90,12 @@ UStaticMesh* UFVItemLibrary::LoadWorldMesh(const UFVItemDefinition* Item)
 {
 	const FFVItemFragment_World* World = Item ? Item->FindFragment<FFVItemFragment_World>() : nullptr;
 	return World ? World->Mesh.LoadSynchronous() : nullptr;
+}
+
+TSubclassOf<AActor> UFVItemLibrary::LoadActorClass(const UFVItemDefinition* Item)
+{
+	const FFVItemFragment_World* World = Item ? Item->FindFragment<FFVItemFragment_World>() : nullptr;
+	return World ? World->ActorClass.LoadSynchronous() : nullptr;
 }
 
 USoundBase* UFVItemLibrary::LoadSound(const TSoftObjectPtr<USoundBase>& Sound)
@@ -192,23 +196,6 @@ FName UFVItemLibrary::GetHandSocket(const bool bRightHand)
 	return bRightHand ? Settings.RightHandSocket : Settings.LeftHandSocket;
 }
 
-bool UFVItemLibrary::CanUseItem(const UFVItemDefinition* Item, AActor* User)
-{
-	const FFVItemFragment_Usable* Usable = Item ? Item->FindFragment<FFVItemFragment_Usable>() : nullptr;
-	return Usable && User && Usable->UseConditions.Evaluate(UFVConditionLibrary::MakeContext(User, User));
-}
-
-bool UFVItemLibrary::ApplyUseEffects(const UFVItemDefinition* Item, AActor* User)
-{
-	if (!CanUseItem(Item, User))
-	{
-		return false;
-	}
-
-	Item->FindFragment<FFVItemFragment_Usable>()->Effects.Apply(UFVConditionLibrary::MakeContext(User, User));
-	return true;
-}
-
 bool UFVItemLibrary::CanGiveItem(const AActor* Giver, const AActor* Receiver, const UFVItemDefinition* Item, const int32 Quantity, const int32 Money)
 {
 	const bool bGivesItem = Item && Quantity > 0;
@@ -279,8 +266,7 @@ AActor* UFVItemLibrary::SpawnWorldItem(UObject* WorldContext, const FFVItemStack
 		return nullptr;
 	}
 
-	const FFVItemFragment_World* Fragment = Stack.Item->FindFragment<FFVItemFragment_World>();
-	UClass* ActorClass = Fragment ? Fragment->ActorClass.LoadSynchronous() : nullptr;
+	UClass* ActorClass = LoadActorClass(Stack.Item);
 	if (!ActorClass)
 	{
 		ActorClass = UFVItemSettings::Get().WorldItemClass.LoadSynchronous();

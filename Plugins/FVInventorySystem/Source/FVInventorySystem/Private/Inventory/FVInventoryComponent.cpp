@@ -42,28 +42,6 @@ namespace
 	{
 		return Stack.Item != nullptr && Stack.Item->IsKeyItem();
 	}
-
-	template <typename T>
-	T& FindOrAddData(FFVItemStack& Stack)
-	{
-		for (TInstancedStruct<FFVItemInstanceFragment>& Data : Stack.InstanceData)
-		{
-			if (T* Found = Data.GetMutablePtr<T>())
-			{
-				return *Found;
-			}
-		}
-
-		TInstancedStruct<FFVItemInstanceFragment>& Added = Stack.InstanceData.AddDefaulted_GetRef();
-		Added.InitializeAs<T>();
-		return *Added.GetMutablePtr<T>();
-	}
-
-	template <typename T>
-	bool RemoveData(FFVItemStack& Stack)
-	{
-		return Stack.InstanceData.RemoveAll([](const TInstancedStruct<FFVItemInstanceFragment>& Data) { return Data.GetPtr<T>() != nullptr; }) > 0;
-	}
 }
 
 UFVInventoryComponent::UFVInventoryComponent()
@@ -621,10 +599,9 @@ bool UFVInventoryComponent::CanUseStack(const FGuid InstanceId) const
 		return false;
 	}
 
-	const bool bUsesUpUnit = Stack->Item->FindFragment<FFVItemFragment_Charges>()
-		? UFVItemStackLibrary::GetChargesLeft(*Stack) <= 1
-		: Usable->bConsumeOnUse;
-	if (bUsesUpUnit && !CanRemoveFromStack(*Stack, 1))
+	// A unit this use would use up must be able to leave the inventory.
+	FFVItemStack Spent = *Stack;
+	if (UFVItemStackLibrary::SpendUse(Spent) && !CanRemoveFromStack(*Stack, 1))
 	{
 		return false;
 	}
@@ -643,59 +620,50 @@ bool UFVInventoryComponent::UseStack(const FGuid InstanceId)
 	const FFVItemFragment_Usable* Usable = Item->FindFragment<FFVItemFragment_Usable>();
 	Usable->Effects.Apply(UFVConditionLibrary::MakeContext(GetOwner(), GetOwner()));
 
-	// Effects may have changed the inventory; both paths look the stack up again.
-	if (Item->FindFragment<FFVItemFragment_Charges>())
-	{
-		SpendCharge(InstanceId);
-	}
-	else if (Usable->bConsumeOnUse)
-	{
-		RemoveStack(InstanceId, 1);
-	}
+	// Effects may have changed the inventory, so the stack is looked up again.
+	SpendUse(InstanceId);
 
 	OnItemUsed.Broadcast(Item);
 	return true;
 }
 
-void UFVInventoryComponent::SpendCharge(const FGuid& InstanceId)
+void UFVInventoryComponent::SpendUse(const FGuid& InstanceId)
 {
 	const FFVItemStack* Stack = FindStack(InstanceId);
-	if (!Stack)
+	if (!Stack || !Stack->Item)
 	{
 		return;
 	}
 
-	const int32 Left = UFVItemStackLibrary::GetChargesLeft(*Stack) - 1;
-	if (Left <= 0)
+	const bool bCharges = Stack->Item->FindFragment<FFVItemFragment_Charges>() != nullptr;
+	FFVItemStack Spent = *Stack;
+
+	if (UFVItemStackLibrary::SpendUse(Spent))
 	{
 		RemoveStack(InstanceId, 1);
-
-		// Units left in the stack are full.
-		FFVItemStack* Rest = FindMutableStack(InstanceId);
-		if (Rest && RemoveData<FFVItemInstance_Charges>(*Rest))
-		{
-			OnStackChanged.Broadcast(InstanceId);
-		}
-		return;
 	}
-
-	if (Stack->Quantity == 1)
+	else if (bCharges && Spent.Quantity > 1)
 	{
-		FindOrAddData<FFVItemInstance_Charges>(*FindMutableStack(InstanceId)).Remaining = Left;
-		OnStackChanged.Broadcast(InstanceId);
+		// A partly used unit leaves its stack and becomes an entry of its own; the units left are full.
+		FFVItemStack* Rest = FindMutableStack(InstanceId);
+		Rest->RemoveData<FFVItemInstance_Charges>();
+		SetStackQuantity(InstanceId, Rest->Quantity - 1);
+
+		Spent.InstanceId = FGuid::NewGuid();
+		Spent.Quantity = 1;
+		Items.Add(Spent);
+		OnStackChanged.Broadcast(Spent.InstanceId);
+		OnCapacityChanged.Broadcast();
 		return;
 	}
 
-	// A partly used unit leaves its stack and becomes an entry of its own.
-	FFVItemStack Unit = *Stack;
-	Unit.InstanceId = FGuid::NewGuid();
-	Unit.Quantity = 1;
-	FindOrAddData<FFVItemInstance_Charges>(Unit).Remaining = Left;
-
-	SetStackQuantity(InstanceId, Stack->Quantity - 1);
-	Items.Add(Unit);
-	OnStackChanged.Broadcast(Unit.InstanceId);
-	OnCapacityChanged.Broadcast();
+	// The unit's Charges Left changed, or was cleared from the full units left.
+	FFVItemStack* Rest = bCharges ? FindMutableStack(InstanceId) : nullptr;
+	if (Rest)
+	{
+		Rest->InstanceData = Spent.InstanceData;
+		OnStackChanged.Broadcast(InstanceId);
+	}
 }
 
 int32 UFVInventoryComponent::GetCharges(const FGuid InstanceId) const
@@ -727,7 +695,7 @@ int32 UFVInventoryComponent::MoveStack(UFVInventoryComponent* To, const FGuid& I
 	Moved.Quantity = FMath::Min(Quantity, Stack->Quantity);
 	if (bMarkStolen)
 	{
-		FindOrAddData<FFVItemInstance_Stolen>(Moved).Owner = StolenFrom;
+		Moved.FindOrAddData<FFVItemInstance_Stolen>().Owner = StolenFrom;
 	}
 
 	// Plain units merge and may move in part; a stack with instance data moves whole, up to what one stack holds.

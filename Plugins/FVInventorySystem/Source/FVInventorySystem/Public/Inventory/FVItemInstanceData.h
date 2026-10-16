@@ -5,7 +5,7 @@
 #include "Inventory/FVInventoryComponent.h"
 #include "FVItemInstanceData.generated.h"
 
-/** Uses left on a partly used unit (stack of one). */
+/** Uses left on a partly used unit: the stack's next one. */
 USTRUCT(BlueprintType, meta = (DisplayName = "Charges Left"))
 struct FVINVENTORYSYSTEM_API FFVItemInstance_Charges : public FFVItemInstanceFragment
 {

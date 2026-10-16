@@ -34,6 +34,37 @@ int32 UFVItemStackLibrary::GetChargesLeft(const FFVItemStack& Stack)
 	return Stack.Item->IsUsable() ? 1 : 0;
 }
 
+bool UFVItemStackLibrary::SpendUse(FFVItemStack& Stack)
+{
+	const FFVItemFragment_Usable* Usable = Stack.Item ? Stack.Item->FindFragment<FFVItemFragment_Usable>() : nullptr;
+	if (!Usable || Stack.Quantity <= 0)
+	{
+		return false;
+	}
+
+	bool bUsedUp = Usable->bConsumeOnUse;
+	if (Stack.Item->FindFragment<FFVItemFragment_Charges>())
+	{
+		const int32 Left = GetChargesLeft(Stack) - 1;
+		bUsedUp = Left <= 0;
+
+		if (bUsedUp)
+		{
+			Stack.RemoveData<FFVItemInstance_Charges>();
+		}
+		else
+		{
+			Stack.FindOrAddData<FFVItemInstance_Charges>().Remaining = Left;
+		}
+	}
+
+	if (bUsedUp)
+	{
+		--Stack.Quantity;
+	}
+	return bUsedUp;
+}
+
 int32 UFVItemStackLibrary::GetBasePrice(const UFVItemDefinition* Item)
 {
 	const FFVItemFragment_Value* Value = Item ? Item->FindFragment<FFVItemFragment_Value>() : nullptr;

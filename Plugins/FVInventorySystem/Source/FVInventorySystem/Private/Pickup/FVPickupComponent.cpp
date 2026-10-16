@@ -1,9 +1,12 @@
 #include "Pickup/FVPickupComponent.h"
 
+#include "Conditions/FVConditionLibrary.h"
 #include "GameFramework/Actor.h"
 #include "FVInventorySystem.h"
+#include "Inventory/FVItemStackLibrary.h"
 #include "Pickup/FVItemReceiverComponent.h"
 #include "Items/FVItemDefinition.h"
+#include "Items/FVItemFragments.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPickupComponent)
 
@@ -11,6 +14,34 @@ bool UFVPickupComponent::CanBePickedUpBy(AActor* Picker) const
 {
 	const UFVItemReceiverComponent* Receiver = UFVItemReceiverComponent::FindReceiver(Picker);
 	return Item && !IsDepleted() && Receiver && Receiver->IsAcceptingItems();
+}
+
+bool UFVPickupComponent::CanUseInPlace(AActor* User) const
+{
+	const FFVItemFragment_Usable* Usable = Item && !IsDepleted() ? Item->FindFragment<FFVItemFragment_Usable>() : nullptr;
+	return Usable && User && Usable->UseConditions.Evaluate(UFVConditionLibrary::MakeContext(User, User));
+}
+
+bool UFVPickupComponent::UseInPlace(AActor* User)
+{
+	if (!CanUseInPlace(User))
+	{
+		return false;
+	}
+
+	Item->FindFragment<FFVItemFragment_Usable>()->Effects.Apply(UFVConditionLibrary::MakeContext(User, User));
+
+	FFVItemStack Stack = GetStack();
+	UFVItemStackLibrary::SpendUse(Stack);
+	SetStack(Stack);
+	OnUsedInPlace.Broadcast(User);
+
+	if (IsDepleted() && bDestroyOwnerOnPickup)
+	{
+		GetOwner()->Destroy();
+	}
+
+	return true;
 }
 
 FFVItemStack UFVPickupComponent::GetStack() const

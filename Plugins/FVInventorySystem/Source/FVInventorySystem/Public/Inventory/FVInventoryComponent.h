@@ -24,6 +24,28 @@ struct FVINVENTORYSYSTEM_API FFVItemStack
 	template <typename T>
 	const T* FindData() const { return FVFragments::Find<T>(InstanceData); }
 
+	template <typename T>
+	T& FindOrAddData()
+	{
+		for (TInstancedStruct<FFVItemInstanceFragment>& Data : InstanceData)
+		{
+			if (T* Found = Data.GetMutablePtr<T>())
+			{
+				return *Found;
+			}
+		}
+
+		TInstancedStruct<FFVItemInstanceFragment>& Added = InstanceData.AddDefaulted_GetRef();
+		Added.InitializeAs<T>();
+		return *Added.GetMutablePtr<T>();
+	}
+
+	template <typename T>
+	bool RemoveData()
+	{
+		return InstanceData.RemoveAll([](const TInstancedStruct<FFVItemInstanceFragment>& Data) { return Data.GetPtr<T>() != nullptr; }) > 0;
+	}
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, SaveGame, Category = "Inventory", meta = (ToolTip = "Assigned when the stack enters an inventory; equipment and UI refer to the stack by it."))
 	FGuid InstanceId;
 
@@ -189,7 +211,7 @@ private:
 	bool CanRemoveFromStack(const FFVItemStack& Stack, int32 Quantity) const;
 	bool CanAcceptStack(const FFVItemStack& Stack) const;
 	FGuid FindStackToUse(const UFVItemDefinition* Item) const;
-	void SpendCharge(const FGuid& InstanceId);
+	void SpendUse(const FGuid& InstanceId);
 	int32 MoveStack(UFVInventoryComponent* To, const FGuid& InstanceId, int32 Quantity, bool bMarkStolen, const FGameplayTag& StolenFrom);
 	void BroadcastItemChanged(UFVItemDefinition* Item, int32 OldTotal);
 	void RefreshContainers();

@@ -34,6 +34,32 @@ EDataValidationResult UFVInteractableComponent::IsDataValid(FDataValidationConte
 }
 #endif
 
+void UFVInteractableComponent::SetDefinition(UFVInteractableDefinition* NewDefinition)
+{
+	Definition = NewDefinition;
+
+	// Before Begin Play nothing is read from it yet; the registry never reads it.
+	if (!HasBegunPlay())
+	{
+		return;
+	}
+
+	RuntimeOffers = Definition ? Definition->Offers : TArray<FFVInteractionOffer>();
+
+	for (UPrimitiveComponent* Primitive : DetectablePrimitives)
+	{
+		if (IsValid(Primitive))
+		{
+			Primitive->SetCollisionResponseToChannel(GetCollisionChannel(), ECR_Block);
+		}
+	}
+
+	if (UFVInteractorComponent* Interactor = TargetInteractor.Get())
+	{
+		Interactor->RequestOfferRefresh();
+	}
+}
+
 bool UFVInteractableComponent::ShouldShowOffers() const
 {
 	return !Definition || Definition->bShowOffers;

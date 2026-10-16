@@ -61,6 +61,7 @@ class AFVWorldItem : AActor
 	void BeginPlay()
 	{
 		Pickup.OnPickedUp.AddUFunction(this, n"OnPickedUp");
+		Pickup.OnUsedInPlace.AddUFunction(this, n"OnUsedInPlace");
 		Saveable.OnActorDataLoaded.AddUFunction(this, n"RefreshPresence");
 
 		UFVFactDatabase Facts = UFVFactDatabase::Get();
@@ -90,26 +91,6 @@ class AFVWorldItem : AActor
 		return Pickup.GetStack();
 	}
 
-	// Takes one unit off the stack, e.g. after it was used straight from the world; the last one removes the item like a pickup.
-	UFUNCTION()
-	void ConsumeOne()
-	{
-		FFVItemStack Remaining = Pickup.GetStack();
-
-		if (Remaining.Quantity <= 0)
-		{
-			return;
-		}
-
-		Remaining.Quantity -= 1;
-		Pickup.SetStack(Remaining);
-
-		if (Pickup.IsDepleted())
-		{
-			RemoveFromWorld();
-		}
-	}
-
 	UFUNCTION()
 	private void OnPickedUp(AActor Picker)
 	{
@@ -120,6 +101,16 @@ class AFVWorldItem : AActor
 			FVItemWorld::PlaySound(WorldFragment.PickupSound, GetActorLocation());
 		}
 
+		if (Pickup.IsDepleted())
+		{
+			RemoveFromWorld();
+		}
+	}
+
+	// Used straight from the world (Pickup.UseInPlace): the last unit removes the item like a pickup.
+	UFUNCTION()
+	private void OnUsedInPlace(AActor User)
+	{
 		if (Pickup.IsDepleted())
 		{
 			RemoveFromWorld();
@@ -182,7 +173,7 @@ class AFVWorldItem : AActor
 
 		if (Offers != nullptr)
 		{
-			Interactable.Definition = Offers;
+			Interactable.SetDefinition(Offers);
 		}
 	}
 }

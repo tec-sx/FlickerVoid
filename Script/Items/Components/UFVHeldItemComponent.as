@@ -120,34 +120,41 @@ class UFVHeldItemComponent : UActorComponent
 		RefreshPresentation();
 	}
 
-	// The World fragment's Actor Class, spawned with the held unit on its pickup and made inert (no collision, physics or offers); none without one.
+	// The World fragment's Actor Class at the hand socket, made inert (no collision, physics or offers); none without one. A class with a pickup (a world item) gets the held unit before construction, so it looks like the dropped item.
 	private AActor SpawnHeldActor(UFVItemDefinition Item, FGameplayTag Slot, USkeletalMeshComponent CharacterMesh, FName Socket)
 	{
-		FFVItemFragment_World World;
+		TSubclassOf<AActor> ActorClass = FVItem::LoadActorClass(Item);
 
-		// Check: TSoftClassPtr binds IsNull().
-		if (!FVItem::GetWorldFragment(Item, World) || World.ActorClass.IsNull())
+		if (!ActorClass.IsValid())
 		{
 			return nullptr;
 		}
 
-		FFVItemStack Unit;
-		UFVInventoryComponent Inventory = UFVInventoryComponent::Get(GetOwner());
-
-		if (!IsValid(Inventory) || !Inventory.GetStack(Equipment.GetEquippedInstance(Slot), Unit))
-		{
-			Unit.Item = Item;
-		}
-
-		Unit.Quantity = 1;
-
-		AActor HeldActor = FVItem::SpawnWorldItem(Unit, CharacterMesh.GetSocketTransform(Socket));
+		// Check: script binds SpawnActor(Class, Location, Rotation, Name, bDeferredSpawn) and FinishSpawningActor(Actor).
+		AActor HeldActor = SpawnActor(ActorClass, CharacterMesh.GetSocketLocation(Socket), CharacterMesh.GetSocketRotation(Socket), NAME_None, true);
 
 		if (HeldActor == nullptr)
 		{
 			return nullptr;
 		}
 
+		UFVPickupComponent Pickup = UFVPickupComponent::Get(HeldActor);
+
+		if (IsValid(Pickup))
+		{
+			FFVItemStack Unit;
+			UFVInventoryComponent Inventory = UFVInventoryComponent::Get(GetOwner());
+
+			if (!IsValid(Inventory) || !Inventory.GetStack(Equipment.GetEquippedInstance(Slot), Unit))
+			{
+				Unit.Item = Item;
+			}
+
+			Unit.Quantity = 1;
+			Pickup.SetStack(Unit);
+		}
+
+		FinishSpawningActor(HeldActor);
 		HeldActor.SetActorEnableCollision(false);
 
 		UFVInteractableComponent Offers = UFVInteractableComponent::Get(HeldActor);

@@ -8,7 +8,7 @@ Builds on FVInventorySystem (items, inventory, money, loot; read [its guide](FVI
 
 1. *Project Settings > FlickerVoid > Items*: set **World Item Class** to `AFVWorldItem` (or a Blueprint of it), and a **Default Interactable** with a Pickup offer (sections 5 and 13).
 2. Make an item definition with a **World** fragment (its mesh), e.g. `DA_Item_Apple`.
-3. Grant the player the item abilities (section 6) and add **UFVHeldItemComponent** to the player (section 8).
+3. Grant the player the item abilities (section 6). `APlayerCharacter` already has the held item and intoxication components (sections 8 and 11).
 4. Place an `AFVWorldItem` in the level and set its **Item**. Its mesh and offers come from the definition.
 5. Press Play, look at it and take it.
 
@@ -41,13 +41,13 @@ Added to an item definition's **Fragments** like the plugin's own.
 
 | Fragment | Fields |
 |---|---|
-| World | **Mesh** (in the world and in the hand), **Actor Class** (spawned instead of the generic world item when dropped or held, e.g. a flashlight with a light), **Interactable** (overrides the offers chosen by category), **Grip Socket** (socket on the item mesh placed in the hand; none = mesh origin), **Grip Offset** (from the hand socket), **Pickup Sound**, **Drop Sound**, **Use Sound** |
+| World | **Mesh** (in the world and in the hand), **Actor Class** (spawned instead of the generic world item when dropped, thrown or held, e.g. a flashlight with a light; dropped or thrown it needs a pickup component, so make it a Blueprint of `AFVWorldItem` for items that can leave the hand), **Interactable** (overrides the offers chosen by category), **Grip Socket** (socket on the item mesh placed in the hand; none = mesh origin), **Grip Offset** (from the hand socket), **Pickup Sound**, **Drop Sound**, **Use Sound** |
 | Animation | **Use Style** (under `Animation.Item.Use`), **Hold Style** (under `Animation.Item.Hold`), **Use Montage** (overrides the use style's montage) |
 | Throwable | **Loudness**, **Noise Range** (cm), **Throw Speed** (cm/s), **Break On Impact**, **Impact Sound** |
 
 On a **character** definition, the **Item Animations** fragment maps styles to that character's animations: **Montages** (`Animation.Item.*` style to montage: use styles, pickup low/mid/high, give, throw) and **Hold Poses** (hold style to upper body pose). See section 6.2.
 
-Script reads fragments through `FVItem::GetWorldFragment`, `GetAnimationFragment` and `GetThrowableFragment`.
+Script reads fragments through `FVItem::GetWorldFragment`, `GetAnimationFragment` and `GetThrowableFragment`, and loads the Actor Class with `FVItem::LoadActorClass`.
 
 ## 4. World actors
 
@@ -55,7 +55,7 @@ All four are AngelScript actors in `Script/Items/World`. Place them directly, or
 
 | Actor | Set | Behaviour |
 |---|---|---|
-| `AFVWorldItem` | **Item**, **Quantity** (instance only), **Appear Conditions** (checked with the player as instigator, again whenever facts change), **Simulate Physics** | The stack sits on its **FV Pickup Component**; the mesh and the interactable definition come from the item (section 5). Picked up, used up or emptied, a placed item hides and stays collected after a load; a dropped or thrown one is destroyed. `Get Stack`, `Consume One` |
+| `AFVWorldItem` | **Item**, **Quantity** (instance only), **Appear Conditions** (checked with the player as instigator, again whenever facts change), **Simulate Physics** | The stack sits on its **FV Pickup Component**; the mesh and the interactable definition come from the item (section 5). Picked up, used up or emptied, a placed item hides and stays collected after a load; a dropped or thrown one is destroyed. `Get Stack`; used in place through its pickup (`Use In Place`, section 6) |
 | `AFVReadable` | **Knowledge** (the note, Kind Document), **Hide When Read**; its **Secrets** component (section 7) | `Mark Read(Reader)` learns the knowledge and broadcasts `Message.Item.Read`. `Needs Investigation`, `Is Solved` |
 | `AFVMoneyPickup` | **Amount**, **Pickup Sound** | The pickup ability calls `Collect(Collector)`: adds Amount to the collector's money |
 | `AFVLootContainer` | **Storage** (inventory: starting items and money; Apply Carry Limits off), **Loot** (table, **Owner Tag**), **Interaction Point** (where the hand reaches; motion warping target). Add an **FV Lock Component** on the instance or a Blueprint for a lock | `Try Open(Opener)`: unlocks with a carried key if locked, rolls the loot once, broadcasts `Message.Item.ContainerOpened`. `Take All(Taker)`: moves items and money to the taker; with an Owner Tag they get the Stolen mark and a `Message.Item.Stolen` per item |
@@ -88,7 +88,7 @@ AngelScript abilities in `Script/Items/Abilities`, all derived from `UFVInteract
 | Ability | Event | Started by | Does |
 |---|---|---|---|
 | `UFVPickupAbility` | `Event.Item.Pickup` | Take offer | Money: collected at once. Items: pickup montage by height (`Animation.Item.Pickup.Low/Mid/High`, else its **Pickup Montage**), warped to the item, taken on Apply |
-| `UFVUseItemAbility` | `Event.Item.Use` | Use offer (world), inventory stack (payload), Use Held | Use montage (`FVItem::FindUseMontage`) with a prop in the right hand from Attach to Release; the item takes effect on Apply (`Use Stack` from the inventory; effects and one unit off the world item otherwise) |
+| `UFVUseItemAbility` | `Event.Item.Use` | Use offer (world), inventory stack (payload), Use Held | Use montage (`FVItem::FindUseMontage`) with a prop in the right hand from Attach to Release; the item takes effect on Apply (`Use Stack` from the inventory, the pickup's `Use In Place` in the world; both spend one charge, or one unit if Consume On Use) |
 | `UFVWearItemAbility` | `Event.Item.Wear` | Wear offer, inventory stack | Picks a world item up first, then wears it |
 | `UFVHoldItemAbility` | `Event.Item.Hold` | Hold offer, inventory stack | Puts the stack in a hand slot: the right hand if it fits (the left when only that one is free), else the left; holding a held stack again puts it away |
 | `UFVUseHeldItemAbility` | `Event.Item.UseHeld` | Input tag | Uses what is held, right hand first (section 8) |
@@ -138,8 +138,8 @@ Any examinable actor can have a Secrets component; only readables are solved by 
 
 ## 8. Held items
 
-Add **UFVHeldItemComponent** (`Script/Items/Components`) to the player (and to NPCs that hold things). It watches the equipment component's `Equipment.Slot.Hand.Right` and `.Hand.Left`:
-- The World fragment's **Actor Class** is spawned at the hand socket (inert: no collision, physics or offers), else a mesh prop of the World mesh. **Grip Socket** and **Grip Offset** place it.
+**UFVHeldItemComponent** (`Script/Items/Components`) is on `APlayerCharacter` (**Held Items**); add it to NPCs that hold things. It watches the equipment component's `Equipment.Slot.Hand.Right` and `.Hand.Left`:
+- The World fragment's **Actor Class** is spawned at the hand socket and made inert (no collision, physics or offers). Any actor class works; one with a pickup component (a world item) gets the held unit before construction, so it shows the item's mesh. Without an Actor Class a mesh prop of the World mesh is attached. **Grip Socket** and **Grip Offset** place it.
 - The hold pose of the item (**Hold Style**, looked up like montages in **Hold Poses** / **Default Hold Poses**) goes to `UFVPlayerAnimInstance.RightHandHoldPose` / `LeftHandHoldPose`.
 - `Put Away` / `Take Out` hide and show what is held (abilities with `Status.HandsBusy` do it).
 - `Use Held(Right Hand)`: the held actor's **UFVHeldItemBehaviourComponent**, else `Event.Item.Use` for a usable item.
@@ -158,13 +158,13 @@ Throw takes one unit off the stack (a held stack's last unit leaves the hand), s
 ## 10. Keys
 
 Give a lock (**FV Lock Component**) a **Key Tag** under `Key.` and give the key item that tag in its definition **Tags**; tick **Consume Key** for single-use keys. `FVItemKeys::HasKeyFor(Holder, Lock)` and `FVItemKeys::TryUnlockWithKey(Holder, Lock)` (`Script/Items/FVItemKeys.as`) check the holder's inventory, unlock, and take one key unit when it is consumed.
-- Doors (`Script/World/Doors/InteractionResponse_DoorToggle.as`): a toggle blocked by the lock tries the interactor's key, then opens.
+- Doors (`Script/World/Doors/InteractionResponse_DoorToggle.as`): **On Toggle Blocked** tries the interactor's key; once the lock is open the toggle goes ahead.
 - Loot containers try the key in `Try Open` and `Take All`.
 - Lockpicking is unchanged.
 
 ## 11. Intoxication
 
-Add **UFVIntoxicationComponent** (`Script/Items/Components`) to the player next to its **FV Attribute Component**:
+**UFVIntoxicationComponent** (`Script/Items/Components`) is on `APlayerCharacter` (**Intoxication**) and works with the player's **FV Attribute Component**. Set its attributes on the player Blueprint; the other properties have defaults:
 
 | Property | Meaning |
 |---|---|
@@ -260,7 +260,7 @@ Sent through the GameplayMessageSubsystem for UI and other systems.
 
 | Namespace | Functions |
 |---|---|
-| `FVItem::` (`UFVItemLibrary`, C++) | Fragments, `Load World Mesh`, `Load Sound`, `Find Interactable`, `Find Montage`, `Find Use Montage`, `Find Hold Pose`, `Get Pickup Style`, `Get Hand Socket`, `Can Use Item`, `Apply Use Effects`, `Can Give Item`, `Give Item`, `Spawn World Item`, `Send Item Event`, `Get Item Payload`, `Get Settings` |
+| `FVItem::` (`UFVItemLibrary`, C++) | Fragments, `Load World Mesh`, `Load Actor Class`, `Load Sound`, `Find Interactable`, `Find Montage`, `Find Use Montage`, `Find Hold Pose`, `Get Pickup Style`, `Get Hand Socket`, `Can Give Item`, `Give Item`, `Spawn World Item`, `Send Item Event`, `Get Item Payload`, `Get Settings` |
 | `FVItemAnim::` (`Script/Items/Abilities/FVItemAbilityHelpers.as`) | Montage and notify tasks, motion warping targets, hand props, hand slots, `Set Hands Busy` |
 | `FVItemWorld::` (same file) | Event target, sounds, world item of an actor, picking a world item up, drop transform, physics |
 | `FVItemKeys::` (`Script/Items/FVItemKeys.as`) | `Has Key For`, `Try Unlock With Key` |
@@ -273,12 +273,12 @@ Content isn't in this repository; make these in the editor.
 - **Settings**: Items (section 13), including the hand sockets and default montages and hold poses.
 - **Interactable definitions** with their offers and Activate Ability event tags (section 5); category entries in Interactables By Category.
 - **Ability set** entries for the player (section 6), and Blueprint children of the abilities that need data (Steal Check, Give Scene, Pickup Montage).
-- **Attributes**: Intoxication and Health; the player's Intoxication component (section 11).
+- **Attributes**: Intoxication and Health, set on the player's Intoxication component (section 11).
 - **Character definitions**: Item Animations fragment (montages, hold poses), Gifts fragment, Social fragment (faction, relationship fact) for gift receivers, pickpocket victims and merchants.
 - **Montages** with FV Gameplay Event notifies (Attach, Apply, Release, Handover) and a motion warping window named `Item`; optionally a Contextual Anim Scene for giving.
 - **Skeletons**: sockets `hand_r_item` and `hand_l_item`.
 - **AnimBP**: hold pose blend (section 8).
-- **Actors**: Blueprints of the world actors if needed, a `BP_Flashlight` (or similar) with a Held Item Behaviour component, merchants with inventory and merchant components.
+- **Actors**: Blueprints of the world actors if needed, a `BP_Flashlight` (or similar; a Blueprint of `AFVWorldItem` if it can be dropped) with a Held Item Behaviour component, merchants with inventory and merchant components.
 - **Items**: World fragments (meshes, sounds) on every item that appears in the world.
 
 ## 19. Retired scripts

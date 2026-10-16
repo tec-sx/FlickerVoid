@@ -37,6 +37,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FV|Item", meta = (ToolTip = "Loads the World fragment's mesh; none without one."))
 	static UStaticMesh* LoadWorldMesh(const UFVItemDefinition* Item);
 
+	UFUNCTION(BlueprintCallable, Category = "FV|Item", meta = (ToolTip = "Loads the World fragment's Actor Class; none without one."))
+	static TSubclassOf<AActor> LoadActorClass(const UFVItemDefinition* Item);
+
 	UFUNCTION(BlueprintCallable, Category = "FV|Item", meta = (ToolTip = "Loads a sound, e.g. one of the World fragment's sounds; none if unset."))
 	static USoundBase* LoadSound(const TSoftObjectPtr<USoundBase>& Sound);
 
@@ -57,12 +60,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FV|Item|Animation", meta = (ToolTip = "Character mesh socket for items held in that hand (Items settings)."))
 	static FName GetHandSocket(bool bRightHand);
-
-	UFUNCTION(BlueprintPure, Category = "FV|Item", meta = (ToolTip = "The item is usable and its Use Conditions pass for the user. Doesn't look at any inventory."))
-	static bool CanUseItem(const UFVItemDefinition* Item, AActor* User);
-
-	UFUNCTION(BlueprintCallable, Category = "FV|Item", meta = (ToolTip = "Applies the item's Usable effects with the user as instigator and target, if Can Use Item. Doesn't touch any inventory."))
-	static bool ApplyUseEffects(const UFVItemDefinition* Item, AActor* User);
 
 	UFUNCTION(BlueprintPure, Category = "FV|Item|Give", meta = (ToolTip = "The giver's inventory holds the item and money, and the receiver's inventory (if any) can take the item. False when there is nothing to give."))
 	static bool CanGiveItem(const AActor* Giver, const AActor* Receiver, const UFVItemDefinition* Item, int32 Quantity, int32 Money);

@@ -80,6 +80,7 @@ Add, rename or remove categories and slots in *Project Settings > GameplayTags* 
 - `Can Use Stack(Id)`: the item is usable, its Use Conditions pass, and a unit that would be used up can leave the inventory (a worn bag can't if the rest wouldn't fit).
 - `Use Item(Item)` / `Can Use Item(Item)` pick the stack for you: a partly used unit first, then unworn plain stacks.
 - `Get Charges(Id)`: uses left on the stack's next unit (its Charges Left, else the item's Charges, else 1 for a usable item, 0 otherwise).
+- An item lying in the world is used by the same rules through its pickup (`Use In Place`, section 4). A world stack doesn't split: its Charges Left is for its next unit and comes along when it is picked up; the first use in the inventory then splits that unit off.
 
 ### 3.3 Money
 Money is a number on the inventory component, not an item; coins found, looted or stolen add to it.
@@ -107,14 +108,15 @@ Money is a number on the inventory component, not an item; coins found, looted o
 - Events: **On Equipment Changed** (slot, old item, new item; one per affected slot, after tags are updated), **On Equipment Reset** (all slots replaced by a load).
 
 ### 3.7 Script helpers
-Blueprint and AngelScript can't read instanced structs, so `UFVItemStackLibrary` (`FVItemStack::` in AngelScript) reads them: `Is Stolen(Stack, Out Owner)`, `Get Charges Left(Stack)`, `Get Base Price(Item)` (0 without a Value fragment), `Is Sellable(Item)` (Value fragment marked Sellable).
+Blueprint and AngelScript can't read instanced structs, so `UFVItemStackLibrary` (`FVItemStack::` in AngelScript) reads them: `Is Stolen(Stack, Out Owner)`, `Get Charges Left(Stack)`, `Get Base Price(Item)` (0 without a Value fragment), `Is Sellable(Item)` (Value fragment marked Sellable). In C++, `SpendUse(Stack)` spends one use of a stack held outside an inventory, by the rules `Use Stack` and `Use In Place` share.
 
 ## 4. Pickups
 
 **FV Pickup Component** holds a stack: **Item**, **Quantity** and **Instance Data** (e.g. a Stolen mark or Charges Left). Quantity and Instance Data are saved with an **FV Saveable Component** on the actor.
 - `Try Pickup(Picker)` offers the stack to the picker's receiver. A plain stack that doesn't fully fit leaves the rest in the world; a stack with instance data is taken whole or not at all.
 - **On Picked Up** fires after the quantity is updated: `Get Quantity` is what is left.
-- With **Destroy Owner On Pickup** (default) the actor is destroyed once everything is taken. Turn it off (`Set Destroy Owner On Pickup(false)`) to keep the actor: the pickup is then **depleted** (`Is Depleted`, quantity 0) and can't be picked up again; the actor decides what to do, e.g. hide itself.
+- `Can Use In Place(User)` / `Use In Place(User)` use a usable item where it lies, by the rules of `Use Stack` (section 3.2) with the user as Instigator and Target. **On Used In Place** fires after the stack is updated.
+- With **Destroy Owner On Pickup** (default) the actor is destroyed once everything is taken or used up. Turn it off (`Set Destroy Owner On Pickup(false)`) to keep the actor: the pickup is then **depleted** (`Is Depleted`, quantity 0) and can't be picked up again; the actor decides what to do, e.g. hide itself.
 - `Set Stack(Stack)` / `Get Stack` set and read the whole stack, e.g. when a dropped stack is spawned into the world.
 
 The receiver: `Receive Stack(Stack, Source)` fires **On Stack Received** (instance data included) and, for plain stacks only, **On Item Received**; `Receive Item(Item, Quantity, Source)` offers a plain stack. Handlers call `Report Taken(Quantity)`; when nobody reports, a bound listener is assumed to take everything (e.g. a quest trigger). The inventory listens to On Stack Received.

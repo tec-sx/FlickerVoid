@@ -39,7 +39,7 @@ class UFVUseItemAbility : UFVItemMontageAbility
 			UsedWorldActor = FVItemWorld::GetWorldTarget(this, Payload);
 			UsedItem = FVItemWorld::GetWorldItem(UsedWorldActor);
 
-			if (!FVItem::CanUseItem(UsedItem, Avatar))
+			if (UsedItem == nullptr || !UFVPickupComponent::Get(UsedWorldActor).CanUseInPlace(Avatar))
 			{
 				EndAbility();
 				return;
@@ -141,40 +141,12 @@ class UFVUseItemAbility : UFVItemMontageAbility
 		return UsedInstanceId.IsValid() ? Inventory.UseStack(UsedInstanceId) : Inventory.UseItem(UsedItem);
 	}
 
+	// The pickup spends a charge or a unit like Use Stack; the actor handles a used up pickup.
 	private bool UseFromWorld(AActor Avatar)
 	{
-		if (!IsValid(UsedWorldActor) || !FVItem::ApplyUseEffects(UsedItem, Avatar))
-		{
-			return false;
-		}
+		UFVPickupComponent Pickup = IsValid(UsedWorldActor) ? UFVPickupComponent::Get(UsedWorldActor) : nullptr;
 
-		AFVWorldItem WorldItem = Cast<AFVWorldItem>(UsedWorldActor);
-
-		if (WorldItem != nullptr)
-		{
-			WorldItem.ConsumeOne();
-			return true;
-		}
-
-		// Item actors other than AFVWorldItem: take one unit off the pickup and remove the actor with the last one.
-		UFVPickupComponent Pickup = UFVPickupComponent::Get(UsedWorldActor);
-
-		if (IsValid(Pickup))
-		{
-			FFVItemStack Stack = Pickup.GetStack();
-			Stack.Quantity -= 1;
-
-			if (Stack.Quantity > 0)
-			{
-				Pickup.SetStack(Stack);
-			}
-			else
-			{
-				UsedWorldActor.DestroyActor();
-			}
-		}
-
-		return true;
+		return IsValid(Pickup) && Pickup.UseInPlace(Avatar);
 	}
 
 	// The world item's mesh hides while its prop is in the hand, and comes back if units are left.
