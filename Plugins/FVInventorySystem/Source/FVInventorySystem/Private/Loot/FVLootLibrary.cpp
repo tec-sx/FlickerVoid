@@ -16,7 +16,9 @@ namespace FVLootRoll
 	{
 		FFVConditionContext Context;
 		FFVLootResult Result;
+		TArray<const UFVLootTableDefinition*, TInlineAllocator<MaxDepth>> Path;
 		bool bTooDeep = false;
+		bool bCycle = false;
 	};
 
 	void AddUnits(FFVLootResult& Result, UFVItemDefinition* Item, const int32 Quantity)
@@ -39,6 +41,13 @@ namespace FVLootRoll
 			Roll.bTooDeep = true;
 			return;
 		}
+
+		if (Roll.Path.Contains(&Table))
+		{
+			Roll.bCycle = true;
+			return;
+		}
+		Roll.Path.Push(&Table);
 
 		const int32 MinMoney = FMath::Max(0, Table.MinMoney);
 		Roll.Result.Money += FMath::RandRange(MinMoney, FMath::Max(MinMoney, Table.MaxMoney));
@@ -66,6 +75,8 @@ namespace FVLootRoll
 				AddUnits(Roll.Result, Entry.Item, Quantity);
 			}
 		}
+
+		Roll.Path.Pop();
 	}
 }
 
@@ -82,6 +93,11 @@ FFVLootResult UFVLootLibrary::RollLoot(const UFVLootTableDefinition* Table, AAct
 	if (Roll.bTooDeep)
 	{
 		UE_LOG(LogFVInventorySystem, Warning, TEXT("%s: loot tables nest more than %d deep; the deeper rolls were skipped."), *GetNameSafe(Table), FVLootRoll::MaxDepth);
+	}
+
+	if (Roll.bCycle)
+	{
+		UE_LOG(LogFVInventorySystem, Warning, TEXT("%s: a nested loot table leads back to a table already being rolled; that roll was skipped."), *GetNameSafe(Table));
 	}
 
 	return Roll.Result;

@@ -8,6 +8,7 @@
 #include "Items/FVItemEventPayload.h"
 #include "Items/FVItemLibrary.h"
 #include "Items/FVItemMessages.h"
+#include "TimerManager.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVFlowNode_GiveItem)
 
@@ -90,7 +91,13 @@ void UFVFlowNode_GiveItem::HandleGiveFinished(FGameplayTag Channel, const FFVIte
 	}
 
 	bWaiting = false;
-	TriggerOutput(Message.bSucceeded ? FVGiveItemPins::Success : FVGiveItemPins::Failed, true);
+
+	// The give ability broadcasts while it is still ending, so the next node's give could not start it yet.
+	const FName Pin = Message.bSucceeded ? FVGiveItemPins::Success : FVGiveItemPins::Failed;
+	GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, Pin]()
+	{
+		TriggerOutput(Pin, true);
+	}));
 }
 
 void UFVFlowNode_GiveItem::Cleanup()

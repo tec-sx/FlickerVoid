@@ -15,6 +15,12 @@ struct FVINVENTORYSYSTEM_API FFVCondition_HasItem : public FFVConditionBase
 {
 	GENERATED_BODY()
 
+	virtual FText GetDescription() const override;
+
+protected:
+	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+
+public:
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	TObjectPtr<UFVItemDefinition> Item;
 
@@ -23,11 +29,6 @@ struct FVINVENTORYSYSTEM_API FFVCondition_HasItem : public FFVConditionBase
 
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	bool bCheckTarget = false;
-
-	virtual FText GetDescription() const override;
-
-protected:
-	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
 };
 
 /** Instigator (or Target) holds at least Quantity units of items whose definition Tags contain the tag, e.g. a key or a tool. */
@@ -36,6 +37,12 @@ struct FVINVENTORYSYSTEM_API FFVCondition_HasItemWithTag : public FFVConditionBa
 {
 	GENERATED_BODY()
 
+	virtual FText GetDescription() const override;
+
+protected:
+	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+
+public:
 	UPROPERTY(EditAnywhere, Category = "Condition", meta = (ToolTip = "Matched against the definition Tags; children count, e.g. Key.Door matches Key.Door.Mansion."))
 	FGameplayTag Tag;
 
@@ -44,11 +51,6 @@ struct FVINVENTORYSYSTEM_API FFVCondition_HasItemWithTag : public FFVConditionBa
 
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	bool bCheckTarget = false;
-
-	virtual FText GetDescription() const override;
-
-protected:
-	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
 };
 
 /** Instigator (or Target) has at least Amount money. */
@@ -57,16 +59,17 @@ struct FVINVENTORYSYSTEM_API FFVCondition_HasMoney : public FFVConditionBase
 {
 	GENERATED_BODY()
 
+	virtual FText GetDescription() const override;
+
+protected:
+	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+
+public:
 	UPROPERTY(EditAnywhere, Category = "Condition", meta = (ClampMin = 1))
 	int32 Amount = 1;
 
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	bool bCheckTarget = false;
-
-	virtual FText GetDescription() const override;
-
-protected:
-	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
 };
 
 /** Instigator (or Target) wears the item, or anything granting the tag when Item is empty. */
@@ -75,6 +78,12 @@ struct FVINVENTORYSYSTEM_API FFVCondition_IsWearing : public FFVConditionBase
 {
 	GENERATED_BODY()
 
+	virtual FText GetDescription() const override;
+
+protected:
+	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+
+public:
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	TObjectPtr<UFVItemDefinition> Item;
 
@@ -83,11 +92,6 @@ struct FVINVENTORYSYSTEM_API FFVCondition_IsWearing : public FFVConditionBase
 
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	bool bCheckTarget = false;
-
-	virtual FText GetDescription() const override;
-
-protected:
-	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
 };
 
 /** Gives items to the Instigator (or Target), optionally equipping them. */
@@ -95,6 +99,9 @@ USTRUCT(BlueprintType, meta = (DisplayName = "Give Item"))
 struct FVINVENTORYSYSTEM_API FFVEffect_GiveItem : public FFVEffectBase
 {
 	GENERATED_BODY()
+
+	virtual void Apply(const FFVConditionContext& Context) const override;
+	virtual FText GetDescription() const override;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<UFVItemDefinition> Item;
@@ -107,9 +114,6 @@ struct FVINVENTORYSYSTEM_API FFVEffect_GiveItem : public FFVEffectBase
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	bool bGiveToTarget = false;
-
-	virtual void Apply(const FFVConditionContext& Context) const override;
-	virtual FText GetDescription() const override;
 };
 
 /** Removes items from the Instigator (or Target). */
@@ -117,6 +121,9 @@ USTRUCT(BlueprintType, meta = (DisplayName = "Take Item"))
 struct FVINVENTORYSYSTEM_API FFVEffect_TakeItem : public FFVEffectBase
 {
 	GENERATED_BODY()
+
+	virtual void Apply(const FFVConditionContext& Context) const override;
+	virtual FText GetDescription() const override;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<UFVItemDefinition> Item;
@@ -126,9 +133,6 @@ struct FVINVENTORYSYSTEM_API FFVEffect_TakeItem : public FFVEffectBase
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	bool bTakeFromTarget = false;
-
-	virtual void Apply(const FFVConditionContext& Context) const override;
-	virtual FText GetDescription() const override;
 };
 
 /** Gives money to the Instigator (or Target). */
@@ -137,14 +141,14 @@ struct FVINVENTORYSYSTEM_API FFVEffect_GiveMoney : public FFVEffectBase
 {
 	GENERATED_BODY()
 
+	virtual void Apply(const FFVConditionContext& Context) const override;
+	virtual FText GetDescription() const override;
+
 	UPROPERTY(EditAnywhere, Category = "Effect", meta = (ClampMin = 1))
 	int32 Amount = 1;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	bool bGiveToTarget = false;
-
-	virtual void Apply(const FFVConditionContext& Context) const override;
-	virtual FText GetDescription() const override;
 };
 
 /** Takes money from the Instigator (or Target); takes nothing if there isn't enough. */
@@ -153,14 +157,14 @@ struct FVINVENTORYSYSTEM_API FFVEffect_TakeMoney : public FFVEffectBase
 {
 	GENERATED_BODY()
 
+	virtual void Apply(const FFVConditionContext& Context) const override;
+	virtual FText GetDescription() const override;
+
 	UPROPERTY(EditAnywhere, Category = "Effect", meta = (ClampMin = 1))
 	int32 Amount = 1;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	bool bTakeFromTarget = false;
-
-	virtual void Apply(const FFVConditionContext& Context) const override;
-	virtual FText GetDescription() const override;
 };
 
 /** Rolls a loot table into the Instigator's (or Target's) inventory. Entry conditions see the effect's Instigator and the receiver as Target. */
@@ -169,12 +173,12 @@ struct FVINVENTORYSYSTEM_API FFVEffect_GiveLoot : public FFVEffectBase
 {
 	GENERATED_BODY()
 
+	virtual void Apply(const FFVConditionContext& Context) const override;
+	virtual FText GetDescription() const override;
+
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<UFVLootTableDefinition> Table;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	bool bGiveToTarget = false;
-
-	virtual void Apply(const FFVConditionContext& Context) const override;
-	virtual FText GetDescription() const override;
 };

@@ -210,6 +210,7 @@ private:
 	void SetStackQuantity(const FGuid& InstanceId, int32 NewQuantity);
 	bool CanRemoveFromStack(const FFVItemStack& Stack, int32 Quantity) const;
 	bool CanAcceptStack(const FFVItemStack& Stack) const;
+	int32 AddStackInParts(FFVItemStack Stack);
 	FGuid FindStackToUse(const UFVItemDefinition* Item) const;
 	void SpendUse(const FGuid& InstanceId);
 	int32 MoveStack(UFVInventoryComponent* To, const FGuid& InstanceId, int32 Quantity, bool bMarkStolen, const FGameplayTag& StolenFrom);

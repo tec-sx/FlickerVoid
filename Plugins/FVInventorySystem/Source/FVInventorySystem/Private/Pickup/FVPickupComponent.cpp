@@ -3,6 +3,7 @@
 #include "Conditions/FVConditionLibrary.h"
 #include "GameFramework/Actor.h"
 #include "FVInventorySystem.h"
+#include "Inventory/FVItemInstanceData.h"
 #include "Inventory/FVItemStackLibrary.h"
 #include "Pickup/FVItemReceiverComponent.h"
 #include "Items/FVItemDefinition.h"
@@ -87,8 +88,14 @@ bool UFVPickupComponent::TryPickup(AActor* Picker)
 		return false;
 	}
 
-	// A partial pickup leaves the rest in the world.
+	// A partial pickup leaves the rest in the world. A partly used unit is taken first, so the units left are full.
 	Quantity = FMath::Max(0, Quantity - Taken);
+	if (Quantity > 0)
+	{
+		FFVItemStack Left = GetStack();
+		Left.RemoveData<FFVItemInstance_Charges>();
+		InstanceData = Left.InstanceData;
+	}
 	OnPickedUp.Broadcast(Picker);
 
 	if (IsDepleted() && bDestroyOwnerOnPickup)

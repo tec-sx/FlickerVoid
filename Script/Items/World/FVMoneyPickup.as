@@ -32,8 +32,7 @@ class AFVMoneyPickup : AActor
 		RefreshPresence();
 	}
 
-	// Adds Amount to the collector's inventory money and removes the pickup. False if already collected or the collector has no inventory.
-	UFUNCTION()
+	UFUNCTION(meta = (ToolTip = "Adds Amount to the collector's inventory money and removes the pickup. False if already collected or the collector has no inventory."))
 	bool Collect(AActor Collector)
 	{
 		UFVInventoryComponent Inventory = Collector != nullptr ? UFVInventoryComponent::Get(Collector) : nullptr;

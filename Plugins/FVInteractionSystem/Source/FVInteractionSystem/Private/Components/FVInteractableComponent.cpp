@@ -45,18 +45,22 @@ void UFVInteractableComponent::SetDefinition(UFVInteractableDefinition* NewDefin
 	}
 
 	RuntimeOffers = Definition ? Definition->Offers : TArray<FFVInteractionOffer>();
+	RefreshDetection();
 
+	if (UFVInteractorComponent* Interactor = TargetInteractor.Get())
+	{
+		Interactor->RequestOfferRefresh();
+	}
+}
+
+void UFVInteractableComponent::RefreshDetection()
+{
 	for (UPrimitiveComponent* Primitive : DetectablePrimitives)
 	{
 		if (IsValid(Primitive))
 		{
 			Primitive->SetCollisionResponseToChannel(GetCollisionChannel(), ECR_Block);
 		}
-	}
-
-	if (UFVInteractorComponent* Interactor = TargetInteractor.Get())
-	{
-		Interactor->RequestOfferRefresh();
 	}
 }
 

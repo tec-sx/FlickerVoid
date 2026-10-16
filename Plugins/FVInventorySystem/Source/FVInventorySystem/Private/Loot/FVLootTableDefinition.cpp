@@ -9,6 +9,34 @@
 #define LOCTEXT_NAMESPACE "FVLootTableDefinition"
 
 #if WITH_EDITOR
+namespace
+{
+	bool LeadsTo(const UFVLootTableDefinition* From, const UFVLootTableDefinition* Target, TSet<const UFVLootTableDefinition*>& Visited)
+	{
+		for (const FFVLootEntry& Entry : From->Entries)
+		{
+			const UFVLootTableDefinition* Next = Entry.Table.Get();
+			if (!Next)
+			{
+				continue;
+			}
+
+			if (Next == Target)
+			{
+				return true;
+			}
+
+			bool bVisited = false;
+			Visited.Add(Next, &bVisited);
+			if (!bVisited && LeadsTo(Next, Target, Visited))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+}
+
 EDataValidationResult UFVLootTableDefinition::IsDataValid(FDataValidationContext& Context) const
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
@@ -33,9 +61,10 @@ EDataValidationResult UFVLootTableDefinition::IsDataValid(FDataValidationContext
 			Context.AddWarning(FText::Format(LOCTEXT("ItemAndTable", "Entry {0} has both an Item and a Table; only the Table is rolled."), Index));
 		}
 
-		if (Entry.Table.Get() == this)
+		TSet<const UFVLootTableDefinition*> Visited;
+		if (Entry.Table && (Entry.Table.Get() == this || LeadsTo(Entry.Table.Get(), this, Visited)))
 		{
-			Context.AddError(FText::Format(LOCTEXT("SelfTable", "Entry {0} rolls this table itself."), Index));
+			Context.AddError(FText::Format(LOCTEXT("SelfTable", "Entry {0} leads back to this table."), Index));
 			Result = EDataValidationResult::Invalid;
 		}
 

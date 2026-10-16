@@ -26,8 +26,7 @@ class AFVLootContainer : AActor
 	UPROPERTY(DefaultComponent)
 	UFVLootComponent Loot;
 
-	// Unlocks with a carried key if locked, rolls the loot once and broadcasts Message.Item.ContainerOpened (the take screen opens on it). False if it stays locked.
-	UFUNCTION()
+	UFUNCTION(meta = (ToolTip = "Unlocks with a carried key if locked, rolls the loot once and broadcasts Message.Item.ContainerOpened (the take screen opens on it). False if it stays locked."))
 	bool TryOpen(AActor Opener)
 	{
 		if (!UnlockAndFill(Opener))
@@ -44,8 +43,7 @@ class AFVLootContainer : AActor
 		return true;
 	}
 
-	// Opens without the take screen and moves everything, money included, to the taker's inventory. Owned contents get the Stolen mark and a Message.Item.Stolen per item taken. Returns the units taken.
-	UFUNCTION()
+	UFUNCTION(meta = (ToolTip = "Opens without the take screen and moves everything, money included, to the taker's inventory. Owned contents get the Stolen mark and a Message.Item.Stolen per item taken. Returns the units taken."))
 	int TakeAll(AActor Taker)
 	{
 		UFVInventoryComponent TakerInventory = Taker != nullptr ? UFVInventoryComponent::Get(Taker) : nullptr;

@@ -304,6 +304,13 @@ namespace FVItemWorld
 		Body.SetCollisionProfileName(CollisionProfile::PhysicsActor);
 		Body.SetSimulatePhysics(true);
 
+		// The profile reset every channel, including the interaction channel the item is detected on.
+		UFVInteractableComponent Interactable = UFVInteractableComponent::Get(WorldActor);
+		if (Interactable != nullptr)
+		{
+			Interactable.RefreshDetection();
+		}
+
 		return Body;
 	}
 }

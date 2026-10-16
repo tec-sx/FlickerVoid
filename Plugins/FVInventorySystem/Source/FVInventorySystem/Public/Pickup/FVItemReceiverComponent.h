@@ -23,15 +23,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Item")
 	static UE_API UFVItemReceiverComponent* FindReceiver(AActor* Actor);
 
-	/** Offers items to whoever listens and returns how many were taken. */
-	UFUNCTION(BlueprintCallable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item", meta = (ToolTip = "Offers items to whoever listens and returns how many were taken."))
 	UE_API int32 ReceiveItem(UFVItemDefinition* Item, int32 Quantity, AActor* Source);
 
 	UFUNCTION(BlueprintCallable, Category = "Item", meta = (ToolTip = "Offers a stack, instance data included, to whoever listens and returns how many units were taken."))
 	UE_API int32 ReceiveStack(const FFVItemStack& Stack, AActor* Source);
 
-	/** Called from an OnStackReceived or OnItemReceived handler to report how much of the offer it took. */
-	UFUNCTION(BlueprintCallable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item", meta = (ToolTip = "Called from an OnStackReceived or OnItemReceived handler to report how much of the offer it took."))
 	void ReportTaken(const int32 Quantity)
 	{
 		TakenQuantity += FMath::Max(Quantity, 0);

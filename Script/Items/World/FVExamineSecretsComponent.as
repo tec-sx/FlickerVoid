@@ -23,8 +23,7 @@ class UFVExamineSecretsComponent : UActorComponent
 		return Secrets.Num() > 0;
 	}
 
-	// Secrets whose clue is known.
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, meta = (ToolTip = "Secrets whose clue is known."))
 	int CountFound() const
 	{
 		int Found = 0;
@@ -40,8 +39,7 @@ class UFVExamineSecretsComponent : UActorComponent
 		return Found;
 	}
 
-	// Every secret's clue is known; secrets without a clue don't count.
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, meta = (ToolTip = "Every secret's clue is known; secrets without a clue don't count."))
 	bool AllFound() const
 	{
 		for (int Index = 0; Index < Secrets.Num(); Index++)
@@ -55,8 +53,7 @@ class UFVExamineSecretsComponent : UActorComponent
 		return true;
 	}
 
-	// Learns the clue of every unknown secret within Angle Tolerance of the view rotation. True if one was learned now.
-	UFUNCTION()
+	UFUNCTION(meta = (ToolTip = "Learns the clue of every unknown secret within Angle Tolerance of the view rotation. True if one was learned now."))
 	bool TryFind(FRotator ViewRotation)
 	{
 		bool bFoundNew = false;

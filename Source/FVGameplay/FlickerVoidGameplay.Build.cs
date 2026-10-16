@@ -36,10 +36,7 @@ public class FlickerVoidGameplay : ModuleRules
 			"DeveloperSettings",
 			"FVCoreFlow",
 			"FVStorySystem",
-			"FVSocialSystem",
-			"AIModule",
-			"ContextualAnimation",
-			"MotionWarping"
+			"FVSocialSystem"
 		});
 
 		if (Target.bBuildEditor)

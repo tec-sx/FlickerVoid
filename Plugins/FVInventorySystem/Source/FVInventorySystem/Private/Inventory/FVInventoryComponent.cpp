@@ -124,9 +124,54 @@ void UFVInventoryComponent::HandleStackReceived(const FFVItemStack& Stack, AActo
 {
 	if (UFVItemReceiverComponent* Receiver = UFVItemReceiverComponent::FindReceiver(GetOwner()))
 	{
-		const int32 Taken = Stack.InstanceData.IsEmpty() ? AddItem(Stack.Item, Stack.Quantity) : (AddStack(Stack).IsValid() ? Stack.Quantity : 0);
-		Receiver->ReportTaken(Taken);
+		Receiver->ReportTaken(AddStackInParts(Stack));
 	}
+}
+
+int32 UFVInventoryComponent::AddStackInParts(FFVItemStack Stack)
+{
+	if (!Stack.Item || Stack.Quantity <= 0)
+	{
+		return 0;
+	}
+
+	int32 Taken = 0;
+
+	// A partly used unit goes in alone and first; the units after it are full.
+	if (Stack.Quantity > 1 && Stack.FindData<FFVItemInstance_Charges>())
+	{
+		FFVItemStack Used = Stack;
+		Used.Quantity = 1;
+		if (!AddStack(Used).IsValid())
+		{
+			return 0;
+		}
+
+		Taken = 1;
+		--Stack.Quantity;
+		Stack.RemoveData<FFVItemInstance_Charges>();
+	}
+
+	if (Stack.InstanceData.IsEmpty())
+	{
+		return Taken + AddItem(Stack.Item, Stack.Quantity);
+	}
+
+	// Stacks with instance data never merge, so they go in as whole stacks of at most the item's stack size.
+	const int32 MaxPerStack = Stack.Item->MaxQuantity;
+	while (Stack.Quantity > 0)
+	{
+		FFVItemStack Part = Stack;
+		Part.Quantity = MaxPerStack <= 0 ? Stack.Quantity : FMath::Min(Stack.Quantity, MaxPerStack);
+		if (!AddStack(Part).IsValid())
+		{
+			break;
+		}
+
+		Taken += Part.Quantity;
+		Stack.Quantity -= Part.Quantity;
+	}
+	return Taken;
 }
 
 void UFVInventoryComponent::HandleEquipmentChanged(FGameplayTag Slot, UFVItemDefinition* OldItem, UFVItemDefinition* NewItem)
@@ -644,15 +689,20 @@ void UFVInventoryComponent::SpendUse(const FGuid& InstanceId)
 	}
 	else if (bCharges && Spent.Quantity > 1)
 	{
-		// A partly used unit leaves its stack and becomes an entry of its own; the units left are full.
-		FFVItemStack* Rest = FindMutableStack(InstanceId);
-		Rest->RemoveData<FFVItemInstance_Charges>();
-		SetStackQuantity(InstanceId, Rest->Quantity - 1);
+		// The partly used unit keeps the stack's id, so equipment and callers holding the id go on draining it;
+		// the full units left become a stack of their own.
+		FFVItemStack Full = Spent;
+		Full.RemoveData<FFVItemInstance_Charges>();
+		Full.InstanceId = FGuid::NewGuid();
+		Full.Quantity = Spent.Quantity - 1;
 
-		Spent.InstanceId = FGuid::NewGuid();
-		Spent.Quantity = 1;
-		Items.Add(Spent);
-		OnStackChanged.Broadcast(Spent.InstanceId);
+		FFVItemStack* Used = FindMutableStack(InstanceId);
+		Used->InstanceData = Spent.InstanceData;
+		Used->Quantity = 1;
+
+		Items.Add(Full);
+		OnStackChanged.Broadcast(InstanceId);
+		OnStackChanged.Broadcast(Full.InstanceId);
 		OnCapacityChanged.Broadcast();
 		return;
 	}

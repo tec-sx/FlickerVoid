@@ -35,22 +35,19 @@ class AFVReadable : AActor
 		RefreshPresence();
 	}
 
-	// Unsolved and some of its secrets aren't found yet: only investigating it helps.
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, meta = (ToolTip = "Unsolved and some of its secrets aren't found yet: only investigating it helps."))
 	bool NeedsInvestigation() const
 	{
 		return !IsSolved() && Secrets.HasSecrets() && !Secrets.AllFound();
 	}
 
-	// Its knowledge is known.
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, meta = (ToolTip = "Its knowledge is known."))
 	bool IsSolved() const
 	{
 		return Knowledge != nullptr && FVKnowledge::Knows(Knowledge);
 	}
 
-	// Learns the knowledge and broadcasts Message.Item.Read (the reader screen opens on it).
-	UFUNCTION()
+	UFUNCTION(meta = (ToolTip = "Learns the knowledge and broadcasts Message.Item.Read (the reader screen opens on it)."))
 	void MarkRead(AActor Reader)
 	{
 		if (Knowledge != nullptr)
