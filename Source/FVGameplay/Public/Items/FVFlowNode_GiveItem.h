@@ -37,6 +37,10 @@ public:
 	virtual EDataValidationResult ValidateNode() override;
 #endif
 
+private:
+	void HandleGiveFinished(FGameplayTag Channel, const FFVItemGiveMessage& Message);
+
+public:
 	UPROPERTY(EditAnywhere, Category = "Give")
 	EFVGiveDirection Direction = EFVGiveDirection::PlayerGives;
 
@@ -53,8 +57,6 @@ public:
 	bool bAsGift = false;
 
 private:
-	void HandleGiveFinished(FGameplayTag Channel, const FFVItemGiveMessage& Message);
-
 	FGameplayMessageListenerHandle ListenerHandle;
 	TWeakObjectPtr<AActor> Giver;
 	TWeakObjectPtr<AActor> Receiver;

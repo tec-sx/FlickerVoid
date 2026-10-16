@@ -6,7 +6,7 @@ class UFVHeldItemComponent : UActorComponent
 	private AActor LeftActor;
 	private UStaticMeshComponent RightProp;
 	private UStaticMeshComponent LeftProp;
-	private bool bPutAway = false;
+	private int BusyCount = 0;
 
 	UFUNCTION(BlueprintOverride)
 	void BeginPlay()
@@ -35,21 +35,21 @@ class UFVHeldItemComponent : UActorComponent
 	UFUNCTION(meta = (ToolTip = "Hides the held items and clears the hold poses while an action needs both hands."))
 	void PutAway()
 	{
-		bPutAway = true;
+		BusyCount++;
 		RefreshPresentation();
 	}
 
 	UFUNCTION(meta = (ToolTip = "Shows the held items again after Put Away."))
 	void TakeOut()
 	{
-		bPutAway = false;
+		BusyCount = Math::Max(0, BusyCount - 1);
 		RefreshPresentation();
 	}
 
 	UFUNCTION(meta = (ToolTip = "Uses the item held in that hand: its held actor's Held Item Behaviour component, else Event.Item.Use for a usable item. False if nothing happened."))
 	bool UseHeld(bool bRightHand)
 	{
-		if (!IsValid(Equipment) || bPutAway)
+		if (!IsValid(Equipment) || BusyCount > 0)
 		{
 			return false;
 		}
@@ -157,13 +157,6 @@ class UFVHeldItemComponent : UActorComponent
 		FinishSpawningActor(HeldActor);
 		HeldActor.SetActorEnableCollision(false);
 
-		UFVInteractableComponent Offers = UFVInteractableComponent::Get(HeldActor);
-
-		if (IsValid(Offers))
-		{
-			Offers.DeactivateInteractions();
-		}
-
 		USceneComponent Root = HeldActor.RootComponent;
 		UPrimitiveComponent Body = Cast<UPrimitiveComponent>(Root);
 
@@ -231,18 +224,18 @@ class UFVHeldItemComponent : UActorComponent
 	{
 		if (IsValid(HeldActor))
 		{
-			HeldActor.SetActorHiddenInGame(bPutAway);
+			HeldActor.SetActorHiddenInGame(BusyCount > 0);
 		}
 
 		if (IsValid(Prop))
 		{
-			Prop.SetVisibility(!bPutAway);
+			Prop.SetVisibility(BusyCount == 0);
 		}
 	}
 
 	private UAnimSequenceBase FindHoldPose(bool bRightHand)
 	{
-		if (bPutAway || !IsValid(Equipment))
+		if (BusyCount > 0 || !IsValid(Equipment))
 		{
 			return nullptr;
 		}

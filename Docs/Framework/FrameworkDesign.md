@@ -68,7 +68,7 @@ UFVDefinition (Id tag, Display, Tags)                        FVFramework
  ├─ UFVCheckDefinition      { Attribute, Roll, Modifiers<Conditions> }  FVAttributeSystem
  ├─ UFVItemDefinition       { Weight, GridSize, MaxQuantity } + Fragments<FFVItemFragment>  FVInventorySystem
  │     FFVItemFragment_Equippable { Slots, BlockedSlots, GrantedTags }
- │     FFVItemFragment_Usable     { Effects, bConsume }
+ │     FFVItemFragment_Usable     { UseConditions, Effects, bConsumeOnUse }
  │     FFVItemFragment_Container  { Cells, WeightBonus }
  │     FFVItemFragment_Charges    { Charges }
  │     FFVItemFragment_Value      { BasePrice, bSellable }

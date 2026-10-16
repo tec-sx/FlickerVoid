@@ -60,7 +60,7 @@ All four are AngelScript actors in `Script/Items/World`. Place them directly, or
 | `AFVMoneyPickup` | **Amount**, **Pickup Sound** | The pickup ability calls `Collect(Collector)`: adds Amount to the collector's money |
 | `AFVLootContainer` | **Storage** (inventory: starting items and money; Apply Carry Limits off), **Loot** (table, **Owner Tag**), **Interaction Point** (where the hand reaches; motion warping target). Add an **FV Lock Component** on the instance or a Blueprint for a lock | `Try Open(Opener)`: unlocks with a carried key if locked, rolls the loot once, broadcasts `Message.Item.ContainerOpened`. `Take All(Taker)`: moves items and money to the taker; with an Owner Tag they get the Stolen mark and a `Message.Item.Stolen` per item |
 
-Dropped and thrown items are spawned with `FVItem::SpawnWorldItem(Stack, Transform)`: the World fragment's Actor Class, else the settings' **World Item Class**, with the stack on its pickup component (instance data such as a Stolen mark kept).
+Dropped and thrown items are spawned with `FVItem::SpawnWorldItem(Stack, Transform)`: the World fragment's Actor Class, else the settings' **World Item Class**, with the stack on its pickup component (instance data such as a Stolen mark kept). Dropped and thrown items get no Save Id, so they aren't saved and are gone after a load (known limitation).
 
 ## 5. Interactable definitions and offers
 
@@ -212,7 +212,7 @@ Script effects for dialogue and offers (*Script* effect, Instigator = the custom
 | Default Hold Poses | Hold poses by style for characters without an entry |
 | Pickup Low Height / Pickup High Height | Item height above the feet below which Pickup.Low and above which Pickup.High is used (default 40 and 140 cm) |
 
-Script reads them with `FVItem::GetSettings()`.
+Script reads them with `FVItem::GetSettings()`. The Items settings have no toolbar or menu shortcut; open them from Project Settings.
 
 ## 14. Pickpocketing
 
@@ -293,7 +293,7 @@ These scripts were removed; Blueprints that use them no longer compile:
 | `Script/World/Items/InteractionResponse_Consume.as` | `UInteractableResponseComponent_Consume` | A Use offer (`Event.Item.Use`) |
 | `Script/Interaction/Requirements/FVItemRequirement.as` | `UFVItemRequirement` (already commented out) | *Has Item* / *Has Item With Tag* conditions |
 
-Check every Blueprint deriving from `AItem`, `ARigidItem` or `ABeverageItem`, or holding a `UInteractableResponseComponent_Consume`, and reparent or rebuild it. `UFVPickupAbility` moved to `Script/Items/Abilities` with its name unchanged. `UFVExamineAbility` lost **Secret View Angles**, **Secret Knowledge** and **Secret Angle Tolerance**: move such data into a Secrets component on the examined actor.
+Check every Blueprint deriving from `AItem`, `ARigidItem` or `ABeverageItem`, or holding a `UInteractableResponseComponent_Consume`, and reparent or rebuild it. `UFVPickupAbility` moved to `Script/Items/Abilities` with its name unchanged. `UFVExamineAbility` lost **Secret View Angles**, **Secret Knowledge** and **Secret Angle Tolerance**: move such data into a Secrets component on the examined actor. **On Toggle Blocked** (`UFVInteractableResponseComponent_Toggle`) gained an Interactor parameter: open and refresh every Blueprint that overrides it.
 
 ## 20. Not in this work
 

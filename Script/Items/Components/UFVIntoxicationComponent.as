@@ -28,8 +28,7 @@ class UFVIntoxicationComponent : UActorComponent
 	UFUNCTION(BlueprintOverride)
 	void BeginPlay()
 	{
-		// Check: UFVAttributeComponent declares its own static UFUNCTION Get(const AActor); either binding returns the owner's component.
-		Attributes = UFVAttributeComponent::Get(GetOwner());
+		Attributes = Cast<UFVAttributeComponent>(GetOwner().GetComponentByClass(UFVAttributeComponent));
 
 		if (!IsValid(Attributes) || Intoxication == nullptr)
 		{
