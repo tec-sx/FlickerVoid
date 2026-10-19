@@ -2,6 +2,7 @@
 
 #include "FVInventoryTags.h"
 #include "Items/FVItemFragments.h"
+#include "Engine/StaticMesh.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -25,6 +26,12 @@ FGameplayTagContainer UFVItemDefinition::GetEquipmentSlots() const
 {
 	const FFVItemFragment_Equippable* Equippable = FindFragment<FFVItemFragment_Equippable>();
 	return Equippable ? Equippable->Slots : FGameplayTagContainer();
+}
+
+UStaticMesh* UFVItemDefinition::LoadWorldMesh() const
+{
+	const FFVItemFragment_Pickup* Pickup = FindFragment<FFVItemFragment_Pickup>();
+	return Pickup ? Pickup->WorldMesh.LoadSynchronous() : nullptr;
 }
 
 void UFVItemDefinition::PostLoad()

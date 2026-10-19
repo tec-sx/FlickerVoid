@@ -5,6 +5,8 @@
 #include "Data/FVFragment.h"
 #include "FVItemDefinition.generated.h"
 
+class UStaticMesh;
+
 /** Base for item fragments (equippable, usable, ...). */
 USTRUCT(BlueprintType, meta = (Hidden))
 struct FVINVENTORYSYSTEM_API FFVItemFragment : public FFVFragment
@@ -33,6 +35,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Item", meta = (ToolTip = "Slots the item can be worn in (any one of them); empty if not equippable."))
 	FGameplayTagContainer GetEquipmentSlots() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Item", meta = (ToolTip = "Loads the World Mesh from the Pickup fragment; null if the item has none."))
+	UStaticMesh* LoadWorldMesh() const;
 
 	virtual void PostLoad() override;
 

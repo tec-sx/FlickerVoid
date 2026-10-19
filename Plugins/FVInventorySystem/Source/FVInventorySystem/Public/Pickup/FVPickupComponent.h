@@ -8,6 +8,7 @@
 class UFVItemDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnPickedUp, AActor*, Picker);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFVOnPickupItemChanged);
 
 /** Makes the owning actor collectable into the picker's UFVItemReceiverComponent. */
 UCLASS(MinimalAPI, ClassGroup=(FV), meta=(BlueprintSpawnableComponent))
@@ -30,8 +31,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Pickup")
 	int32 GetQuantity() const { return Quantity; }
 
+	UFUNCTION(BlueprintCallable, Category = "Pickup", meta = (ToolTip = "Changes what the pickup holds, e.g. on an actor spawned for a dropped item."))
+	UE_API void SetItem(UFVItemDefinition* InItem, int32 InQuantity = 1);
+
 	UPROPERTY(BlueprintAssignable, Category = "Pickup")
 	FFVOnPickedUp OnPickedUp;
+
+	UPROPERTY(BlueprintAssignable, Category = "Pickup")
+	FFVOnPickupItemChanged OnItemChanged;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup")
