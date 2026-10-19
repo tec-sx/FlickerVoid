@@ -7,6 +7,7 @@
 #include "Data/FVInteractableDefinition.h"
 #include "FVInteractionSystem.h"
 #include "FVInteractionSystemSettings.h"
+#include "Relevance/FVRelevanceComponent.h"
 #include "Subsystems/FVInteractionRegistrySubsystem.h"
 
 #if WITH_EDITOR
@@ -109,6 +110,13 @@ void UFVInteractableComponent::BeginPlay()
 	{
 		Registry->Register(this);
 	}
+
+	Relevance = UFVRelevanceComponent::FindOrAdd(GetOwner(), FVInteractionGameplayTags::Relevance_Interactable);
+	if (IsValid(Relevance))
+	{
+		Relevance->OnBandChanged.AddDynamic(this, &UFVInteractableComponent::HandleRelevanceBandChanged);
+		HandleRelevanceBandChanged(Relevance->GetBand(), EFVRelevanceBand::Far);
+	}
 }
 
 void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -117,6 +125,11 @@ void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		World->GetTimerManager().ClearTimer(Timer_Cooldown);
 
+		if (IsValid(Relevance))
+		{
+			Relevance->OnBandChanged.RemoveDynamic(this, &UFVInteractableComponent::HandleRelevanceBandChanged);
+		}
+
 		if (IsValid(Registry))
 		{
 			Registry->Unregister(this);
@@ -124,6 +137,14 @@ void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void UFVInteractableComponent::HandleRelevanceBandChanged(const EFVRelevanceBand NewBand, EFVRelevanceBand)
+{
+	if (IsValid(Registry))
+	{
+		Registry->SetInRange(this, NewBand == EFVRelevanceBand::Near);
+	}
 }
 
 bool UFVInteractableComponent::IsTransitionAllowed(EFVInteractableState From, EFVInteractableState To)

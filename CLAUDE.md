@@ -19,7 +19,7 @@ Much older code in `Source/` is experimental or obsolete; don't assume it should
 
 | Plugin | Purpose |
 |---|---|
-| FVFramework | Core: `UFVDefinition`, fragments, facts DB, conditions/effects, identity, Flow nodes, debug HUD base (FVCoreDebug), editor helpers (FVCoreEditor) |
+| FVFramework | Core: `UFVDefinition`, fragments, facts DB, conditions/effects, identity, relevance (distance bands on the Significance Manager), Flow nodes, debug HUD base (FVCoreDebug), editor helpers (FVCoreEditor) |
 | FVAttributeSystem | Data-defined attributes, modifiers, checks |
 | FVInventorySystem | Items, weight + grid limits, granular outfit slots, pickup |
 | FVDialogueSystem | Dialogue on FlowGraph |

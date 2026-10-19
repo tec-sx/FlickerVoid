@@ -94,7 +94,8 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | `UFVDialogueParticipantComponent` | Dialogue | speakers: events for lines (anim, lip sync, barks) |
 | `UFVAttributeComponent` | Attributes | any character with attributes |
 | `UFVScannerComponent` | FVGameplay | player |
-| `UFVScannableComponent` | FVGameplay | anything scannable (needs an interactable component too) |
+| `UFVScannableComponent` | FVGameplay | anything scannable; in range while in the Near band of `Relevance.ScanTarget` |
+| `UFVRelevanceComponent` | FVFramework | anything a system switches on and off by distance; added by systems with `FindOrAdd`, one per relevance group |
 | `UFVMapMarkerComponent` | Navigation | anything shown on the map, minimap or compass (shops, quest givers, points of interest) |
 | `UFVNavigatorComponent` | Navigation | player pawn: active map, discovery, minimap/compass/world map views |
 | `AFVMapCaptureActor` | Navigation | editor-only camera placed over an area to capture a map layer image |

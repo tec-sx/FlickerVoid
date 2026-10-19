@@ -2,17 +2,19 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Relevance/FVRelevanceSettings.h"
 #include "Scanner/FVScanDefinition.h"
 #include "FVScannableComponent.generated.h"
 
 class UPrimitiveComponent;
+class UFVRelevanceComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScanRevealChanged, bool, bRevealed);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScanned, AActor*, Scanner);
 
 /**
- * Makes the owner show up in scan mode and reveal its scan definition when scanned. The owner also
- * needs an interactable component, since the scanner finds its targets through the interaction registry.
+ * Makes the owner show up in scan mode and reveal its scan definition when scanned. It is in scan range
+ * while in the Near band of the Relevance.ScanTarget group.
  */
 UCLASS(ClassGroup = (FV), meta = (BlueprintSpawnableComponent))
 class FLICKERVOIDGAMEPLAY_API UFVScannableComponent : public UActorComponent
@@ -57,6 +59,7 @@ public:
 	FFVOnScanned OnScanned;
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scanner")
@@ -66,12 +69,18 @@ protected:
 	bool bScanned = false;
 
 private:
+	UFUNCTION()
+	void HandleRelevanceBandChanged(EFVRelevanceBand NewBand, EFVRelevanceBand OldBand);
+
 	struct FPrimitiveState
 	{
 		TWeakObjectPtr<UPrimitiveComponent> Primitive;
 		bool bRenderCustomDepth = false;
 		int32 Stencil = 0;
 	};
+
+	UPROPERTY(Transient)
+	TObjectPtr<UFVRelevanceComponent> Relevance;
 
 	TArray<FPrimitiveState> SavedStates;
 	bool bRevealed = false;

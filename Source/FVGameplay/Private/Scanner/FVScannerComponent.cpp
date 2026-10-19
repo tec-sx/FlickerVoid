@@ -120,7 +120,7 @@ void UFVScannerComponent::UpdateTargets()
 	TArray<TWeakObjectPtr<UFVScannableComponent>> NowRevealed;
 
 	TArray<UFVScannableComponent*> Candidates;
-	Subsystem->CollectScannables(ViewLocation, Range, Candidates);
+	Subsystem->CollectScannables(Candidates);
 
 	for (UFVScannableComponent* Scannable : Candidates)
 	{

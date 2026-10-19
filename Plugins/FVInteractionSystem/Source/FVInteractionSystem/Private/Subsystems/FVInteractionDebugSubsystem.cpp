@@ -5,6 +5,8 @@
 
 #include "Components/FVInteractorComponent.h"
 #include "Components/FVInteractableComponent.h"
+#include "Core/FVInteractionGameplayTags.h"
+#include "Relevance/FVRelevanceSettings.h"
 #include "Subsystems/FVInteractionRegistrySubsystem.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
@@ -108,8 +110,7 @@ void UFVInteractionDebugSubsystem::Unregister()
 void UFVInteractionDebugSubsystem::VisualizeRange(
 	const UWorld* World, 
 	const UFVInteractorComponent* Interactor, 
-	const float Radius, 
-	TArray<TObjectPtr<UFVInteractableComponent>>& ActiveInteractables,
+	const TArray<TObjectPtr<UFVInteractableComponent>>& ActiveInteractables,
 	const float Interval)
 {
 	const int32 DrawLevel = CVarInteractionDebugDraw.GetValueOnGameThread();
@@ -117,8 +118,11 @@ void UFVInteractionDebugSubsystem::VisualizeRange(
 	{
 		return;
 	}
-	
-	DrawDebugCircle(World, Interactor->GetOwner()->GetActorLocation(), Radius, 64, FColor(0, 128, 255), false, Interval, 0, 0.5f, FVector::ForwardVector, FVector::RightVector, false);
+
+	if (const FFVRelevanceGroup* Group = UFVRelevanceSettings::Get().FindGroup(FVInteractionGameplayTags::Relevance_Interactable))
+	{
+		DrawDebugCircle(World, Interactor->GetOwner()->GetActorLocation(), Group->NearDistance, 64, FColor(0, 128, 255), false, Interval, 0, 0.5f, FVector::ForwardVector, FVector::RightVector, false);
+	}
 	
 	if (DrawLevel < 2)
 	{

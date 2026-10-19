@@ -2,6 +2,8 @@
 
 #include "Components/PrimitiveComponent.h"
 #include "Conditions/FVConditionLibrary.h"
+#include "FVGameplayTags.h"
+#include "Relevance/FVRelevanceComponent.h"
 #include "Scanner/FVScannerSubsystem.h"
 #include "GameFramework/Actor.h"
 
@@ -12,10 +14,40 @@ UFVScannableComponent::UFVScannableComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+void UFVScannableComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	Relevance = UFVRelevanceComponent::FindOrAdd(GetOwner(), FVGameplayTags::Relevance_ScanTarget);
+	if (IsValid(Relevance))
+	{
+		Relevance->OnBandChanged.AddDynamic(this, &UFVScannableComponent::HandleRelevanceBandChanged);
+		HandleRelevanceBandChanged(Relevance->GetBand(), EFVRelevanceBand::Far);
+	}
+}
+
 void UFVScannableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (IsValid(Relevance))
+	{
+		Relevance->OnBandChanged.RemoveDynamic(this, &UFVScannableComponent::HandleRelevanceBandChanged);
+	}
+
+	if (UFVScannerSubsystem* Subsystem = UFVScannerSubsystem::Get(this))
+	{
+		Subsystem->SetInRange(this, false);
+	}
+
 	SetRevealed(false);
 	Super::EndPlay(EndPlayReason);
+}
+
+void UFVScannableComponent::HandleRelevanceBandChanged(const EFVRelevanceBand NewBand, EFVRelevanceBand)
+{
+	if (UFVScannerSubsystem* Subsystem = UFVScannerSubsystem::Get(this))
+	{
+		Subsystem->SetInRange(this, NewBand == EFVRelevanceBand::Near);
+	}
 }
 
 bool UFVScannableComponent::CanBeScannedBy(AActor* Scanner) const

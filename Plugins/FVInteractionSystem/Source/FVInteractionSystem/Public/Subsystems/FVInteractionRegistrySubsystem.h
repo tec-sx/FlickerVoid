@@ -11,8 +11,12 @@ class UFVInteractionDebugSubsystem;
 class UFVInteractableComponent;
 class UFVInteractorComponent;
 
+/**
+ * Tracks interactables and the player interactor. Interactables report entering and leaving the Near band
+ * of the Relevance.Interactable group; those in range are awake while an interactor is registered.
+ */
 UCLASS(MinimalAPI, NotBlueprintable)
-class UFVInteractionRegistrySubsystem final : public UTickableWorldSubsystem
+class UFVInteractionRegistrySubsystem final : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
@@ -20,33 +24,28 @@ public:
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
-	virtual void Tick(float DeltaTime) override;
-	virtual TStatId GetStatId() const override;
 
 	UE_API const TArray<TObjectPtr<UFVInteractableComponent>>& GetAllInteractables() const { return RegisteredInteractables; }
-	UE_API const TArray<TObjectPtr<UFVInteractableComponent>>& GetActiveInteractables() const { return ActiveInteractables; }
-	
+
+	/** Interactables in range while an interactor is registered; empty otherwise. */
+	UE_API const TArray<TObjectPtr<UFVInteractableComponent>>& GetActiveInteractables() const;
+
 	void Register(UFVInteractableComponent* Interactable);
 	void Unregister(UFVInteractableComponent* Interactable);
+	void SetInRange(UFVInteractableComponent* Interactable, bool bInRange);
 	void RegisterInteractor(UFVInteractorComponent* InInteractor);
 	void UnregisterInteractor();
-	
-	
-private:
-	void Update();
 
+private:
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UFVInteractorComponent> InteractorPtr;
 
 	UPROPERTY(Transient)
-	TArray<TObjectPtr<UFVInteractableComponent>> ActiveInteractables;
-	
+	TArray<TObjectPtr<UFVInteractableComponent>> InRangeInteractables;
+
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UFVInteractableComponent>> RegisteredInteractables;
-	
-	float TickInterval = 0.01f;
-	float TimeSinceLastTick = 0.f;
-	
+
 #if !UE_BUILD_SHIPPING
 	TWeakObjectPtr<UFVInteractionDebugSubsystem> DebugSubsystem;
 #endif

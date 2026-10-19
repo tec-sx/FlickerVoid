@@ -3,7 +3,7 @@
  "Version": 1,
  "VersionName": "1.0",
  "FriendlyName": "FVFramework",
- "Description": "FlickerVoid framework core: definitions, fragments, identity, conditions, effects, facts, input, world clock, cinematics, StateTree and Flow nodes, saveable component, easing.",
+ "Description": "FlickerVoid framework core: definitions, fragments, identity, conditions, effects, facts, input, world clock, cinematics, relevance, StateTree and Flow nodes, saveable component, easing.",
  "Category": "FlickerVoid",
  "CreatedBy": "TecSX",
  "CreatedByURL": "",
@@ -32,6 +32,10 @@
   },
   {
    "Name": "Flow",
+   "Enabled": true
+  },
+  {
+   "Name": "SignificanceManager",
    "Enabled": true
   }
  ],

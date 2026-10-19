@@ -114,6 +114,13 @@ void UFVInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		const bool bHasInteractablesInRange = IsValid(Registry) && !Registry->GetActiveInteractables().IsEmpty();
 		SetState(bHasInteractablesInRange ? EFVInteractorState::Awake : EFVInteractorState::Idle);
 	}
+
+#if !UE_BUILD_SHIPPING
+	if (DebugSubsystem.IsValid() && IsValid(Registry))
+	{
+		UFVInteractionDebugSubsystem::VisualizeRange(GetWorld(), this, Registry->GetActiveInteractables(), ActiveDetection.TickInterval);
+	}
+#endif
 	
 	if (State != EFVInteractorState::Awake)
 	{

@@ -1,8 +1,6 @@
 #include "Scanner/FVScannerSubsystem.h"
 
-#include "Components/FVInteractableComponent.h"
 #include "Scanner/FVScannableComponent.h"
-#include "Subsystems/FVInteractionRegistrySubsystem.h"
 
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -29,22 +27,23 @@ void UFVScannerSubsystem::SetScanModeActive(const bool bActive)
 	OnScanModeChanged.Broadcast(bActive);
 }
 
-void UFVScannerSubsystem::CollectScannables(const FVector& Origin, const float Range, TArray<UFVScannableComponent*>& OutScannables) const
+void UFVScannerSubsystem::SetInRange(UFVScannableComponent* Scannable, const bool bInRange)
 {
-	const UFVInteractionRegistrySubsystem* Registry = GetWorld() != nullptr ? GetWorld()->GetSubsystem<UFVInteractionRegistrySubsystem>() : nullptr;
-	if (Registry == nullptr)
+	if (bInRange)
 	{
-		return;
+		InRange.AddUnique(Scannable);
 	}
-
-	const float RangeSquared = FMath::Square(Range);
-
-	for (const TObjectPtr<UFVInteractableComponent>& Interactable : Registry->GetAllInteractables())
+	else
 	{
-		const AActor* Owner = Interactable != nullptr ? Interactable->GetOwner() : nullptr;
-		UFVScannableComponent* Scannable = Owner != nullptr ? Owner->FindComponentByClass<UFVScannableComponent>() : nullptr;
+		InRange.RemoveSingleSwap(Scannable, EAllowShrinking::No);
+	}
+}
 
-		if (Scannable != nullptr && FVector::DistSquared(Scannable->GetScanLocation(), Origin) <= RangeSquared)
+void UFVScannerSubsystem::CollectScannables(TArray<UFVScannableComponent*>& OutScannables) const
+{
+	for (UFVScannableComponent* Scannable : InRange)
+	{
+		if (IsValid(Scannable))
 		{
 			OutScannables.Add(Scannable);
 		}

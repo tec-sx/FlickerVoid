@@ -37,7 +37,7 @@ namespace FVInteractionGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Secondary, "InputTag.Interaction.Secondary", "Secondary interaction input slot.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Alternate, "InputTag.Interaction.Alternate", "Alternate interaction input slot.");
 
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_State_Idle, "Interaction.State.Idle", "Interactable is out of range of every interactor.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_State_Idle, "Interaction.State.Idle", "Interactable is outside the Near band of the interactable relevance group.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_State_Awake, "Interaction.State.Awake", "Interactable is in range and can react.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_State_Suppressed, "Interaction.State.Suppressed", "Interactable is deliberately blocked.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_State_Interacting, "Interaction.State.Interacting", "Interactable is currently in use.");
@@ -49,6 +49,8 @@ namespace FVInteractionGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Suppression_Menu, "Interaction.Suppression.Menu", "Suppressed while a menu is open.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Suppression_Vehicle, "Interaction.Suppression.Vehicle", "Suppressed while driving or riding.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Suppression_Dependency, "Interaction.Suppression.Dependency", "Suppressed by another interaction holding a dependency.");
+
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Relevance_Interactable, "Relevance.Interactable", "Relevance group of interactables; its Near band is where they wake up.");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Tag_Player, "Interactor.Tag.Player", "Interactor driven by a human player.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Mode, "Interactor.Mode", "Root for interactor detection modes.");
