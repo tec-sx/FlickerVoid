@@ -23,7 +23,7 @@ TOptional<FUIInputConfig> UFVActivatableWidget::GetDesiredInputConfig() const
 	}
 }
 
-void UFVActivatableWidget::BindInputAction(UInputAction* Action)
+void UFVActivatableWidget::BindInputAction(UInputAction* Action, const bool bShowInActionBar)
 {
 	if (!Action || BoundActions.Contains(Action))
 	{
@@ -31,7 +31,9 @@ void UFVActivatableWidget::BindInputAction(UInputAction* Action)
 	}
 
 	BoundActions.Add(Action);
-	RegisterUIActionBinding(FBindUIActionArgs(Action, false, FSimpleDelegate::CreateUObject(this, &ThisClass::HandleBoundAction, Action)));
+	FBindUIActionArgs Args(Action, bShowInActionBar, FSimpleDelegate::CreateUObject(this, &ThisClass::HandleBoundAction, Action));
+	Args.OverrideDisplayName = Action->ActionDescription;
+	RegisterUIActionBinding(Args);
 }
 
 void UFVActivatableWidget::NativeOnActivated()

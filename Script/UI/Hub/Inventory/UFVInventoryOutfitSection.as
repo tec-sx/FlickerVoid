@@ -46,7 +46,7 @@ class UFVInventoryOutfitSection : UFVHubSectionWidget
             {
                 Labels.Add(Group.Label);
             }
-            GroupTabs.OnTabSelected.AddUFunction(this, n"HandleGroupSelected");
+            GroupTabs.OnTabIndexSelected.AddUFunction(this, n"HandleGroupSelected");
             GroupTabs.SetTabs(Labels);
             GroupTabs.SelectTab(0);
         }

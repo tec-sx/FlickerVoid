@@ -1,9 +1,10 @@
 event void FFVOnTabChanged(int Index, UWidget Content);
 
-// Tabs over content laid out by hand where the tab view is placed: put a Widget Switcher in its TabContent slot (a Common
-// Animated Switcher animates the change) and lay the tabs out as its children, in order. Builds TabBar from Tab Labels,
-// or from the children's Page Title or Section Title, keeps the bar and the switcher in step and reports On Tab Changed.
-// Works in any layout (the hub, a page, the options screen); owners call Select Next / Select Previous from their input.
+// Tabs over content laid out by hand where the tab view is placed: put a Common Animated Switcher in its TabContent slot
+// and lay the tabs out as its children, in order. Builds TabBar (a CommonUI tab list) from Tab Labels, or from the
+// children's Page Title or Section Title, links it to the switcher and reports On Tab Changed. Starts on the child the
+// switcher shows in the designer. Works in any layout (the hub, a page, the options screen); owners call Select Next /
+// Select Previous from their input.
 UCLASS(Abstract)
 class UFVTabViewWidget : UUserWidget
 {
@@ -19,19 +20,20 @@ class UFVTabViewWidget : UUserWidget
     UPROPERTY()
     FFVOnTabChanged OnTabChanged;
 
-    private UWidgetSwitcher Switcher;
+    private UCommonAnimatedSwitcher Switcher;
     private TArray<UWidget> Contents;
 
     UFUNCTION(BlueprintOverride)
     void OnInitialized()
     {
-        Switcher = Cast<UWidgetSwitcher>(TabContent.GetContent());
+        Switcher = Cast<UCommonAnimatedSwitcher>(TabContent.GetContent());
         if (Switcher == nullptr)
         {
-            Print(f"{GetName()}: put a Widget Switcher in the Tab Content slot.");
+            Print(f"{GetName()}: put a Common Animated Switcher in the Tab Content slot.");
             return;
         }
 
+        int StartIndex = Switcher.GetActiveWidgetIndex();
         TArray<FText> Labels;
         for (int i = 0; i < Switcher.GetChildrenCount(); i++)
         {
@@ -45,18 +47,10 @@ class UFVTabViewWidget : UUserWidget
             Print(f"{GetName()}: {Contents.Num()} tabs; keep it to 3 or fewer.");
         }
 
-        TabBar.OnTabSelected.AddUFunction(this, n"HandleTabSelected");
-        TabBar.SetTabs(Labels);
-    }
-
-    // Starts on the child the switcher shows in the designer.
-    UFUNCTION(BlueprintOverride)
-    void Construct()
-    {
-        if (Switcher != nullptr && GetSelectedIndex() < 0)
-        {
-            SelectTab(Switcher.GetActiveWidgetIndex());
-        }
+        TabBar.OnTabIndexSelected.AddUFunction(this, n"HandleTabSelected");
+        TabBar.SetContentTabs(Labels, Switcher, Contents);
+        // Before the switcher is on screen, so the first tab shows without a transition.
+        TabBar.SelectTab(StartIndex);
     }
 
     UFUNCTION(BlueprintCallable, Category = "FV|UI")
@@ -110,12 +104,12 @@ class UFVTabViewWidget : UUserWidget
         return -1;
     }
 
+    // The linked switcher has already shown the tab's content.
     UFUNCTION()
     private void HandleTabSelected(int Index)
     {
-        if (Switcher != nullptr && Contents.IsValidIndex(Index))
+        if (Contents.IsValidIndex(Index))
         {
-            Switcher.SetActiveWidgetIndex(Index);
             OnTabChanged.Broadcast(Index, Contents[Index]);
         }
     }

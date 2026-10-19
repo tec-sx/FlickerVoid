@@ -1,59 +1,23 @@
-event void FFVOnTabClicked(int Index);
-event void FFVOnTabSelected(int Index);
+event void FFVOnTabIndexSelected(int Index);
 
-// One tab of a UFVTabBarWidget. Style the selected state in OnSelectedChanged.
+// One tab of a UFVTabBarWidget. A Common Button: its Common Button Style gives the selected, hovered and disabled looks,
+// and gamepad focus moves between tabs like any Common Button.
 UCLASS(Abstract)
-class UFVTabButtonWidget : UUserWidget
+class UFVTabButtonWidget : UCommonButtonBase
 {
-    UPROPERTY(BindWidget)
-    UButton TabButton;
-
     UPROPERTY(BindWidget)
     UTextBlock LabelText;
 
-    UPROPERTY()
-    FFVOnTabClicked OnTabClicked;
-
-    private int TabIndex = -1;
-    private bool bSelected = false;
-
-    UFUNCTION(BlueprintOverride)
-    void OnInitialized()
-    {
-        TabButton.OnClicked.AddUFunction(this, n"HandleClicked");
-    }
-
-    void Setup(FText Label, int Index)
+    void SetLabel(FText Label)
     {
         LabelText.SetText(Label);
-        TabIndex = Index;
-    }
-
-    void SetSelected(bool bInSelected)
-    {
-        bSelected = bInSelected;
-        OnSelectedChanged(bSelected);
-    }
-
-    UFUNCTION(BlueprintPure, Category = "FV|UI")
-    bool IsSelected() const
-    {
-        return bSelected;
-    }
-
-    UFUNCTION(BlueprintEvent, Category = "FV|UI")
-    void OnSelectedChanged(bool bNowSelected) {}
-
-    UFUNCTION()
-    private void HandleClicked()
-    {
-        OnTabClicked.Broadcast(TabIndex);
     }
 }
 
-// A row of tabs built from labels. Owners call SetTabs, then listen to OnTabSelected; Next and Previous wrap around.
+// A row of tabs on CommonUI's tab list, built from labels. Owners call SetTabs (or SetContentTabs to drive a Common
+// Animated Switcher), then listen to OnTabIndexSelected; Next and Previous wrap around.
 UCLASS(Abstract)
-class UFVTabBarWidget : UUserWidget
+class UFVTabBarWidget : UCommonTabListWidgetBase
 {
     UPROPERTY(BindWidget)
     UPanelWidget TabPanel;
@@ -62,67 +26,62 @@ class UFVTabBarWidget : UUserWidget
     TSubclassOf<UFVTabButtonWidget> TabButtonClass;
 
     UPROPERTY()
-    FFVOnTabSelected OnTabSelected;
+    FFVOnTabIndexSelected OnTabIndexSelected;
 
-    private TArray<UFVTabButtonWidget> Buttons;
+    private TArray<FName> TabIds;
     private int SelectedIndex = -1;
+    private bool bBuildingTabs = false;
+    private bool bListening = false;
 
     UFUNCTION(BlueprintCallable, Category = "FV|UI")
     void SetTabs(TArray<FText> Labels)
     {
-        TabPanel.ClearChildren();
-        Buttons.Empty();
-        SelectedIndex = -1;
+        TArray<UWidget> NoContents;
+        BuildTabs(Labels, nullptr, NoContents);
+    }
 
-        if (!TabButtonClass.IsValid())
+    // Selecting tab i shows Contents[i] in Switcher; the contents must be the switcher's children, one per label.
+    UFUNCTION(BlueprintCallable, Category = "FV|UI")
+    void SetContentTabs(TArray<FText> Labels, UCommonAnimatedSwitcher Switcher, TArray<UWidget> Contents)
+    {
+        if (Switcher == nullptr || Contents.Num() != Labels.Num())
         {
-            Print(f"{GetName()}: Tab Button Class is not set.");
+            Print(f"{GetName()}: content tabs need a switcher and one content widget per label.");
             return;
         }
-
-        for (int i = 0; i < Labels.Num(); i++)
-        {
-            UFVTabButtonWidget Button = WidgetBlueprint::CreateWidget(TabButtonClass, GetOwningPlayer());
-            Button.Setup(Labels[i], i);
-            Button.OnTabClicked.AddUFunction(this, n"HandleTabClicked");
-            TabPanel.AddChild(Button);
-            Buttons.Add(Button);
-        }
-
-        SetVisibility(Labels.Num() > 1 ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+        BuildTabs(Labels, Switcher, Contents);
     }
 
     UFUNCTION(BlueprintCallable, Category = "FV|UI")
     void SelectTab(int Index)
     {
-        if (!Buttons.IsValidIndex(Index) || Index == SelectedIndex)
+        if (!TabIds.IsValidIndex(Index) || Index == SelectedIndex)
         {
             return;
         }
 
-        SelectedIndex = Index;
-        for (int i = 0; i < Buttons.Num(); i++)
+        if (GetSelectedTabId() != TabIds[Index] && !SelectTabByID(TabIds[Index], false))
         {
-            Buttons[i].SetSelected(i == SelectedIndex);
+            return;
         }
-        OnTabSelected.Broadcast(SelectedIndex);
+        ApplySelection(Index);
     }
 
     UFUNCTION(BlueprintCallable, Category = "FV|UI")
     void SelectNext()
     {
-        if (Buttons.Num() > 0)
+        if (TabIds.Num() > 0)
         {
-            SelectTab((SelectedIndex + 1) % Buttons.Num());
+            SelectTab((SelectedIndex + 1) % TabIds.Num());
         }
     }
 
     UFUNCTION(BlueprintCallable, Category = "FV|UI")
     void SelectPrevious()
     {
-        if (Buttons.Num() > 0)
+        if (TabIds.Num() > 0)
         {
-            SelectTab((SelectedIndex - 1 + Buttons.Num()) % Buttons.Num());
+            SelectTab((SelectedIndex - 1 + TabIds.Num()) % TabIds.Num());
         }
     }
 
@@ -132,15 +91,66 @@ class UFVTabBarWidget : UUserWidget
         return SelectedIndex;
     }
 
-    UFUNCTION(BlueprintPure, Category = "FV|UI")
-    int GetTabCount() const
+    // The tab list selects its first tab while tabs are registered; that selection is reported by the owner's own
+    // SelectTab call, so registering stays silent.
+    private void BuildTabs(TArray<FText> Labels, UCommonAnimatedSwitcher Switcher, TArray<UWidget> Contents)
     {
-        return Buttons.Num();
+        if (!bListening)
+        {
+            OnTabSelected.AddUFunction(this, n"HandleTabSelected");
+            bListening = true;
+        }
+
+        bBuildingTabs = true;
+        RemoveAllTabs();
+        TabPanel.ClearChildren();
+        TabIds.Empty();
+        SelectedIndex = -1;
+        SetLinkedSwitcher(Switcher);
+
+        if (!TabButtonClass.IsValid())
+        {
+            Print(f"{GetName()}: Tab Button Class is not set.");
+        }
+        else
+        {
+            for (int i = 0; i < Labels.Num(); i++)
+            {
+                FName TabId = FName(f"Tab{i}");
+                UWidget Content = Switcher != nullptr ? Contents[i] : nullptr;
+                if (!RegisterTab(TabId, TabButtonClass, Content, -1))
+                {
+                    Print(f"{GetName()}: could not add tab {i}.");
+                    break;
+                }
+
+                UFVTabButtonWidget Button = Cast<UFVTabButtonWidget>(GetTabButtonBaseByID(TabId));
+                Button.SetLabel(Labels[i]);
+                TabPanel.AddChild(Button);
+                TabIds.Add(TabId);
+            }
+        }
+
+        bBuildingTabs = false;
+        SetVisibility(TabIds.Num() > 1 ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+    }
+
+    private void ApplySelection(int Index)
+    {
+        if (Index < 0 || Index == SelectedIndex)
+        {
+            return;
+        }
+        SelectedIndex = Index;
+        OnTabIndexSelected.Broadcast(SelectedIndex);
     }
 
     UFUNCTION()
-    private void HandleTabClicked(int Index)
+    private void HandleTabSelected(FName TabId)
     {
-        SelectTab(Index);
+        if (!bBuildingTabs)
+        {
+            ApplySelection(TabIds.FindIndex(TabId));
+        }
     }
 }

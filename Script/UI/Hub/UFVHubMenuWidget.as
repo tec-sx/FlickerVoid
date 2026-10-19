@@ -25,8 +25,8 @@ class UFVHubMenuWidget : UFVScreenWidget
     void OnInitialized()
     {
         Super::OnInitialized();
-        BindInputAction(NextPageAction);
-        BindInputAction(PreviousPageAction);
+        BindInputAction(NextPageAction, PageTabView != nullptr);
+        BindInputAction(PreviousPageAction, PageTabView != nullptr);
 
         for (UWidget Widget : FVUI::FindWidgetsOfClass(this, UFVHubPageWidget))
         {
