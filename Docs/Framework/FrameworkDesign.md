@@ -50,7 +50,7 @@ Content (data assets, meshes, textures, materials, FX, Blueprint world actors, W
 | **FVNavigationSystem** | new | Map definitions with layers (floors, interiors), marker definitions with view fragments, marker component, discovery, tracked marker, waypoint, driving logic for minimap, world map and compass. Editor: Map Capture panel and capture actor that render layer images. |
 | FVStealthSystem | phase 2 (proposed) | Visibility (light, stance, disguise), hiding spots, suspicion meters for NPCs (StateTree + AI perception). |
 
-Every plugin depends only on FVFramework (and Flow where it has graph nodes). Plugins never depend on each other; they meet through **facts, gameplay tags, conditions/effects and components on actors**.
+Every plugin depends only on FVFramework (and Flow where it has graph nodes, engine GAS where it uses the ability system). Plugins never depend on each other; they meet through **facts, gameplay tags, conditions/effects and components on actors**.
 
 ### Game module
 
@@ -210,8 +210,7 @@ flowchart LR
 UFVDefinition (Id tag, Display, Tags)                        FVFramework
  ├─ UFVCharacterDefinition  + Fragments<FFVCharacterFragment> FVFramework
  │     FFVCharacterFragment_Social { Faction, RelationshipFact }      (Social)
- ├─ UFVAttributeDefinition  { Category, Default, Min, Max }     FVAttributeSystem
- ├─ UFVAttributeSetDefinition { Parents, Attributes }           FVAttributeSystem
+ ├─ UFVAttributeDefinition  { Attribute (GAS), Category, Min, Max }  FVAttributeSystem
  ├─ UFVCheckDefinition      { Attribute, Roll, Modifiers<Conditions> }  FVAttributeSystem
  ├─ UFVItemDefinition       { Weight, GridSize, MaxQuantity } + Fragments<FFVItemFragment>  FVInventorySystem
  │     FFVItemFragment_Equippable { Slots, BlockedSlots, GrantedTags }
@@ -244,7 +243,7 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | `UFVPickupComponent` | Inventory | world items |
 | `UFVLootComponent` | Inventory | containers, bodies: rolls a loot table into their inventory once |
 | `UFVDialogueParticipantComponent` | Dialogue | speakers: events for lines (anim, lip sync, barks) |
-| `UFVAttributeComponent` | Attributes | any character with attributes |
+| `UFVAttributeComponent` | Attributes | characters whose attribute changes are listened to or saved (values live on the ability system) |
 | `UFVScannerComponent` | FVGameplay | player |
 | `UFVScannableComponent` | FVGameplay | anything scannable (needs an interactable component too) |
 | `UFVMapMarkerComponent` | Navigation | anything shown on the map, minimap or compass (shops, quest givers, points of interest) |
