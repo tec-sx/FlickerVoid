@@ -28,8 +28,8 @@ class FVCOREUI_API UFVActivatableWidget : public UCommonActivatableWidget
 public:
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
-	UFUNCTION(BlueprintCallable, Category = "FV|UI", meta = (ToolTip = "Calls On Input Action whenever the action's key is pressed while this widget is in the active screen. Needs Enable Enhanced Input Support in Common Input settings and the action mapped in an active context, e.g. the menu context."))
-	void BindInputAction(UInputAction* Action);
+	UFUNCTION(BlueprintCallable, Category = "FV|UI", meta = (ToolTip = "Calls On Input Action whenever the action's key is pressed while this widget is in the active screen. Needs Enable Enhanced Input Support in Common Input settings and the action mapped in an active context, e.g. the menu context. Show In Action Bar lists the action, with its Action Description, in a Common Bound Action Bar on screen."))
+	void BindInputAction(UInputAction* Action, bool bShowInActionBar = false);
 
 protected:
 	virtual void NativeOnActivated() override;

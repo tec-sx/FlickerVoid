@@ -1,6 +1,7 @@
 // Base for full screens (hub menu, map, menus): takes UI input while active and adds the menu mapping context
 // (FlickerVoid > UI > Menu Input Context). Its input actions arrive through CommonUI whatever has focus, so the
 // keys work even when the mouse moved focus away. Close Actions (e.g. IA_Back on Escape) and CommonUI Back go to Back().
+// Bound actions are listed in a Common Bound Action Bar when one is on screen.
 UCLASS(Abstract)
 class UFVScreenWidget : UFVActivatableWidget
 {
@@ -16,7 +17,7 @@ class UFVScreenWidget : UFVActivatableWidget
     {
         for (UInputAction Action : CloseActions)
         {
-            BindInputAction(Action);
+            BindInputAction(Action, true);
         }
     }
 

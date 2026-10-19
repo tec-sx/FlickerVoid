@@ -49,7 +49,7 @@ class UFVHubListSectionWidget : UFVHubSectionWidget
     {
         if (FilterTabs != nullptr)
         {
-            FilterTabs.OnTabSelected.AddUFunction(this, n"HandleFilterSelected");
+            FilterTabs.OnTabIndexSelected.AddUFunction(this, n"HandleFilterSelected");
             FilterTabs.SetTabs(GetFilterLabels());
             FilterTabs.SelectTab(0);
         }
