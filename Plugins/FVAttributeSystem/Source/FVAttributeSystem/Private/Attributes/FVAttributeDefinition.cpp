@@ -19,46 +19,20 @@ EDataValidationResult UFVAttributeDefinition::IsDataValid(FDataValidationContext
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 
+	if (!Attribute.IsValid())
+	{
+		Context.AddError(LOCTEXT("NoAttribute", "No attribute selected."));
+		Result = EDataValidationResult::Invalid;
+	}
+
 	if (Min > Max)
 	{
 		Context.AddError(LOCTEXT("BadRange", "Min is greater than Max."));
 		Result = EDataValidationResult::Invalid;
 	}
-	else if (DefaultValue < Min || DefaultValue > Max)
-	{
-		Context.AddWarning(LOCTEXT("DefaultOutOfRange", "DefaultValue is outside [Min, Max] and will be clamped."));
-	}
 
 	return Result;
 }
 #endif
-
-void UFVAttributeSetDefinition::Collect(TArray<FFVAttributeValue>& OutValues) const
-{
-	for (const TObjectPtr<const UFVAttributeSetDefinition>& Parent : Parents)
-	{
-		if (Parent != nullptr && Parent != this)
-		{
-			Parent->Collect(OutValues);
-		}
-	}
-
-	for (const FFVAttributeValue& Value : Attributes)
-	{
-		if (Value.Attribute == nullptr)
-		{
-			continue;
-		}
-
-		if (FFVAttributeValue* Existing = OutValues.FindByPredicate([&Value](const FFVAttributeValue& Entry) { return Entry.Attribute == Value.Attribute; }))
-		{
-			Existing->Value = Value.Value;
-		}
-		else
-		{
-			OutValues.Add(Value);
-		}
-	}
-}
 
 #undef LOCTEXT_NAMESPACE

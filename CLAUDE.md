@@ -20,7 +20,7 @@ Much older code in `Source/` is experimental or obsolete; don't assume it should
 | Plugin | Purpose |
 |---|---|
 | FVFramework | Core: `UFVDefinition`, fragments, facts DB, conditions/effects, identity, Flow nodes, debug HUD base (FVCoreDebug), editor helpers (FVCoreEditor) |
-| FVAttributeSystem | Data-defined attributes, modifiers, checks |
+| FVAttributeSystem | Definitions for GAS attributes (attribute sets in AngelScript, Gameplay Effects change them), checks |
 | FVInventorySystem | Items, weight + grid limits, granular outfit slots, pickup |
 | FVDialogueSystem | Dialogue on FlowGraph |
 | FVStorySystem | Quests, knowledge |

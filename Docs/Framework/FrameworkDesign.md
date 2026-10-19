@@ -32,7 +32,7 @@ Plugins (FV*System, feature based)  ->  Game modules (domain based)  ->  AngelSc
 | --- | --- | --- |
 | **FVFramework** | kept, extended | Facts, conditions/effects, definitions, **fragments**, **character definition + identity component**, world clock, cinematics, spawner, input, UI layout, StateTree nodes. New module **FVCoreFlow**: generic Flow nodes (Branch, Apply Effects, Wait For Conditions, Conditions predicate). |
 | **FVInteractionSystem** | kept as is | Interactor/interactable, offers, focus. |
-| **FVAttributeSystem** | new | Attribute and attribute set definitions, attribute component with modifiers, skill checks, attribute conditions/effects. |
+| **FVAttributeSystem** | new, on GAS | Attributes are GAS attributes in attribute sets (AngelScript, base `UFVAttributeSet` clamps to definitions); Gameplay Effects change them. Attribute definitions (display, range), attribute component (change events, save), skill checks, attribute and Gameplay Effect conditions/effects. |
 | **FVInventorySystem** | new (replaces the Mountea fork) | Item definition + fragments (equippable, usable, container), inventory with weight and grid space, layered equipment slots, pickup and item receiver, item conditions/effects. |
 | **FVDialogueSystem** | new (replaces the Yap fork) | Flow-based conversations: Line, Choice, End Conversation, Bark nodes; dialogue subsystem for UI; participant component for animation/voice. |
 | **FVStorySystem** | reworked | Quests (+ optional quest Flow graph), knowledge, save. Yap bridge removed; reputation moved to Social. |
@@ -40,7 +40,7 @@ Plugins (FV*System, feature based)  ->  Game modules (domain based)  ->  AngelSc
 | **FVNavigationSystem** | new | Map definitions with layers (floors, interiors), marker definitions with view fragments, marker component, discovery, tracked marker, waypoint, driving logic for minimap, world map and compass. Editor: Map Capture panel and capture actor that render layer images. |
 | FVStealthSystem | phase 2 (proposed) | Visibility (light, stance, disguise), hiding spots, suspicion meters for NPCs (StateTree + AI perception). |
 
-Every plugin depends only on FVFramework (and Flow where it has graph nodes). Plugins never depend on each other; they meet through **facts, gameplay tags, conditions/effects and components on actors**.
+Every plugin depends only on FVFramework (and Flow where it has graph nodes, engine GAS where it uses the ability system). Plugins never depend on each other; they meet through **facts, gameplay tags, conditions/effects and components on actors**.
 
 ### Game modules
 
@@ -63,8 +63,7 @@ Every plugin depends only on FVFramework (and Flow where it has graph nodes). Pl
 UFVDefinition (Id tag, Display, Tags)                        FVFramework
  ├─ UFVCharacterDefinition  + Fragments<FFVCharacterFragment> FVFramework
  │     FFVCharacterFragment_Social { Faction, RelationshipFact }      (Social)
- ├─ UFVAttributeDefinition  { Category, Default, Min, Max }     FVAttributeSystem
- ├─ UFVAttributeSetDefinition { Parents, Attributes }           FVAttributeSystem
+ ├─ UFVAttributeDefinition  { Attribute (GAS), Category, Min, Max }  FVAttributeSystem
  ├─ UFVCheckDefinition      { Attribute, Roll, Modifiers<Conditions> }  FVAttributeSystem
  ├─ UFVItemDefinition       { Weight, GridSize, MaxQuantity } + Fragments<FFVItemFragment>  FVInventorySystem
  │     FFVItemFragment_Equippable { Slots, BlockedSlots, GrantedTags }
@@ -92,7 +91,7 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | `UFVInventoryComponent`, `UFVEquipmentComponent`, `UFVItemReceiverComponent` | Inventory | player, containers, NPCs |
 | `UFVPickupComponent` | Inventory | world items |
 | `UFVDialogueParticipantComponent` | Dialogue | speakers: events for lines (anim, lip sync, barks) |
-| `UFVAttributeComponent` | Attributes | any character with attributes |
+| `UFVAttributeComponent` | Attributes | characters whose attribute changes are listened to or saved (values live on the ability system) |
 | `UFVScannerComponent` | FVGameplay | player |
 | `UFVScannableComponent` | FVGameplay | anything scannable (needs an interactable component too) |
 | `UFVMapMarkerComponent` | Navigation | anything shown on the map, minimap or compass (shops, quest givers, points of interest) |
