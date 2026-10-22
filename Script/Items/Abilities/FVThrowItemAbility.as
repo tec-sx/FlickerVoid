@@ -38,7 +38,7 @@ class UFVThrowItemAbility : UFVItemMontageAbility
 
 		FGameplayTag Hand = FVItemAnim::GetHoldingHand(Equipment, ThrownId);
 		bFromHand = Hand.IsValid();
-		bRightHand = !bFromHand || Hand == FVItemAnim::GetHandSlot(true);
+		bRightHand = !bFromHand || Hand == FVItem::GetHandSlot(true);
 
 		if (!CanThrow(Avatar, Equipment))
 		{
@@ -60,7 +60,7 @@ class UFVThrowItemAbility : UFVItemMontageAbility
 
 		for (int Hand = 0; Hand < 2; Hand++)
 		{
-			FGameplayTag Slot = FVItemAnim::GetHandSlot(Hand == 0);
+			FGameplayTag Slot = FVItem::GetHandSlot(Hand == 0);
 
 			if (FVItem::GetThrowableFragment(Equipment.GetEquipped(Slot), Throwable))
 			{
@@ -106,20 +106,20 @@ class UFVThrowItemAbility : UFVItemMontageAbility
 	{
 		if (!bFromHand && Prop == nullptr)
 		{
-			Prop = FVItemAnim::AttachProp(GetAvatarActorFromActorInfo(), ThrownItem, FVItem::GetHandSocket(true));
+			Prop = FVItem::AttachProp(GetAvatarActorFromActorInfo(), ThrownItem, FVItem::GetHandSocket(true));
 		}
 	}
 
 	void OnItemApply() override
 	{
-		FVItemAnim::DetachProp(Prop);
+		FVItem::DetachProp(Prop);
 		Prop = nullptr;
 		Release(GetAvatarActorFromActorInfo());
 	}
 
 	void OnItemAbilityEnded(bool bWasApplied) override
 	{
-		FVItemAnim::DetachProp(Prop);
+		FVItem::DetachProp(Prop);
 		Prop = nullptr;
 		ThrownItem = nullptr;
 	}
@@ -136,7 +136,7 @@ class UFVThrowItemAbility : UFVItemMontageAbility
 		}
 
 		FVector Direction = GetAimDirection(Avatar);
-		USkeletalMeshComponent CharacterMesh = FVItemAnim::GetCharacterMesh(Avatar);
+		USkeletalMeshComponent CharacterMesh = FVItem::GetCharacterMesh(Avatar);
 		FVector Start = CharacterMesh != nullptr
 			? CharacterMesh.GetSocketLocation(FVItem::GetHandSocket(bRightHand))
 			: Avatar.GetActorLocation();

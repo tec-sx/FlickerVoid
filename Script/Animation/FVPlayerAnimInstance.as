@@ -51,10 +51,10 @@ class UFVPlayerAnimInstance : UFVCharacterAnimInstance
 	// HELD ITEMS
 	// ========================================================================
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (ToolTip = "Upper body pose of the item in the right hand, set by UFVHeldItemComponent; none when the hand is empty or busy."))
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (ToolTip = "Upper body pose of the item in the right hand, passed on by APlayerCharacter from its Held Items component; none when the hand is empty or busy."))
     UAnimSequenceBase RightHandHoldPose;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (ToolTip = "Upper body pose of the item in the left hand, set by UFVHeldItemComponent; none when the hand is empty or busy."))
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (ToolTip = "Upper body pose of the item in the left hand, passed on by APlayerCharacter from its Held Items component; none when the hand is empty or busy."))
     UAnimSequenceBase LeftHandHoldPose;
 
     UFUNCTION()

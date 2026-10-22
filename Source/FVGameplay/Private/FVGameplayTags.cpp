@@ -100,6 +100,12 @@ namespace FVGameplayTags
 								   "Root for scan categories; each one maps to a highlight style in Scanner settings.");
 
 	// ============================================================================
+	// ITEM HAND SLOT TAGS
+	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Equipment_Slot_Hand_Left, "Equipment.Slot.Hand.Left", "Held in the left hand.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Equipment_Slot_Hand_Right, "Equipment.Slot.Hand.Right", "Held in the right hand.");
+
+	// ============================================================================
 	// ITEM EVENT TAGS
 	// ============================================================================
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Item_Pickup, "Event.Item.Pickup", "Take a world item or money into the inventory.");

@@ -1,4 +1,4 @@
-// Montage, motion warping and hand prop helpers shared by the item abilities.
+// Montage, motion warping and held item helpers shared by the item abilities; hand props and slots are in FVItem:: (C++).
 namespace FVItemAnim
 {
 	// Montage task on the ability's avatar; none without a montage. Bind its events, then call ReadyForActivation.
@@ -49,91 +49,6 @@ namespace FVItemAnim
 		}
 	}
 
-	USkeletalMeshComponent GetCharacterMesh(AActor Character)
-	{
-		if (Character == nullptr)
-		{
-			return nullptr;
-		}
-
-		ACharacter AsCharacter = Cast<ACharacter>(Character);
-
-		if (AsCharacter != nullptr)
-		{
-			return AsCharacter.Mesh;
-		}
-
-		return USkeletalMeshComponent::Get(Character);
-	}
-
-	// Transform relative to the hand socket that puts the item's grip socket (or its origin) at the hand, offset by the World fragment's Grip Offset.
-	FTransform GetGripTransform(UFVItemDefinition Item, UStaticMeshComponent ItemMesh)
-	{
-		FFVItemFragment_World World;
-
-		if (!FVItem::GetWorldFragment(Item, World))
-		{
-			return FTransform();
-		}
-
-		if (ItemMesh != nullptr && World.GripSocket != NAME_None && ItemMesh.DoesSocketExist(World.GripSocket))
-		{
-			FTransform Socket = ItemMesh.GetSocketTransform(World.GripSocket, ERelativeTransformSpace::RTS_Component);
-
-			// Check: FTransform binds Inverse() and operator* (A * B applies A, then B).
-			return Socket.Inverse() * World.GripOffset;
-		}
-
-		return World.GripOffset;
-	}
-
-	// Spawns a collision-free mesh of the item at the character's socket; none if the item has no World mesh.
-	UStaticMeshComponent AttachProp(AActor Character, UFVItemDefinition Item, FName Socket)
-	{
-		USkeletalMeshComponent CharacterMesh = GetCharacterMesh(Character);
-		UStaticMesh PropMesh = FVItem::LoadWorldMesh(Item);
-
-		if (CharacterMesh == nullptr || PropMesh == nullptr)
-		{
-			return nullptr;
-		}
-
-		UStaticMeshComponent Prop = UStaticMeshComponent::Create(Character);
-		Prop.SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		Prop.SetStaticMesh(PropMesh);
-		Prop.AttachToComponent(
-			CharacterMesh,
-			Socket,
-			EAttachmentRule::SnapToTarget,
-			EAttachmentRule::SnapToTarget,
-			EAttachmentRule::KeepRelative,
-			false);
-		Prop.SetRelativeTransform(GetGripTransform(Item, Prop));
-
-		return Prop;
-	}
-
-	void DetachProp(UStaticMeshComponent Prop)
-	{
-		if (!IsValid(Prop))
-		{
-			return;
-		}
-
-		// Check: DestroyComponent binds UActorComponent::K2_DestroyComponent(Object), which only destroys when Object is the owner.
-		Prop.DestroyComponent(Prop.GetOwner());
-	}
-
-	FGameplayTag GetHandSlot(bool bRightHand)
-	{
-		if (bRightHand)
-		{
-			return GameplayTags::Equipment_Slot_Hand_Right;
-		}
-
-		return GameplayTags::Equipment_Slot_Hand_Left;
-	}
-
 	// Hand slot the stack is held in; invalid if it isn't held.
 	FGameplayTag GetHoldingHand(UFVEquipmentComponent Equipment, FGuid InstanceId)
 	{
@@ -142,14 +57,14 @@ namespace FVItemAnim
 			return FGameplayTag();
 		}
 
-		if (Equipment.GetEquippedInstance(GetHandSlot(true)) == InstanceId)
+		if (Equipment.GetEquippedInstance(FVItem::GetHandSlot(true)) == InstanceId)
 		{
-			return GetHandSlot(true);
+			return FVItem::GetHandSlot(true);
 		}
 
-		if (Equipment.GetEquippedInstance(GetHandSlot(false)) == InstanceId)
+		if (Equipment.GetEquippedInstance(FVItem::GetHandSlot(false)) == InstanceId)
 		{
-			return GetHandSlot(false);
+			return FVItem::GetHandSlot(false);
 		}
 
 		return FGameplayTag();

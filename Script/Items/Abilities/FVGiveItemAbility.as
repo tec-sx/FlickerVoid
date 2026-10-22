@@ -204,12 +204,12 @@ class UFVGiveItemAbility : UFVItemMontageAbility
 	// The item's prop in the character's right hand; none removes it.
 	private void MovePropTo(AActor Character)
 	{
-		FVItemAnim::DetachProp(Prop);
+		FVItem::DetachProp(Prop);
 		Prop = nullptr;
 
 		if (Character != nullptr && GivenItem != nullptr)
 		{
-			Prop = FVItemAnim::AttachProp(Character, GivenItem, FVItem::GetHandSocket(true));
+			Prop = FVItem::AttachProp(Character, GivenItem, FVItem::GetHandSocket(true));
 		}
 	}
 

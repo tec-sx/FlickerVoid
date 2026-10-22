@@ -29,6 +29,7 @@ public class FlickerVoidGameplay : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"UMG",
+			"AIModule",
 			"GameplayMessageRuntime",
 			"FVCoreDebug",
 			"FlickerVoidCharacter",

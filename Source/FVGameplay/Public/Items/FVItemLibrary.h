@@ -15,10 +15,12 @@ class UFVInteractableDefinition;
 class UFVItemDefinition;
 class UFVItemEventPayload;
 class UFVItemSettings;
+class USkeletalMeshComponent;
 class USoundBase;
 class UStaticMesh;
+class UStaticMeshComponent;
 
-/** Item helpers for abilities, world items and script: fragments script can't read, animation lookups, world spawning and item events. */
+/** Item helpers for abilities, world items and script: fragments script can't read, animation lookups, hand props, world spawning and item events. */
 UCLASS()
 class FLICKERVOIDGAMEPLAY_API UFVItemLibrary : public UBlueprintFunctionLibrary
 {
@@ -60,6 +62,21 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FV|Item|Animation", meta = (ToolTip = "Character mesh socket for items held in that hand (Items settings)."))
 	static FName GetHandSocket(bool bRightHand);
+
+	UFUNCTION(BlueprintPure, Category = "FV|Item|Hand", meta = (ToolTip = "Equipment slot of items held in that hand: Equipment.Slot.Hand.Right or Equipment.Slot.Hand.Left."))
+	static FGameplayTag GetHandSlot(bool bRightHand);
+
+	UFUNCTION(BlueprintPure, Category = "FV|Item|Hand", meta = (ToolTip = "A character's Mesh, else the actor's first skeletal mesh component."))
+	static USkeletalMeshComponent* GetCharacterMesh(const AActor* Character);
+
+	UFUNCTION(BlueprintCallable, Category = "FV|Item|Hand", meta = (ToolTip = "Attaches a collision-free mesh of the item (World fragment) to the character's mesh socket, placed by its Grip Socket and Grip Offset; none without a mesh. Remove it with Detach Prop."))
+	static UStaticMeshComponent* AttachProp(AActor* Character, const UFVItemDefinition* Item, FName Socket);
+
+	UFUNCTION(BlueprintCallable, Category = "FV|Item|Hand", meta = (ToolTip = "Removes a prop made by Attach Prop."))
+	static void DetachProp(UStaticMeshComponent* Prop);
+
+	/** Transform relative to a hand socket that puts the item's grip socket (or its origin) at the hand, offset by the World fragment's Grip Offset. */
+	static FTransform GetGripTransform(const UFVItemDefinition* Item, const UStaticMeshComponent* ItemMesh);
 
 	UFUNCTION(BlueprintPure, Category = "FV|Item|Give", meta = (ToolTip = "The giver's inventory holds the item and money, and the receiver's inventory (if any) can take the item. False when there is nothing to give."))
 	static bool CanGiveItem(const AActor* Giver, const AActor* Receiver, const UFVItemDefinition* Item, int32 Quantity, int32 Money);

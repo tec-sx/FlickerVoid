@@ -2,7 +2,7 @@
 
 How items work in FlickerVoid on top of the plugins: the item types in data, the world actors (items, notes, money, loot containers), the item abilities and their animations, keys, held and thrown items, intoxication, trading, pickpocketing and giving from dialogue.
 
-Builds on FVInventorySystem (items, inventory, money, loot; read [its guide](FVInventorySystem.md) first), FVInteractionSystem (offers, locks), FVStorySystem (knowledge), FVSocialSystem (factions, gifts) and FVAttributeSystem (attributes, checks). C++ lives in `Source/FVGameplay/.../Items` (module `FlickerVoidGameplay`), AngelScript in `Script/Items`.
+Builds on FVInventorySystem (items, inventory, money, loot; read [its guide](FVInventorySystem.md) first), FVInteractionSystem (offers, locks), FVStorySystem (knowledge), FVSocialSystem (factions, gifts) and FVAttributeSystem (attributes, checks). C++ (fragments, settings, the item library, the item components and the Give Item node) lives in `Source/FVGameplay/.../Items` (module `FlickerVoidGameplay`); AngelScript in `Script/Items` builds the actors and abilities from it.
 
 ## 1. Quick start
 
@@ -131,16 +131,16 @@ A montage is looked up in the character definition's **Item Animations** fragmen
 
 An `AFVReadable` shows a note; its **Knowledge** (Kind **Document**) is what reading teaches.
 - **Read** (`UFVReadAbility`) learns it and broadcasts `Message.Item.Read` (Reader, Knowledge, Source); the reader screen opens on it (section 16). **Hide When Read** removes the note afterwards.
-- A note with secrets must be **investigated** first. Its **Secrets** component (`UFVExamineSecretsComponent`) lists up to three secrets, each a **View Angle** (rotation in the examine view) and a **Clue** (knowledge), matched within **Angle Tolerance**. The Investigate offer starts the examine ability; turning the note to a secret's angle learns its clue. When every clue is known the note is read (its knowledge learned) and the view closes. Cancelling keeps the clues found and leaves the note unsolved in the world.
+- A note with secrets must be **investigated** first. Its **Secrets** component (`UFVExamineSecretsComponent`, C++) lists up to three secrets (validation warns about more), each a **View Angle** (rotation in the examine view) and a **Clue** (knowledge), matched within **Angle Tolerance**. The Investigate offer starts the examine ability; turning the note to a secret's angle learns its clue. When every clue is known the note is read (its knowledge learned) and the view closes. Cancelling keeps the clues found and leaves the note unsolved in the world.
 - The *FV Needs Investigation Condition* (Script condition) is true while the target readable has unfound secrets; use it as in section 5 so only one of Read and Investigate shows.
 
 Any examinable actor can have a Secrets component; only readables are solved by finding them all.
 
 ## 8. Held items
 
-**UFVHeldItemComponent** (`Script/Items/Components`) is on `APlayerCharacter` (**Held Items**); add it to NPCs that hold things. It watches the equipment component's `Equipment.Slot.Hand.Right` and `.Hand.Left`:
+**UFVHeldItemComponent** (C++) is on `APlayerCharacter` (**Held Items**); add it to NPCs that hold things. It watches the equipment component's `Equipment.Slot.Hand.Right` and `.Hand.Left`:
 - The World fragment's **Actor Class** is spawned at the hand socket and made inert (no collision, physics or offers). Any actor class works; one with a pickup component (a world item) gets the held unit before construction, so it shows the item's mesh. Without an Actor Class a mesh prop of the World mesh is attached. **Grip Socket** and **Grip Offset** place it.
-- The hold pose of the item (**Hold Style**, looked up like montages in **Hold Poses** / **Default Hold Poses**) goes to `UFVPlayerAnimInstance.RightHandHoldPose` / `LeftHandHoldPose`.
+- `Get Hold Pose(Right Hand)` is the hold pose of the item (**Hold Style**, looked up like montages in **Hold Poses** / **Default Hold Poses**). `APlayerCharacter` passes both poses to `UFVPlayerAnimInstance.RightHandHoldPose` / `LeftHandHoldPose` on **On Held Items Changed**.
 - `Put Away` / `Take Out` hide and show what is held (abilities with `Status.HandsBusy` do it).
 - `Use Held(Right Hand)`: the held actor's **UFVHeldItemBehaviourComponent**, else `Event.Item.Use` for a usable item.
 
@@ -150,7 +150,7 @@ AnimBP: blend each hold pose over its arm, e.g. *Layered Blend Per Bone* from `c
 
 ## 9. Throwing
 
-Throw takes one unit off the stack (a held stack's last unit leaves the hand), spawns it at the hand socket and pushes it along the aim at **Throw Speed**. Its first hit (**UFVThrownItemComponent**, added by the ability):
+Throw takes one unit off the stack (a held stack's last unit leaves the hand), spawns it at the hand socket and pushes it along the aim at **Throw Speed**. Its first hit (**UFVThrownItemComponent**, C++, added by the ability):
 - reports an AI hearing noise (`UAISense_Hearing`, tag `ItemNoise`, **Loudness**, **Noise Range**) with the thrower as instigator,
 - broadcasts `Message.Item.Noise` (Instigator, Location, Loudness, Range),
 - plays **Impact Sound** and destroys the item if **Break On Impact**.
@@ -164,7 +164,7 @@ Give a lock (**FV Lock Component**) a **Key Tag** under `Key.` and give the key 
 
 ## 11. Intoxication
 
-**UFVIntoxicationComponent** (`Script/Items/Components`) is on `APlayerCharacter` (**Intoxication**) and works with the player's **FV Attribute Component**. Set its attributes on the player Blueprint; the other properties have defaults:
+**UFVIntoxicationComponent** (C++) is on `APlayerCharacter` (**Intoxication**) and works with the player's **FV Attribute Component**. Set its attributes on the player Blueprint; the other properties have defaults:
 
 | Property | Meaning |
 |---|---|
@@ -178,7 +178,7 @@ Alcohol raises Intoxication and sobering items lower it, both with *Modify Attri
 
 ## 12. Trading
 
-A merchant is an NPC with an **FV Inventory Component** (its **Items** are the stock, its **Money** pays for what it buys; **Apply Carry Limits** off) and **UFVMerchantComponent** (`Script/Items/Trade`):
+A merchant is an NPC with an **FV Inventory Component** (its **Items** are the stock, its **Money** pays for what it buys; **Apply Carry Limits** off) and **UFVMerchantComponent** (C++):
 
 | Property | Meaning |
 |---|---|
@@ -260,8 +260,8 @@ Sent through the GameplayMessageSubsystem for UI and other systems.
 
 | Namespace | Functions |
 |---|---|
-| `FVItem::` (`UFVItemLibrary`, C++) | Fragments, `Load World Mesh`, `Load Actor Class`, `Load Sound`, `Find Interactable`, `Find Montage`, `Find Use Montage`, `Find Hold Pose`, `Get Pickup Style`, `Get Hand Socket`, `Can Give Item`, `Give Item`, `Spawn World Item`, `Send Item Event`, `Get Item Payload`, `Get Settings` |
-| `FVItemAnim::` (`Script/Items/Abilities/FVItemAbilityHelpers.as`) | Montage and notify tasks, motion warping targets, hand props, hand slots, `Set Hands Busy` |
+| `FVItem::` (`UFVItemLibrary`, C++) | Fragments, `Load World Mesh`, `Load Actor Class`, `Load Sound`, `Find Interactable`, `Find Montage`, `Find Use Montage`, `Find Hold Pose`, `Get Pickup Style`, `Get Hand Socket`, `Get Hand Slot`, `Get Character Mesh`, `Attach Prop`, `Detach Prop`, `Can Give Item`, `Give Item`, `Spawn World Item`, `Send Item Event`, `Get Item Payload`, `Get Settings` |
+| `FVItemAnim::` (`Script/Items/Abilities/FVItemAbilityHelpers.as`) | Montage and notify tasks, motion warping targets, `Get Holding Hand`, `Set Hands Busy` |
 | `FVItemWorld::` (same file) | Event target, sounds, world item of an actor, picking a world item up, drop transform, physics |
 | `FVItemKeys::` (`Script/Items/FVItemKeys.as`) | `Has Key For`, `Try Unlock With Key` |
 

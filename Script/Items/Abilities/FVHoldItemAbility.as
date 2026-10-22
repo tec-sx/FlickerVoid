@@ -78,8 +78,8 @@ class UFVHoldItemAbility : UFVInteractAbility
 	private FGameplayTag ChooseHand(UFVEquipmentComponent Equipment, UFVItemDefinition Item)
 	{
 		FGameplayTagContainer Slots = Item.GetEquipmentSlots();
-		FGameplayTag Right = FVItemAnim::GetHandSlot(true);
-		FGameplayTag Left = FVItemAnim::GetHandSlot(false);
+		FGameplayTag Right = FVItem::GetHandSlot(true);
+		FGameplayTag Left = FVItem::GetHandSlot(false);
 		bool bFitsRight = Slots.HasTagExact(Right);
 		bool bFitsLeft = Slots.HasTagExact(Left);
 

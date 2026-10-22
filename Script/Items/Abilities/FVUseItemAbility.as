@@ -94,7 +94,7 @@ class UFVUseItemAbility : UFVItemMontageAbility
 			return;
 		}
 
-		Prop = FVItemAnim::AttachProp(GetAvatarActorFromActorInfo(), UsedItem, FVItem::GetHandSocket(true));
+		Prop = FVItem::AttachProp(GetAvatarActorFromActorInfo(), UsedItem, FVItem::GetHandSocket(true));
 		SetWorldMeshVisible(false);
 	}
 
@@ -117,7 +117,7 @@ class UFVUseItemAbility : UFVItemMontageAbility
 
 	void OnItemRelease() override
 	{
-		FVItemAnim::DetachProp(Prop);
+		FVItem::DetachProp(Prop);
 		Prop = nullptr;
 		SetWorldMeshVisible(true);
 	}

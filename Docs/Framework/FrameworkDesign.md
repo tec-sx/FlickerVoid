@@ -48,7 +48,7 @@ Every plugin depends only on FVFramework (and Flow where it has graph nodes). Pl
 | --- | --- | --- |
 | FVCore | logging, tags, flow triggers | kept |
 | FVCharacter | locomotion, animation, traversal | kept |
-| FVGameplay | GAS: ASC, abilities, interaction ability base, scanner; items: game item fragments, item settings and library, item events and messages, Give Item Flow node | attribute sets, checks and the personality system removed |
+| FVGameplay | GAS: ASC, abilities, interaction ability base, scanner; items: game item fragments, item settings and library, item components, item events and messages, Give Item Flow node | attribute sets, checks and the personality system removed |
 | FVAI | NPC config, StateTree tasks | faction now from FVSocialSystem |
 | FVNarrative | narrative tags | memory and psychology systems removed |
 | FVWorld | world objects (doors, hiding spots), world tags | `UFVWorldStateSubsystem` removed, facts and the clock are the single source |
@@ -103,6 +103,10 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | `UFVMapMarkerComponent` | Navigation | anything shown on the map, minimap or compass (shops, quest givers, points of interest) |
 | `UFVNavigatorComponent` | Navigation | player pawn: active map, discovery, minimap/compass/world map views |
 | `AFVMapCaptureActor` | Navigation | editor-only camera placed over an area to capture a map layer image |
+| `UFVHeldItemComponent`, `UFVIntoxicationComponent` | FVGameplay | player; held items also on NPCs that hold things |
+| `UFVHeldItemBehaviourComponent`, `UFVThrownItemComponent` | FVGameplay | held item actors (e.g. a flashlight); thrown items, added by the throw ability |
+| `UFVMerchantComponent` | FVGameplay | merchants, next to their inventory |
+| `UFVExamineSecretsComponent` | FVGameplay | readables and other examinable actors with secrets |
 
 ## Key flows
 

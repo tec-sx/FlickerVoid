@@ -5,6 +5,8 @@
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Data/FVCharacterDefinition.h"
 #include "Data/FVInteractableDefinition.h"
 #include "Engine/Engine.h"
@@ -194,6 +196,61 @@ FName UFVItemLibrary::GetHandSocket(const bool bRightHand)
 {
 	const UFVItemSettings& Settings = UFVItemSettings::Get();
 	return bRightHand ? Settings.RightHandSocket : Settings.LeftHandSocket;
+}
+
+FGameplayTag UFVItemLibrary::GetHandSlot(const bool bRightHand)
+{
+	return bRightHand ? FVGameplayTags::Equipment_Slot_Hand_Right : FVGameplayTags::Equipment_Slot_Hand_Left;
+}
+
+USkeletalMeshComponent* UFVItemLibrary::GetCharacterMesh(const AActor* Character)
+{
+	if (const ACharacter* AsCharacter = Cast<ACharacter>(Character))
+	{
+		return AsCharacter->GetMesh();
+	}
+	return Character ? Character->FindComponentByClass<USkeletalMeshComponent>() : nullptr;
+}
+
+UStaticMeshComponent* UFVItemLibrary::AttachProp(AActor* Character, const UFVItemDefinition* Item, const FName Socket)
+{
+	USkeletalMeshComponent* CharacterMesh = GetCharacterMesh(Character);
+	UStaticMesh* PropMesh = LoadWorldMesh(Item);
+	if (!CharacterMesh || !PropMesh)
+	{
+		return nullptr;
+	}
+
+	UStaticMeshComponent* Prop = NewObject<UStaticMeshComponent>(Character, NAME_None, RF_Transient);
+	Prop->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Prop->SetStaticMesh(PropMesh);
+	Prop->SetupAttachment(CharacterMesh, Socket);
+	Prop->RegisterComponent();
+	Prop->SetRelativeTransform(GetGripTransform(Item, Prop));
+	return Prop;
+}
+
+void UFVItemLibrary::DetachProp(UStaticMeshComponent* Prop)
+{
+	if (IsValid(Prop))
+	{
+		Prop->DestroyComponent();
+	}
+}
+
+FTransform UFVItemLibrary::GetGripTransform(const UFVItemDefinition* Item, const UStaticMeshComponent* ItemMesh)
+{
+	const FFVItemFragment_World* World = Item ? Item->FindFragment<FFVItemFragment_World>() : nullptr;
+	if (!World)
+	{
+		return FTransform::Identity;
+	}
+
+	if (ItemMesh && !World->GripSocket.IsNone() && ItemMesh->DoesSocketExist(World->GripSocket))
+	{
+		return ItemMesh->GetSocketTransform(World->GripSocket, RTS_Component).Inverse() * World->GripOffset;
+	}
+	return World->GripOffset;
 }
 
 bool UFVItemLibrary::CanGiveItem(const AActor* Giver, const AActor* Receiver, const UFVItemDefinition* Item, const int32 Quantity, const int32 Money)

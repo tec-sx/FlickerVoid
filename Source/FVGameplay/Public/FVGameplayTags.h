@@ -102,6 +102,13 @@ namespace FVGameplayTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Fact_Gameplay_Counter);
 
 	// ============================================================================
+	// ITEM HAND SLOT TAGS
+	// Equipment slots of held items; the inventory plugin's tag ini lists them too.
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Hand_Left);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Equipment_Slot_Hand_Right);
+
+	// ============================================================================
 	// ITEM EVENT TAGS
 	// Sent to the acting character with SendGameplayEventToActor; item abilities
 	// trigger on them. Notify events come from montages (FV Gameplay Event).
