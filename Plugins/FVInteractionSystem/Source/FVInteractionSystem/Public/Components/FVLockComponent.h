@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GameplayTagContainer.h"
 
 #include "FVLockComponent.generated.h"
 
@@ -25,6 +26,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interaction|Lock")
 	float GetDifficulty() const { return Difficulty; }
 
+	UFUNCTION(BlueprintPure, Category = "Interaction|Lock", meta = (ToolTip = "Tag an item's definition Tags must contain to open the lock; invalid when no key fits."))
+	FGameplayTag GetKeyTag() const { return KeyTag; }
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|Lock", meta = (ToolTip = "The key is used up when it opens the lock."))
+	bool ConsumesKey() const { return bConsumeKey; }
+
+	UFUNCTION(BlueprintPure, Category = "Interaction|Lock", meta = (ToolTip = "Locked and a key fits it."))
+	bool CanBeOpenedWithKey() const { return bLocked && KeyTag.IsValid(); }
+
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Lock")
 	void SetLocked(bool bInLocked, AActor* Instigator = nullptr);
 
@@ -46,4 +56,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Interaction|Lock", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float Difficulty = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Interaction|Lock", meta = (Categories = "Key", ToolTip = "An item whose definition Tags contain this tag opens the lock."))
+	FGameplayTag KeyTag;
+
+	UPROPERTY(EditAnywhere, Category = "Interaction|Lock", meta = (ToolTip = "The key is used up when it opens the lock."))
+	bool bConsumeKey = false;
 };
