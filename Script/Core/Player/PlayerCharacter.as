@@ -21,7 +21,6 @@ class APlayerCharacter : AFVPlayerCharacter
     UPROPERTY()
     FIKGoal RightHandIKGoal;
 
-    bool bJustLanded = false;
     bool bIsRagdolling = false;
 
     default Mesh.SetRelativeLocation(FVector(0, 0, -CapsuleComponent.CapsuleHalfHeight));
@@ -60,33 +59,27 @@ class APlayerCharacter : AFVPlayerCharacter
     {
         Traversal = UFVTraversalComponent::Get(this);
 
-        // Configure initial movement settings
-        CharacterMovement.bOrientRotationToMovement = false;
-        CharacterMovement.bUseControllerDesiredRotation = true;
+        Locomotion.OnStartedFalling.AddUFunction(this, n"OnStartedFalling");
     }
 
     UFUNCTION(BlueprintOverride)
     bool RequestTraverse()
     {
-        EDrawDebugTrace DrawDebugType = CharacterMovement.IsMovingOnGround()
+        EDrawDebugTrace DrawDebugType = Locomotion.IsOnGround()
             ? EDrawDebugTrace::ForOneFrame
             : EDrawDebugTrace::ForDuration;
 
         bool bIsTraversing = Traversal.TryTraversalAction(DrawDebugType);
 
-        SetTraversing(bIsTraversing);
+        Locomotion.SetTraversing(bIsTraversing);
 
         return bIsTraversing;
     }
 
-    UFUNCTION(BlueprintOverride)
-    void OnWalkingOffLedge(
-		FVector PreviousFloorImpactNormal,
-		FVector PreviousFloorContactNormal,
-        FVector PreviousLocation,
-		float TimeDelta)
+    UFUNCTION()
+    void OnStartedFalling()
     {
-        UnCrouch();
+        Locomotion.StopCrouching();
     }
 
     UFUNCTION()

@@ -1,180 +1,77 @@
 #include "Character/FVCharacter.h"
 
-#include "AbilitySystemComponent.h"
-#include "AbilitySystemGlobals.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "Engine/CollisionProfile.h"
 #include "FlowComponent.h"
-#include "FVCharacterTags.h"
-#include "FVCharacterTypes.h"
 #include "FVCoreTags.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Movement/FVCharacterMovementComponent.h"
+#include "Movement/FVLocomotionComponent.h"
+#include "Movement/FVMovementSetComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVCharacter)
 
 AFVCharacter::AFVCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UFVCharacterMovementComponent>(CharacterMovementComponentName))
+	: Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
-	
+
 	SetReplicatingMovement(false);
-	
+
+	// Same subobject names as ACharacter, so Blueprints made on the old base keep their capsule and mesh settings.
+	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CollisionCylinder"));
+	CapsuleComponent->InitCapsuleSize(34.f, 88.f);
+	CapsuleComponent->SetCollisionProfileName(UCollisionProfile::Pawn_ProfileName);
+	CapsuleComponent->CanCharacterStepUpOn = ECB_No;
+	CapsuleComponent->SetShouldUpdatePhysicsVolume(true);
+	CapsuleComponent->SetCanEverAffectNavigation(false);
+	CapsuleComponent->bDynamicObstacle = true;
+	RootComponent = CapsuleComponent;
+
+	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh0"));
+	Mesh->SetupAttachment(CapsuleComponent);
+	Mesh->AlwaysLoadOnClient = true;
+	Mesh->AlwaysLoadOnServer = true;
+	Mesh->bOwnerNoSee = false;
+	Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPose;
+	Mesh->bCastDynamicShadow = true;
+	Mesh->bAffectDynamicIndirectLighting = true;
+	Mesh->PrimaryComponentTick.TickGroup = TG_PrePhysics;
+	Mesh->SetCollisionProfileName(TEXT("CharacterMesh"));
+	Mesh->SetGenerateOverlapEvents(false);
+	Mesh->SetCanEverAffectNavigation(false);
+
+	Mover = CreateDefaultSubobject<UCharacterMoverComponent>(TEXT("CharacterMover"));
+	Mover->bGatherInputFromAllInputProducerComponents = true;
+	Locomotion = CreateDefaultSubobject<UFVLocomotionComponent>(TEXT("Locomotion"));
+	MovementSets = CreateDefaultSubobject<UFVMovementSetComponent>(TEXT("MovementSets"));
+
 	FlowComponent = CreateDefaultSubobject<UFlowComponent>(TEXT("FlowComponent"));
-
-	if (FlowComponent)
-	{
-		FlowComponent->IdentityTags = FGameplayTagContainer(FVCoreTags::Player_Pawn);
-	}
-
-	MovementBlockingTags.AddTag(FVCharacterTags::Status_Movement_Blocked);
+	FlowComponent->IdentityTags = FGameplayTagContainer(FVCoreTags::Player_Pawn);
 }
 
-
-void AFVCharacter::BeginPlay()
+void AFVCharacter::PreInitializeComponents()
 {
-	Super::BeginPlay();
+	Super::PreInitializeComponents();
+
+	// Editor worlds keep the Blueprint's modes; changing them on placed instances can stop those pawns from moving.
+	if (GetWorld() && GetWorld()->IsGameWorld())
+	{
+		MovementSets->InstallStartingSets();
+	}
 }
 
-void AFVCharacter::Landed(const FHitResult& Hit)
+void AFVCharacter::PostInitializeComponents()
 {
-	Super::Landed(Hit);
-	
-	LandingVelocity = GetCharacterMovement()->Velocity;
-	bJustLanded = true;
-	
-	
-	GetWorld()->GetTimerManager()
-		.SetTimer(JustLandedTimerHandle, [this](){ bJustLanded = false; }, 0.3f, false);
+	Super::PostInitializeComponents();
+
+	Mover->SetPrimaryVisualComponent(Mesh);
 }
 
-//~=============================================================================
-// Character Properties
-//~=============================================================================
-
-float AFVCharacter::GetGroundSpeed() const
+FVector AFVCharacter::GetVelocity() const
 {
-	float Speed = 0.0f;
-	
-	if (GetCharacterMovement()->IsMovingOnGround())
-	{
-		Speed = GetCharacterMovement()->Velocity.Size2D();
-	}
-
-	return Speed;
-}
-
-FRotator AFVCharacter::GetAimRotation() const
-{
-	FRotator AimRotation = GetControlRotation();
-	if (TargetedPosition != FVector::ZeroVector)
-	{
-		const FVector DirectionToTarget = TargetedPosition - GetActorLocation();
-		
-		AimRotation = DirectionToTarget.ToOrientationRotator();
-		AimRotation.Roll = AimRotation.Pitch = 0;
-	}
-	
-	return AimRotation;
-}
-
-UFVCharacterMovementComponent* AFVCharacter::GetFVCharacterMovement() const
-{ 
-	return GetCharacterMovement<UFVCharacterMovementComponent>(); 
-}
-
-FFVCharacterRuntimeState AFVCharacter::GetRuntimeState() const
-{	
-	FFVCharacterRuntimeState RuntimeState;
-	
-	RuntimeState.ActorTransform = GetActorTransform();
-	RuntimeState.GroundSpeed = GetGroundSpeed();
-	RuntimeState.Velocity = GetCharacterMovement()->Velocity;
-	RuntimeState.InputAcceleration = GetCharacterMovement()->GetCurrentAcceleration();
-	RuntimeState.CurrentMaxAcceleration = GetCharacterMovement()->GetMaxAcceleration();
-	RuntimeState.CurrentMaxDeceleration = GetCharacterMovement()->GetMaxBrakingDeceleration();
-	RuntimeState.Gait = GetGait();
-	RuntimeState.Stance = GetStance();
-	RuntimeState.MovementMode = GetMovementMode();
-	RuntimeState.OrientationIntent = GetActorRotation();
-	RuntimeState.AimingDirection = GetAimRotation();
-	RuntimeState.LandingVelocity = LandingVelocity;
-	RuntimeState.bJustLanded = bJustLanded;
-	RuntimeState.GroundNormal = GetCharacterMovement()->CurrentFloor.HitResult.ImpactNormal;
-	
-	return RuntimeState;
-}
-
-bool AFVCharacter::CanMove() const
-{
-	if (IsMoveInputIgnored() || GetCharacterMovement()->MovementMode == MOVE_None)
-	{
-		return false;
-	}
-
-	if (MovementBlockingTags.IsEmpty())
-	{
-		return true;
-	}
-
-	if (OwnedTags.HasAny(MovementBlockingTags))
-	{
-		return false;
-	}
-
-	const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(this);
-	return !ASC || !ASC->HasAnyMatchingGameplayTags(MovementBlockingTags);
-}
-
-bool AFVCharacter::CanSprint() const
-{
-	return true;
-}
-
-void AFVCharacter::RequestWalk()
-{
-	if (IsSprinting())
-	{
-		return;
-	}
-	
-	SetWalking(!IsWalking());
-}
-
-void AFVCharacter::RequestCrouch()
-{
-	if (IsCrouched())
-	{
-		UnCrouch();
-	}
-	else
-	{
-		Crouch();
-	}
-}
-
-void AFVCharacter::RequestSprint(const bool bValue)
-{
-	if (bValue && IsCrouched())
-	{
-		UnCrouch();
-	}
-	
-	if (CanSprint())
-	{
-		SetSprinting(bValue);
-	}
-}
-
-void AFVCharacter::RequestJump()
-{
-	if (IsCrouched())
-	{
-		UnCrouch();
-	}
-	else
-	{
-		Jump();
-	}
+	return Mover ? Mover->GetVelocity() : Super::GetVelocity();
 }
 
 FGameplayTagContainer AFVCharacter::GetIdentityTags() const
@@ -196,43 +93,4 @@ void AFVCharacter::AddGameplayTag(FGameplayTag Tag)
 void AFVCharacter::RemoveGameplayTag(FGameplayTag Tag)
 {
 	OwnedTags.RemoveTag(Tag);
-}
-
-EFVGait AFVCharacter::GetGait() const
-{
-	if (IsSprinting())
-	{
-		return EFVGait::Sprinting;
-	}
-	else if (IsWalking())
-	{
-		return EFVGait::Walking;
-	}
-	else
-	{
-		return EFVGait::Running;
-	}
-}
-
-EFVStance AFVCharacter::GetStance() const
-{
-	return IsCrouched() ? EFVStance::Crouch : EFVStance::Stand;
-}
-
-EFVMovementMode AFVCharacter::GetMovementMode() const
-{
-	switch (GetCharacterMovement()->MovementMode)
-	{
-	case MOVE_Walking:
-	case MOVE_NavWalking:
-		return EFVMovementMode::OnGround;
-	case MOVE_Falling:
-		return EFVMovementMode::InAir;
-	case MOVE_Flying:
-		return EFVMovementMode::Traversing;
-	case MOVE_Swimming:
-		return EFVMovementMode::Swimming;
-	default:
-		return EFVMovementMode::None;
-	}
 }
