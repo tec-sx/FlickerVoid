@@ -14,7 +14,7 @@ Read [FVFramework](FVFramework.md) first; every other plugin builds on its defin
 | [FVStorySystem](FVStorySystem.md) | Quests, knowledge (clues, topics, thoughts), save and load |
 | [FVSocialSystem](FVSocialSystem.md) | Factions, standing, fame, notoriety, titles, relationships, disguise |
 | [FVNavigationSystem](FVNavigationSystem.md) | Maps, map markers, discovery, waypoint, minimap/compass/world map logic, map capture |
-| [Character movement](CharacterMovement.md) (game module) | Mover-driven characters, gait data, traversal, animation on UAF |
+| [Character movement](CharacterMovement.md) (game module) | Mover-driven characters, movement sets and AngelScript movement modes, traversal, animation on UAF |
 
 ## Shared conventions
 

@@ -8,8 +8,6 @@
 #include "FVLocomotionComponent.generated.h"
 
 class UCharacterMoverComponent;
-class UFVLocomotionData;
-struct FFVGaitSettings;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnLanded, FVector, LandingVelocity);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFVOnStartedFalling);
@@ -17,8 +15,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnGaitChanged, EFVGait, NewGait);
 
 /**
  * Movement intent and state of a character driven by Mover's Character Mover Component.
- * Input sets the intent (move, gait, crouch, jump, aim); as Mover's input producer the component turns it into Mover input every step,
- * writes the active gait into Mover's Common Legacy Movement Settings and keeps the state animation and traversal read.
+ * Input sets the intent (move, gait, crouch, jump, aim); as Mover's input producer the component sends it every step as
+ * Mover's default character inputs plus FFVLocomotionInputs. The movement modes decide what it does; animation and
+ * traversal read the state here.
  */
 UCLASS(ClassGroup = (FlickerVoid), meta = (BlueprintSpawnableComponent))
 class FLICKERVOIDCHARACTER_API UFVLocomotionComponent : public UActorComponent, public IMoverInputProducerInterface
@@ -123,21 +122,16 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion", meta = (ToolTip = "Gait speeds and turning. Empty uses the defaults of UFVLocomotionData."))
-	TObjectPtr<const UFVLocomotionData> LocomotionData;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion", meta = (ClampMin = "0", ClampMax = "180", ToolTip = "Sprint only while the move input is within this angle of the facing direction, in degrees."))
+	float SprintAngleThreshold = 50.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion", meta = (ClampMin = "0", ToolTip = "How long JustLanded stays true after landing, in seconds."))
 	float JustLandedDuration = 0.3f;
 
 private:
-	const UFVLocomotionData& GetData() const;
-	const FFVGaitSettings& GetGaitSettings() const;
 	EFVGait ResolveGait() const;
 	bool ShouldFaceControl() const;
-	float GetDirectionalSpeedScale() const;
-	float GetSpeedMultiplier() const;
 	FRotator GetControlYaw() const;
-	void ApplyGaitToMover() const;
 	void UpdateMovementEvents(float DeltaTime);
 
 	UPROPERTY(Transient)

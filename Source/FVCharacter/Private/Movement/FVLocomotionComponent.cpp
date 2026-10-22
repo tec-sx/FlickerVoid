@@ -7,7 +7,7 @@
 #include "FVCharacterModule.h"
 #include "FVCharacterTags.h"
 #include "GameFramework/Pawn.h"
-#include "Movement/FVLocomotionData.h"
+#include "Movement/FVLocomotionInputs.h"
 #include "MoverDataModelTypes.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVLocomotionComponent)
@@ -39,7 +39,6 @@ void UFVLocomotionComponent::BeginPlay()
 
 	LastOrientationIntent = GetOwner()->GetActorForwardVector();
 	Gait = ResolveGait();
-	ApplyGaitToMover();
 }
 
 void UFVLocomotionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -53,7 +52,6 @@ void UFVLocomotionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		OnGaitChanged.Broadcast(Gait);
 	}
 
-	ApplyGaitToMover();
 	UpdateMovementEvents(DeltaTime);
 }
 
@@ -69,7 +67,7 @@ void UFVLocomotionComponent::ProduceInput_Implementation(int32 SimTimeMs, FMover
 	if (CanMove())
 	{
 		const FVector LocalInput(MoveDirection.X, MoveDirection.Y, 0.f);
-		MoveIntent = ControlYaw.RotateVector(LocalInput).GetClampedToMaxSize(1.f) * GetDirectionalSpeedScale();
+		MoveIntent = ControlYaw.RotateVector(LocalInput).GetClampedToMaxSize(1.f);
 	}
 
 	Inputs.SetMoveInput(EMoveInputType::DirectionalIntent, MoveIntent);
@@ -87,6 +85,13 @@ void UFVLocomotionComponent::ProduceInput_Implementation(int32 SimTimeMs, FMover
 	Inputs.bIsJumpJustPressed = bJumpJustPressed;
 	Inputs.bIsJumpPressed = bJumpHeld;
 	bJumpJustPressed = false;
+
+	FFVLocomotionInputs& LocomotionInputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FFVLocomotionInputs>();
+	LocomotionInputs.Gait = Gait;
+	LocomotionInputs.LocalMoveDirection = CanMove() ? MoveDirection : FVector::ZeroVector;
+	LocomotionInputs.bFacingControl = ShouldFaceControl();
+	LocomotionInputs.bAiming = bAiming;
+	LocomotionInputs.bTraversing = bTraversing;
 }
 
 void UFVLocomotionComponent::RequestMove(FVector Direction)
@@ -255,12 +260,15 @@ FFVCharacterRuntimeState UFVLocomotionComponent::GetRuntimeState() const
 		return State;
 	}
 
-	const FFVGaitSettings& GaitSettings = GetGaitSettings();
 	State.Velocity = Mover->GetVelocity();
 	State.GroundSpeed = GetGroundSpeed();
-	State.InputAcceleration = Mover->GetMovementIntent() * GaitSettings.Acceleration;
-	State.CurrentMaxAcceleration = GaitSettings.Acceleration;
-	State.CurrentMaxDeceleration = GaitSettings.Deceleration;
+
+	if (const UCommonLegacyMovementSettings* Settings = Mover->FindSharedSettings<UCommonLegacyMovementSettings>())
+	{
+		State.InputAcceleration = Mover->GetMovementIntent() * Settings->Acceleration;
+		State.CurrentMaxAcceleration = Settings->Acceleration;
+		State.CurrentMaxDeceleration = Settings->Deceleration;
+	}
 
 	FHitResult FloorHit;
 	if (Mover->TryGetFloorCheckHitResult(FloorHit))
@@ -271,30 +279,6 @@ FFVCharacterRuntimeState UFVLocomotionComponent::GetRuntimeState() const
 	return State;
 }
 
-const UFVLocomotionData& UFVLocomotionComponent::GetData() const
-{
-	return LocomotionData ? *LocomotionData : *GetDefault<UFVLocomotionData>();
-}
-
-const FFVGaitSettings& UFVLocomotionComponent::GetGaitSettings() const
-{
-	const UFVLocomotionData& Data = GetData();
-	if (IsCrouching())
-	{
-		return Data.Crouch;
-	}
-
-	switch (Gait)
-	{
-	case EFVGait::Walking:
-		return Data.Walk;
-	case EFVGait::Sprinting:
-		return Data.Sprint;
-	default:
-		return Data.Run;
-	}
-}
-
 EFVGait UFVLocomotionComponent::ResolveGait() const
 {
 	if (bWantsToSprint && !IsCrouching() && !MoveDirection.IsNearlyZero())
@@ -303,7 +287,7 @@ EFVGait UFVLocomotionComponent::ResolveGait() const
 		const FVector InputDirection = GetControlYaw().RotateVector(FVector(MoveDirection.X, MoveDirection.Y, 0.f)).GetSafeNormal2D();
 		const float Angle = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(FVector::DotProduct(FacingDirection, InputDirection), -1.f, 1.f)));
 
-		if (Angle <= GetData().SprintAngleThreshold)
+		if (Angle <= SprintAngleThreshold)
 		{
 			return EFVGait::Sprinting;
 		}
@@ -317,61 +301,11 @@ bool UFVLocomotionComponent::ShouldFaceControl() const
 	return bAiming || !FMath::IsNearlyZero(MoveDirection.Y);
 }
 
-float UFVLocomotionComponent::GetDirectionalSpeedScale() const
-{
-	const FFVGaitSettings& GaitSettings = GetGaitSettings();
-	if (!ShouldFaceControl() || GaitSettings.ForwardSpeed <= UE_KINDA_SMALL_NUMBER)
-	{
-		return 1.f;
-	}
-
-	// 0 = forward, 90 = sideways, 180 = backwards
-	const float Angle = FMath::RadiansToDegrees(FMath::Atan2(FMath::Abs(MoveDirection.Y), MoveDirection.X));
-	const float Speed = Angle <= 90.f
-		? FMath::Lerp(GaitSettings.ForwardSpeed, GaitSettings.StrafeSpeed, Angle / 90.f)
-		: FMath::Lerp(GaitSettings.StrafeSpeed, GaitSettings.BackwardSpeed, (Angle - 90.f) / 90.f);
-
-	return Speed / GaitSettings.ForwardSpeed;
-}
-
-float UFVLocomotionComponent::GetSpeedMultiplier() const
-{
-	const FGameplayAttribute& Attribute = GetData().SpeedMultiplierAttribute;
-	if (!Attribute.IsValid())
-	{
-		return 1.f;
-	}
-
-	const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
-	if (!ASC || !ASC->HasAttributeSetForAttribute(Attribute))
-	{
-		return 1.f;
-	}
-
-	return ASC->GetNumericAttribute(Attribute);
-}
-
 FRotator UFVLocomotionComponent::GetControlYaw() const
 {
 	const APawn* Pawn = Cast<APawn>(GetOwner());
 	const FRotator Rotation = Pawn && Pawn->GetController() ? Pawn->GetControlRotation() : GetOwner()->GetActorRotation();
 	return FRotator(0.f, Rotation.Yaw, 0.f);
-}
-
-void UFVLocomotionComponent::ApplyGaitToMover() const
-{
-	UCommonLegacyMovementSettings* Settings = Mover ? Mover->FindSharedSettings_Mutable<UCommonLegacyMovementSettings>() : nullptr;
-	if (!Settings)
-	{
-		return;
-	}
-
-	const FFVGaitSettings& GaitSettings = GetGaitSettings();
-	Settings->MaxSpeed = GaitSettings.ForwardSpeed * GetSpeedMultiplier();
-	Settings->Acceleration = GaitSettings.Acceleration;
-	Settings->Deceleration = GaitSettings.Deceleration;
-	Settings->GroundFriction = GaitSettings.GroundFriction;
-	Settings->TurningRate = GetData().TurningRate;
 }
 
 void UFVLocomotionComponent::UpdateMovementEvents(float DeltaTime)

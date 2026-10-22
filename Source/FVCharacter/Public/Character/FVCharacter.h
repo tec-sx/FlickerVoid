@@ -9,11 +9,12 @@ class UCapsuleComponent;
 class UCharacterMoverComponent;
 class UFlowComponent;
 class UFVLocomotionComponent;
+class UFVMovementSetComponent;
 class USkeletalMeshComponent;
 
 /**
- * Pawn shape shared by FlickerVoid characters: capsule, skeletal mesh, Mover's Character Mover Component and the locomotion
- * component, which produces Mover's input.
+ * Pawn shape shared by FlickerVoid characters: capsule, skeletal mesh, Mover's Character Mover Component, the locomotion
+ * component (Mover's input) and the movement set component (Mover's modes).
  */
 UCLASS(Config = Game)
 class FLICKERVOIDCHARACTER_API AFVCharacter : public APawn, public IGameplayTagAssetInterface
@@ -23,6 +24,7 @@ class FLICKERVOIDCHARACTER_API AFVCharacter : public APawn, public IGameplayTagA
 public:
 	AFVCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	virtual void PreInitializeComponents() override;
 	virtual void PostInitializeComponents() override;
 	virtual FVector GetVelocity() const override;
 
@@ -37,6 +39,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Character|Movement")
 	UFVLocomotionComponent* GetLocomotion() const { return Locomotion; }
+
+	UFUNCTION(BlueprintPure, Category = "Character|Movement")
+	UFVMovementSetComponent* GetMovementSets() const { return MovementSets; }
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Character|Movement", meta = (ToolTip = "Tries a traversal action (vault, mantle, hurdle) in front of the character. Returns true when one started."))
 	bool RequestTraverse();
@@ -67,6 +72,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UFVLocomotionComponent> Locomotion;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UFVMovementSetComponent> MovementSets;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UFlowComponent> FlowComponent;

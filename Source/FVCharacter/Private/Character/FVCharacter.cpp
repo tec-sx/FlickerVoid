@@ -7,6 +7,7 @@
 #include "FlowComponent.h"
 #include "FVCoreTags.h"
 #include "Movement/FVLocomotionComponent.h"
+#include "Movement/FVMovementSetComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVCharacter)
 
@@ -44,9 +45,21 @@ AFVCharacter::AFVCharacter(const FObjectInitializer& ObjectInitializer)
 	Mover = CreateDefaultSubobject<UCharacterMoverComponent>(TEXT("CharacterMover"));
 	Mover->bGatherInputFromAllInputProducerComponents = true;
 	Locomotion = CreateDefaultSubobject<UFVLocomotionComponent>(TEXT("Locomotion"));
+	MovementSets = CreateDefaultSubobject<UFVMovementSetComponent>(TEXT("MovementSets"));
 
 	FlowComponent = CreateDefaultSubobject<UFlowComponent>(TEXT("FlowComponent"));
 	FlowComponent->IdentityTags = FGameplayTagContainer(FVCoreTags::Player_Pawn);
+}
+
+void AFVCharacter::PreInitializeComponents()
+{
+	Super::PreInitializeComponents();
+
+	// Editor worlds keep the Blueprint's modes; changing them on placed instances can stop those pawns from moving.
+	if (GetWorld() && GetWorld()->IsGameWorld())
+	{
+		MovementSets->InstallStartingSets();
+	}
 }
 
 void AFVCharacter::PostInitializeComponents()
