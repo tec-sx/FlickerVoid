@@ -10,6 +10,7 @@
 #include "ISettingsModule.h"
 #include "Layout/FVUILayout.h"
 #include "PropertyEditorModule.h"
+#include "Relevance/FVRelevanceSettings.h"
 #include "Styling/AppStyle.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "Time/FVWorldClock.h"
@@ -86,6 +87,8 @@ void FFVCoreEditorModule::RegisterMenus()
 		[] { OpenSettings(UFVUISettings::StaticClass()); });
 	AddMenuAction("Framework", FrameworkLabel, "WorldClockSettings", LOCTEXT("FrameworkClock", "World Clock Settings"), FText::GetEmpty(),
 		[] { OpenSettings(UFVWorldClockSettings::StaticClass()); });
+	AddMenuAction("Framework", FrameworkLabel, "RelevanceSettings", LOCTEXT("FrameworkRelevance", "Relevance Settings"), FText::GetEmpty(),
+		[] { OpenSettings(UFVRelevanceSettings::StaticClass()); });
 }
 
 void FFVCoreEditorModule::AddMenuAction(FName Section, const FText& SectionLabel, FName ActionName, const FText& Label, const FText& ToolTip, TFunction<void()> Action)

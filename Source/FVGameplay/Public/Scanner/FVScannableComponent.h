@@ -11,8 +11,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScanRevealChanged, bool, bRevea
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScanned, AActor*, Scanner);
 
 /**
- * Makes the owner show up in scan mode and reveal its scan definition when scanned. The owner also
- * needs an interactable component, since the scanner finds its targets through the interaction registry.
+ * Makes the owner show up in scan mode and reveal its scan definition when scanned. It is in scan range
+ * while in the Near band of the Relevance.ScanTarget group.
  */
 UCLASS(ClassGroup = (FV), meta = (BlueprintSpawnableComponent))
 class FLICKERVOIDGAMEPLAY_API UFVScannableComponent : public UActorComponent
@@ -57,6 +57,7 @@ public:
 	FFVOnScanned OnScanned;
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scanner")

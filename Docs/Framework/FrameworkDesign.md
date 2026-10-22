@@ -14,7 +14,7 @@ Status: implemented in `feature/framework-dev`, revised after the owner's answer
 | Reference | Practice | Here |
 | --- | --- | --- |
 | CDPR (Witcher 3, Cyberpunk) | One **facts DB** is the single source of truth for story state. Quest graphs are signal graphs with phases, conditions and *pause until condition* nodes. | `UFVFactDatabase` (exists). Flow graphs for quests/dialogue, `FV Wait For Conditions` node = Witcher's Pause node. Quests, knowledge, reputation, relationships, notoriety all live in facts, so saving and conditions come for free. |
-| CDPR scanner / Witcher senses / Tomb Raider instinct | A mode that highlights categories of objects through post-process stencils, shows data on focus and turns findings into clues. Time slows while scanning. | Scanner in `FVGameplay`: candidates from the interaction registry, category stencils, focus by view alignment, timed scan, effects on scan (learn knowledge, set facts). Optional time dilation. |
+| CDPR scanner / Witcher senses / Tomb Raider instinct | A mode that highlights categories of objects through post-process stencils, shows data on focus and turns findings into clues. Time slows while scanning. | Scanner in `FVGameplay`: candidates from the Near band of the `Relevance.ScanTarget` relevance group, category stencils, focus by view alignment, timed scan, effects on scan (learn knowledge, set facts). Optional time dilation. |
 | Hitman | Disguises are tags; some NPCs (enforcers) see through them; suspicion builds rather than flipping. | Outfits grant gameplay tags (`Disguise.Faction.*`). `FVSocialSystem` resolves attitude from standing tier, notoriety and disguise, and a disguise lowers the fame onlookers read. Suspicion meter is phase 2 (stealth). |
 | Lyra / modern UE5 | Item fragments, instanced structs, data assets, GAS, StateTree, modular components. | Fragments on definitions (`TInstancedStruct`), components found on actors instead of interfaces. |
 | Tarkov / Resident Evil | Carrying is a decision: weight and container space, no free stacking. | Items carry weight and a grid footprint; bags and backpacks grant both. |
@@ -53,7 +53,7 @@ Every plugin depends only on FVFramework (and Flow where it has graph nodes). Pl
 | FVNarrative | narrative tags | memory and psychology systems removed |
 | FVWorld | world objects (doors, hiding spots), world tags | `UFVWorldStateSubsystem` removed, facts and the clock are the single source |
 | FVUI | HUD, journal, dialogue, scanner widgets | kept |
-| FVGameplay | also owns the **scanner** now (`Scanner/`), built on the interaction registry | scanner moved in from a plugin |
+| FVGameplay | also owns the **scanner** now (`Scanner/`), built on FVFramework relevance | scanner moved in from a plugin |
 | FVItems | — | **removed**: pickup/receiver/item definition moved to FVInventorySystem |
 | FlickerVoidGame | game mode, player, asset manager | kept |
 
@@ -94,7 +94,8 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | `UFVDialogueParticipantComponent` | Dialogue | speakers: events for lines (anim, lip sync, barks) |
 | `UFVAttributeComponent` | Attributes | any character with attributes |
 | `UFVScannerComponent` | FVGameplay | player |
-| `UFVScannableComponent` | FVGameplay | anything scannable (needs an interactable component too) |
+| `UFVScannableComponent` | FVGameplay | anything scannable; in range while in the Near band of `Relevance.ScanTarget` |
+| `UFVRelevanceComponent` | FVFramework | anything a system switches on and off by distance; added by systems with `FindOrAdd`, one per relevance group |
 | `UFVMapMarkerComponent` | Navigation | anything shown on the map, minimap or compass (shops, quest givers, points of interest) |
 | `UFVNavigatorComponent` | Navigation | player pawn: active map, discovery, minimap/compass/world map views |
 | `AFVMapCaptureActor` | Navigation | editor-only camera placed over an area to capture a map layer image |

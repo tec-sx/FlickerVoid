@@ -1,8 +1,8 @@
 # FVFramework setup
 
-The core every other plugin builds on: definitions and fragments, the facts database, conditions and effects, character identity, UI layout and HUD, world clock, cinematics, spawners, Flow and StateTree nodes, and the debug HUD.
+The core every other plugin builds on: definitions and fragments, the facts database, conditions and effects, character identity, UI layout and HUD, world clock, cinematics, spawners, relevance (distance bands), Flow and StateTree nodes, and the debug HUD.
 
-Modules: `FVCoreRuntime`, `FVCoreFlow`, `FVCoreUI`, `FVCoreDebug`, `FVCoreEditor`. Requires the Flow, StateTree, CommonUI, EnhancedInput and DataValidation plugins (enabled by the plugin).
+Modules: `FVCoreRuntime`, `FVCoreFlow`, `FVCoreUI`, `FVCoreDebug`, `FVCoreEditor`. Requires the Flow, StateTree, CommonUI, EnhancedInput, DataValidation and SignificanceManager plugins (enabled by the plugin).
 
 ## 1. Quick start
 
@@ -133,7 +133,31 @@ Place an `AFVSpawner` (or a Blueprint of it) in the level and set its **Definiti
 
 `UFVGestureComponent` measures press, hold, mash and hover gestures for interaction offers.
 
-## 11. Debug
+## 11. Relevance
+
+Tells systems how far things are from the player, without each system looping over its objects. `UFVRelevanceSubsystem` feeds the engine's Significance Manager the local players' viewpoints; the manager scores every registered object in parallel, then each object's band is updated on the game thread.
+
+- **FV Relevance Component**: put on an actor (or let a system add it) and set its **Group**, a tag under `Relevance.` such as `Relevance.Interactable` or `Relevance.ScanTarget`. It reports a band, **Near**, **Mid** or **Far**, and broadcasts **On Band Changed** (new band, old band). Bind it in AngelScript to switch things on and off by distance (`IsNear`, `GetBand`, `GetDistance`).
+- One component per group. An actor in several groups (an interactable that can also be scanned) carries one for each; `UFVRelevanceComponent::FindOrAdd(Actor, Group)` finds or adds it from C++, so systems need no extra setup on their actors.
+- Bands have hysteresis: an object enters a band at its threshold and leaves only once it is **Hysteresis** further out, so nothing flickers at the edge.
+- Updates run on real time, so slow motion doesn't slow them down. Objects outside every band cost one distance check per update and nothing else.
+
+*FlickerVoid > Relevance* (also *FlickerVoid menu > Framework > Relevance Settings*, `Config/DefaultGame.ini`):
+
+| Setting | Meaning |
+|---|---|
+| Origin | Measure from the player's **Pawn** (default) or **Camera** |
+| Update Interval | Real seconds between updates (0.1); 0 updates every frame |
+| Groups | Per group: **Near Distance**, **Mid Distance**, **Hysteresis** (cm). A group without an entry uses 600 / 2500 / 50 and logs a warning |
+
+| Group | Owner | Near band means |
+|---|---|---|
+| `Relevance.Interactable` | FVInteractionSystem | Interactable is awake and can be focused (600 cm) |
+| `Relevance.ScanTarget` | Game module (scanner) | Scannable lights up in scan mode (2500 cm) |
+
+Add a group for a new system by declaring its tag (natively in the system's module) and adding an entry here. Crowds stay on Mass LOD and character animation will use Epic's Animation Budget Allocator; align their distances with these groups when they arrive.
+
+## 12. Debug
 
 | CVar / command | Effect |
 |---|---|
@@ -142,6 +166,9 @@ Place an `AFVSpawner` (or a Blueprint of it) in the level and set its **Definiti
 | `FV.Facts.Set <Tag> <Value>` | Write a fact |
 | `FV.Facts.Dump [Filter]` | Log all facts |
 | `FV.Facts.Reset` | Reset facts to their declared defaults |
+| `FVCvar.Relevance.Debug.HUD 1` or `2` | Objects per band for each relevance group; 2 also draws the band rings and colors objects by band (green near, yellow mid, red far) |
+| `FVCvar.Relevance.Debug.Group Scan` | Limit the relevance readout to groups containing this text |
+| `FV.Relevance.List [Group]` | Log relevance components with band and distance |
 | `FV.ValidateAll` (editor) | Run data validation on every definition |
 
 Every plugin's debug readout stacks on the same on-screen panel (`UFVDebugHUDSubsystem`).

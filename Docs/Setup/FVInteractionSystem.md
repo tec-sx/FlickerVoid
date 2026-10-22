@@ -1,6 +1,6 @@
 # FVInteractionSystem setup
 
-Look-at interaction: the player's interactor finds interactables around it, picks the best one in view, shows its offers (Talk, Open, Pick up...) and runs an offer's effects when its gesture completes (press, hold, mash, hover).
+Look-at interaction: interactables wake up when the player comes near (FVFramework relevance, group `Relevance.Interactable`), the player's interactor picks the best one in view, shows its offers (Talk, Open, Pick up...) and runs an offer's effects when its gesture completes (press, hold, mash, hover).
 
 Modules: `FVInteractionSystem`, `FVInteractionSystemDebug`, `FVInteractionSystemEditor` (Blueprint compile checks for interactable setups).
 
@@ -38,7 +38,7 @@ Untick **Show Offers** for simple interactables such as an unlocked door: the wi
 |---|---|---|
 | FV Interactor Component | Player pawn | Set **Definition**. Modes are pushed and popped at runtime by tag (e.g. while aiming). **Ignored Actors** for self-hits |
 | FV Interaction UI Component | Player pawn or controller (needs the interactor) | Pushes the interaction widget into the UI layout once and keeps it updated. Optional **UI Settings Override** |
-| FV Interactable Component | Anything interactable | Set **Definition**. Primitives tagged `Detectable` (the **Detectable Primitive Tag**) are traced and highlighted |
+| FV Interactable Component | Anything interactable | Set **Definition**. Primitives tagged `Detectable` (the **Detectable Primitive Tag**) are traced and highlighted. On BeginPlay it adds an FV Relevance Component for `Relevance.Interactable` unless the actor already has one; it wakes itself up (focusable) while in that group's Near band, and the interactor only traces while something is in that band |
 | FV Interactable Highlight Component | Interactables that should glow | Uses the project's highlight setup unless **Override Setup** is ticked |
 | FV Lock Component | Lockable doors and containers | **Locked** (saved), **Lock Pickable**, **Difficulty** 0-1 |
 | `UFVInteractableResponseComponent` subclass | Interactables reacting to an action | Abstract; set its **Action Tag** and implement **Execute Action**. `UFVInteractableResponseComponent_Toggle` handles open/close with a lock; see `Script/World/Doors/InteractionResponse_DoorToggle.as` |
@@ -58,13 +58,12 @@ Requires the FVFramework UI layout with a `UI.Layer.Game` layer.
 
 ## 5. Settings
 
-*FlickerVoid > Interaction System* (also *FlickerVoid menu > Interaction System > Global Settings* and *UI Settings*):
+*FlickerVoid > Interaction System* (also *FlickerVoid menu > Interaction System > Global Settings* and *UI Settings*). The activation distance is the Near Distance of the `Relevance.Interactable` group in *FlickerVoid > Relevance* (FVFramework setup, Relevance section):
 
 | Setting | Meaning |
 |---|---|
 | Interactor Default Settings | Default state, collision channel and interactor tag |
 | Interactable Base Settings | Default interaction period, state, channel, highlight on/off, highlight setup (overlay material or post-process stencil), weight |
-| Registry Settings | Activation radius around the player and refresh interval |
 | Widget Update Frequency | Seconds between prompt updates |
 | Interaction UI Settings | `DA_InteractionUISettings` |
 
@@ -72,7 +71,7 @@ For post-process highlighting, enable *Custom Depth-Stencil Pass: Enabled with S
 
 ## 6. Gameplay tags
 
-Defined natively, nothing to create: `Interactable.*`, `Interaction.Action.*`, `InputTag.Interaction.*`, `Interactor.Tag.*`, `Interactor.Mode.*`, `Interaction.Cancel.*`, `Interaction.Suppression.*`. Add children for new types and actions (e.g. `Interaction.Action.Sit`).
+Defined natively, nothing to create: `Relevance.Interactable`, `Interactable.*`, `Interaction.Action.*`, `InputTag.Interaction.*`, `Interactor.Tag.*`, `Interactor.Mode.*`, `Interaction.Cancel.*`, `Interaction.Suppression.*`. Add children for new types and actions (e.g. `Interaction.Action.Sit`).
 
 ## 7. Conditions
 
@@ -84,7 +83,8 @@ Defined natively, nothing to create: `Interactable.*`, `Interaction.Action.*`, `
 |---|---|
 | `FVCvar.Interaction.Debug.HUD 1` | Candidates and resolved prompts on screen |
 | `FVCvar.Interaction.Debug.Draw 1` or `2` | Draw detection volumes, probes, cones and highlights |
-| `FV.Interaction.List` | Log registered interactables |
+| `FV.Interaction.List` | Log interactables closest first with their relevance band and state |
+| `FVCvar.Relevance.Debug.HUD 2` | Band counts and rings for every relevance group (FVFramework) |
 | `FV.Interaction.Focus` | Log what the player focuses |
 
 ## Troubleshooting
@@ -93,5 +93,6 @@ Defined natively, nothing to create: `Interactable.*`, `Interaction.Action.*`, `
 |---|---|
 | Interaction widget gets no events | Its class isn't a child of `FVInteractionWidget` |
 | Nothing gets focused | No primitive tagged `Detectable`, or the detection channel doesn't hit it |
+| Interactables never wake up | The SignificanceManager plugin is disabled, or `Relevance.Interactable` has no entry in *FlickerVoid > Relevance* (the log warns and defaults apply) |
 | Focus indicator never changes | The data table row name doesn't match the interactable type tag |
 | Offer commits but nothing happens | The Activate Ability event tag has no matching ability trigger on the player |

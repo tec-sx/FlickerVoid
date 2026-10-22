@@ -52,6 +52,7 @@ namespace FVGameplayTags
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Event_LockpickEnded);
 	
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Scan_Category);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Relevance_ScanTarget);
 
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Pickup);

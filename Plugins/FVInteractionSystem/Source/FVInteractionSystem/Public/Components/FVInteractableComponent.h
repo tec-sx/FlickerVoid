@@ -7,6 +7,7 @@
 #include "Core/FVInteractionTypes.h"
 #include "Data/FVInteractableDefinition.h"
 #include "GameplayTags.h"
+#include "Relevance/FVRelevanceSettings.h"
 #include "FVInteractableComponent.generated.h"
 
 #define UE_API FVINTERACTIONSYSTEM_API
@@ -14,8 +15,8 @@
 class UPrimitiveComponent;
 class UShapeComponent;
 class UFVInteractableResponseComponent;
-class UFVInteractionRegistrySubsystem;
 class UFVInteractableDefinition;
+class UFVRelevanceComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableFoundInteractor, UFVInteractorComponent*, Interactor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractableLostInteractor, UFVInteractorComponent*, Interactor);
@@ -173,12 +174,15 @@ private:
 	void ProgressInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const float Progress) const;
 	void EndInteraction(const FGameplayTag& ActionTag, UFVInteractorComponent* Interactor, const bool bSuccess);
 	
+	UFUNCTION()
+	void HandleRelevanceBandChanged(EFVRelevanceBand NewBand, EFVRelevanceBand OldBand);
+
 	void ApplyStateTag(EFVInteractableState OldState, EFVInteractableState NewState) const;
 	void StartCooldown();
 	void ApplyOfferEffects(const FGameplayTag& ActionTag, const UFVInteractorComponent* Interactor) const;
 	
 	UPROPERTY(Transient)
-	TObjectPtr<UFVInteractionRegistrySubsystem> Registry;
+	TObjectPtr<UFVRelevanceComponent> Relevance;
 
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UFVInteractorComponent> TargetInteractor;
