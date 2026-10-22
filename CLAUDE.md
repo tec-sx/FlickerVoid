@@ -25,7 +25,7 @@ Much older code in `Source/` is experimental or obsolete; don't assume it should
 | FVDialogueSystem | Dialogue on FlowGraph |
 | FVStorySystem | Quests, knowledge |
 | FVSocialSystem | Factions, standing, fame, notoriety, titles, disguise, affinity |
-| FVInteractionSystem | Interaction offers, registry subsystem, focus |
+| FVInteractionSystem | Interaction offers, wake-up by relevance (`Relevance.Interactable`), focus |
 | FVNavigationSystem | Maps and layers, map markers, discovery, waypoint and tracking, minimap/world map/compass view logic, map capture tool |
 | Flow | FlowGraph (MothCocoon), external git submodule; don't edit |
 

@@ -82,6 +82,53 @@ void UFVRelevanceSubsystem::GetComponents(const FGameplayTag& Group, TArray<UFVR
 	}
 }
 
+void UFVRelevanceSubsystem::GetNearComponents(const FGameplayTag& Group, TArray<UFVRelevanceComponent*>& OutComponents) const
+{
+	ForEachNearComponent(Group, [&OutComponents](UFVRelevanceComponent* Component)
+	{
+		OutComponents.Add(Component);
+		return true;
+	});
+}
+
+bool UFVRelevanceSubsystem::HasNearComponents(const FGameplayTag& Group) const
+{
+	bool bFound = false;
+	ForEachNearComponent(Group, [&bFound](UFVRelevanceComponent*)
+	{
+		bFound = true;
+		return false;
+	});
+	return bFound;
+}
+
+void UFVRelevanceSubsystem::ForEachNearComponent(const FGameplayTag& Group, const TFunctionRef<bool(UFVRelevanceComponent*)> Visit) const
+{
+	const USignificanceManager* Manager = GetSignificanceManager();
+	if (Manager == nullptr)
+	{
+		return;
+	}
+
+	// Sorted closest first; hysteresis keeps an object Near up to NearDistance + Hysteresis, so only stop past that.
+	for (const USignificanceManager::FManagedObjectInfo* Info : Manager->GetManagedObjects(Group.GetTagName()))
+	{
+		UFVRelevanceComponent* Component = Cast<UFVRelevanceComponent>(Info->GetObject());
+		if (Component == nullptr)
+		{
+			continue;
+		}
+		if (Component->GetDistance() > Component->GroupSettings.NearDistance + Component->GroupSettings.Hysteresis)
+		{
+			return;
+		}
+		if (Component->IsNear() && !Visit(Component))
+		{
+			return;
+		}
+	}
+}
+
 void UFVRelevanceSubsystem::Tick(const float DeltaTime)
 {
 	Super::Tick(DeltaTime);

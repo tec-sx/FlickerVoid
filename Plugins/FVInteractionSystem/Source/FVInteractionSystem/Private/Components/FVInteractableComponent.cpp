@@ -8,7 +8,6 @@
 #include "FVInteractionSystem.h"
 #include "FVInteractionSystemSettings.h"
 #include "Relevance/FVRelevanceComponent.h"
-#include "Subsystems/FVInteractionRegistrySubsystem.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -104,13 +103,6 @@ void UFVInteractableComponent::BeginPlay()
 
 	ProcessDependencies();
 
-	Registry = GetWorld()->GetSubsystem<UFVInteractionRegistrySubsystem>();
-
-	if (IsValid(Registry))
-	{
-		Registry->Register(this);
-	}
-
 	Relevance = UFVRelevanceComponent::FindOrAdd(GetOwner(), FVInteractionGameplayTags::Relevance_Interactable);
 	if (IsValid(Relevance))
 	{
@@ -129,11 +121,6 @@ void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		{
 			Relevance->OnBandChanged.RemoveDynamic(this, &UFVInteractableComponent::HandleRelevanceBandChanged);
 		}
-
-		if (IsValid(Registry))
-		{
-			Registry->Unregister(this);
-		}
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -141,9 +128,13 @@ void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void UFVInteractableComponent::HandleRelevanceBandChanged(const EFVRelevanceBand NewBand, EFVRelevanceBand)
 {
-	if (IsValid(Registry))
+	if (NewBand == EFVRelevanceBand::Near)
 	{
-		Registry->SetInRange(this, NewBand == EFVRelevanceBand::Near);
+		ActivateInteractions();
+	}
+	else
+	{
+		DeactivateInteractions();
 	}
 }
 
@@ -357,7 +348,7 @@ void UFVInteractableComponent::RemoveSuppression(FGameplayTag Reason)
 	{
 		EFVInteractableState NewState = EFVInteractableState::Idle;
 
-		if (IsValid(Registry) && Registry->GetActiveInteractables().Contains(this))
+		if (IsValid(Relevance) && Relevance->IsNear())
 		{
 			NewState = EFVInteractableState::Awake;
 		}

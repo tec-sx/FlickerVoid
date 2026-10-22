@@ -15,7 +15,6 @@
 class UPrimitiveComponent;
 class UShapeComponent;
 class UFVInteractableResponseComponent;
-class UFVInteractionRegistrySubsystem;
 class UFVInteractableDefinition;
 class UFVRelevanceComponent;
 
@@ -182,9 +181,6 @@ private:
 	void StartCooldown();
 	void ApplyOfferEffects(const FGameplayTag& ActionTag, const UFVInteractorComponent* Interactor) const;
 	
-	UPROPERTY(Transient)
-	TObjectPtr<UFVInteractionRegistrySubsystem> Registry;
-
 	UPROPERTY(Transient)
 	TObjectPtr<UFVRelevanceComponent> Relevance;
 

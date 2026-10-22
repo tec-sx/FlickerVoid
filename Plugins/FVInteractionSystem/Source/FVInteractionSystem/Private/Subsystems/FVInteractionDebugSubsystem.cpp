@@ -6,8 +6,9 @@
 #include "Components/FVInteractorComponent.h"
 #include "Components/FVInteractableComponent.h"
 #include "Core/FVInteractionGameplayTags.h"
+#include "Relevance/FVRelevanceComponent.h"
 #include "Relevance/FVRelevanceSettings.h"
-#include "Subsystems/FVInteractionRegistrySubsystem.h"
+#include "Relevance/FVRelevanceSubsystem.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -110,7 +111,6 @@ void UFVInteractionDebugSubsystem::Unregister()
 void UFVInteractionDebugSubsystem::VisualizeRange(
 	const UWorld* World, 
 	const UFVInteractorComponent* Interactor, 
-	const TArray<TObjectPtr<UFVInteractableComponent>>& ActiveInteractables,
 	const float Interval)
 {
 	const int32 DrawLevel = CVarInteractionDebugDraw.GetValueOnGameThread();
@@ -124,20 +124,25 @@ void UFVInteractionDebugSubsystem::VisualizeRange(
 		DrawDebugCircle(World, Interactor->GetOwner()->GetActorLocation(), Group->NearDistance, 64, FColor(0, 128, 255), false, Interval, 0, 0.5f, FVector::ForwardVector, FVector::RightVector, false);
 	}
 	
-	if (DrawLevel < 2)
+	const UFVRelevanceSubsystem* Relevance = UFVRelevanceSubsystem::Get(World);
+	if (DrawLevel < 2 || Relevance == nullptr)
 	{
 		return;
 	}
 
-	for (const UFVInteractableComponent* Interactable : ActiveInteractables)
+	TArray<UFVRelevanceComponent*> NearComponents;
+	Relevance->GetNearComponents(FVInteractionGameplayTags::Relevance_Interactable, NearComponents);
+
+	for (const UFVRelevanceComponent* Near : NearComponents)
 	{
-		if (!IsValid(Interactable) || !Interactable->GetOwner())
+		const AActor* NearActor = Near->GetOwner();
+		if (NearActor == nullptr)
 		{
 			continue;
 		}
 
-		const FColor Color = Interactor->GetTargetInteractable() == Interactable ? FColor::Green : FColor::Yellow;
-		DrawBoundingBox(World, Interactable->GetOwner(), Color, Interval);
+		const bool bIsTarget = Interactor->GetTargetInteractable() && Interactor->GetTargetInteractable()->GetOwner() == NearActor;
+		DrawBoundingBox(World, NearActor, bIsTarget ? FColor::Green : FColor::Yellow, Interval);
 	}
 }
 
@@ -350,19 +355,16 @@ void UFVInteractionDebugSubsystem::DrawHUD(UCanvas* Canvas, APlayerController* P
 		
 		Y += LineHeight * 0.5f;
 
-		int32 RegisteredCount = 0;
-		if (const UWorld* World = GetWorld())
+		TArray<UFVRelevanceComponent*> NearComponents;
+		if (const UFVRelevanceSubsystem* Relevance = UFVRelevanceSubsystem::Get(GetWorld()))
 		{
-			if (const UFVInteractionRegistrySubsystem* Registry = World->GetSubsystem<UFVInteractionRegistrySubsystem>())
-			{
-				RegisteredCount = Registry->GetAllInteractables().Num();
-			}
+			Relevance->GetNearComponents(FVInteractionGameplayTags::Relevance_Interactable, NearComponents);
 		}
 		
-		DrawLine(FString::Printf(TEXT("Focused=%s Candidates=%d Registered=%d"),
+		DrawLine(FString::Printf(TEXT("Focused=%s Candidates=%d InRange=%d"),
 			IsValid(FocusedActor) ? *FocusedActor->GetName() : TEXT("none"),
 			HitResults.Num(),
-			RegisteredCount),
+			NearComponents.Num()),
 			HeaderColor);
 
 		

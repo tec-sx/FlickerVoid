@@ -2,6 +2,9 @@
 
 #include "CollisionQueryParams.h"
 #include "Engine/World.h"
+#include "FVGameplayTags.h"
+#include "Relevance/FVRelevanceComponent.h"
+#include "Relevance/FVRelevanceSubsystem.h"
 #include "Scanner/FVScannableComponent.h"
 #include "Scanner/FVScannerSubsystem.h"
 #include "GameFramework/Actor.h"
@@ -104,8 +107,8 @@ void UFVScannerComponent::TickComponent(const float DeltaTime, const ELevelTick 
 
 void UFVScannerComponent::UpdateTargets()
 {
-	const UFVScannerSubsystem* Subsystem = UFVScannerSubsystem::Get(this);
-	if (!Subsystem)
+	const UFVRelevanceSubsystem* Relevance = UFVRelevanceSubsystem::Get(this);
+	if (!Relevance)
 	{
 		return;
 	}
@@ -119,12 +122,13 @@ void UFVScannerComponent::UpdateTargets()
 	float BestDot = MinDot;
 	TArray<TWeakObjectPtr<UFVScannableComponent>> NowRevealed;
 
-	TArray<UFVScannableComponent*> Candidates;
-	Subsystem->CollectScannables(Candidates);
+	TArray<UFVRelevanceComponent*> InRange;
+	Relevance->GetNearComponents(FVGameplayTags::Relevance_ScanTarget, InRange);
 
-	for (UFVScannableComponent* Scannable : Candidates)
+	for (const UFVRelevanceComponent* Near : InRange)
 	{
-		if (Scannable->GetOwner() == GetOwner() || !Scannable->CanBeScannedBy(GetOwner()))
+		UFVScannableComponent* Scannable = Near->GetOwner() != nullptr ? Near->GetOwner()->FindComponentByClass<UFVScannableComponent>() : nullptr;
+		if (Scannable == nullptr || Scannable->GetOwner() == GetOwner() || !Scannable->CanBeScannedBy(GetOwner()))
 		{
 			continue;
 		}

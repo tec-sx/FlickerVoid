@@ -1,7 +1,5 @@
 #include "Scanner/FVScannerSubsystem.h"
 
-#include "Scanner/FVScannableComponent.h"
-
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Scanner/FVScanDefinition.h"
@@ -25,27 +23,4 @@ void UFVScannerSubsystem::SetScanModeActive(const bool bActive)
 	bScanModeActive = bActive;
 	UGameplayStatics::SetGlobalTimeDilation(this, bActive ? GetDefault<UFVScannerSettings>()->ScanModeTimeDilation : 1.f);
 	OnScanModeChanged.Broadcast(bActive);
-}
-
-void UFVScannerSubsystem::SetInRange(UFVScannableComponent* Scannable, const bool bInRange)
-{
-	if (bInRange)
-	{
-		InRange.AddUnique(Scannable);
-	}
-	else
-	{
-		InRange.RemoveSingleSwap(Scannable, EAllowShrinking::No);
-	}
-}
-
-void UFVScannerSubsystem::CollectScannables(TArray<UFVScannableComponent*>& OutScannables) const
-{
-	for (UFVScannableComponent* Scannable : InRange)
-	{
-		if (IsValid(Scannable))
-		{
-			OutScannables.Add(Scannable);
-		}
-	}
 }

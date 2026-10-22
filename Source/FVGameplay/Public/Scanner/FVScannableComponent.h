@@ -2,12 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Relevance/FVRelevanceSettings.h"
 #include "Scanner/FVScanDefinition.h"
 #include "FVScannableComponent.generated.h"
 
 class UPrimitiveComponent;
-class UFVRelevanceComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScanRevealChanged, bool, bRevealed);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScanned, AActor*, Scanner);
@@ -69,18 +67,12 @@ protected:
 	bool bScanned = false;
 
 private:
-	UFUNCTION()
-	void HandleRelevanceBandChanged(EFVRelevanceBand NewBand, EFVRelevanceBand OldBand);
-
 	struct FPrimitiveState
 	{
 		TWeakObjectPtr<UPrimitiveComponent> Primitive;
 		bool bRenderCustomDepth = false;
 		int32 Stencil = 0;
 	};
-
-	UPROPERTY(Transient)
-	TObjectPtr<UFVRelevanceComponent> Relevance;
 
 	TArray<FPrimitiveState> SavedStates;
 	bool bRevealed = false;

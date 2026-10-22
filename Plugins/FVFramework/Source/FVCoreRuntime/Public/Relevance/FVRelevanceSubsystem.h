@@ -30,6 +30,11 @@ public:
 	/** Registered components of Group, closest first. */
 	void GetComponents(const FGameplayTag& Group, TArray<UFVRelevanceComponent*>& OutComponents) const;
 
+	/** Components of Group in its Near band, closest first. Stops at the first one too far to be Near. */
+	void GetNearComponents(const FGameplayTag& Group, TArray<UFVRelevanceComponent*>& OutComponents) const;
+
+	bool HasNearComponents(const FGameplayTag& Group) const;
+
 	/** Viewpoints used by the last update. */
 	const TArray<FTransform>& GetViewpoints() const { return Viewpoints; }
 
@@ -38,6 +43,8 @@ protected:
 
 private:
 	USignificanceManager* GetSignificanceManager() const;
+	/** Visits Near components of Group closest first until Visit returns false. */
+	void ForEachNearComponent(const FGameplayTag& Group, TFunctionRef<bool(UFVRelevanceComponent*)> Visit) const;
 	void GatherViewpoints();
 
 	TArray<FTransform> Viewpoints;
