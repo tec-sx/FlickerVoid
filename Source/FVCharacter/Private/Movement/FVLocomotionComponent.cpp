@@ -9,7 +9,6 @@
 #include "GameFramework/Pawn.h"
 #include "Movement/FVLocomotionData.h"
 #include "MoverDataModelTypes.h"
-#include "MoverSimulationTypes.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVLocomotionComponent)
 
@@ -58,7 +57,7 @@ void UFVLocomotionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	UpdateMovementEvents(DeltaTime);
 }
 
-void UFVLocomotionComponent::ProduceInput(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
+void UFVLocomotionComponent::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
 {
 	FCharacterDefaultInputs& Inputs = InputCmdResult.InputCollection.FindOrAddMutableDataByType<FCharacterDefaultInputs>();
 

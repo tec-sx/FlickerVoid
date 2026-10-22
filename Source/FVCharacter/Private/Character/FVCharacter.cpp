@@ -42,6 +42,7 @@ AFVCharacter::AFVCharacter(const FObjectInitializer& ObjectInitializer)
 	Mesh->SetCanEverAffectNavigation(false);
 
 	Mover = CreateDefaultSubobject<UCharacterMoverComponent>(TEXT("CharacterMover"));
+	Mover->bGatherInputFromAllInputProducerComponents = true;
 	Locomotion = CreateDefaultSubobject<UFVLocomotionComponent>(TEXT("Locomotion"));
 
 	FlowComponent = CreateDefaultSubobject<UFlowComponent>(TEXT("FlowComponent"));
@@ -58,14 +59,6 @@ void AFVCharacter::PostInitializeComponents()
 FVector AFVCharacter::GetVelocity() const
 {
 	return Mover ? Mover->GetVelocity() : Super::GetVelocity();
-}
-
-void AFVCharacter::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
-{
-	if (Locomotion)
-	{
-		Locomotion->ProduceInput(SimTimeMs, InputCmdResult);
-	}
 }
 
 FGameplayTagContainer AFVCharacter::GetIdentityTags() const

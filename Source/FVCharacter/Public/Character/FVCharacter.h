@@ -3,7 +3,6 @@
 #include "GameFramework/Pawn.h"
 #include "GameplayTagAssetInterface.h"
 #include "GameplayTagContainer.h"
-#include "MoverSimulationTypes.h"
 #include "FVCharacter.generated.h"
 
 class UCapsuleComponent;
@@ -14,11 +13,10 @@ class USkeletalMeshComponent;
 
 /**
  * Pawn shape shared by FlickerVoid characters: capsule, skeletal mesh, Mover's Character Mover Component and the locomotion
- * component. The pawn is Mover's input producer and hands that job to the locomotion component, so the Mover interface
- * stays in C++.
+ * component, which produces Mover's input.
  */
 UCLASS(Config = Game)
-class FLICKERVOIDCHARACTER_API AFVCharacter : public APawn, public IGameplayTagAssetInterface, public IMoverInputProducerInterface
+class FLICKERVOIDCHARACTER_API AFVCharacter : public APawn, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -27,8 +25,6 @@ public:
 
 	virtual void PostInitializeComponents() override;
 	virtual FVector GetVelocity() const override;
-
-	virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult) override;
 
 	UFUNCTION(BlueprintPure, Category = "Character")
 	UCapsuleComponent* GetCapsuleComponent() const { return CapsuleComponent; }

@@ -4,12 +4,12 @@
 #include "Components/ActorComponent.h"
 #include "FVCharacterTypes.h"
 #include "GameplayTagContainer.h"
+#include "MoverSimulationTypes.h"
 #include "FVLocomotionComponent.generated.h"
 
 class UCharacterMoverComponent;
 class UFVLocomotionData;
 struct FFVGaitSettings;
-struct FMoverInputCmdContext;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnLanded, FVector, LandingVelocity);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFVOnStartedFalling);
@@ -17,11 +17,11 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnGaitChanged, EFVGait, NewGait);
 
 /**
  * Movement intent and state of a character driven by Mover's Character Mover Component.
- * Input sets the intent (move, gait, crouch, jump, aim); the component turns it into Mover input every simulation step,
+ * Input sets the intent (move, gait, crouch, jump, aim); as Mover's input producer the component turns it into Mover input every step,
  * writes the active gait into Mover's Common Legacy Movement Settings and keeps the state animation and traversal read.
  */
 UCLASS(ClassGroup = (FlickerVoid), meta = (BlueprintSpawnableComponent))
-class FLICKERVOIDCHARACTER_API UFVLocomotionComponent : public UActorComponent
+class FLICKERVOIDCHARACTER_API UFVLocomotionComponent : public UActorComponent, public IMoverInputProducerInterface
 {
 	GENERATED_BODY()
 
@@ -30,8 +30,7 @@ public:
 
 	static UFVLocomotionComponent* Find(const AActor* Actor);
 
-	/** Fills Mover's default character inputs. Called by the owning pawn, which is Mover's input producer. */
-	void ProduceInput(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult);
+	virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Locomotion|Intent", meta = (ToolTip = "Sets the move input in control space: X forward, Y right, each -1 to 1. Zero stops."))
 	void RequestMove(FVector Direction);

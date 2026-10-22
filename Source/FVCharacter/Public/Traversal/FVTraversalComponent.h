@@ -57,13 +57,13 @@ private:
 
 	UCapsuleComponent* GetCapsule() const;
 	UAnimInstance* GetAnimInstance() const;
-	FTraceParams MakeTraceParams(const AActor& Character) const;
-	bool DoForwardTrace(const AActor& Character, const FTraceParams& Params, FFVTraversalCheckResult& Result) const;
-	bool DoClearanceTraces(const AActor& Character, const FFVTraversalCheckResult& Result,
+	FTraceParams MakeTraceParams(const AActor& Actor) const;
+	bool DoForwardTrace(const AActor& Actor, const FTraceParams& Params, FFVTraversalCheckResult& Result) const;
+	bool DoClearanceTraces(const AActor& Actor, const FFVTraversalCheckResult& Result,
 	                       FHitResult& OutBackHit) const;
-	void DoFloorTrace(const AActor& Character, FFVTraversalCheckResult& Result) const;
-	void CapsuleTrace(const AActor& Character, const FVector& Start, const FVector& End, FHitResult& OutHit) const;
-	FFVTraversalChooserInput MakeChooserInput(const AActor& Character) const;
+	void DoFloorTrace(const AActor& Actor, FFVTraversalCheckResult& Result) const;
+	void CapsuleTrace(const AActor& Actor, const FVector& Start, const FVector& End, FHitResult& OutHit) const;
+	FFVTraversalChooserInput MakeChooserInput(const AActor& Actor) const;
 	static EFVTraversalActionType ClassifyAction(const FFVTraversalCheckResult& Result);
 	void ReadDebugSettings();
 	void DrawLedges(const FFVLedgeResult& Ledges) const;
