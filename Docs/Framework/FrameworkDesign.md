@@ -60,7 +60,7 @@ Target: one runtime module `FlickerVoid` plus `FlickerVoidDebug` and `FlickerVoi
 | --- | --- | --- |
 | **Setup** | configures the game | game mode base (loads game data), game state, player state, player controller (forwards Enhanced Input, which the AngelScript fork can't bind), asset manager, settings |
 | **Shapes** | types C++ must know | components, definitions, data asset types, the fragments, conditions and effects C++ systems need, runtime item data |
-| **Hosts** | engine extension points AngelScript can't create | Flow nodes, struct-based StateTree tasks, rig units, anim instances, movement components |
+| **Hosts** | engine extension points AngelScript can't create | Flow nodes, struct-based StateTree tasks, rig units, anim instances (until UAF replaces them), custom Mover input and layered move data |
 
 ### Module structure (refactor plan)
 
@@ -68,27 +68,27 @@ Target: one runtime module `FlickerVoid` plus `FlickerVoidDebug` and `FlickerVoi
 | --- | --- |
 | FlickerVoid (`Source/FlickerVoidGame`) | stays as the game module. `AFVGameModeBase` keeps the data loading; Explore and Story game modes and the player character move to AngelScript. |
 | FlickerVoidCore | Flow trigger nodes and the trigger component are generic and move to FVFramework's FVCoreFlow; trigger box and sphere actors and Blueprint-base StateTree tasks/conditions move to AngelScript; the struct StateTree task and tagged physical material stay in the game module. |
-| FlickerVoidCharacter | **dropped** (owner, 2026-10-16). Movement component, movement handlers and traversal component go to `Gameplay/`; anim instance, rig units and animation/locomotion data go to `Presentation/`; `AFVTraversable` becomes an AngelScript actor with a C++ component the traversal component finds; `UFVCharacterDataAsset` is deleted (obsolete, it extended the retired pawn data) and the player is set up through its `UFVCharacterDefinition` like every character; characters move to AngelScript (below). |
+| FlickerVoidCharacter | **dropped** (owner, 2026-10-16). The Mover pieces (locomotion component, movement set component, movement sets, ground mode, locomotion inputs; PR #63) and the traversal component go to `Gameplay/`; the anim instance (until UAF replaces it), rig units and animation data go to `Presentation/`; `AFVTraversable` becomes an AngelScript actor with a C++ component the traversal component finds; `UFVCharacterDataAsset` is deleted (obsolete, it extended the retired pawn data) and the player is set up through its `UFVCharacterDefinition` like every character; characters move to AngelScript (below). |
 | FlickerVoidGameplay | ability fragment, ability set, tag relationship map, scanner and the ActivateAbility effect stay in the game module; the debug StateTree task moves to AngelScript; scanner debug goes to FlickerVoidDebug. |
-| FlickerVoidAI | NPC fact conditions/effects, StateTree schema, StateTree AI component, AI controller and the random location task stay; the perception evaluator moves to AngelScript; `AFVAICharacter` becomes an AngelScript character. |
+| FlickerVoidAI | NPC fact conditions/effects, StateTree schema, StateTree AI component, AI controller and the random location task stay; the perception evaluator moves to AngelScript; `AFVAICharacter` becomes an AngelScript character, on Mover once Mover's NavWalking is set up for AI paths (until then it stays on the Character Movement Component, PR #63). |
 | FlickerVoidWorld | world object actors move to AngelScript. |
 | FlickerVoidNarrative, FlickerVoidUI | deleted (the journal is AngelScript UI, PR #55). |
 | FlickerVoidCoreEditor | renamed FlickerVoidEditor. |
 
 Moving a class to another module changes its `/Script/<Module>` path: add one `+PackageRedirects=(OldName="/Script/<OldModule>",NewName="/Script/FlickerVoid")` per removed module to `Config/DefaultEngine.ini` (plus class redirects for renamed classes) so assets keep loading until they are resaved.
 
-**Characters.** Protagonist and residents are both characters: one AngelScript base composed of C++ components, with `Protagonist` and `Resident` classes on top. What has to change first:
+**Characters.** Protagonist and residents are both characters: one AngelScript base composed of C++ components, with `Protagonist` and `Resident` classes on top. Characters move with Mover (owner, 2026-10-19; PR #63), so the base is a pawn, not an `ACharacter`. What has to change first:
 
-1. Movement state now on `AFVCharacter` (walk, sprint, aim and traverse flags, move requests, runtime state for animation) moves into `UFVCharacterMovementComponent`. The anim instance, movement handlers and traversal component read the component instead of casting to `AFVCharacter`.
+1. Movement state moves off `AFVCharacter` into `UFVLocomotionComponent`, and movement modes into movement sets on `UFVMovementSetComponent`. The anim instance, traversal component and player controller read the locomotion component instead of casting to `AFVCharacter` (PR #63, player only so far).
 2. Ability granting on first possession (`AFVPlayerCharacter::PossessedBy`, PR #58) moves into the ability system component, which listens for its pawn's controller change.
-3. The AngelScript character base swaps in `UFVCharacterMovementComponent` with `UPROPERTY(OverrideComponent = CharacterMovement)` (supported by the fork), replacing `SetDefaultSubobjectClass` in `AFVCharacter`'s constructor; no C++ character base is needed.
+3. What `AFVCharacter` still does in C++ moves into its components: installing the starting movement sets, pointing Mover at the mesh and reporting Mover's velocity as the pawn's (`GetVelocity`). The AngelScript base then declares the capsule, mesh, Character Mover, locomotion and movement set components itself, and `AFVCharacter` goes. If one of these can't move into a component, a thin C++ pawn base stays.
 4. AngelScript classes can't implement `IGameplayTagAssetInterface` or `IAbilitySystemInterface`. FVDialogueSystem (`FVDialogueFlowNodes.cpp`) and FVSocialSystem (`FVSocialLibrary.cpp`) cast actors to the tag interface and must read owned tags from a component instead. GAS's `GetAbilitySystemComponentFromActor` already falls back to a component lookup.
-5. `AFVPlayerController` stops casting to `AFVPlayerCharacter` and uses components.
+5. `AFVPlayerController` stops caching `AFVPlayerCharacter` and uses components only.
 
 **Character looks.** Meshes assigned from a data asset at runtime (`BeginPlay`) don't show in the Blueprint editor, which makes character setups hard to tweak visually. So:
 
-- The skeletal mesh, anim blueprint and physics asset of a character are set directly on its Blueprint (Content layer), one Blueprint per distinct look. Definitions and data assets hold gameplay data only; the cosmetics in `UCharacterDataAsset.as` move onto the Blueprints.
-- Looks that must come from data, such as outfits on the body or variants of a resident, are applied in the construction script (AngelScript `ConstructionScript()`) or in a C++ component's `OnRegister()`. Both run in the Blueprint editor viewport and the level editor, so the result stays visible; `AInteractableAICharacter.as` and `FVWorldItem.as` (PR #59) already work this way. The data asset has to be set on the Blueprint's defaults (not only per placed instance) to show in the Blueprint editor, and soft references are loaded synchronously only in the editor.
+- The skeletal mesh, animation (the Anim Blueprint, or the UAF component's system once animation moves to UAF) and physics asset of a character are set directly on its Blueprint (Content layer), one Blueprint per distinct look. Definitions and data assets hold gameplay data only; the cosmetics in `UCharacterDataAsset.as` move onto the Blueprints.
+- Looks that must come from data, such as outfits on the body or variants of a resident, are applied in the construction script (AngelScript `ConstructionScript()`) or in a C++ component's `OnRegister()`. Both run in the Blueprint editor viewport and the level editor, so the result stays visible; the interactable AI character script and PR #59's world item already work this way. The data asset has to be set on the Blueprint's defaults (not only per placed instance) to show in the Blueprint editor, and soft references are loaded synchronously only in the editor.
 
 ## Ontology
 
@@ -186,8 +186,8 @@ flowchart LR
 - AngelScript can't implement interfaces, so C++ never casts an actor to an interface, engine interfaces included; it finds a component.
 - C++ never names an AngelScript class. It reaches script-built things in three ways:
   - **Find**: look up a C++ component on the actor and call it or broadcast its delegates.
-  - **Spawn**: data or config holds a class typed as a C++ base (Default Pawn Class, ability sets on the character definition), and the engine or C++ instantiates the AngelScript subclass.
-  - **Host**: a generic C++ container holds an instanced, Blueprintable C++ base that AngelScript subclasses: fragments, conditions and effects (`UFVFragment`, `UFVCondition`, `UFVEffect`) are subclassed directly; StateTree hosts tasks deriving from `UStateTreeTaskBlueprintBase`. The Branch, Apply Effects and Wait For Conditions Flow nodes host conditions and effects, so AngelScript logic already runs in Flow graphs; a new C++ Flow node is needed only for a new graph shape (pins, async waits, add-ons).
+  - **Spawn**: data or config holds a class typed as a C++ base (Default Pawn Class, ability sets on the character definition and the attribute sets they grant), and the engine or C++ instantiates the AngelScript subclass.
+  - **Host**: a generic C++ container holds an instanced, Blueprintable C++ base that AngelScript subclasses: fragments, conditions and effects (`UFVFragment`, `UFVCondition`, `UFVEffect`) are subclassed directly; StateTree hosts tasks deriving from `UStateTreeTaskBlueprintBase`; movement sets host Mover movement modes and transitions, so a mode such as swimming is written in AngelScript. The Branch, Apply Effects and Wait For Conditions Flow nodes host conditions and effects, so AngelScript logic already runs in Flow graphs; a new C++ Flow node is needed only for a new graph shape (pins, async waits, add-ons).
 
 ## Folders and naming
 
