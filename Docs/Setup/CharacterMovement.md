@@ -52,6 +52,7 @@ Behaviour kept from the handlers: the character turns towards its movement, and 
    - Graph: chooser, then motion matching with the pose search databases and the trajectory.
    - Bind graph variables to the locomotion component: `GetGait`, `GetStance`, `GetMovementMode`, `IsAiming`, `IsTraversing`, `JustLanded`, `GetGroundSpeed`, `GetRuntimeState`.
    - On the player Blueprint add the UAF (AnimNext) component with the System, and turn animation off on the skeletal mesh (no Anim Blueprint), or UAF won't run.
+   - Correctives: the corrective Control Rig (Spherical Pose Reader helper bones and corrective morph curves) currently runs in the mesh's Post Process Anim Blueprint. Under UAF, run it as the last step of the System through `UAFControlRig` (its Control Rig task), after the graph and before the pose is written to the mesh. Check once whether the Post Process Anim Blueprint still runs when the mesh has no Anim Blueprint; if it doesn't, the correctives stop without an error.
    - Once it works, `UFVCharacterAnimInstance`, its proxy, `UFVAnimationConfigData` and `Script/Animation/FVPlayerAnimInstance.as` can go.
 
 ## Adding a movement ability in AngelScript
