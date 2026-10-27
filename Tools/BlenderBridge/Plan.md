@@ -12,6 +12,8 @@ The tool is a Blender add-on with a **Get from Unreal** action: it copies chosen
 
 Through the engine's Python Remote Execution (Python Editor Script Plugin). Blender finds the editor by UDP multicast on port 6766 and sends Python over a TCP command connection (port 6776), localhost only by default. The client side is the engine's own `remote_execution.py` from the Python Editor Script Plugin, copied into the add-on.
 
+Reference: Epic's [BlenderTools](https://github.com/EpicGames/BlenderTools) and its maintained [poly-hammer fork](https://github.com/poly-hammer/BlenderTools) (both MIT) use the same link in Send to Unreal (`send2ue/dependencies/remote_execution.py`). They also start an XML-RPC server inside the editor (port 9998) to call named functions; we only need a few calls, so plain remote execution is enough, and their RPC layer can be reused if that changes.
+
 No UE plugin and nothing in `Content/`: the UE-side code is sent over the link with each request. The project only needs the Python Editor Script Plugin enabled and Remote Execution on; today neither is set in `FlickerVoid.uproject` or `Config/DefaultEngine.ini`.
 
 ## Where it lives
