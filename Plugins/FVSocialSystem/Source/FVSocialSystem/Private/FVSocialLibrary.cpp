@@ -238,6 +238,52 @@ bool UFVSocialLibrary::IsDisguisedAs(const AActor* Actor, const UFVFactionDefini
 		&& FMath::Max(GetNotoriety(Actor, Faction), GetGlobalNotoriety(Actor)) < Faction->DisguiseNotorietyLimit;
 }
 
+TArray<UFVFactionDefinition*> UFVSocialLibrary::GetFactions()
+{
+	TArray<UFVFactionDefinition*> Result;
+	for (const TSoftObjectPtr<UFVFactionDefinition>& Soft : UFVSocialSettings::Get().Factions)
+	{
+		if (UFVFactionDefinition* Faction = Soft.LoadSynchronous())
+		{
+			Result.Add(Faction);
+		}
+	}
+	return Result;
+}
+
+UFVFactionDefinition* UFVSocialLibrary::GetDisguiseFaction(const AActor* Actor)
+{
+	for (UFVFactionDefinition* Faction : GetFactions())
+	{
+		if (IsDisguisedAs(Actor, Faction))
+		{
+			return Faction;
+		}
+	}
+	return nullptr;
+}
+
+TArray<UFVCharacterDefinition*> UFVSocialLibrary::GetKnownCharacters(const UObject* WorldContext)
+{
+	TArray<UFVCharacterDefinition*> Result;
+	const UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext);
+	if (!Database)
+	{
+		return Result;
+	}
+
+	for (const TSoftObjectPtr<UFVCharacterDefinition>& Soft : UFVSocialSettings::Get().Relationships)
+	{
+		UFVCharacterDefinition* Character = Soft.LoadSynchronous();
+		const FFVCharacterFragment_Social* Social = Character ? Character->FindFragment<FFVCharacterFragment_Social>() : nullptr;
+		if (Social && Database->IsFactDefined(Social->RelationshipFact))
+		{
+			Result.Add(Character);
+		}
+	}
+	return Result;
+}
+
 EFVAttitude UFVSocialLibrary::GetAttitude(const UFVFactionDefinition* Faction, const AActor* Subject)
 {
 	if (!Faction || !Subject)

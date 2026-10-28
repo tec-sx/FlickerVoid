@@ -48,6 +48,7 @@ Get `UFVQuestSubsystem`, bind **On Quests Changed** (read `Get Last Changed Ques
 - Learn through the **Learn Knowledge** effect (dialogue choices, scans, examine abilities, Flow) or `UFVKnowledgeLibrary::Learn` (`FVKnowledge::Learn(Knowledge)` in AngelScript; the world context is implicit).
 - Test it with the **Knows** condition: unlock dialogue topics, interaction offers, objectives.
 - Knowledge whose prerequisites aren't known can't be learned yet; chain clues into deductions this way.
+- `Get Known Knowledge(Kinds)` lists every known definition of the given kinds (all when empty), found through the asset registry; the journal's Notes and Memories use it.
 - **Document** is a read note, letter, book or map. Papers are knowledge, never inventory items: reading one learns it, and a note that must be investigated is learned only once all its secrets (one clue each) are found (the game's readable actor and examine ability handle this, see `Docs/Setup/Items.md`).
 
 ## 4. Settings

@@ -19,16 +19,20 @@ AFVGameModeBase::AFVGameModeBase()
 	PlayerStateClass = AFVPlayerState::StaticClass();
 	DefaultPawnClass = nullptr;
 
-	// The HUD creates the FV UI layout for each local player.
-	UClass* ConfiguredHUD = GetDefault<UFVUISettings>()->DefaultHUDClass.LoadSynchronous();
-	HUDClass = ConfiguredHUD ? ConfiguredHUD : AFVHUD::StaticClass();
-
 	// World clock and fact database are world/game-instance subsystems driven by
 	// Project Settings > FlickerVoid; add explicit bootstrapping here if needed.
 }
 
 void AFVGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
+	if (HUDClass == AFVHUD::StaticClass())
+	{
+		if (UClass* ConfiguredHUD = GetDefault<UFVUISettings>()->DefaultHUDClass.LoadSynchronous())
+		{
+			HUDClass = ConfiguredHUD;
+		}
+	}
+	
 	Super::InitGame(MapName, Options, ErrorMessage);
 
 	if (!DefaultPawnClass)

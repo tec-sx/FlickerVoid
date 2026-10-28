@@ -77,6 +77,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FV|Social")
 	static bool IsDisguisedAs(const AActor* Actor, const UFVFactionDefinition* Faction);
 
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "Factions registered in the Social settings."))
+	static TArray<UFVFactionDefinition*> GetFactions();
+
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "The registered faction the actor currently passes as a member of, or null."))
+	static UFVFactionDefinition* GetDisguiseFaction(const AActor* Actor);
+
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (WorldContext = "WorldContext", ToolTip = "Characters from the Social settings' Relationships list whose relationship fact has been set."))
+	static TArray<UFVCharacterDefinition*> GetKnownCharacters(const UObject* WorldContext);
+
 	/**
 	 * How members of Faction treat Subject: members and accepted disguises are Allied,
 	 * high notoriety is Hostile, otherwise the standing tier decides.

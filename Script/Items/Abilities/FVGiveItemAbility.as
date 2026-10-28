@@ -141,14 +141,13 @@ class UFVGiveItemAbility : UFVItemMontageAbility
 			return false;
 		}
 
-		// Check: UContextualAnimUtilities binds BP_SceneBindingContext_MakeFromActor(Actor) and BP_CreateContextualAnimSceneBindings(SceneAsset, Params, OutBindings) under these script names.
 		TMap<FName, FContextualAnimSceneBindingContext> Roles;
-		Roles.Add(n"Giver", UContextualAnimUtilities::BP_SceneBindingContext_MakeFromActor(Giver));
-		Roles.Add(n"Receiver", UContextualAnimUtilities::BP_SceneBindingContext_MakeFromActor(Receiver));
+		Roles.Add(n"Giver", UContextualAnimUtilities::SceneBindingContext_MakeFromActor(Giver));
+		Roles.Add(n"Receiver", UContextualAnimUtilities::SceneBindingContext_MakeFromActor(Receiver));
 
 		FContextualAnimSceneBindings Bindings;
 
-		if (!UContextualAnimUtilities::BP_CreateContextualAnimSceneBindings(GiveScene, Roles, Bindings))
+		if (!UContextualAnimUtilities::CreateContextualAnimSceneBindings(GiveScene, Roles, Bindings))
 		{
 			return false;
 		}

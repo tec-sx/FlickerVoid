@@ -2,12 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "CommonActivatableWidget.h"
+#include "FVActivatableWidget.h"
 #include "FVUserWidgetHost.generated.h"
 
 class UOverlay;
 
 UCLASS(NotBlueprintable)
-class FVCOREUI_API UFVUserWidgetHost : public UCommonActivatableWidget
+class FVCOREUI_API UFVUserWidgetHost : public UFVActivatableWidget
 {
 	GENERATED_BODY()
 

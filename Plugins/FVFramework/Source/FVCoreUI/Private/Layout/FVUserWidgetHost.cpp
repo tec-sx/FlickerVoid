@@ -10,6 +10,7 @@ UFVUserWidgetHost::UFVUserWidgetHost(const FObjectInitializer& ObjectInitializer
 	: Super(ObjectInitializer)
 {
 	bAutoActivate = true;
+	InputMode = EFVWidgetInputMode::Game;
 }
 
 void UFVUserWidgetHost::NativeOnInitialized()
