@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 
+class UAnimSequence;
 class UPoseAsset;
 class USkeletalMesh;
 class USkeletalMeshComponent;
@@ -58,6 +59,15 @@ struct FVANIMATIONSYSTEMEDITOR_API FFVPoseAuthoring
 
 	/** Adds a skeleton curve to the asset, at 0 on every pose, keeping every pose, its name and the additive setup. */
 	static bool AddCurve(UPoseAsset& Asset, FName Curve, FText& OutError);
+
+	/** An empty, unsaved Pose Asset at AssetPath (/Game/Folder/PA_Name) for the mesh's skeleton, previewed on the mesh. */
+	static UPoseAsset* CreatePoseAsset(const FString& AssetPath, USkeletalMesh& Mesh, FText& OutError);
+
+	/** The animation's local bone transforms at Frame. */
+	static FFVPoseSnapshot ReadAnimationFrame(const UAnimSequence& Animation, int32 Frame);
+
+	/** Frame i of Animation becomes pose Poses[i], updated (keeping its curves) or created by name. One undo step, all or nothing. */
+	static bool SetPosesFromAnimation(UPoseAsset& Asset, const UAnimSequence& Animation, const TArray<FName>& Poses, TArray<FName>& OutCreated, TArray<FName>& OutUpdated, FText& OutError);
 
 	/** Adds or replaces a pose from computed data, without opening a transaction. Bones missing from Pose keep the mesh reference pose. */
 	static bool WritePose(UPoseAsset& Asset, FName Pose, const FFVPoseSnapshot& Snapshot, FText& OutError);

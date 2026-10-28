@@ -63,6 +63,8 @@ How capture works: **Create** and **Update** save the pose last opened with **Go
 | `CanMirrorPose`, `GetMirrorPoseName`, `MirrorPoses`, `MirrorAll` | The mirroring rules above; `MirrorAll` also returns the skipped poses and the orphans, and deletes the orphans on request |
 | `CreateInbetweens` | Poses between the base pose and a pose |
 | `GetAddableCurves`, `AddCurve`, `SetCurveValue` | Skeleton curves on the asset and their per-pose values |
+| `CreatePoseAsset` | An empty, unsaved Pose Asset for a mesh's skeleton, previewed on the mesh |
+| `SetPosesFromAnimation` | Frame i of an animation becomes pose i by name: updated (curve values kept) or created, all or nothing. Returns a result struct (created, updated, error) instead of a bool, so Python callers get the error. The Blender tools' **Send Poses to Unreal** uses it |
 
 `UFVAnimationLibrary` (runtime): `GetBoneSide`, `GetMirrorBoneName`, `GetNameSide`, `GetMirrorName`, using the same side pairs.
 
