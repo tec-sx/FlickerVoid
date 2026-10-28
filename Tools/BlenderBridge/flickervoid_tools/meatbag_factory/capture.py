@@ -13,7 +13,8 @@ from . import library, solver
 class Capture:
     problem: solver.Problem
     bones: list          # deform bone names, in Problem order
-    poses: list          # pose names, in library order
+    poses: list          # names of the captured poses, in library order
+    indices: list        # their library indices
     bind: np.ndarray     # (B, 4, 4) bone rest matrices in armature space
     posed: np.ndarray    # (F, B, 4, 4) posed bone matrices with helpers at rest
     to_armature: np.ndarray  # (4, 4) mesh space to armature space
@@ -59,9 +60,12 @@ def target_shape_keys(target, poses):
     keys = target.data.shape_keys.key_blocks if target.data.shape_keys else []
     pose_keys = {key.name: key for key in keys if key.name in poses}
     values = {name: key.value for name, key in pose_keys.items()}
+    show_only = target.show_only_shape_key
+    target.show_only_shape_key = False
     try:
         yield pose_keys
     finally:
+        target.show_only_shape_key = show_only
         for name, value in values.items():
             pose_keys[name].value = value
 
@@ -74,10 +78,15 @@ def show_pose(context, armature, bones, values, helper_names=()):
     context.view_layer.update()
 
 
-def capture(context, armature, mesh, target, helper_names):
+def capture(context, armature, mesh, target, helper_names, pose_indices=None):
+    """The problem for the given library poses (all when None); helpers not named stay as the library poses them."""
     action = library.library_of(armature)
-    poses = library.pose_names(action)
-    check_names(poses)
+    names = library.pose_names(action)
+    check_names(names)
+    indices = list(range(len(names))) if pose_indices is None else list(pose_indices)
+    if not indices:
+        raise CaptureError("No poses to solve: every pose is locked")
+    poses = [names[i] for i in indices]
     if not helper_names:
         raise CaptureError("No helper bones: put them in the helper bone collection, or select them")
     for modifier in mesh.modifiers:
@@ -103,8 +112,8 @@ def capture(context, armature, mesh, target, helper_names):
     all_bones = library.bone_names(armature)
     values = library.read(action, all_bones)
     posed_all, skin_all, targets = [], [], []
-    with library.preserved_pose(armature), target_shape_keys(target, poses) as pose_keys:
-        for p, name in enumerate(poses):
+    with library.preserved_pose(armature), target_shape_keys(target, names) as pose_keys:
+        for p, name in zip(indices, poses):
             for key_name, key in pose_keys.items():
                 key.value = 1.0 if key_name == name else 0.0
             show_pose(context, armature, all_bones, values[p], helper_names)
@@ -115,7 +124,7 @@ def capture(context, armature, mesh, target, helper_names):
     context.view_layer.update()
 
     problem = solver.Problem(rest, weights, np.stack(skin_all), np.stack(targets), helpers)
-    return Capture(problem, bones, poses, bind, np.stack(posed_all), to_armature)
+    return Capture(problem, bones, poses, indices, bind, np.stack(posed_all), to_armature)
 
 
 def _transform(points, matrix):

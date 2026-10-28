@@ -15,7 +15,8 @@ def armature_of(obj):
 
 
 def deformed_meshes(armature, scene):
-    return [obj for obj in scene.objects if obj.type == "MESH" and armature_of(obj) == armature]
+    """Meshes the armature deforms, leaving out Meatbag Factory sculpt targets, which are never pushed."""
+    return [obj for obj in scene.objects if obj.type == "MESH" and armature_of(obj) == armature and not obj.get("mf_sculpt_target")]
 
 
 def deform_bones(armature):

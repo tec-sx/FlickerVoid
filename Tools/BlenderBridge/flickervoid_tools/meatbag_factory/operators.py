@@ -5,7 +5,7 @@ import numpy as np
 import bpy
 from mathutils import Matrix
 
-from . import apply, capture, library, pose_asset, solver
+from . import apply, capture, library, pose_asset, sculpt, solver
 from .. import preferences
 from ..push import export
 from ..unreal_link import link
@@ -44,24 +44,25 @@ def _weight_changed(pose, context):
     show_preview(context, pose.id_data)
 
 
-_renaming = set()
-
-
 def _name_changed(pose, context):
-    key = pose.as_pointer()
-    if key in _renaming:
-        return
-    others = [other.name for other in pose.id_data.meatbag_poses if other.as_pointer() != key]
-    if pose.name in others or not pose.name:
-        base = pose.name or "pose"
-        name, suffix = base, 1
-        while name in others:
-            name, suffix = f"{base}_{suffix}", suffix + 1
-        _renaming.add(key)
-        try:
-            pose.name = name
-        finally:
-            _renaming.discard(key)
+    """Keeps names unique and renames the pose's sculpt target shape key with it."""
+    others = {other.name for other in pose.id_data.meatbag_poses if other.as_pointer() != pose.as_pointer()}
+    base = pose.name.strip() or "pose"
+    name, suffix = base, 1
+    while name in others:
+        name, suffix = f"{base}_{suffix}", suffix + 1
+    if name != pose.name:
+        pose["name"] = name
+    old = pose.synced_name
+    target = _sculpt_target(context)
+    if old and target and old != name:
+        sculpt.rename_pose_key(target, old, name)
+    pose["synced_name"] = name
+
+
+def _sculpt_target(context):
+    mesh = settings(context).mesh
+    return mesh.meatbag_target if mesh else None
 
 
 class MeatbagPose(bpy.types.PropertyGroup):
@@ -69,6 +70,8 @@ class MeatbagPose(bpy.types.PropertyGroup):
                                    description="Pose name in Unreal, with its side token (thigh_l_raise_90)")
     weight: bpy.props.FloatProperty(name="Weight", default=0.0, soft_min=0.0, soft_max=1.0, update=_weight_changed,
                                     description="Preview weight; the viewport shows the mix of all weights")
+    locked: bpy.props.BoolProperty(name="Locked", description="Solve leaves this pose's helpers as they are, for hand-tuned poses")
+    synced_name: bpy.props.StringProperty(options={"HIDDEN"})
 
 
 class MeatbagPoseResult(bpy.types.PropertyGroup):
@@ -88,7 +91,16 @@ class MeatbagSettings(bpy.types.PropertyGroup):
     mesh: bpy.props.PointerProperty(type=bpy.types.Object, poll=_is_mesh, name="Mesh",
                                     description="The skinned mesh whose helper bones are solved")
     target: bpy.props.PointerProperty(type=bpy.types.Object, poll=_is_mesh, name="Target",
-                                      description="The mesh to match in each pose, with the same vertices as Mesh. Its shape keys named after a pose are on only for that pose")
+                                      description="Mesh to match in each pose, with the same vertices as Mesh, such as a muscle skin. "
+                                                  "Its shape keys named after a pose are on only for that pose. Empty uses the sculpt target")
+    solve_scope: bpy.props.EnumProperty(name="Solve", items=(
+        ("ALL", "All Poses", "Solve every pose that isn't locked"),
+        ("ACTIVE", "Active Pose", "Solve only the active pose"),
+    ))
+    selected_helpers: bpy.props.BoolProperty(name="Selected Helpers Only",
+                                             description="Solve only the selected helper bones; the others keep their pose")
+    solve_on_back: bpy.props.BoolProperty(name="Solve on Back", default=True,
+                                          description="Solve the sculpted pose when leaving the sculpt target")
     helper_collection: bpy.props.StringProperty(name="Helper Bones", default="Correctives",
                                                 description="Bone collection of the helper bones to solve; empty uses the selected bones")
     allow_scale: bpy.props.BoolProperty(name="Allow Scale", default=False,
@@ -196,6 +208,9 @@ class MEATBAG_OT_pose_remove(_PoseOperator, bpy.types.Operator):
         at = action.meatbag_pose_index
         names = library.pose_names(action)
         values = np.delete(library.read(action, bones), at, axis=0)
+        target = _sculpt_target(context)
+        if target:
+            sculpt.remove_pose_key(target, names[at])
         del names[at]
         return self.finish(context, action, names, values, at - 1 if at else 0)
 
@@ -255,56 +270,156 @@ class MEATBAG_OT_pose_rest(_LibraryOperator, bpy.types.Operator):
         return {"FINISHED"}
 
 
+def _helpers(s):
+    helpers = capture.helper_bone_names(s.armature, s.helper_collection)
+    if s.selected_helpers:
+        selected = set(capture.helper_bone_names(s.armature, ""))
+        helpers = [name for name in helpers if name in selected]
+    return helpers
+
+
+def _pose_indices(s, scope):
+    action = library.library_of(s.armature)
+    poses = action.meatbag_poses if action else []
+    if scope == "ACTIVE":
+        return [action.meatbag_pose_index] if poses else []
+    return [i for i, pose in enumerate(poses) if not pose.locked]
+
+
+def solve(operator, context, scope):
+    """Captures, solves and writes back the scoped poses; reports to the operator."""
+    s = settings(context)
+    target = sculpt.effective_target(s)
+    if target is None or target == s.mesh:
+        operator.report({"ERROR"}, "No target: sculpt a pose, or pick a Target mesh")
+        return {"CANCELLED"}
+    helpers = _helpers(s)
+    indices = _pose_indices(s, scope)
+    if context.mode != "OBJECT":
+        bpy.ops.object.mode_set(mode="OBJECT")
+    try:
+        captured = capture.capture(context, s.armature, s.mesh, target, helpers, indices)
+    except capture.CaptureError as error:
+        operator.report({"ERROR"}, str(error))
+        return {"CANCELLED"}
+
+    all_poses = len(library.pose_names(library.library_of(s.armature)))
+    solve_weights = s.solve_weights and len(indices) == all_poses
+    problem = captured.problem
+    unweighted = [name for name in helpers if not (problem.weights[:, captured.bones.index(name)] > 0).any()]
+    options = solver.Options(iterations=s.iterations, allow_scale=s.allow_scale, solve_weights=solve_weights,
+                             weight_rounds=s.weight_rounds, max_influences=preferences.get(context).max_influences)
+    result = solver.solve(problem, options)
+
+    apply.write_helper_poses(context, s.armature, captured, result)
+    changed = apply.write_weights(s.mesh, captured, result.weights) if solve_weights else 0
+    apply.write_residual(s.mesh, result)
+    keys = apply.write_residual_shape_keys(s.mesh, captured, result, s.residual_threshold) if s.residual_keys else []
+
+    s.results.clear()
+    for row_index, (name, index) in enumerate(zip(captured.poses, captured.indices)):
+        row = s.results.add()
+        row.name, row.index = name, index
+        row.before = _rms(result.initial_error[row_index])
+        row.after = _rms(result.error[row_index])
+
+    message = f"Solved {len(helpers)} helpers over {len(captured.poses)} poses: RMS {result.rms(result.initial_error):.4g} to {result.rms():.4g}"
+    if changed:
+        message += f", {changed} vertices reweighted"
+    if keys:
+        message += f", {len(keys)} residual shape keys"
+    if s.solve_weights and not solve_weights:
+        message += ". Weights not solved: they need every pose, unlocked"
+    if unweighted:
+        operator.report({"WARNING"}, message + f". No weights, so not solved: {', '.join(unweighted)}")
+    else:
+        operator.report({"INFO"}, message)
+    return {"FINISHED"}
+
+
 class MEATBAG_OT_solve_correctives(bpy.types.Operator):
     bl_idname = "meatbag.solve_correctives"
     bl_label = "Solve Helper Bones"
-    bl_description = ("Fit the helper bones so the skinned mesh matches the target in every library pose. "
+    bl_description = ("Fit the helper bones so the skinned mesh matches the target in the poses chosen by Solve. "
                       "Stores the helpers in the poses and the remaining error in the mf_residual attribute")
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
     def poll(cls, context):
         s = settings(context)
-        return bool(s.armature and s.mesh and s.target and s.mesh != s.target)
+        return bool(s.armature and s.mesh and s.armature.meatbag_library)
+
+    def execute(self, context):
+        return solve(self, context, settings(context).solve_scope)
+
+
+class MEATBAG_OT_sculpt_pose(_PoseOperator, bpy.types.Operator):
+    bl_idname = "meatbag.sculpt_pose"
+    bl_label = "Sculpt Pose"
+    bl_description = ("Show the active pose on the sculpt target (a hidden copy of the body, made when missing) "
+                      "and sculpt its shape key for this pose. The body is hidden until Back")
+
+    @classmethod
+    def poll(cls, context):
+        return super().poll(context) and settings(context).mesh is not None
 
     def execute(self, context):
         s = settings(context)
-        helpers = capture.helper_bone_names(s.armature, s.helper_collection)
-        if context.mode != "OBJECT":
-            bpy.ops.object.mode_set(mode="OBJECT")
+        armature, action = self.library(context)
         try:
-            captured = capture.capture(context, s.armature, s.mesh, s.target, helpers)
-        except capture.CaptureError as error:
+            target = sculpt.ensure_target(s.mesh)
+        except sculpt.SculptError as error:
             self.report({"ERROR"}, str(error))
             return {"CANCELLED"}
+        index = action.meatbag_pose_index
+        name = action.meatbag_poses[index].name
+        key = sculpt.pose_key(target, name, create=True)
 
-        problem = captured.problem
-        unweighted = [name for name in helpers if not (problem.weights[:, captured.bones.index(name)] > 0).any()]
-        options = solver.Options(iterations=s.iterations, allow_scale=s.allow_scale, solve_weights=s.solve_weights,
-                                 weight_rounds=s.weight_rounds, max_influences=preferences.get(context).max_influences)
-        result = solver.solve(problem, options)
+        if context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
+        bones = library.bone_names(armature)
+        for pose in action.meatbag_poses:
+            pose["weight"] = 0.0
+        library.set_pose(armature, bones, library.read(action, bones)[index])
 
-        apply.write_helper_poses(context, s.armature, captured, result)
-        changed = apply.write_weights(s.mesh, captured, result.weights) if s.solve_weights else 0
-        apply.write_residual(s.mesh, result)
-        keys = apply.write_residual_shape_keys(s.mesh, captured, result, s.residual_threshold) if s.residual_keys else []
+        target.active_shape_key_index = list(target.data.shape_keys.key_blocks).index(key)
+        target.show_only_shape_key = True
+        target.hide_set(False)
+        s.mesh.hide_set(True)
+        for obj in context.selected_objects:
+            obj.select_set(False)
+        target.select_set(True)
+        context.view_layer.objects.active = target
+        bpy.ops.object.mode_set(mode="SCULPT")
+        self.report({"INFO"}, f"Sculpting {name}. Press Back when done")
+        return {"FINISHED"}
 
-        s.results.clear()
-        for index, name in enumerate(captured.poses):
-            row = s.results.add()
-            row.name, row.index = name, index
-            row.before = _rms(result.initial_error[index])
-            row.after = _rms(result.error[index])
 
-        message = f"Solved {len(helpers)} helpers over {len(captured.poses)} poses: RMS {result.rms(result.initial_error):.4g} to {result.rms():.4g}"
-        if changed:
-            message += f", {changed} vertices reweighted"
-        if keys:
-            message += f", {len(keys)} residual shape keys"
-        if unweighted:
-            self.report({"WARNING"}, message + f". No weights, so not solved: {', '.join(unweighted)}")
-        else:
-            self.report({"INFO"}, message)
+class MEATBAG_OT_sculpt_back(bpy.types.Operator):
+    bl_idname = "meatbag.sculpt_back"
+    bl_label = "Back"
+    bl_description = "Hide the sculpt target, show the body again, and solve the sculpted pose when Solve on Back is on"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        s = settings(context)
+        return bool(s.mesh and s.mesh.meatbag_target)
+
+    def execute(self, context):
+        s = settings(context)
+        target = s.mesh.meatbag_target
+        if context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
+        target.show_only_shape_key = False
+        target.hide_set(True)
+        s.mesh.hide_set(False)
+        for obj in context.selected_objects:
+            obj.select_set(False)
+        s.mesh.select_set(True)
+        context.view_layer.objects.active = s.mesh
+        if s.solve_on_back and s.armature and not s.target:
+            return solve(self, context, "ACTIVE")
         return {"FINISHED"}
 
 
@@ -385,6 +500,7 @@ class MEATBAG_UL_poses(bpy.types.UIList):
         row.operator(MEATBAG_OT_pose_apply.bl_idname, text="", icon="ARMATURE_DATA", emboss=False).index = index
         row.prop(item, "name", text="", emboss=False)
         row.prop(item, "weight", text="", slider=True)
+        row.prop(item, "locked", text="", icon="LOCKED" if item.locked else "UNLOCKED", emboss=False)
 
 
 class MEATBAG_UL_pose_results(bpy.types.UIList):
@@ -407,6 +523,8 @@ classes = (
     MEATBAG_OT_pose_apply,
     MEATBAG_OT_pose_rest,
     MEATBAG_OT_solve_correctives,
+    MEATBAG_OT_sculpt_pose,
+    MEATBAG_OT_sculpt_back,
     MEATBAG_OT_send_poses,
     MEATBAG_OT_use_selected_pose_asset,
     MEATBAG_UL_poses,
@@ -420,10 +538,13 @@ def register_properties():
                                                                  description="Action holding this armature's Meatbag Factory poses, pose i at frame i")
     bpy.types.Action.meatbag_poses = bpy.props.CollectionProperty(type=MeatbagPose)
     bpy.types.Action.meatbag_pose_index = bpy.props.IntProperty()
+    bpy.types.Object.meatbag_target = bpy.props.PointerProperty(type=bpy.types.Object, name="Sculpt Target",
+                                                                description="Hidden copy of this body that holds the per-pose sculpts")
 
 
 def unregister_properties():
     del bpy.types.Action.meatbag_pose_index
     del bpy.types.Action.meatbag_poses
+    del bpy.types.Object.meatbag_target
     del bpy.types.Object.meatbag_library
     del bpy.types.Scene.meatbag

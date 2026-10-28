@@ -27,8 +27,8 @@ def write_helper_poses(context, armature, capture, result):
     helpers = sorted((armature.data.bones[name] for name, i in index.items() if capture.problem.helpers[i]), key=_depth)
     values = library.read(action, bones)
     with library.preserved_pose(armature):
-        for p in range(len(capture.poses)):
-            library.set_pose(armature, bones, values[p])
+        for p, pose in enumerate(capture.indices):
+            library.set_pose(armature, bones, values[pose])
             context.view_layer.update()
             for bone in helpers:
                 b = index[bone.name]
@@ -37,7 +37,7 @@ def write_helper_poses(context, armature, capture, result):
                 pose_bone = armature.pose.bones[bone.name]
                 pose_bone.matrix = _matrix(skin @ capture.bind[b])
                 context.view_layer.update()
-            values[p] = library.current(armature, bones)
+            values[pose] = library.current(armature, bones)
     library.write(action, library.pose_names(action), bones, values)
     context.view_layer.update()
     return len(helpers)

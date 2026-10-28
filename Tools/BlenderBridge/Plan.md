@@ -122,9 +122,24 @@ Considered and not taken: Blender's own Pose Library (one action asset per pose 
 
 - **Armature** with its example poses in the pose library, and helper bones (deform bones, usually parented to a main bone) in a bone collection, `Correctives` by default.
 - **Mesh**: the skinned body. Helpers need painted weights on the vertices they should move; a helper without weights can't be solved and is reported.
-- **Target**: a mesh with the same vertices that shows the wanted shape in each pose. Usually a copy of the body on the same armature with one sculpted shape key per pose, named after the pose: while a pose is captured, its own key is set to 1 and the other pose-named keys to 0. A live deformer driven by the bones works too. Its modifiers may move vertices but not change their count.
+- **Target**: the shape to match in each pose. By default the **sculpt target**, which the tool makes and manages (below). **Other Target** picks any mesh with the same vertices instead, such as a muscle skin driven by the same bones. In either, shape keys named after a pose are set to 1 for that pose and 0 for the others while capturing. Its modifiers may move vertices but not change their count.
 - Pose names become the Pose Asset's pose names and the `CR_` shape key names, so they use the side tokens the Meatbag Factory mirrors (`thigh_l_raise_90`).
 - The Armature modifier has Preserve Volume off, since Unreal skins linearly.
+
+### Sculpt target
+
+You pose only one armature. The sculpt target is a hidden copy of the body (`<Body>_MF_Target`) on the same armature, made on first use, with its own Basis and one shape key per library pose. The body stays clean: it is never sculpted, and the target is left out of Push and the Contract checks.
+
+- **Sculpt Pose** shows the active library pose, hides the body, shows the target with that pose's key active (made when missing, shown alone) and enters Sculpt mode. Blender maps the strokes on the posed mesh back into the key.
+- **Back** returns to the body and, with **Solve on Back**, solves that pose right away.
+- Renaming or removing a pose renames or removes its key. When the body's vertex count changes, delete the target and a new one is made (sculpts on the old one are lost).
+
+### Solve scope
+
+- **Solve**: **All Poses** (every pose that isn't locked) or **Active Pose**.
+- **Selected Helpers Only**: only the selected helper bones are solved; the others keep what the pose gives them.
+- **Lock** a pose in the list after tuning its helpers by hand, so later solves leave it alone. Without a lock, a solve overwrites the helpers of every pose it covers.
+- **Solve Weights** needs every pose, so it is skipped (and reported) when the scope leaves poses out.
 
 ### Solve Helper Bones
 

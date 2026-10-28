@@ -92,8 +92,8 @@ def _channel(fcurve):
 
 
 def write(action, names, bones, values):
-    """Replaces the whole library: pose i keyed at frame i, names kept in order, preview weights kept by name."""
-    weights = {pose.name: pose.weight for pose in action.meatbag_poses}
+    """Replaces the whole library: pose i keyed at frame i, names kept in order, weights and locks kept by name."""
+    kept = {pose.name: (pose.weight, pose.locked) for pose in action.meatbag_poses}
     channelbag = _channelbag(action, True)
     for fcurve in list(channelbag.fcurves):
         channelbag.fcurves.remove(fcurve)
@@ -117,9 +117,10 @@ def write(action, names, bones, values):
 
     action.meatbag_poses.clear()
     for name in names:
+        # Item access skips the update callbacks (rename sync, preview).
         pose = action.meatbag_poses.add()
-        pose.name = name
-        pose["weight"] = weights.get(name, 0.0)  # item access skips the update callback
+        pose["name"] = pose["synced_name"] = name
+        pose["weight"], pose["locked"] = kept.get(name, (0.0, False))
     # A fresh token rather than a counter, so undo and redo never meet a cached read of another state.
     action["mf_revision"] = random.getrandbits(31)
     _cache.clear()

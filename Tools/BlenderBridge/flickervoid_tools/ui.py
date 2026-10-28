@@ -4,7 +4,8 @@ from . import preferences
 from .push.operators import FV_OT_push, FV_OT_test_connection, FV_OT_use_selected_asset
 from .meatbag_factory.contract.operators import MEATBAG_OT_check_contract, MEATBAG_UL_issues
 from .meatbag_factory.operators import (MEATBAG_OT_pose_add, MEATBAG_OT_pose_move, MEATBAG_OT_pose_remove,
-                                        MEATBAG_OT_pose_rest, MEATBAG_OT_pose_update, MEATBAG_OT_send_poses,
+                                        MEATBAG_OT_pose_rest, MEATBAG_OT_pose_update, MEATBAG_OT_sculpt_back,
+                                        MEATBAG_OT_sculpt_pose, MEATBAG_OT_send_poses,
                                         MEATBAG_OT_solve_correctives, MEATBAG_OT_use_selected_pose_asset,
                                         MEATBAG_UL_pose_results, MEATBAG_UL_poses)
 
@@ -109,8 +110,15 @@ class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
         if s.armature:
             layout.prop_search(s, "helper_collection", s.armature.data, "collections_all")
         layout.prop(s, "mesh")
-        layout.prop(s, "target")
+        row = layout.row(align=True)
+        sculpting = s.mesh and s.mesh.meatbag_target and context.active_object == s.mesh.meatbag_target
+        row.operator(MEATBAG_OT_sculpt_back.bl_idname if sculpting else MEATBAG_OT_sculpt_pose.bl_idname,
+                     icon="LOOP_BACK" if sculpting else "SCULPTMODE_HLT")
+        layout.prop(s, "solve_on_back")
+        layout.prop(s, "target", text="Other Target")
 
+        layout.prop(s, "solve_scope")
+        layout.prop(s, "selected_helpers")
         column = layout.column(heading="Solve")
         column.prop(s, "allow_scale")
         column.prop(s, "solve_weights")
