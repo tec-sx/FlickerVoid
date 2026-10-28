@@ -1,5 +1,6 @@
 #include "Items/FVItemDefinition.h"
 
+#include "FVInventorySettings.h"
 #include "FVInventoryTags.h"
 #include "Items/FVItemFragments.h"
 
@@ -25,6 +26,11 @@ FGameplayTagContainer UFVItemDefinition::GetEquipmentSlots() const
 {
 	const FFVItemFragment_Equippable* Equippable = FindFragment<FFVItemFragment_Equippable>();
 	return Equippable ? Equippable->Slots : FGameplayTagContainer();
+}
+
+bool UFVItemDefinition::IsKeyItem() const
+{
+	return Category.IsValid() && Category.MatchesAny(UFVInventorySettings::Get().KeyItemCategories);
 }
 
 void UFVItemDefinition::PostLoad()
@@ -74,6 +80,11 @@ EDataValidationResult UFVItemDefinition::IsDataValid(FDataValidationContext& Con
 	if (FindFragment<FFVItemFragment_Container>() && !IsEquippable())
 	{
 		Context.AddWarning(LOCTEXT("ContainerNotEquippable", "Container adds space only while worn, but the item has no Equippable fragment."));
+	}
+
+	if (FindFragment<FFVItemFragment_Charges>() && !IsUsable())
+	{
+		Context.AddWarning(LOCTEXT("ChargesNotUsable", "Charges count uses, but the item has no Usable fragment."));
 	}
 
 	return Result;

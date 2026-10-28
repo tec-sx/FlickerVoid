@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
 #include "FVCoreNames.h"
+#include "GameplayTagContainer.h"
 #include "FVInventorySettings.generated.h"
 
 UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Inventory"))
@@ -26,4 +27,7 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ClampMin = 0, ToolTip = "Cells available with no bag or backpack: pockets."))
 	int32 BasePocketCells = 6;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Lists", meta = (Categories = "Item", ToolTip = "Item categories kept in the Keys and Quest list: they take no cells and no weight."))
+	FGameplayTagContainer KeyItemCategories;
 };

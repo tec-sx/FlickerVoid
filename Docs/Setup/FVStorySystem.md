@@ -1,6 +1,6 @@
 # FVStorySystem setup
 
-Quests, knowledge (clues, topics, thoughts) and saving. Quest state and knowledge live in facts, so they save with everything else and any condition can test them.
+Quests, knowledge (clues, topics, thoughts, documents) and saving. Quest state and knowledge live in facts, so they save with everything else and any condition can test them.
 
 Modules: `FVStorySystem`, `FVStorySystemDebug`, `FVStorySystemEditor` (Save Inspector). Requires Flow and FVFramework.
 
@@ -43,11 +43,12 @@ Get `UFVQuestSubsystem`, bind **On Quests Changed** (read `Get Last Changed Ques
 
 | Asset | Class | Key fields |
 |---|---|---|
-| `DA_Knowledge_<Name>` | `FVKnowledgeDefinition` | **Id** = fact written when learned (e.g. `Knowledge.Clue.BloodOnCoat`), **Kind** (Clue, Topic, Thought), **Prerequisites**, **On Learned** effects |
+| `DA_Knowledge_<Name>` | `FVKnowledgeDefinition` | **Id** = fact written when learned (e.g. `Knowledge.Clue.BloodOnCoat`), **Kind** (Clue, Topic, Thought, Document), **Prerequisites**, **On Learned** effects |
 
 - Learn through the **Learn Knowledge** effect (dialogue choices, scans, examine abilities, Flow) or `UFVKnowledgeLibrary::Learn` (`FVKnowledge::Learn(Knowledge)` in AngelScript; the world context is implicit).
 - Test it with the **Knows** condition: unlock dialogue topics, interaction offers, objectives.
 - Knowledge whose prerequisites aren't known can't be learned yet; chain clues into deductions this way.
+- **Document** is a read note, letter, book or map. Papers are knowledge, never inventory items: reading one learns it, and a note that must be investigated is learned only once all its secrets (one clue each) are found (the game's readable actor and examine ability handle this, see `Docs/Setup/Items.md`).
 
 ## 4. Settings
 

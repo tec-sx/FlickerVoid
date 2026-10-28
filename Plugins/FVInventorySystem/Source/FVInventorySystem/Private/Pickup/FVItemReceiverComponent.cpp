@@ -45,14 +45,34 @@ UFVItemReceiverComponent* UFVItemReceiverComponent::FindReceiver(AActor* Actor)
 
 int32 UFVItemReceiverComponent::ReceiveItem(UFVItemDefinition* Item, const int32 Quantity, AActor* Source)
 {
-	if (!Item || Quantity <= 0 || !bAcceptingItems)
+	FFVItemStack Stack;
+	Stack.Item = Item;
+	Stack.Quantity = Quantity;
+	return ReceiveStack(Stack, Source);
+}
+
+int32 UFVItemReceiverComponent::ReceiveStack(const FFVItemStack& Stack, AActor* Source)
+{
+	if (!Stack.Item || Stack.Quantity <= 0 || !bAcceptingItems)
 	{
 		return 0;
 	}
 
 	TakenQuantity = 0;
-	OnItemReceived.Broadcast(Item, Quantity, Source);
+	bTakenReported = false;
+
+	const bool bPlain = Stack.InstanceData.IsEmpty();
+	OnStackReceived.Broadcast(Stack, Source);
+	if (bPlain)
+	{
+		OnItemReceived.Broadcast(Stack.Item, Stack.Quantity, Source);
+	}
+
+	if (bTakenReported)
+	{
+		return FMath::Min(TakenQuantity, Stack.Quantity);
+	}
 
 	// Nothing reported back means the listener takes everything, e.g. a quest trigger.
-	return OnItemReceived.IsBound() ? FMath::Min(TakenQuantity > 0 ? TakenQuantity : Quantity, Quantity) : 0;
+	return OnStackReceived.IsBound() || (bPlain && OnItemReceived.IsBound()) ? Stack.Quantity : 0;
 }
