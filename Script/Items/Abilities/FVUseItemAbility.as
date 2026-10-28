@@ -107,11 +107,11 @@ class UFVUseItemAbility : UFVItemMontageAbility
 			return;
 		}
 
-		FFVItemFragment_World World;
+		FFVItemFragment_World ItemWorldFragment;
 
-		if (FVItem::GetWorldFragment(UsedItem, World))
+		if (FVItem::GetWorldFragment(UsedItem, ItemWorldFragment))
 		{
-			FVItemWorld::PlaySound(World.UseSound, Avatar.GetActorLocation());
+			FVItemWorld::PlaySound(ItemWorldFragment.UseSound, Avatar.GetActorLocation());
 		}
 	}
 

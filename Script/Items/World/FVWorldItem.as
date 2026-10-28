@@ -169,7 +169,7 @@ class AFVWorldItem : AActor
 			Mesh.SetStaticMesh(ItemMesh);
 		}
 
-		UFVInteractableDefinition Offers = FVItem::FindInteractable(StackItem);
+		const UFVInteractableDefinition Offers = FVItem::FindInteractable(StackItem);
 
 		if (Offers != nullptr)
 		{

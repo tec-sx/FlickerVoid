@@ -39,11 +39,11 @@ class UFVDropItemAbility : UFVInteractAbility
 
 		FVItemWorld::EnablePhysics(WorldActor);
 
-		FFVItemFragment_World World;
+		FFVItemFragment_World ItemWorldFragment;
 
-		if (FVItem::GetWorldFragment(Stack.Item, World))
+		if (FVItem::GetWorldFragment(Stack.Item, ItemWorldFragment))
 		{
-			FVItemWorld::PlaySound(World.DropSound, WorldActor.GetActorLocation());
+			FVItemWorld::PlaySound(ItemWorldFragment.DropSound, WorldActor.GetActorLocation());
 		}
 	}
 

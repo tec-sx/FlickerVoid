@@ -102,7 +102,7 @@ class UFVPickpocketAbility : UFVInteractAbility
 
 	private int StealMoney(UFVInventoryComponent From, UFVInventoryComponent To)
 	{
-		int Amount = Math::Max(1, From.GetMoney() * Math::RandRange(MinMoneyPercent, 100) / 100);
+		int Amount = Math::IntegerDivisionTrunc(Math::Max(1, From.GetMoney() * Math::RandRange(MinMoneyPercent, 100)), 100);
 
 		return From.TransferMoney(To, Amount);
 	}
