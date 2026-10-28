@@ -1,6 +1,6 @@
 #include "Checks/FVCheck.h"
 
-#include "Attributes/FVAttributeComponent.h"
+#include "Attributes/FVAttributeLibrary.h"
 #include "Conditions/FVConditionLibrary.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVCheck)
@@ -65,11 +65,11 @@ FFVCheckResult UFVCheckLibrary::Build(const UFVCheckDefinition* Check, const FFV
 		return Result;
 	}
 
-	if (const UFVAttributeComponent* Attributes = UFVAttributeComponent::Find(Cast<AActor>(Context.Instigator)))
+	if (UFVAttributeLibrary::HasAttribute(Context.Instigator, Check->Attribute))
 	{
-		const int32 Value = FMath::RoundToInt(Attributes->GetValue(Check->Attribute));
+		const int32 Value = FMath::RoundToInt(UFVAttributeLibrary::GetValue(Context.Instigator, Check->Attribute));
 		Result.Total += Value;
-		Result.Breakdown.Add({ Check->Attribute != nullptr ? Check->Attribute->Display.Name : FText::GetEmpty(), Value });
+		Result.Breakdown.Add({ Check->Attribute->Display.Name, Value });
 	}
 
 	for (const FFVCheckModifier& Modifier : Check->Modifiers)

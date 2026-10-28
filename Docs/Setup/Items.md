@@ -164,7 +164,7 @@ Give a lock (**FV Lock Component**) a **Key Tag** under `Key.` and give the key 
 
 ## 11. Intoxication
 
-**UFVIntoxicationComponent** (C++) is on `APlayerCharacter` (**Intoxication**) and works with the player's **FV Attribute Component**. Set its attributes on the player Blueprint; the other properties have defaults:
+**UFVIntoxicationComponent** (C++) is on `APlayerCharacter` (**Intoxication**) and works with the player's **FV Attribute Component**. Intoxication and Health are GAS attributes in `UPhysicalAttributeSet` (`Script/Gameplay/Protagonist/State/Physical/PhysicalAttributeSet.as`); grant that set through the player's ability set and give each attribute an FV Attribute Definition (see FVAttributeSystem.md). Set its attributes on the player Blueprint; the other properties have defaults:
 
 | Property | Meaning |
 |---|---|

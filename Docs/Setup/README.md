@@ -8,7 +8,7 @@ Read [FVFramework](FVFramework.md) first; every other plugin builds on its defin
 |---|---|
 | [FVFramework](FVFramework.md) | Definitions, facts, conditions and effects, characters, UI layout, world clock, cinematics, spawners, Flow and StateTree nodes, debug HUD |
 | [FVInteractionSystem](FVInteractionSystem.md) | Look-at interaction: offers, prompts, focus indicator, highlight, locks and keys, doors |
-| [FVAttributeSystem](FVAttributeSystem.md) | Attributes, attribute sets, modifiers, skill checks |
+| [FVAttributeSystem](FVAttributeSystem.md) | Attribute definitions over GAS attributes, Gameplay Effect conditions/effects, skill checks |
 | [FVInventorySystem](FVInventorySystem.md) | Items, carrying (weight and space), Keys and Quest list, money, outfits and equipment slots, pickups, loot tables |
 | [FVDialogueSystem](FVDialogueSystem.md) | Conversations and barks on FlowGraph |
 | [FVStorySystem](FVStorySystem.md) | Quests, knowledge (clues, topics, thoughts, documents), save and load |
