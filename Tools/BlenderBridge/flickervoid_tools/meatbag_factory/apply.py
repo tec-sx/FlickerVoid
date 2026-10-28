@@ -1,9 +1,9 @@
-"""Writes a solve back to the scene: helper bone keys per pose, helper weights, residual error and residual shape keys."""
+"""Writes a solve back to the scene: helper transforms in the pose library, helper weights, residual error and residual shape keys."""
 
 import numpy as np
 from mathutils import Matrix
 
-from . import solver
+from . import library, solver
 
 RESIDUAL_ATTRIBUTE = "mf_residual"
 RESIDUAL_PREFIX = "CR_"
@@ -18,34 +18,29 @@ def _depth(bone):
     return len(bone.parent_recursive)
 
 
-def write_helper_keys(context, armature, capture, result):
-    """Keys every helper bone at each pose's frame so its posed matrix matches the solve."""
-    scene = context.scene
+def write_helper_poses(context, armature, capture, result):
+    """Stores each helper's solved transform in its library pose; returns how many helpers were written."""
+    action = library.library_of(armature)
+    bones = library.bone_names(armature)
+    column = {name: i for i, name in enumerate(bones)}
     index = {name: i for i, name in enumerate(capture.bones)}
     helpers = sorted((armature.data.bones[name] for name, i in index.items() if capture.problem.helpers[i]), key=_depth)
-    frame = scene.frame_current
-    try:
-        for pose_index, (_, pose_frame) in enumerate(capture.poses):
-            scene.frame_set(pose_frame)
+    values = library.read(action, bones)
+    with library.preserved_pose(armature):
+        for p in range(len(capture.poses)):
+            library.set_pose(armature, bones, values[p])
+            context.view_layer.update()
             for bone in helpers:
                 b = index[bone.name]
                 skin = np.eye(4)
-                skin[:3, :] = result.skin[pose_index, b]
+                skin[:3, :] = result.skin[p, b]
                 pose_bone = armature.pose.bones[bone.name]
                 pose_bone.matrix = _matrix(skin @ capture.bind[b])
                 context.view_layer.update()
-                _key(pose_bone, pose_frame)
-    finally:
-        scene.frame_set(frame)
+            values[p] = library.current(armature, bones)
+    library.write(action, library.pose_names(action), bones, values)
+    context.view_layer.update()
     return len(helpers)
-
-
-def _key(pose_bone, frame):
-    group = pose_bone.name
-    pose_bone.keyframe_insert("location", frame=frame, group=group)
-    rotation = {"QUATERNION": "rotation_quaternion", "AXIS_ANGLE": "rotation_axis_angle"}.get(pose_bone.rotation_mode, "rotation_euler")
-    pose_bone.keyframe_insert(rotation, frame=frame, group=group)
-    pose_bone.keyframe_insert("scale", frame=frame, group=group)
 
 
 def write_weights(mesh, capture, weights):
@@ -90,7 +85,7 @@ def write_residual_shape_keys(mesh, capture, result, threshold):
     basis = basis.reshape(-1, 3)
 
     written = []
-    for pose_index, (pose, _) in enumerate(capture.poses):
+    for pose_index, pose in enumerate(capture.poses):
         if result.error[pose_index].max() <= threshold:
             continue
         blended = np.einsum("nb,bij->nij", result.weights, result.skin[pose_index][:, :, :3])

@@ -3,8 +3,10 @@ import bpy
 from . import preferences
 from .push.operators import FV_OT_push, FV_OT_test_connection, FV_OT_use_selected_asset
 from .meatbag_factory.contract.operators import MEATBAG_OT_check_contract, MEATBAG_UL_issues
-from .meatbag_factory.operators import (MEATBAG_OT_send_poses, MEATBAG_OT_solve_correctives,
-                                        MEATBAG_OT_use_selected_pose_asset, MEATBAG_UL_pose_results)
+from .meatbag_factory.operators import (MEATBAG_OT_pose_add, MEATBAG_OT_pose_move, MEATBAG_OT_pose_remove,
+                                        MEATBAG_OT_pose_rest, MEATBAG_OT_pose_update, MEATBAG_OT_send_poses,
+                                        MEATBAG_OT_solve_correctives, MEATBAG_OT_use_selected_pose_asset,
+                                        MEATBAG_UL_pose_results, MEATBAG_UL_poses)
 
 
 class FV_PT_unreal(bpy.types.Panel):
@@ -57,20 +59,53 @@ class MEATBAG_PT_contract(bpy.types.Panel):
             layout.template_list(MEATBAG_UL_issues.__name__, "", wm, "meatbag_issues", wm, "meatbag_issue_index", rows=6)
 
 
-class MEATBAG_PT_correctives(bpy.types.Panel):
-    bl_label = "Correctives"
-    bl_idname = "MEATBAG_PT_correctives"
-    bl_parent_id = MEATBAG_PT_factory.bl_idname
+class _MeatbagSubpanel:
+    bl_parent_id = "MEATBAG_PT_factory"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "FlickerVoid"
+
+
+class MEATBAG_PT_poses(_MeatbagSubpanel, bpy.types.Panel):
+    bl_label = "Poses"
+    bl_idname = "MEATBAG_PT_poses"
+
+    def draw(self, context):
+        layout = self.layout
+        s = context.scene.meatbag
+        layout.prop(s, "armature")
+        if not s.armature:
+            return
+        action = s.armature.meatbag_library
+        row = layout.row()
+        if action:
+            row.template_list(MEATBAG_UL_poses.__name__, "", action, "meatbag_poses", action, "meatbag_pose_index", rows=6)
+        else:
+            row.label(text="No poses yet")
+        column = row.column(align=True)
+        column.operator(MEATBAG_OT_pose_add.bl_idname, text="", icon="ADD").rest = False
+        column.operator(MEATBAG_OT_pose_remove.bl_idname, text="", icon="REMOVE")
+        column.separator()
+        column.operator(MEATBAG_OT_pose_move.bl_idname, text="", icon="TRIA_UP").direction = "UP"
+        column.operator(MEATBAG_OT_pose_move.bl_idname, text="", icon="TRIA_DOWN").direction = "DOWN"
+
+        row = layout.row(align=True)
+        row.operator(MEATBAG_OT_pose_add.bl_idname, text="Add Rest Pose", icon="ARMATURE_DATA").rest = True
+        row.operator(MEATBAG_OT_pose_update.bl_idname, icon="FILE_REFRESH")
+        row = layout.row(align=True)
+        row.prop(s, "blend_mode", expand=True)
+        row.operator(MEATBAG_OT_pose_rest.bl_idname, text="", icon="LOOP_BACK")
+
+
+class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
+    bl_label = "Correctives"
+    bl_idname = "MEATBAG_PT_correctives"
 
     def draw(self, context):
         layout = self.layout
         s = context.scene.meatbag
         layout.use_property_split = True
         layout.use_property_decorate = False
-        layout.prop(s, "armature")
         if s.armature:
             layout.prop_search(s, "helper_collection", s.armature.data, "collections_all")
         layout.prop(s, "mesh")
@@ -100,4 +135,4 @@ class MEATBAG_PT_correctives(bpy.types.Panel):
         layout.operator(MEATBAG_OT_send_poses.bl_idname, icon="EXPORT")
 
 
-classes = (FV_PT_unreal, MEATBAG_PT_factory, MEATBAG_PT_contract, MEATBAG_PT_correctives)
+classes = (FV_PT_unreal, MEATBAG_PT_factory, MEATBAG_PT_contract, MEATBAG_PT_poses, MEATBAG_PT_correctives)

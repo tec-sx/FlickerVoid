@@ -51,10 +51,10 @@ The push exports multires at its base level and the armature in rest pose. It na
 **Meatbag Factory > Correctives.** Turns a target shape into helper bone motion. Details in [Plan.md](Plan.md#slice-2-meatbag-factory-correctives).
 
 1. Put the helper bones in a bone collection (`Correctives` by default) and paint their weights. Turn off Preserve Volume on the Armature modifier.
-2. Pose the main bones at a few frames and add a timeline marker at each, named after the pose (`thigh_l_raise_90`).
-3. Make the **Target**: a mesh with the same vertices showing the wanted shape in each pose (muscle simulation, or a sculpted copy).
-4. Pick **Armature**, **Mesh** and **Target**, press **Solve Helper Bones**. The helpers are keyed at each marker; the list shows each pose's error before and after (click the marker icon to jump to it). The `mf_residual` attribute shows where error is left, and **Residual Shape Keys** adds `CR_<pose>` keys for it.
-5. Push the mesh, set the **Pose Asset** path (or pick the selected one in Unreal with the eyedropper) and press **Send Poses to Unreal**. Poses with a marker's name are updated, the others created, and the asset is created when missing. Save in Unreal.
+2. In **Poses**, pick the **Armature** and build its pose library: pose the bones in the viewport and press **+** (or **Add Rest Pose** to start from rest), one pose per example, named after the pose (`thigh_l_raise_90`). Nothing goes on the timeline. **Update Pose**, remove, reorder and rename as needed; the weight sliders preview mixes (**Blend** interpolates, **Additive** stacks).
+3. Make the **Target**: a mesh with the same vertices showing the wanted shape in each pose, usually a copy of the body on the same armature with a sculpted shape key per pose, named after the pose.
+4. Pick **Mesh** and **Target** in **Correctives**, press **Solve Helper Bones**. The helpers are stored in each library pose; the list shows each pose's error before and after (the bone icon shows the pose). The `mf_residual` attribute shows where error is left, and **Residual Shape Keys** adds `CR_<pose>` keys for it.
+5. Push the mesh, set the **Pose Asset** path (or pick the selected one in Unreal with the eyedropper) and press **Send Poses to Unreal**. Poses with a library pose's name are updated, the others created, and the asset is created when missing. Save in Unreal.
 
 Sending poses needs the Meatbag Factory commands from PR #66 in the Unreal build.
 

@@ -57,7 +57,8 @@ Tools/BlenderBridge/
       contract/                Contract checks, operators
       solver.py                no bpy: helper bone solver (SSDR, port of Dem Bones)
       capture.py, apply.py     read the problem from the scene, write the solve back
-      pose_asset.py            bake the pose markers into an FBX animation
+      library.py               the pose library (hidden action) and preview blending
+      pose_asset.py            bake the library poses into an FBX animation
     preferences.py, scene_data.py, ui.py
   tests/                       plain Python tests for core/ and unreal_link/
 ```
@@ -106,29 +107,40 @@ Later slices add rest-pose symmetry, bone roll and axis checks, and the leaf rul
 
 Turns a target shape (a muscle simulation, a sculpt) into helper bone motion, so correctives are bone driven where bones can do it and morphs only carry the rest.
 
+### Pose library
+
+The example poses live in a **pose library**, not on the timeline. The library is one action per armature that is never assigned to it, so the timeline, the Dope Sheet and the armature's own animation stay untouched. Pose i is keyed at frame i on every bone (location, quaternion rotation, scale, relative to rest), and the pose names and preview weights are stored on the action, so the action is the whole library and saves with the `.blend`. The Pose Asset gets the poses in library order.
+
+- **Add Pose** (+) adds the viewport pose after the active one; **Add Rest Pose** adds one with every bone transform cleared, to pose from scratch.
+- **Update Pose** replaces the active pose with the viewport pose. **Remove**, **Move Up/Down** and renaming in the list rewrite the action's keys to match. Names stay unique.
+- The bone icon on a row shows that pose. **Rest Pose** clears the bones and the weights.
+- **Preview weights**: each pose has a weight slider and the viewport shows the mix. **Blend** is a weighted average where the rest pose takes what is left below 1, so A at `1 - t` and B at `t` interpolates between two poses, and a single pose at `t` goes from rest to the pose. **Additive** adds each pose's change from rest on top of the others, the way stacked correctives combine.
+
+Considered and not taken: Blender's own Pose Library (one action asset per pose in the Asset Browser, with interactive blending) has no order and scatters the poses over many assets; timeline markers tie the poses to the scene's frames. Muscle simulations that need frames to settle are the one case the library can't drive yet; a **Lay Out on Timeline** command (poses on temporary frames, simulated, target read per frame, removed afterwards) would cover it when needed.
+
 ### Setup in Blender
 
-- **Armature** with the main bones animated into the example poses, and helper bones (deform bones, usually parented to a main bone) in a bone collection, `Correctives` by default.
+- **Armature** with its example poses in the pose library, and helper bones (deform bones, usually parented to a main bone) in a bone collection, `Correctives` by default.
 - **Mesh**: the skinned body. Helpers need painted weights on the vertices they should move; a helper without weights can't be solved and is reported.
-- **Target**: a mesh with the same vertices that shows the wanted shape in each pose (the muscle simulation result, or a copy of the body with a sculpted shape key). Its modifiers may move vertices but not change their count.
-- One **timeline marker per pose**, named after the pose (`thigh_l_raise_90`). The names become the Pose Asset's pose names and the `CR_` shape key names, so they use the side tokens the Meatbag Factory mirrors.
+- **Target**: a mesh with the same vertices that shows the wanted shape in each pose. Usually a copy of the body on the same armature with one sculpted shape key per pose, named after the pose: while a pose is captured, its own key is set to 1 and the other pose-named keys to 0. A live deformer driven by the bones works too. Its modifiers may move vertices but not change their count.
+- Pose names become the Pose Asset's pose names and the `CR_` shape key names, so they use the side tokens the Meatbag Factory mirrors (`thigh_l_raise_90`).
 - The Armature modifier has Preserve Volume off, since Unreal skins linearly.
 
 ### Solve Helper Bones
 
 A numpy port of the parts of [Dem Bones](https://github.com/electronicarts/dem-bones) (BSD-3) that apply: Smooth Skinning Decomposition with Rigid Bones, with the main bones locked and only the helpers solved.
 
-1. **Capture**: for each marker, the main bones' posed matrices with the helpers at rest, and the target's vertex positions, all in armature space.
+1. **Capture**: for each library pose, the main bones' posed matrices with the helpers at rest, and the target's vertex positions, all in armature space.
 2. **Transforms**: Gauss-Seidel sweeps over the helpers. Each helper's rotation and translation (and uniform scale with **Allow Scale**) is the weighted Procrustes fit that brings its vertices closest to the target, with the other bones fixed.
 3. **Weights** (optional, **Solve Weights**): per vertex, non-negative least squares on how much it follows each helper it already has; the main bones keep their painted proportions in what is left, and the vertex keeps at most the contract's influence count. Alternates with step 2 for **Weight Rounds**.
-4. **Write back**: helpers keyed at each marker frame (location, rotation, scale), changed weights written, the largest remaining error per vertex in the point attribute `mf_residual` (view it as a color attribute), and, with **Residual Shape Keys**, a `CR_<pose>` shape key per pose whose error exceeds the **Threshold**. A residual key is stored in rest space, so the solved bones plus the key at 1 give the target exactly.
+4. **Write back**: each helper's solved transform stored in its library pose, changed weights written, the largest remaining error per vertex in the point attribute `mf_residual` (view it as a color attribute), and, with **Residual Shape Keys**, a `CR_<pose>` shape key per pose whose error exceeds the **Threshold**. A residual key is stored in rest space, so the solved bones plus the key at 1 give the target exactly.
 
 The panel lists each pose's RMS error before and after. Helpers are never driven here: the corrective rig in Unreal drives them from the Pose Asset.
 
 ### Send Poses to Unreal
 
-1. Each marker's full pose (every bone, after constraints and drivers) is baked into frame i of a temporary armature copy without constraints, exported as an armature-only FBX animation with the push preset.
-2. In Unreal, the snippet imports it as `<Pose Asset>_Source` on the mesh's Skeleton, creates the Pose Asset if it is missing (`CreatePoseAsset`, previewed on the linked mesh), and calls `SetPosesFromAnimation`: poses with a marker's name are updated (keeping their curve values), the others created, as one undo step.
+1. Each library pose (every bone, after constraints and drivers) is baked into frame i of a temporary armature copy without constraints, exported as an armature-only FBX animation with the push preset.
+2. In Unreal, the snippet imports it as `<Pose Asset>_Source` on the mesh's Skeleton, creates the Pose Asset if it is missing (`CreatePoseAsset`, previewed on the linked mesh), and calls `SetPosesFromAnimation`: poses with a library pose's name are updated (keeping their curve values), the others created, as one undo step.
 3. The source animation is deleted unless **Keep Source Animation** is on. Nothing is saved.
 
 Push the mesh first, so the Skeleton has the helper bones and the `CR_` morph targets. Right-side poses come from **Mirror All** in the Meatbag Factory window.

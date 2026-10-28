@@ -1,4 +1,4 @@
-"""Reads a corrective problem from the scene: rest mesh, weights, posed bones and target meshes per pose."""
+"""Reads a corrective problem from the scene: rest mesh, weights, and per library pose the posed bones and the target."""
 
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -6,14 +6,14 @@ from dataclasses import dataclass
 import numpy as np
 from mathutils import Matrix
 
-from . import solver
+from . import library, solver
 
 
 @dataclass
 class Capture:
     problem: solver.Problem
     bones: list          # deform bone names, in Problem order
-    poses: list          # (pose name, frame)
+    poses: list          # pose names, in library order
     bind: np.ndarray     # (B, 4, 4) bone rest matrices in armature space
     posed: np.ndarray    # (F, B, 4, 4) posed bone matrices with helpers at rest
     to_armature: np.ndarray  # (4, 4) mesh space to armature space
@@ -25,16 +25,6 @@ class CaptureError(RuntimeError):
 
 def to_numpy(matrix):
     return np.array([list(row) for row in matrix], dtype=float)
-
-
-def pose_markers(scene):
-    """(name, frame) of the scene's timeline markers, in frame order: one marker per example pose."""
-    markers = sorted(scene.timeline_markers, key=lambda marker: marker.frame)
-    names = [marker.name for marker in markers]
-    duplicates = sorted({name for name in names if names.count(name) > 1})
-    if duplicates:
-        raise CaptureError(f"Pose markers must have unique names: {', '.join(duplicates)}")
-    return [(marker.name, marker.frame) for marker in markers]
 
 
 def helper_bone_names(armature, collection_name):
@@ -55,52 +45,39 @@ def _selected(armature, bone):
     return pose_bone.select if hasattr(pose_bone, "select") else bone.select
 
 
-def action_fcurves(armature):
-    animation = armature.animation_data
-    action = animation.action if animation else None
-    if not action:
-        return []
-    try:
-        from bpy_extras import anim_utils
-        channelbag = anim_utils.action_get_channelbag_for_slot(action, animation.action_slot)
-        return list(channelbag.fcurves) if channelbag else []
-    except (ImportError, AttributeError):
-        return list(action.fcurves)
-
-
-def bone_fcurves(armature, bone_names):
-    prefixes = tuple(f'pose.bones["{name}"]' for name in bone_names)
-    return [fcurve for fcurve in action_fcurves(armature) if fcurve.data_path.startswith(prefixes)]
+def check_names(names):
+    if not names:
+        raise CaptureError("The pose library is empty: add a pose for each example")
+    duplicates = sorted({name for name in names if names.count(name) > 1})
+    if duplicates:
+        raise CaptureError(f"Pose names must be unique: {', '.join(duplicates)}")
 
 
 @contextmanager
-def helpers_at_rest(armature, helper_names):
-    """Mutes the helpers' animation and resets their pose, so captures show main bones and plain skinning only."""
-    fcurves = bone_fcurves(armature, helper_names)
-    muted = [(fcurve, fcurve.mute) for fcurve in fcurves]
-    bases = {name: armature.pose.bones[name].matrix_basis.copy() for name in helper_names}
-    for fcurve in fcurves:
-        fcurve.mute = True
+def target_shape_keys(target, poses):
+    """Target shape keys named after poses are switched on only for their own pose; restored afterwards."""
+    keys = target.data.shape_keys.key_blocks if target.data.shape_keys else []
+    pose_keys = {key.name: key for key in keys if key.name in poses}
+    values = {name: key.value for name, key in pose_keys.items()}
     try:
-        yield
+        yield pose_keys
     finally:
-        for fcurve, mute in muted:
-            fcurve.mute = mute
-        for name, basis in bases.items():
-            armature.pose.bones[name].matrix_basis = basis
+        for name, value in values.items():
+            pose_keys[name].value = value
 
 
-def _reset_helpers(armature, helper_names, view_layer):
+def show_pose(context, armature, bones, values, helper_names=()):
+    """Sets the armature to a library pose, helpers at rest when given, and evaluates the scene."""
+    library.set_pose(armature, bones, values)
     for name in helper_names:
         armature.pose.bones[name].matrix_basis = Matrix.Identity(4)
-    view_layer.update()
+    context.view_layer.update()
 
 
 def capture(context, armature, mesh, target, helper_names):
-    scene = context.scene
-    poses = pose_markers(scene)
-    if not poses:
-        raise CaptureError("Add a timeline marker for each example pose, named after the pose (thigh_l_raise)")
+    action = library.library_of(armature)
+    poses = library.pose_names(action)
+    check_names(poses)
     if not helper_names:
         raise CaptureError("No helper bones: put them in the helper bone collection, or select them")
     for modifier in mesh.modifiers:
@@ -123,19 +100,19 @@ def capture(context, armature, mesh, target, helper_names):
     bind_inverse = np.linalg.inv(bind)
     target_to_armature = to_numpy(armature.matrix_world.inverted() @ target.matrix_world)
 
-    frame = scene.frame_current
+    all_bones = library.bone_names(armature)
+    values = library.read(action, all_bones)
     posed_all, skin_all, targets = [], [], []
-    try:
-        with helpers_at_rest(armature, helper_names):
-            for name, pose_frame in poses:
-                scene.frame_set(pose_frame)
-                _reset_helpers(armature, helper_names, context.view_layer)
-                posed = np.stack([to_numpy(armature.pose.bones[bone].matrix) for bone in bones])
-                posed_all.append(posed)
-                skin_all.append((posed @ bind_inverse)[:, :3, :])
-                targets.append(_evaluated_points(context, target, count, target_to_armature, name))
-    finally:
-        scene.frame_set(frame)
+    with library.preserved_pose(armature), target_shape_keys(target, poses) as pose_keys:
+        for p, name in enumerate(poses):
+            for key_name, key in pose_keys.items():
+                key.value = 1.0 if key_name == name else 0.0
+            show_pose(context, armature, all_bones, values[p], helper_names)
+            posed = np.stack([to_numpy(armature.pose.bones[bone].matrix) for bone in bones])
+            posed_all.append(posed)
+            skin_all.append((posed @ bind_inverse)[:, :3, :])
+            targets.append(_evaluated_points(context, target, count, target_to_armature, name))
+    context.view_layer.update()
 
     problem = solver.Problem(rest, weights, np.stack(skin_all), np.stack(targets), helpers)
     return Capture(problem, bones, poses, bind, np.stack(posed_all), to_armature)

@@ -1,25 +1,27 @@
-"""Bakes the example poses into an armature-only FBX animation, one frame per pose, for a Pose Asset in Unreal."""
+"""Bakes the library poses into an armature-only FBX animation, one frame per pose, for a Pose Asset in Unreal."""
 
 from contextlib import contextmanager
 
 import bpy
 
+from . import library
 from ..push import export
 
 POSE_ACTION = "MF_PoseAssetSource"
 
 
-def sample_poses(context, armature, poses):
-    """Armature-space matrices of every bone at each pose's frame, after constraints and drivers."""
-    scene = context.scene
-    frame = scene.frame_current
+def sample_poses(context, armature):
+    """Armature-space matrices of every bone in each library pose, after constraints and drivers."""
+    action = library.library_of(armature)
+    bones = library.bone_names(armature)
+    values = library.read(action, bones)
     samples = []
-    try:
-        for _, pose_frame in poses:
-            scene.frame_set(pose_frame)
+    with library.preserved_pose(armature):
+        for pose_values in values:
+            library.set_pose(armature, bones, pose_values)
+            context.view_layer.update()
             samples.append({pose_bone.name: pose_bone.matrix.copy() for pose_bone in armature.pose.bones})
-    finally:
-        scene.frame_set(frame)
+    context.view_layer.update()
     return samples
 
 
@@ -61,9 +63,9 @@ def _key(pose_bone, frame):
     pose_bone.keyframe_insert("scale", frame=frame)
 
 
-def export_poses(context, armature, poses, filepath):
-    """Writes the poses as frames 0 to N-1; a single pose is written twice, since Unreal needs two frames."""
-    samples = sample_poses(context, armature, poses)
+def export_poses(context, armature, filepath):
+    """Writes the library poses as frames 0 to N-1; a single pose is written twice, since Unreal needs two frames."""
+    samples = sample_poses(context, armature)
     if len(samples) == 1:
         samples.append(samples[0])
     with baked_copy(context, armature, samples) as copy:
