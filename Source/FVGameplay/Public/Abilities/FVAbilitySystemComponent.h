@@ -68,6 +68,10 @@ public:
 protected:
 	UE_API virtual void AbilitySpecInputPressed(FGameplayAbilitySpec& Spec) override;
 	UE_API virtual void AbilitySpecInputReleased(FGameplayAbilitySpec& Spec) override;
+
+	// Also registers each FV ability's Trigger Event Tag as a gameplay event trigger.
+	UE_API virtual void OnGiveAbility(FGameplayAbilitySpec& AbilitySpec) override;
+	UE_API virtual void OnRemoveAbility(FGameplayAbilitySpec& AbilitySpec) override;
 	
 	UE_API virtual void NotifyAbilityActivated(const FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability) override;
 	UE_API virtual void NotifyAbilityFailed(const FGameplayAbilitySpecHandle Handle, UGameplayAbility* Ability, const FGameplayTagContainer& FailureReason) override;

@@ -12,7 +12,7 @@ public class FVAttributeSystem : ModuleRules
             "CoreUObject",
             "Engine",
             "GameplayTags",
-            "DeveloperSettings",
+            "GameplayAbilities",
             "FVCoreRuntime"
         });
     }

@@ -38,7 +38,7 @@ Refactor in progress: the old `Source/FV*` modules still exist and fold into `Fl
 | Plugin | Purpose |
 |---|---|
 | FVFramework | Core: `UFVDefinition`, fragments, facts DB, conditions/effects, identity, Flow nodes, debug HUD base (FVCoreDebug), editor helpers (FVCoreEditor) |
-| FVAttributeSystem | Data-defined attributes, modifiers, checks |
+| FVAttributeSystem | Definitions for GAS attributes (attribute sets in AngelScript, Gameplay Effects change them), checks |
 | FVInventorySystem | Items, weight + grid limits, granular outfit slots, pickup |
 | FVDialogueSystem | Dialogue on FlowGraph |
 | FVStorySystem | Quests, knowledge |

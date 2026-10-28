@@ -39,6 +39,12 @@ public:
 	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 #endif
 
+	UFUNCTION(BlueprintCallable, Category = "Interactable", meta = (ToolTip = "Replaces the definition, e.g. from the actor's construction script. After Begin Play the offers and the detection channel are reloaded from it."))
+	UE_API void SetDefinition(UFVInteractableDefinition* NewDefinition);
+
+	UFUNCTION(BlueprintCallable, Category = "Interactable", meta = (ToolTip = "Makes the detectable primitives block the interaction channel again, e.g. after a collision profile change at runtime."))
+	UE_API void RefreshDetection();
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable")
 	TObjectPtr<UFVInteractableDefinition> Definition;
 

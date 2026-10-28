@@ -18,6 +18,13 @@ class APlayerCharacter : AFVPlayerCharacter
     UPROPERTY(DefaultComponent)
     UFVItemReceiverComponent ItemReceiverComponent;
     
+
+    UPROPERTY(DefaultComponent, Category = Items)
+    UFVHeldItemComponent HeldItems;
+
+    UPROPERTY(DefaultComponent, Category = Items)
+    UFVIntoxicationComponent Intoxication;
+
     UPROPERTY()
     UFVTraversalComponent Traversal;
     
@@ -61,6 +68,9 @@ class APlayerCharacter : AFVPlayerCharacter
     UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
+        HeldItems.OnHeldItemsChanged.AddUFunction(this, n"UpdateHoldPoses");
+        UpdateHoldPoses();
+
         Traversal = UFVTraversalComponent::Get(this);
 
         // Configure initial movement settings
@@ -108,5 +118,18 @@ class APlayerCharacter : AFVPlayerCharacter
     bool HasFocusedInteractable()
     {
         return InteractorComponent.HasInteractableTarget();
+    }
+
+    // Passes the hold poses of what the hands hold to the anim instance.
+    UFUNCTION()
+    private void UpdateHoldPoses()
+    {
+        UFVPlayerAnimInstance AnimInstance = Cast<UFVPlayerAnimInstance>(Mesh.AnimInstance);
+
+        if (AnimInstance != nullptr)
+        {
+            AnimInstance.RightHandHoldPose = HeldItems.GetHoldPose(true);
+            AnimInstance.LeftHandHoldPose = HeldItems.GetHoldPose(false);
+        }
     }
 }

@@ -27,7 +27,7 @@ Each offer on an interactable definition has:
 - **Gesture**: Press, Hold (duration), Mash (press count), Hover or Automatic.
 - **Display**: name, description and icon shown in the prompt.
 - **Conditions**: when the offer is available. Its *Failure Presentation* hides the offer or shows it locked (with a reason).
-- **Effects**: what happens on commit. In this project the usual effect is **Activate Ability** (from the FVGameplay module), which sends a gameplay event (a tag under `Event.`, e.g. `Event.Interaction.Talk`) to the player. Grant the player an ability derived from `UFVInteractAbility` with an *Ability Trigger* of type *Gameplay Event* on that tag; it reads the interactable and does the work (see `Script/Abilities`: Talk, Pickup, Examine, Lockpick).
+- **Effects**: what happens on commit. In this project the usual effect is **Activate Ability** (from the FVGameplay module), which sends a gameplay event (a tag under `Event.`, e.g. `Event.Interaction.Talk`) to the player. Grant the player an ability derived from `UFVInteractAbility` with an *Ability Trigger* of type *Gameplay Event* on that tag, or set its **Trigger Event Tag** (AngelScript: `default TriggerEventTag = GameplayTags::Event_...;`); it reads the interactable and does the work (see `Script/Abilities`: Talk, Examine, Lockpick; the item abilities, Pickup included, are in `Script/Items/Abilities`, see [Items](Items.md)).
 - **Weight** (ordering) and **Remaining Uses** (-1 unlimited).
 
 Untick **Show Offers** for simple interactables such as an unlocked door: the widget gets an empty offer list but still shows the type-specific focus indicator.
@@ -38,10 +38,14 @@ Untick **Show Offers** for simple interactables such as an unlocked door: the wi
 |---|---|---|
 | FV Interactor Component | Player pawn | Set **Definition**. Modes are pushed and popped at runtime by tag (e.g. while aiming). **Ignored Actors** for self-hits |
 | FV Interaction UI Component | Player pawn or controller (needs the interactor) | Pushes the interaction widget into the UI layout once and keeps it updated. Optional **UI Settings Override** |
-| FV Interactable Component | Anything interactable | Set **Definition**. Primitives tagged `Detectable` (the **Detectable Primitive Tag**) are traced and highlighted |
+| FV Interactable Component | Anything interactable | Set **Definition**, or call `Set Definition` (e.g. from the actor's construction script; after Begin Play it reloads the offers). Primitives tagged `Detectable` (the **Detectable Primitive Tag**) are traced and highlighted; call `Refresh Detection` after changing their collision profile at runtime (e.g. when a dropped item starts simulating physics) |
 | FV Interactable Highlight Component | Interactables that should glow | Uses the project's highlight setup unless **Override Setup** is ticked |
-| FV Lock Component | Lockable doors and containers | **Locked** (saved), **Lock Pickable**, **Difficulty** 0-1 |
-| `UFVInteractableResponseComponent` subclass | Interactables reacting to an action | Abstract; set its **Action Tag** and implement **Execute Action**. `UFVInteractableResponseComponent_Toggle` handles open/close with a lock; see `Script/World/Doors/InteractionResponse_DoorToggle.as` |
+| FV Lock Component | Lockable doors and containers | **Locked** (saved), **Lock Pickable**, **Difficulty** 0-1, **Key Tag**, **Consume Key** (section 3.1) |
+| `UFVInteractableResponseComponent` subclass | Interactables reacting to an action | Abstract; set its **Action Tag** and implement **Execute Action**. `UFVInteractableResponseComponent_Toggle` handles open/close with a lock: **On Toggled(Open)** after each toggle, **On Toggle Blocked(Open, Interactor)** when the lock refuses it (if the event unlocks the lock, e.g. with the interactor's key, the toggle goes ahead), **On Lock Changed(Locked)**; see `Script/World/Doors/InteractionResponse_DoorToggle.as` |
+
+### 3.1 Keys
+
+Set the lock's **Key Tag** to a tag under `Key.` (e.g. `Key.Door.Mansion`); an item whose definition **Tags** contain it opens the lock. Tick **Consume Key** when the key is used up. The plugin only holds this data (`Get Key Tag`, `Consumes Key`, `Can Be Opened With Key`); the game checks the opener's inventory and calls **Unlock** (`Script/Items/FVItemKeys.as`, used by doors in **On Toggle Blocked** and by loot containers). Without a key tag no key fits; the lock is picked or unlocked by script.
 
 ## 4. Interaction UI
 

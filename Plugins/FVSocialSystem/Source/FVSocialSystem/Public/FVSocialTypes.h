@@ -41,6 +41,32 @@ struct FVSOCIALSYSTEM_API FFVCharacterFragment_Social : public FFVCharacterFragm
 	FGameplayTag RelationshipFact;
 };
 
+/** A kind of gift a character reacts to. */
+USTRUCT(BlueprintType)
+struct FVSOCIALSYSTEM_API FFVGiftPreference
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gifts", meta = (ToolTip = "Matched against the gift's definition Tags and Category; a parent tag matches every child."))
+	FGameplayTag Tag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gifts", meta = (ToolTip = "Relationship change when a gift matches; negative for gifts the character dislikes."))
+	int32 RelationshipChange = 1;
+};
+
+/** How a character takes gifts: matching preferences add up, a gift matching none gets the default change. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Gifts"))
+struct FVSOCIALSYSTEM_API FFVCharacterFragment_Gifts : public FFVCharacterFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gifts", meta = (TitleProperty = "Tag", ToolTip = "Gifts this character likes or dislikes. Keep it to about three."))
+	TArray<FFVGiftPreference> Preferences;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gifts", meta = (ToolTip = "Relationship change for a gift no preference matches."))
+	int32 DefaultRelationshipChange = 0;
+};
+
 UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Social"))
 class FVSOCIALSYSTEM_API UFVSocialSettings : public UDeveloperSettings
 {

@@ -63,6 +63,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FV|Social", meta = (WorldContext = "WorldContext"))
 	static void ModifyRelationship(UObject* WorldContext, const UFVCharacterDefinition* Character, int32 Delta);
 
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "Relationship change a gift with these tags (its definition Tags and Category) makes on the receiver: the sum of their matching gift preferences, else their default."))
+	static int32 GetGiftRelationshipChange(const AActor* Receiver, const FGameplayTagContainer& GiftTags);
+
+	UFUNCTION(BlueprintCallable, Category = "FV|Social", meta = (WorldContext = "WorldContext", ToolTip = "Changes the player's relationship with the receiver by their gift preferences. Returns the change; 0 when the receiver has no relationship fact."))
+	static int32 ReceiveGift(UObject* WorldContext, const AActor* Receiver, const FGameplayTagContainer& GiftTags);
+
 	/** Faction of an actor through its identity's Social fragment. */
 	UFUNCTION(BlueprintPure, Category = "FV|Social")
 	static UFVFactionDefinition* GetActorFaction(const AActor* Actor);

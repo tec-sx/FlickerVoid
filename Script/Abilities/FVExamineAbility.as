@@ -1,25 +1,23 @@
+// Opens the examine view on the targeted actor and finds its secrets (UFVExamineSecretsComponent) as the widget turns it. Finding the last secret of an unsolved readable reads it and closes the view; cancelling keeps found clues and leaves the note unsolved.
 class UFVExamineAbility : UFVInteractAbility
 {
-	// Viewing orientations that hide a secret, matched within SecretAngleTolerance.
-	UPROPERTY(EditDefaultsOnly, Category = "Examine")
-	TArray<FRotator> SecretViewAngles;
-
-	// Knowledge learned when the matching SecretViewAngles entry is found (same index).
-	UPROPERTY(EditDefaultsOnly, Category = "Examine")
-	TArray<const UFVKnowledgeDefinition> SecretKnowledge;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Examine")
-	float SecretAngleTolerance = 12.f;
-
 	default ActivationOwnedTags.AddTag(GameplayTags::Status_Interacting);
 
 	private FGameplayMessageListenerHandle ExamineHandle;
-	private TArray<int> FoundSecrets;
+	private AActor ExaminedActor;
+	private bool bListening = false;
+	private bool bViewOpen = false;
 
 	UFUNCTION(BlueprintOverride)
 	void ActivateAbility()
 	{
-		FoundSecrets.Empty();
+		ExaminedActor = IsValid(Interactable) ? Interactable.GetOwner() : nullptr;
+
+		if (ExaminedActor == nullptr)
+		{
+			EndAbility();
+			return;
+		}
 
 		ExamineHandle = UGameplayMessageSubsystem::Get().RegisterListener(
 			GameplayTags::Interaction_Event_ExamineStarted,
@@ -27,76 +25,72 @@ class UFVExamineAbility : UFVInteractAbility
 			n"HandleExamineUpdate",
 			FFVInteractionExamineMessage());
 
+		bListening = true;
+		bViewOpen = true;
 		BroadcastExamineState(true, FRotator::ZeroRotator);
+	}
+
+	UFUNCTION(BlueprintOverride)
+	void OnEndAbility(bool bWasCancelled)
+	{
+		if (bListening)
+		{
+			UGameplayMessageSubsystem::Get().UnregisterListener(ExamineHandle);
+			bListening = false;
+		}
+
+		if (bViewOpen && ExaminedActor != nullptr)
+		{
+			BroadcastExamineState(false, FRotator::ZeroRotator);
+		}
+
+		bViewOpen = false;
+		ExaminedActor = nullptr;
 	}
 
 	UFUNCTION()
 	void HandleExamineUpdate(FGameplayTag Channel, const FFVInteractionExamineMessage& Message)
 	{
-		if (Message.ExaminedActor != Interactable.GetOwner())
+		if (ExaminedActor == nullptr || Message.ExaminedActor != ExaminedActor)
 		{
 			return;
 		}
 
 		if (!Message.bVisible)
 		{
-			EndExamine(false);
+			bViewOpen = false;
+			EndAbility();
 			return;
 		}
 
-		CheckForSecret(Message.ViewRotation);
-	}
+		UFVExamineSecretsComponent Secrets = UFVExamineSecretsComponent::Get(ExaminedActor);
 
-	private void CheckForSecret(FRotator ViewRotation)
-	{
-		for (int Index = 0; Index < SecretViewAngles.Num(); Index++)
-		{
-			if (FoundSecrets.Contains(Index))
-			{
-				continue;
-			}
-
-			if (IsWithinTolerance(ViewRotation, SecretViewAngles[Index]))
-			{
-				FoundSecrets.Add(Index);
-				LearnSecret(Index);
-			}
-		}
-	}
-
-	private bool IsWithinTolerance(FRotator A, FRotator B)
-	{
-		return Math::Abs(Math::FindDeltaAngleDegrees(A.Pitch, B.Pitch)) <= SecretAngleTolerance
-			&& Math::Abs(Math::FindDeltaAngleDegrees(A.Yaw, B.Yaw)) <= SecretAngleTolerance
-			&& Math::Abs(Math::FindDeltaAngleDegrees(A.Roll, B.Roll)) <= SecretAngleTolerance;
-	}
-
-	private void LearnSecret(int SecretIndex)
-	{
-		if (!SecretKnowledge.IsValidIndex(SecretIndex) || SecretKnowledge[SecretIndex] == nullptr)
+		if (!IsValid(Secrets))
 		{
 			return;
 		}
 
-		FVKnowledge::Learn(SecretKnowledge[SecretIndex]);
+		Secrets.TryFind(Message.ViewRotation);
+		TrySolveReadable(Secrets);
 	}
 
-	private void EndExamine(bool bWasCancelled)
+	private void TrySolveReadable(UFVExamineSecretsComponent Secrets)
 	{
-		UGameplayMessageSubsystem::Get().UnregisterListener(ExamineHandle);
+		AFVReadable Readable = Cast<AFVReadable>(ExaminedActor);
 
-		if (bWasCancelled && Interactable.GetOwner() != nullptr)
+		if (Readable == nullptr || Readable.IsSolved() || !Secrets.HasSecrets() || !Secrets.AllFound())
 		{
-			BroadcastExamineState(false, FRotator::ZeroRotator);
+			return;
 		}
 
+		Readable.MarkRead(GetAvatarActorFromActorInfo());
 		EndAbility();
 	}
 
 	private void BroadcastExamineState(bool bVisible, FRotator ViewRotation)
 	{
 		FFVInteractionExamineMessage Message;
-		Message.ExaminedActor = Interactable.GetOwner();
+		Message.ExaminedActor = ExaminedActor;
 		Message.bVisible = bVisible;
 		Message.ViewRotation = ViewRotation;
 

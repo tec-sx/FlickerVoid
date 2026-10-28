@@ -6,6 +6,7 @@
 
 #include "FVInteractableResponseComponent_Toggle.generated.h"
 
+class UFVInteractorComponent;
 class UFVLockComponent;
 
 UCLASS(ClassGroup=(FlickerVoid), meta=(BlueprintSpawnableComponent))
@@ -26,8 +27,8 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
 	void OnToggled(bool bOpen);
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
-	void OnToggleBlocked(bool bOpen);
+	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle", meta = (ToolTip = "The lock blocked the interactor's toggle. If this unlocks the lock, e.g. with a key the interactor carries, the toggle goes ahead."))
+	void OnToggleBlocked(bool bOpen, UFVInteractorComponent* Interactor);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction|Toggle")
 	void OnLockChanged(bool bLocked);

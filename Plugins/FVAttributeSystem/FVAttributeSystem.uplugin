@@ -3,14 +3,15 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "FVAttributeSystem",
-	"Description": "Data-driven attributes, modifiers and skill checks. Attributes are definitions, so game code and AngelScript can add new ones without touching C++.",
+	"Description": "Attribute definitions over Gameplay Ability System attributes, clamping, change events and skill checks. Attributes live in attribute sets (C++ or AngelScript); Gameplay Effects change them.",
 	"Category": "FlickerVoid",
 	"CreatedBy": "TecSX",
 	"CanContainContent": false,
 	"IsBetaVersion": false,
 	"Installed": false,
 	"Plugins": [
-		{ "Name": "FVFramework", "Enabled": true }
+		{ "Name": "FVFramework", "Enabled": true },
+		{ "Name": "GameplayAbilities", "Enabled": true }
 	],
 	"Modules": [
 		{ "Name": "FVAttributeSystem", "Type": "Runtime", "LoadingPhase": "Default" },

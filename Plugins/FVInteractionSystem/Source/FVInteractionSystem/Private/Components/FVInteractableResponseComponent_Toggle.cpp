@@ -32,8 +32,12 @@ void UFVInteractableResponseComponent_Toggle::ExecuteAction_Implementation(UFVIn
 {
 	if (IsLocked())
 	{
-		OnToggleBlocked(!bIsOpen);
-		return;
+		OnToggleBlocked(!bIsOpen, Interactor);
+
+		if (IsLocked())
+		{
+			return;
+		}
 	}
 
 	bIsOpen = !bIsOpen;

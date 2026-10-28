@@ -8,9 +8,10 @@
 UENUM(BlueprintType)
 enum class EFVKnowledgeKind : uint8
 {
-	Clue,
-	Topic,
-	Thought
+	Clue		UMETA(ToolTip = "Evidence found while investigating; clues chain into deductions through prerequisites."),
+	Topic		UMETA(ToolTip = "Something the player can bring up in dialogue."),
+	Thought		UMETA(ToolTip = "A conclusion or idea the protagonist reaches."),
+	Document	UMETA(ToolTip = "A read note, letter, book or map.")
 };
 
 /** A piece of knowledge. Id is the fact tag written when learned (e.g. Knowledge.Clue.BloodOnCoat). */
