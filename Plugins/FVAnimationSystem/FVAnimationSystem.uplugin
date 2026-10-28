@@ -1,0 +1,40 @@
+{
+ "FileVersion": 3,
+ "Version": 1,
+ "VersionName": "1.0",
+ "FriendlyName": "FVAnimationSystem",
+ "Description": "FlickerVoid animation tooling: side naming rules and the Meatbag Factory, an editor for authoring and mirroring Pose Assets.",
+ "Category": "FlickerVoid",
+ "CreatedBy": "TecSX",
+ "CreatedByURL": "",
+ "DocsURL": "",
+ "MarketplaceURL": "",
+ "SupportURL": "",
+ "CanContainContent": true,
+ "IsBetaVersion": false,
+ "IsExperimentalVersion": false,
+ "Installed": false,
+ "Modules": [
+  {
+   "Name": "FVAnimationSystem",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVAnimationSystemDebug",
+   "Type": "Runtime",
+   "LoadingPhase": "Default"
+  },
+  {
+   "Name": "FVAnimationSystemEditor",
+   "Type": "Editor",
+   "LoadingPhase": "PostEngineInit"
+  }
+ ],
+ "Plugins": [
+  {
+   "Name": "FVFramework",
+   "Enabled": true
+  }
+ ]
+}
