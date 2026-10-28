@@ -55,14 +55,19 @@ class UFVCharacterAbilitiesSection : UFVHubListSectionWidget
         }
 
         FGameplayTag Category = Tabs[Filter].AttributeCategory;
-        for (UFVAttributeDefinition Attribute : Attributes.GetKnownAttributes())
+        UFVAttributeSubsystem Registry = UFVAttributeSubsystem::Get();
+        AActor Pawn = GetOwningPlayerPawn();
+    
+        for (UFVAttributeDefinition Attribute : Registry.GetDefinitions())
         {
-            if (Attribute == nullptr || (Category.IsValid() && !Attribute.Category.MatchesTag(Category)))
+            if (Attribute == nullptr ||
+				!FVAttribute::HasAttribute(Pawn, Attribute) ||
+				(Category.IsValid() && !Attribute.Category.MatchesTag(Category)))
             {
                 continue;
             }
 
-            float Value = Attributes.GetValue(Attribute);
+            float Value = FVAttribute::GetValue(Pawn, Attribute);
 
             FFVListEntry Entry;
             Entry.Title = Attribute.Display.Name;

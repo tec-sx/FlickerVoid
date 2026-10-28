@@ -301,7 +301,7 @@ class UFVInventoryInfoSection : UFVHubSectionWidget
     private void HandleDropClicked()
     {
         FFVItemStack Stack;
-        if (!Model.GetSelectedStack(Stack) || Model.Drop(Stack.InstanceId, GetDropQuantity(Stack)) == nullptr)
+        if (!Model.GetSelectedStack(Stack) || !Model.Drop(Stack.InstanceId, GetDropQuantity(Stack)))
         {
             ShowFeedback(CannotDropText);
         }

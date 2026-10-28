@@ -246,19 +246,35 @@ class UFVInventoryModel : UObject
         return WornSlot.IsValid() ? Unequip(WornSlot) : Equip(InstanceId, FGameplayTag());
     }
 
+    // Same rules as the drop ability: not quest, key or worn items.
     bool CanDrop(FGuid InstanceId, int Quantity) const
     {
-        return Inventory != nullptr && Inventory.CanDropStack(InstanceId, Quantity);
+        FFVItemStack Stack;
+        
+        if (Inventory == nullptr || Quantity < 1 || !Inventory.GetStack(InstanceId, Stack) || Quantity > Stack.Quantity)
+        {
+            return false;
+        }
+        
+        if (Stack.Item == nullptr || Stack.Item.bQuestItem || Stack.Item.IsKeyItem())
+        {
+            return false;
+        }
+        
+        return Equipment == nullptr || !Equipment.IsInstanceEquipped(InstanceId);
     }
 
-    // Spawns the units as a pickup in front of the player; worn stacks come off when dropped whole.
-    AActor Drop(FGuid InstanceId, int Quantity)
+    // Sends Event.Item.Drop; the player's drop ability spawns the world item.
+    bool Drop(FGuid InstanceId, int Quantity)
     {
-        if (!CanDrop(InstanceId, Quantity))
+        FFVItemStack Stack;
+        
+        if (!CanDrop(InstanceId, Quantity) || !Inventory.GetStack(InstanceId, Stack))
         {
-            return nullptr;
+            return false;
         }
-        return Inventory.DropStack(InstanceId, Quantity);
+        
+        return FVItem::SendItemEvent(Inventory.GetOwner(), GameplayTags::Event_Item_Drop, Stack.Item, InstanceId, nullptr, nullptr, Quantity);
     }
 
     UFUNCTION()

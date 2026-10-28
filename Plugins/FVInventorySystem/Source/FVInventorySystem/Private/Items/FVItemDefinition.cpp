@@ -1,8 +1,8 @@
 #include "Items/FVItemDefinition.h"
 
+#include "FVInventorySettings.h"
 #include "FVInventoryTags.h"
 #include "Items/FVItemFragments.h"
-#include "Engine/StaticMesh.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -28,10 +28,9 @@ FGameplayTagContainer UFVItemDefinition::GetEquipmentSlots() const
 	return Equippable ? Equippable->Slots : FGameplayTagContainer();
 }
 
-UStaticMesh* UFVItemDefinition::LoadWorldMesh() const
+bool UFVItemDefinition::IsKeyItem() const
 {
-	const FFVItemFragment_Pickup* Pickup = FindFragment<FFVItemFragment_Pickup>();
-	return Pickup ? Pickup->WorldMesh.LoadSynchronous() : nullptr;
+	return Category.IsValid() && Category.MatchesAny(UFVInventorySettings::Get().KeyItemCategories);
 }
 
 void UFVItemDefinition::PostLoad()
@@ -81,6 +80,11 @@ EDataValidationResult UFVItemDefinition::IsDataValid(FDataValidationContext& Con
 	if (FindFragment<FFVItemFragment_Container>() && !IsEquippable())
 	{
 		Context.AddWarning(LOCTEXT("ContainerNotEquippable", "Container adds space only while worn, but the item has no Equippable fragment."));
+	}
+
+	if (FindFragment<FFVItemFragment_Charges>() && !IsUsable())
+	{
+		Context.AddWarning(LOCTEXT("ChargesNotUsable", "Charges count uses, but the item has no Usable fragment."));
 	}
 
 	return Result;

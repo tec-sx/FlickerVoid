@@ -7,9 +7,7 @@
 #include "Items/FVItemDefinition.h"
 #include "FVItemFragments.generated.h"
 
-class AActor;
 class USkeletalMesh;
-class UStaticMesh;
 
 /** Wearable in one of its slots. Granted tags (e.g. Disguise.Faction.Police) are added to the wearer while equipped. */
 USTRUCT(BlueprintType, meta = (DisplayName = "Equippable"))
@@ -65,15 +63,25 @@ struct FVINVENTORYSYSTEM_API FFVItemFragment_Usable : public FFVItemFragment
 	bool bConsumeOnUse = true;
 };
 
-/** How the item looks in the world and what spawns when it is dropped. */
-USTRUCT(BlueprintType, meta = (DisplayName = "Pickup"))
-struct FVINVENTORYSYSTEM_API FFVItemFragment_Pickup : public FFVItemFragment
+/** Several uses per unit, e.g. sips in a bottle. Remaining uses are kept per stack. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Charges"))
+struct FVINVENTORYSYSTEM_API FFVItemFragment_Charges : public FFVItemFragment
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (ToolTip = "Shown by world pickup actors holding this item (see LoadWorldMesh)."))
-	TSoftObjectPtr<UStaticMesh> WorldMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Charges", meta = (ClampMin = 1, ToolTip = "Uses per unit. Each use applies the Usable effects; the unit is used up after the last one."))
+	int32 Charges = 4;
+};
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (ToolTip = "Spawned when the item is dropped; empty uses Default Pickup Class from the inventory settings."))
-	TSoftClassPtr<AActor> PickupClass;
+/** Base price for trading. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Value"))
+struct FVINVENTORYSYSTEM_API FFVItemFragment_Value : public FFVItemFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Value", meta = (ClampMin = 0, ToolTip = "Price of one unit before the merchant's multipliers."))
+	int32 BasePrice = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Value", meta = (ToolTip = "Merchants buy it."))
+	bool bSellable = true;
 };
