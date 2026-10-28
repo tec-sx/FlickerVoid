@@ -14,7 +14,7 @@ enum class EFVBodySide : uint8
 UENUM(BlueprintType, meta = (ScriptName = "MirrorAxis"))
 enum class EFVMirrorAxis : uint8
 {
-	Default UMETA(ToolTip = "The axis set in the Animation System settings."),
+	Default UMETA(ToolTip = "The Default Mirror Axis from the Animation System settings."),
 	X UMETA(ToolTip = "Mirror across the component-space YZ plane."),
 	Y UMETA(ToolTip = "Mirror across the component-space XZ plane."),
 	Z UMETA(ToolTip = "Mirror across the component-space XY plane."),

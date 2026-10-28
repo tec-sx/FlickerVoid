@@ -21,7 +21,7 @@ namespace
 		case EFVMirrorAxis::Z: return EAxis::Z;
 		default:
 			{
-				const EAxis::Type Default = UFVAnimationSettings::Get().MirrorAxis;
+				const EAxis::Type Default = UFVAnimationSettings::Get().DefaultMirrorAxis;
 				return Default == EAxis::None ? EAxis::X : Default;
 			}
 		}

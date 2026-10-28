@@ -18,7 +18,7 @@ Modules: `FVAnimationSystem` (settings, side naming, `UFVAnimationLibrary`), `FV
 | Setting | Default | Use |
 |---|---|---|
 | **Side Pairs** | `_l` / `_r` | Bone suffixes that mark a side; matched ignoring case, case kept (`_L` becomes `_R`). Pose and curve names use the same pairs as whole tokens. |
-| **Mirror Axis** | X | Component-space axis that poses are mirrored across. Each mirror call can pick another (`EFVMirrorAxis`). |
+| **Default Mirror Axis** | X | Component-space axis that poses are mirrored across. The Meatbag Factory window can override it for the session (creatures or robots whose pairs mirror on another axis), and scripting passes it per call (`EFVMirrorAxis`). |
 | **Changed Rotation / Translation / Scale Tolerance** | 0.01 deg / 0.01 cm / 0.001 | When a bone counts as changed by a pose, compared with the base pose (the reference pose, or the base pose of an additive asset). |
 
 ## 3. Mirroring rules

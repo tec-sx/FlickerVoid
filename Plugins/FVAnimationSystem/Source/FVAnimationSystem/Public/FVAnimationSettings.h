@@ -19,8 +19,8 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Mirroring", meta = (ToolTip = "Suffixes that mark a bone's side. A bone without one is a centre bone and is never mirrored."))
 	TArray<FFVSidePair> SidePairs;
 
-	UPROPERTY(Config, EditAnywhere, Category = "Mirroring", meta = (ToolTip = "Default component-space axis that poses are mirrored across. Each mirror can pick another."))
-	TEnumAsByte<EAxis::Type> MirrorAxis = EAxis::X;
+	UPROPERTY(Config, EditAnywhere, Category = "Mirroring", meta = (ToolTip = "Component-space axis that poses are mirrored across, unless the Meatbag Factory's session overrides it (creatures or robots whose pairs mirror on another axis)."))
+	TEnumAsByte<EAxis::Type> DefaultMirrorAxis = EAxis::X;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Changed Bones", meta = (ClampMin = 0, Units = "deg", ToolTip = "A bone counts as changed by a pose when its rotation differs from the base pose by more than this."))
 	float ChangedRotationTolerance = 0.01f;
