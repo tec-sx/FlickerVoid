@@ -50,7 +50,8 @@ private:
 	TSharedRef<ITableRow> MakeCurveRow(FCurveItemPtr Curve, const TSharedRef<STableViewBase>& Owner);
 	TSharedRef<SWidget> MakeAxisMenu();
 	TSharedRef<SWidget> MakeCreateMenu();
-	TSharedRef<SWidget> MakeMirrorAllMenu();
+	TSharedRef<SWidget> MakeSideMenu();
+	TSharedRef<SWidget> MakeMirrorMenu();
 	TSharedRef<SWidget> MakeInbetweensMenu();
 	TSharedRef<SWidget> MakeClipboardMenu();
 	TSharedRef<SWidget> MakeAddCurveMenu();
@@ -60,6 +61,8 @@ private:
 	void OnPoseAssetChanged(const FAssetData& AssetData);
 	bool ShouldFilterAsset(const FAssetData& AssetData) const;
 	FText GetAxisText() const;
+	FText GetSideText() const;
+	FText GetMirrorAllText() const;
 
 	void Refresh();
 	void RefreshCurves();
@@ -83,7 +86,7 @@ private:
 	FReply ResetPreview();
 	FReply DuplicatePose();
 	FReply MirrorSelected();
-	void MirrorAll(EFVBodySide From);
+	FReply MirrorAll();
 	void CreateInbetweens();
 	void Copy(bool bSelectedBones);
 	void Paste();
@@ -100,6 +103,7 @@ private:
 	TWeakPtr<IPersonaToolkit> PersonaToolkit;
 	TWeakObjectPtr<UPoseAsset> PoseAsset;
 	EFVMirrorAxis MirrorAxis = EFVMirrorAxis::Default;
+	EFVBodySide AuthoringSide = EFVBodySide::Left;
 
 	FString Filter;
 	TArray<FPoseItemPtr> Items;

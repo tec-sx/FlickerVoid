@@ -42,6 +42,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FV|Animation|Meatbag Factory", meta = (ToolTip = "Mirrors the poses' side bones onto their counterpart poses, updating or creating them, as one undo step. All or nothing."))
 	static bool MirrorPoses(UPoseAsset* PoseAsset, const TArray<FName>& Poses, EFVMirrorAxis Axis, TArray<FName>& OutMirroredPoses, FText& OutError);
 
+	UFUNCTION(BlueprintCallable, Category = "FV|Animation|Meatbag Factory", meta = (ToolTip = "Mirrors every pose of the From side that can be mirrored, and deletes the other side's orphans (poses whose From-side pose is gone) when Delete Orphans is set. One undo step."))
+	static bool MirrorAll(UPoseAsset* PoseAsset, EFVBodySide From, EFVMirrorAxis Axis, bool bDeleteOrphans, TArray<FName>& OutMirroredPoses, TArray<FName>& OutSkippedPoses, TArray<FName>& OutOrphans, FText& OutError);
+
 	UFUNCTION(BlueprintCallable, Category = "FV|Animation|Meatbag Factory", meta = (ToolTip = "Adds Count (1 to 9) poses between the base pose and Pose, named <Pose>_ib<percent>."))
 	static bool CreateInbetweens(UPoseAsset* PoseAsset, FName Pose, int32 Count, TArray<FName>& OutPoses, FText& OutError);
 

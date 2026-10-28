@@ -22,6 +22,9 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Mirroring", meta = (ToolTip = "Component-space axis that poses are mirrored across, unless the Meatbag Factory's session overrides it (creatures or robots whose pairs mirror on another axis)."))
 	TEnumAsByte<EAxis::Type> DefaultMirrorAxis = EAxis::X;
 
+	UPROPERTY(Config, EditAnywhere, Category = "Mirroring", meta = (InvalidEnumValues = "Centre", ToolTip = "The side poses are authored on. Mirror All copies it to the other side; the Meatbag Factory's session can override it."))
+	EFVBodySide AuthoringSide = EFVBodySide::Left;
+
 	UPROPERTY(Config, EditAnywhere, Category = "Changed Bones", meta = (ClampMin = 0, Units = "deg", ToolTip = "A bone counts as changed by a pose when its rotation differs from the base pose by more than this."))
 	float ChangedRotationTolerance = 0.01f;
 

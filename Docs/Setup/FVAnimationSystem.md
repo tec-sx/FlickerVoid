@@ -9,18 +9,19 @@ Modules: `FVAnimationSystem` (settings, side naming, `UFVAnimationLibrary`), `FV
 1. Open a skeletal mesh and choose *Window > Meatbag Factory* (also in the Skeleton editor).
 2. In **Setup**, pick a Pose Asset on the mesh's skeleton. Make one first with *Create Asset > Pose Asset* in the toolbar if needed. The Pose Asset (or its skeleton) needs a **Preview Mesh**.
 3. Select a bone, rotate it in the viewport, then **Create** and name the pose with its side: `upperarm_l_up_90`.
-4. Press **Mirror**: `upperarm_r_up_90` is updated if it exists and created if not. Ctrl+Z undoes any command.
+4. Author the whole left side, then press **Mirror All L > R** once: every right pose is updated if it exists and created if not. Ctrl+Z undoes any command.
 
 ## 2. The window
 
 | Section | Holds |
 |---|---|
-| **Setup** | **Pose Asset** picker (filtered to the skeleton) and **Mirror Axis**, an override for this session that starts at the project default (for creatures or robots whose pairs mirror on another axis) |
+| **Setup** | **Pose Asset** picker (filtered to the skeleton), and two overrides for this session that start at the project defaults: **Mirror Axis** (for creatures or robots whose pairs mirror on another axis) and **Authoring Side** |
 | **Poses** | Filter, the pose list (side badge L, R or C; double-click a name to rename; a preview weight slider per pose), and the selected pose's curve values with **Add Curve** |
-| **Actions** | Create, Update, Delete · Go To, Reset, Duplicate · Mirror (arrow: Mirror All), Inbetweens, Copy/Paste |
+| **Actions** | Create, Update, Delete · Go To, Reset, Duplicate · Mirror All (arrow: mirror selected poses only), Inbetweens, Copy/Paste |
 
 How capture works: **Create** and **Update** save the pose last opened with **Go To** (or double-click), or the base pose after **Reset**, plus the bones you edited in the viewport. Post-process correctives showing on the preview are never baked in. Preview weight sliders only change the viewport.
 
+- **Mirror All** mirrors every authoring-side pose in one undo step. When other-side poses have lost their authoring-side pose (renamed or deleted), it lists them and asks whether to delete them in the same step. A notification then reports how many poses were created, updated and skipped, with each skipped pose and why (also in the Output Log).
 - **Inbetweens**: 1 to 9 poses between the base pose and the selected pose, named `<pose>_ib<percent>` (`thigh_l_raise_ib50`).
 - **Copy/Paste**: copy a pose, or only the bones selected in the skeleton tree, and paste onto the selected poses with a **Multiplier** (1 as copied, 0.5 half the change from the base pose, 1.5 exaggerated). A bone-only copy pastes no curves.
 - **Add Curve**: lists the skeleton's curves (authored in content, *Skeleton > Anim Curves*) that the asset lacks. Adding one rebuilds the asset through a temporary animation and keeps every pose, its name and the additive setup; the asset's own Source Animation is left as it was.
@@ -34,6 +35,7 @@ How capture works: **Create** and **Update** save the pose last opened with **Go
 |---|---|---|
 | **Side Pairs** | `_l` / `_r` | Bone suffixes that mark a side; matched ignoring case, case kept (`_L` becomes `_R`). Pose and curve names use the same pairs as whole tokens. |
 | **Default Mirror Axis** | X | Component-space axis that poses are mirrored across. The window overrides it per session, and scripting passes it per call (`EFVMirrorAxis`). |
+| **Authoring Side** | Left | The side you author; Mirror All copies it to the other side. The window overrides it per session. |
 | **Changed Rotation / Translation / Scale Tolerance** | 0.01 deg / 0.01 cm / 0.001 | When a bone counts as changed by a pose, compared with the base pose (the reference pose, or the base pose of an additive asset). |
 
 ## 4. Mirroring rules
@@ -43,7 +45,7 @@ How capture works: **Create** and **Update** save the pose last opened with **Go
 - Mirror is refused when the name has no single side token, when the pose changes no bone of its side, or when a changed bone has no counterpart in the skeleton.
 - An existing counterpart keeps its name, its list position and every bone that isn't mirrored. A new counterpart starts from the base pose.
 - Curves of the pose's side (`CR_upperarm_l_up`) copy their value onto the counterpart curve when the asset has it.
-- Several poses mirror as one undo step and all or nothing. Selecting a pose together with its own counterpart is refused. **Mirror All** mirrors every pose of one side and skips the ones that can't be mirrored.
+- Several poses mirror as one undo step and all or nothing. Selecting a pose together with its own counterpart is refused. **Mirror All** mirrors every authoring-side pose and skips the ones that can't be mirrored.
 
 ## 5. Validation
 
@@ -58,7 +60,7 @@ How capture works: **Create** and **Update** save the pose last opened with **Go
 | `CreatePose`, `UpdatePose` | Add or replace a pose from a posed Skeletal Mesh Component on the asset's skeleton |
 | `RenamePose`, `DuplicatePose`, `DeletePoses` | Name-keyed edits; `DeletePoses` deletes all or none |
 | `GetChangedBones` | Bones the pose moves away from the base pose |
-| `CanMirrorPose`, `GetMirrorPoseName`, `MirrorPoses` | The mirroring rules above |
+| `CanMirrorPose`, `GetMirrorPoseName`, `MirrorPoses`, `MirrorAll` | The mirroring rules above; `MirrorAll` also returns the skipped poses and the orphans, and deletes the orphans on request |
 | `CreateInbetweens` | Poses between the base pose and a pose |
 | `GetAddableCurves`, `AddCurve`, `SetCurveValue` | Skeleton curves on the asset and their per-pose values |
 

@@ -77,6 +77,21 @@ bool UFVPoseAuthoringLibrary::MirrorPoses(UPoseAsset* PoseAsset, const TArray<FN
 	return CheckAsset(PoseAsset, OutError) && FFVPoseMirror::MirrorPoses(*PoseAsset, Poses, Axis, OutMirroredPoses, OutError);
 }
 
+bool UFVPoseAuthoringLibrary::MirrorAll(UPoseAsset* PoseAsset, EFVBodySide From, EFVMirrorAxis Axis, bool bDeleteOrphans, TArray<FName>& OutMirroredPoses, TArray<FName>& OutSkippedPoses, TArray<FName>& OutOrphans, FText& OutError)
+{
+	FFVMirrorAllResult Result;
+	const bool bDone = CheckAsset(PoseAsset, OutError) && FFVPoseMirror::MirrorAll(*PoseAsset, From, Axis, bDeleteOrphans, Result, OutError);
+	OutMirroredPoses = Result.Created;
+	OutMirroredPoses.Append(Result.Updated);
+	OutSkippedPoses.Reset();
+	for (const TPair<FName, FText>& Skipped : Result.Skipped)
+	{
+		OutSkippedPoses.Add(Skipped.Key);
+	}
+	OutOrphans = Result.Orphans;
+	return bDone;
+}
+
 bool UFVPoseAuthoringLibrary::CreateInbetweens(UPoseAsset* PoseAsset, FName Pose, int32 Count, TArray<FName>& OutPoses, FText& OutError)
 {
 	return CheckAsset(PoseAsset, OutError) && FFVPoseAuthoring::CreateInbetweens(*PoseAsset, Pose, Count, OutPoses, OutError);

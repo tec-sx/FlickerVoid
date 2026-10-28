@@ -178,6 +178,56 @@ bool FFVPoseMirrorRefusalTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFVPoseMirrorAllTest, "FlickerVoid.Animation.MeatbagFactory.MirrorAll",
+                                 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFVPoseMirrorAllTest::RunTest(const FString& Parameters)
+{
+	using namespace FVPoseAuthoringTests;
+
+	USkeletalMesh* Mesh = LoadMannequin();
+	if (!TestNotNull(TEXT("Mannequin mesh"), Mesh))
+	{
+		return false;
+	}
+	UPoseAsset* Asset = MakePoseAsset(*Mesh);
+	FText Error;
+
+	FFVPoseSnapshot Arm = RefPose(*Mesh);
+	Rotate(Arm, "upperarm_l", FQuat(FVector::ZAxisVector, FMath::DegreesToRadians(60.0)));
+	FFVPoseSnapshot Leg = RefPose(*Mesh);
+	Rotate(Leg, "thigh_l", FQuat(FVector::YAxisVector, FMath::DegreesToRadians(50.0)));
+	FFVPoseSnapshot Spine = RefPose(*Mesh);
+	Rotate(Spine, "spine_03", FQuat(FVector::YAxisVector, FMath::DegreesToRadians(20.0)));
+	FFVPoseSnapshot Foot = RefPose(*Mesh);
+	Rotate(Foot, "foot_r", FQuat(FVector::YAxisVector, FMath::DegreesToRadians(30.0)));
+	FFVPoseAuthoring::WritePose(*Asset, "upperarm_l_up", Arm, Error);
+	FFVPoseAuthoring::WritePose(*Asset, "upperarm_r_up", RefPose(*Mesh), Error);
+	FFVPoseAuthoring::WritePose(*Asset, "thigh_l_raise", Leg, Error);
+	FFVPoseAuthoring::WritePose(*Asset, "spine_l_lean", Spine, Error);
+	FFVPoseAuthoring::WritePose(*Asset, "foot_r_lift", Foot, Error);
+
+	const FFVMirrorAllResult Plan = FFVPoseMirror::PlanMirrorAll(*Asset, EFVBodySide::Left);
+	TestTrue(TEXT("Plan creates thigh_r_raise"), Plan.Created == TArray<FName>({ "thigh_r_raise" }));
+	TestTrue(TEXT("Plan updates upperarm_r_up"), Plan.Updated == TArray<FName>({ "upperarm_r_up" }));
+	TestTrue(TEXT("Plan skips the centre-only pose"), Plan.Skipped.Num() == 1 && Plan.Skipped[0].Key == FName("spine_l_lean"));
+	TestTrue(TEXT("Plan finds the orphan"), Plan.Orphans == TArray<FName>({ "foot_r_lift" }));
+	TestEqual(TEXT("Planning changes nothing"), Asset->GetNumPoses(), 5);
+
+	FFVMirrorAllResult Kept;
+	TestTrue(TEXT("Mirror All keeping orphans"), FFVPoseMirror::MirrorAll(*Asset, EFVBodySide::Left, EFVMirrorAxis::Default, false, Kept, Error));
+	TestTrue(TEXT("Counterpart created"), Asset->ContainsPose("thigh_r_raise"));
+	TestTrue(TEXT("Orphan kept"), Asset->ContainsPose("foot_r_lift") && !Kept.bOrphansDeleted);
+	TestTrue(TEXT("upperarm_r moved"), FFVPoseAuthoring::GetChangedBones(*Asset, "upperarm_r_up").Contains(FName("upperarm_r")));
+
+	FFVMirrorAllResult Cleaned;
+	TestTrue(TEXT("Mirror All deleting orphans"), FFVPoseMirror::MirrorAll(*Asset, EFVBodySide::Left, EFVMirrorAxis::Default, true, Cleaned, Error));
+	TestTrue(TEXT("Second run only updates"), Cleaned.Created.IsEmpty() && Cleaned.Updated.Num() == 2);
+	TestFalse(TEXT("Orphan deleted"), Asset->ContainsPose("foot_r_lift"));
+	TestEqual(TEXT("Pose count"), Asset->GetNumPoses(), 5);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFVPoseCommandsTest, "FlickerVoid.Animation.MeatbagFactory.Commands",
                                  EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

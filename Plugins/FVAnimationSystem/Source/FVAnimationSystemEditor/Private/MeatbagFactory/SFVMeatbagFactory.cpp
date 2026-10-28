@@ -10,6 +10,8 @@
 #include "FVMirrorNameRule.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Framework/Notifications/NotificationManager.h"
+#include "FVAnimationSystem.h"
+#include "Misc/MessageDialog.h"
 #include "IPersonaToolkit.h"
 #include "PoseAuthoring/FVPoseMirror.h"
 #include "PropertyCustomizationHelpers.h"
@@ -80,6 +82,7 @@ namespace
 void SFVMeatbagFactory::Construct(const FArguments& InArgs)
 {
 	PersonaToolkit = InArgs._PersonaToolkit;
+	AuthoringSide = UFVAnimationSettings::Get().AuthoringSide == EFVBodySide::Right ? EFVBodySide::Right : EFVBodySide::Left;
 
 	ChildSlot
 	[
@@ -134,6 +137,14 @@ TSharedRef<SWidget> SFVMeatbagFactory::BuildSetup()
 				.ToolTipText(LOCTEXT("MirrorAxisTip", "Override for this session, for creatures or robots whose pairs mirror on another axis. The project default is in Project Settings > FlickerVoid > Animation System."))
 				.OnGetMenuContent(this, &SFVMeatbagFactory::MakeAxisMenu)
 				.ButtonContent()[SNew(STextBlock).Text(this, &SFVMeatbagFactory::GetAxisText)])
+		]
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 2.f)
+		[
+			Labelled(LOCTEXT("AuthoringSideLabel", "Authoring Side"),
+				SNew(SComboButton)
+				.ToolTipText(LOCTEXT("AuthoringSideTip", "The side you author; Mirror All copies it to the other side. Override for this session; the project default is in Project Settings > FlickerVoid > Animation System."))
+				.OnGetMenuContent(this, &SFVMeatbagFactory::MakeSideMenu)
+				.ButtonContent()[SNew(STextBlock).Text(this, &SFVMeatbagFactory::GetSideText)])
 		];
 }
 
@@ -222,17 +233,17 @@ TSharedRef<SWidget> SFVMeatbagFactory::BuildActions()
 			[
 				SNew(SButton)
 				.HAlign(HAlign_Center)
-				.Text(LOCTEXT("Mirror", "Mirror"))
-				.ToolTipText(this, &SFVMeatbagFactory::GetMirrorToolTip)
-				.IsEnabled(this, &SFVMeatbagFactory::CanMirror)
-				.OnClicked(this, &SFVMeatbagFactory::MirrorSelected)
+				.Text(this, &SFVMeatbagFactory::GetMirrorAllText)
+				.ToolTipText(LOCTEXT("MirrorAllTip", "Mirror every pose of the authoring side onto the other side in one undo step, creating or updating the counterparts. Asks before deleting other-side poses whose authoring-side pose is gone."))
+				.IsEnabled(this, &SFVMeatbagFactory::HasAsset)
+				.OnClicked(this, &SFVMeatbagFactory::MirrorAll)
 			]
 			+ SHorizontalBox::Slot().AutoWidth()
 			[
 				SNew(SComboButton)
-				.ToolTipText(LOCTEXT("MirrorAllTip", "Mirror every pose of one side."))
+				.ToolTipText(LOCTEXT("MirrorMenuTip", "Mirror only the selected poses."))
 				.IsEnabled(this, &SFVMeatbagFactory::HasAsset)
-				.OnGetMenuContent(this, &SFVMeatbagFactory::MakeMirrorAllMenu)
+				.OnGetMenuContent(this, &SFVMeatbagFactory::MakeMirrorMenu)
 			]
 		]
 		+ SUniformGridPanel::Slot(1, 2)[Menu(LOCTEXT("Inbetweens", "Inbetweens"), LOCTEXT("InbetweensTip", "Add poses between the base pose and the selected pose. Select one pose."), &SFVMeatbagFactory::MakeInbetweensMenu, &SFVMeatbagFactory::HasSinglePose)]
@@ -349,13 +360,24 @@ TSharedRef<SWidget> SFVMeatbagFactory::MakeCreateMenu()
 	];
 }
 
-TSharedRef<SWidget> SFVMeatbagFactory::MakeMirrorAllMenu()
+TSharedRef<SWidget> SFVMeatbagFactory::MakeSideMenu()
 {
 	FMenuBuilder Builder(true, nullptr);
-	Builder.AddMenuEntry(LOCTEXT("MirrorAllLeft", "Mirror all left poses to the right"), FText::GetEmpty(), FSlateIcon(),
-		FUIAction(FExecuteAction::CreateLambda([this] { MirrorAll(EFVBodySide::Left); })));
-	Builder.AddMenuEntry(LOCTEXT("MirrorAllRight", "Mirror all right poses to the left"), FText::GetEmpty(), FSlateIcon(),
-		FUIAction(FExecuteAction::CreateLambda([this] { MirrorAll(EFVBodySide::Right); })));
+	for (const EFVBodySide Side : { EFVBodySide::Left, EFVBodySide::Right })
+	{
+		Builder.AddMenuEntry(Side == EFVBodySide::Left ? LOCTEXT("SideLeftName", "Left") : LOCTEXT("SideRightName", "Right"), FText::GetEmpty(), FSlateIcon(),
+			FUIAction(FExecuteAction::CreateLambda([this, Side] { AuthoringSide = Side; }), FCanExecuteAction(),
+				FIsActionChecked::CreateLambda([this, Side] { return AuthoringSide == Side; })),
+			NAME_None, EUserInterfaceActionType::RadioButton);
+	}
+	return Builder.MakeWidget();
+}
+
+TSharedRef<SWidget> SFVMeatbagFactory::MakeMirrorMenu()
+{
+	FMenuBuilder Builder(true, nullptr);
+	Builder.AddMenuEntry(LOCTEXT("MirrorSelected", "Mirror selected poses"), TAttribute<FText>(this, &SFVMeatbagFactory::GetMirrorToolTip), FSlateIcon(),
+		FUIAction(FExecuteAction::CreateLambda([this] { MirrorSelected(); }), FCanExecuteAction::CreateSP(this, &SFVMeatbagFactory::CanMirror)));
 	return Builder.MakeWidget();
 }
 
@@ -458,6 +480,16 @@ bool SFVMeatbagFactory::ShouldFilterAsset(const FAssetData& AssetData) const
 FText SFVMeatbagFactory::GetAxisText() const
 {
 	return AxisText(MirrorAxis);
+}
+
+FText SFVMeatbagFactory::GetSideText() const
+{
+	return AuthoringSide == EFVBodySide::Right ? LOCTEXT("SideRightName", "Right") : LOCTEXT("SideLeftName", "Left");
+}
+
+FText SFVMeatbagFactory::GetMirrorAllText() const
+{
+	return AuthoringSide == EFVBodySide::Right ? LOCTEXT("MirrorAllRightToLeft", "Mirror All R > L") : LOCTEXT("MirrorAllLeftToRight", "Mirror All L > R");
 }
 
 void SFVMeatbagFactory::Refresh()
@@ -773,40 +805,73 @@ FReply SFVMeatbagFactory::MirrorSelected()
 	return FReply::Handled();
 }
 
-void SFVMeatbagFactory::MirrorAll(EFVBodySide From)
+FReply SFVMeatbagFactory::MirrorAll()
 {
 	UPoseAsset* Asset = GetPoseAsset();
 	if (!Asset)
 	{
-		return;
-	}
-	const FFVMirrorNameRule Rule = FFVMirrorNameRule::FromSettings();
-	TArray<FName> Poses;
-	int32 Skipped = 0;
-	for (const FName Pose : Asset->GetPoseFNames())
-	{
-		FText Reason;
-		if (Rule.GetNameSide(Pose.ToString()) == From)
-		{
-			if (FFVPoseMirror::CanMirrorPose(*Asset, Pose, Reason))
-			{
-				Poses.Add(Pose);
-			}
-			else
-			{
-				++Skipped;
-			}
-		}
+		return FReply::Handled();
 	}
 
-	TArray<FName> Targets;
-	FText Error;
-	const bool bDone = FFVPoseMirror::MirrorPoses(*Asset, Poses, MirrorAxis, Targets, Error);
-	Report(bDone, Error, FText::Format(LOCTEXT("MirroredAll", "Mirrored {0} poses, skipped {1} that can't be mirrored."), Targets.Num(), Skipped));
-	if (bDone)
+	bool bDeleteOrphans = false;
+	const FFVMirrorAllResult Plan = FFVPoseMirror::PlanMirrorAll(*Asset, AuthoringSide);
+	if (!Plan.Orphans.IsEmpty())
 	{
-		AfterEdit(Targets);
+		TArray<FString> Names;
+		for (const FName Orphan : Plan.Orphans)
+		{
+			Names.Add(Orphan.ToString());
+		}
+		const EAppReturnType::Type Answer = FMessageDialog::Open(EAppMsgType::YesNoCancel, FText::Format(
+			LOCTEXT("OrphansPrompt", "{0} poses on the other side have no authoring-side pose any more (renamed or deleted):\n\n{1}\n\nDelete them as part of Mirror All?"),
+			Plan.Orphans.Num(), FText::FromString(FString::Join(Names, TEXT("\n")))),
+			LOCTEXT("OrphansTitle", "Meatbag Factory"));
+		if (Answer == EAppReturnType::Cancel)
+		{
+			return FReply::Handled();
+		}
+		bDeleteOrphans = Answer == EAppReturnType::Yes;
 	}
+
+	FFVMirrorAllResult Result;
+	FText Error;
+	const bool bDone = FFVPoseMirror::MirrorAll(*Asset, AuthoringSide, MirrorAxis, bDeleteOrphans, Result, Error);
+	TArray<FString> Lines;
+	for (const TPair<FName, FText>& Skipped : Result.Skipped)
+	{
+		UE_LOG(LogFVAnimationSystem, Warning, TEXT("Mirror All skipped %s: %s"), *Skipped.Key.ToString(), *Skipped.Value.ToString());
+		Lines.Add(FString::Printf(TEXT("%s: %s"), *Skipped.Key.ToString(), *Skipped.Value.ToString()));
+	}
+	if (!bDone)
+	{
+		Report(false, Error);
+		return FReply::Handled();
+	}
+
+	FNotificationInfo Info(FText::Format(LOCTEXT("MirrorAllDone", "Mirror All: {0} created, {1} updated, {2} skipped, {3} orphans deleted."),
+		Result.Created.Num(), Result.Updated.Num(), Result.Skipped.Num(), Result.bOrphansDeleted ? Result.Orphans.Num() : 0));
+	Info.SubText = FText::FromString(FString::Join(Lines, TEXT("\n")));
+	Info.ExpireDuration = Lines.IsEmpty() ? 4.f : 10.f;
+	if (const TSharedPtr<SNotificationItem> Item = FSlateNotificationManager::Get().AddNotification(Info))
+	{
+		Item->SetCompletionState(Lines.IsEmpty() ? SNotificationItem::CS_Success : SNotificationItem::CS_Pending);
+	}
+
+	if (Result.bOrphansDeleted)
+	{
+		for (const FName Orphan : Result.Orphans)
+		{
+			Weights.Remove(Orphan);
+		}
+		if (Result.Orphans.Contains(ActivePose))
+		{
+			ActivePose = NAME_None;
+		}
+	}
+	TArray<FName> Targets = Result.Created;
+	Targets.Append(Result.Updated);
+	AfterEdit(Targets);
+	return FReply::Handled();
 }
 
 void SFVMeatbagFactory::CreateInbetweens()

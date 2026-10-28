@@ -209,4 +209,76 @@ bool FFVPoseMirror::MirrorPoses(UPoseAsset& Asset, const TArray<FName>& Poses, E
 	return true;
 }
 
+FFVMirrorAllResult FFVPoseMirror::PlanMirrorAll(const UPoseAsset& Asset, EFVBodySide From)
+{
+	FFVMirrorAllResult Result;
+	const FFVMirrorNameRule Rule = FFVMirrorNameRule::FromSettings();
+	const EFVBodySide To = From == EFVBodySide::Left ? EFVBodySide::Right : EFVBodySide::Left;
+	for (const FName Pose : Asset.GetPoseFNames())
+	{
+		const EFVBodySide Side = Rule.GetNameSide(Pose.ToString());
+		if (Side == From)
+		{
+			FText Reason;
+			if (!CanMirrorPose(Asset, Pose, Reason))
+			{
+				Result.Skipped.Emplace(Pose, Reason);
+			}
+			else
+			{
+				(Asset.ContainsPose(GetMirrorPoseName(Pose)) ? Result.Updated : Result.Created).Add(GetMirrorPoseName(Pose));
+			}
+		}
+		else if (Side == To && !Asset.ContainsPose(GetMirrorPoseName(Pose)))
+		{
+			Result.Orphans.Add(Pose);
+		}
+	}
+	return Result;
+}
+
+bool FFVPoseMirror::MirrorAll(UPoseAsset& Asset, EFVBodySide From, EFVMirrorAxis Axis, bool bDeleteOrphans, FFVMirrorAllResult& OutResult, FText& OutError)
+{
+	if (From == EFVBodySide::Centre)
+	{
+		OutError = LOCTEXT("ErrCentreSide", "Mirror All needs a left or right authoring side.");
+		return false;
+	}
+
+	OutResult = PlanMirrorAll(Asset, From);
+	const FFVMirrorNameRule Rule = FFVMirrorNameRule::FromSettings();
+	TArray<FName> Sources;
+	for (const FName Target : OutResult.Created)
+	{
+		Sources.Add(FName(*Rule.MirrorName(Target.ToString())));
+	}
+	for (const FName Target : OutResult.Updated)
+	{
+		Sources.Add(FName(*Rule.MirrorName(Target.ToString())));
+	}
+	const bool bDeletes = bDeleteOrphans && !OutResult.Orphans.IsEmpty();
+	if (Sources.IsEmpty() && !bDeletes)
+	{
+		OutError = OutResult.Skipped.IsEmpty()
+			? LOCTEXT("ErrNothingToMirror", "There are no poses of the authoring side to mirror.")
+			: FText::Format(LOCTEXT("ErrAllSkipped", "None of the {0} authoring-side poses can be mirrored."), OutResult.Skipped.Num());
+		return false;
+	}
+
+	FScopedTransaction Transaction(LOCTEXT("MirrorAll", "Mirror All"));
+	Asset.Modify();
+	TArray<FName> Targets;
+	if (!Sources.IsEmpty() && !MirrorPoses(Asset, Sources, Axis, Targets, OutError))
+	{
+		Transaction.Cancel();
+		return false;
+	}
+	if (bDeletes)
+	{
+		Asset.DeletePoses(OutResult.Orphans);
+		OutResult.bOrphansDeleted = true;
+	}
+	return true;
+}
+
 #undef LOCTEXT_NAMESPACE
