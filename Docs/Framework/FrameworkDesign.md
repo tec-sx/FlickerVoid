@@ -42,7 +42,7 @@ Content (data assets, meshes, textures, materials, FX, Blueprint world actors, W
 | --- | --- | --- |
 | **FVFramework** | kept, extended | Facts, conditions/effects, definitions, **fragments**, **character definition + identity component**, world clock, cinematics, spawner, input, UI layout, StateTree nodes. New module **FVCoreFlow**: generic Flow nodes (Branch, Apply Effects, Wait For Conditions, Conditions predicate). |
 | **FVInteractionSystem** | kept as is | Interactor/interactable, offers, focus. |
-| **FVAttributeSystem** | new | Attribute and attribute set definitions, attribute component with modifiers, skill checks, attribute conditions/effects. |
+| **FVAttributeSystem** | new, on GAS | Attributes are GAS attributes in attribute sets (AngelScript, base `UFVAttributeSet` clamps to definitions); Gameplay Effects change them (starting values, perks, kinks, statuses). Attribute definitions (display, range), attribute component (change events, save), skill checks, attribute and Gameplay Effect conditions/effects. |
 | **FVInventorySystem** | new (replaces the Mountea fork) | Item definition + fragments (equippable, usable, container, charges, value), inventory with weight and grid space, a Keys and Quest list without weight or space, money, stack instance data (charges left, stolen), layered equipment slots, pickup and item receiver, loot tables, item conditions/effects. |
 | **FVDialogueSystem** | new (replaces the Yap fork) | Flow-based conversations: Line, Choice, End Conversation, Bark nodes; dialogue subsystem for UI; participant component for animation/voice. |
 | **FVStorySystem** | reworked | Quests (+ optional quest Flow graph), knowledge, save. Yap bridge removed; reputation moved to Social. |
@@ -180,7 +180,7 @@ flowchart LR
   - C++ fragment classes are the ones C++ systems read (equippable, container, abilities, map views...). AngelScript adds game-specific fragments that only AngelScript reads, so C++ still never names a script class.
   - Runtime data stays in structs: item stacks and per-instance data (`FFVItemInstanceFragment`) are plain structs, saved through the save system. No UObject per stack; this game is single-player and needs no replication.
   - Conditions and effects follow the same pattern: abstract instanced `UFVCondition` / `UFVEffect` bases, held by `FFVConditionSet` / `FFVEffectList`. C++ and AngelScript subclass them directly, so the `FFVCondition_Script` / `FFVEffect_Script` structs and the `UFVScriptCondition` / `UFVScriptEffect` wrapper go away. They are stateless: each call reads the properties set in the editor and the context it is given (instigator, target), and writes its result to the world (facts, components, inventory), never to its own members. The same object runs every time its line, quest step or item use runs, so anything that must survive between calls (a wait, an "already applied" flag) lives in the host (Flow node, subsystem) or in facts.
-  - Migration for conditions and effects: about 40 types (22 conditions, 20 effects) in about 40 properties across 8 plugins and the game modules; nothing builds them at runtime, so no `NewObject` calls appear. FVFramework's StateTree nodes (`FVStateTreeNodes.h`) become UObject nodes (`UStateTreeConditionBlueprintBase` for FV Conditions, `UStateTreeTaskBlueprintBase` for FV Apply Effects) that hold the condition set and effect lists directly, so the instanced objects are subobjects of the node, which the StateTree compiler copies into the tree like any Blueprint-base node. Check once in a packaged build.
+  - Migration for conditions and effects: about 40 types (22 conditions, 22 effects) in about 40 properties across 8 plugins and the game modules; nothing builds them at runtime, so no `NewObject` calls appear. FVFramework's StateTree nodes (`FVStateTreeNodes.h`) become UObject nodes (`UStateTreeConditionBlueprintBase` for FV Conditions, `UStateTreeTaskBlueprintBase` for FV Apply Effects) that hold the condition set and effect lists directly, so the instanced objects are subobjects of the node, which the StateTree compiler copies into the tree like any Blueprint-base node. Check once in a packaged build.
   - Migration for fragments: about 16 fragment structs (items, characters, map markers) become `UFVFragment` classes and about 30 `FVFragments::Find` call sites switch to `FindFragment`.
   - Content: changing a property from structs to objects drops what is saved in it, for fragments on data assets and for conditions and effects in dialogue, quests, Flow graphs, interaction offers and StateTrees. Only one condition or effect is authored so far, so they are re-entered by hand after the change, with no converter. Fragments are re-entered the same way unless many definitions are authored by the time they migrate; then the old property stays as `_DEPRECATED` for one version and the owner's `PostLoad` converts it (matching each struct to its class by name and copying properties by reflection), the assets are resaved and the property is deleted. Renaming or deleting one of these classes (C++ or AngelScript) drops it from assets the same way unless a class redirect is added.
 - AngelScript can't implement interfaces, so C++ never casts an actor to an interface, engine interfaces included; it finds a component.
@@ -311,7 +311,7 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 - No `UINTERFACE` exposed to Blueprint/AngelScript. Plugins talk through components with multicast delegates, facts, tags and instanced condition/effect structs.
 - New data types build on `UFVDefinition`; extensions are fragments, not subclasses.
 - Every plugin has three modules: runtime, `*Debug` (console variables, console commands, on-screen readouts) and `*Editor` (settings entry in the FlickerVoid menu, validation).
-- Extension points are open without editing existing code: new attributes, items, factions, titles, scans and checks are new data assets, and `UFVCondition` / `UFVEffect` subclasses, in C++ or AngelScript, add rules that plug into the same condition sets the offers use.
+- Extension points are open without editing existing code: new items, factions, titles, scans and checks are new data assets, a new attribute is one property in an AngelScript attribute set plus its definition asset, and `UFVCondition` / `UFVEffect` subclasses, in C++ or AngelScript, add rules that plug into the same condition sets the offers use.
 - Comments minimal.
 
 ## Where a setting belongs
@@ -320,7 +320,7 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | --- | --- | --- |
 | **Gameplay tags** | identity and classification that data assets and conditions match on | `Equipment.Slot.Coat`, `Item.Outfit`, `Disguise.Faction.Police`, `Scan.Category.*`, fact tags |
 | **Facts** | world and player state that must save and be testable | faction standing, fame, notoriety, titles, quest state, knowledge |
-| **Config (`UDeveloperSettings`)** | per-project defaults a designer tunes once, under the FlickerVoid settings category | weight and space limits, scan categories and dilation, dialogue timing, default attribute set |
+| **Config (`UDeveloperSettings`)** | per-project defaults a designer tunes once, under the FlickerVoid settings category | weight and space limits, scan categories and dilation, dialogue timing |
 | **Console variables (`FVCvar.*`)** | switches for debugging and playtesting, never for shipping balance | `FVCvar.Inventory.EnforceWeight`, `FVCvar.*.Debug.HUD`, `FVCvar.Interaction.Debug.Draw` |
 | **Console commands (`FV.*`)** | one-off actions while testing | `FV.Inventory.Give`, `FV.Quest.Start`, `FV.Social.Notoriety`, `FV.Facts.Set` |
 
@@ -333,7 +333,7 @@ A CVar that changes a rule (such as the two inventory limits) reads `-1` by defa
 3. **One global notoriety**, fed by faction standing. **No decay**: the player sets the pace.
 4. Factions keep standing; the global value is **fame** rather than reputation. Standing with a disliked faction raises notoriety, and fame earns **titles** as facts. Changing appearance lowers what onlookers read.
 5. **One affinity value** per character, open to extension.
-6. Attributes are **data assets** with modifiers and condition-gated checks, so new ones can come from AngelScript.
+6. Attributes are **data assets** with modifiers and condition-gated checks, so new ones can come from AngelScript. Superseded 2026-10-19: attributes are GAS attributes declared in AngelScript attribute sets, Gameplay Effects replace the modifiers, and definitions keep their display data and range.
 7. Obsolete code **removed**: world state subsystem, memory subsystem, personality attributes, SUDS leftovers.
 8. **Stealth is the next PR** (visibility, hiding spots, suspicion).
 9. Flow stays an **external submodule**, pinned on `5.x`.

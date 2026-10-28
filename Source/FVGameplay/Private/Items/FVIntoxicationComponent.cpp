@@ -2,6 +2,7 @@
 
 #include "Attributes/FVAttributeComponent.h"
 #include "Attributes/FVAttributeDefinition.h"
+#include "Attributes/FVAttributeLibrary.h"
 #include "FVGameplayModule.h"
 #include "GameFramework/Actor.h"
 #include "Time/FVWorldClock.h"
@@ -12,7 +13,7 @@ void UFVIntoxicationComponent::SleepItOff()
 {
 	if (Attributes && Intoxication)
 	{
-		Attributes->SetBaseValue(Intoxication, 0.f);
+		UFVAttributeLibrary::SetBaseValue(GetOwner(), Intoxication, 0.f);
 	}
 }
 
@@ -28,7 +29,7 @@ void UFVIntoxicationComponent::BeginPlay()
 	}
 
 	Attributes->OnAttributeChanged.AddDynamic(this, &UFVIntoxicationComponent::HandleAttributeChanged);
-	Peak = FMath::Max(Peak, Attributes->GetValue(Intoxication));
+	Peak = FMath::Max(Peak, UFVAttributeLibrary::GetValue(GetOwner(), Intoxication));
 
 	Clock = UFVWorldClock::Get(this);
 	if (Clock)
@@ -59,9 +60,9 @@ void UFVIntoxicationComponent::HandleHourChanged()
 	const int32 HoursPassed = ClockHour - LastClockHour;
 	LastClockHour = ClockHour;
 
-	if (HoursPassed > 0 && SoberPerHour > 0.f && Attributes->GetValue(Intoxication) > 0.f)
+	if (HoursPassed > 0 && SoberPerHour > 0.f && UFVAttributeLibrary::GetValue(GetOwner(), Intoxication) > 0.f)
 	{
-		Attributes->ModifyBaseValue(Intoxication, -SoberPerHour * HoursPassed);
+		UFVAttributeLibrary::AddToBaseValue(GetOwner(), Intoxication, -SoberPerHour * HoursPassed);
 	}
 }
 
@@ -92,6 +93,6 @@ void UFVIntoxicationComponent::SoberUp()
 
 	if (bHangover && Health && HangoverHealthLoss > 0.f)
 	{
-		Attributes->ModifyBaseValue(Health, -HangoverHealthLoss);
+		UFVAttributeLibrary::AddToBaseValue(GetOwner(), Health, -HangoverHealthLoss);
 	}
 }
