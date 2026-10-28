@@ -2,6 +2,9 @@ import bpy
 
 from . import preferences
 from .push.operators import FV_OT_push, FV_OT_test_connection, FV_OT_use_selected_asset
+from .meatbag_factory import muscles
+from .meatbag_factory.muscle_operators import (MEATBAG_OT_muscle_add, MEATBAG_OT_muscle_mirror, MEATBAG_OT_muscle_remove,
+                                               MEATBAG_OT_muscle_select, MEATBAG_OT_preview_skin)
 from .meatbag_factory.contract.operators import MEATBAG_OT_check_contract, MEATBAG_UL_issues
 from .meatbag_factory.operators import (MEATBAG_OT_pose_add, MEATBAG_OT_pose_move, MEATBAG_OT_pose_remove,
                                         MEATBAG_OT_pose_rest, MEATBAG_OT_pose_update, MEATBAG_OT_sculpt_back,
@@ -98,6 +101,40 @@ class MEATBAG_PT_poses(_MeatbagSubpanel, bpy.types.Panel):
         row.operator(MEATBAG_OT_pose_rest.bl_idname, text="", icon="LOOP_BACK")
 
 
+class MEATBAG_PT_muscles(_MeatbagSubpanel, bpy.types.Panel):
+    bl_label = "Muscles"
+    bl_idname = "MEATBAG_PT_muscles"
+
+    def draw(self, context):
+        layout = self.layout
+        s = context.scene.meatbag
+        if not s.armature or not s.mesh:
+            layout.label(text="Pick the Armature (Poses) and the Mesh (Correctives)", icon="INFO")
+            return
+        row = layout.row(align=True)
+        row.operator(MEATBAG_OT_muscle_add.bl_idname, icon="ADD")
+        row.operator(MEATBAG_OT_preview_skin.bl_idname, icon="HIDE_OFF")
+
+        target = s.mesh.meatbag_target
+        column = layout.column(align=True)
+        for muscle in muscles.muscles_of(context.scene, target):
+            active = muscle == context.active_object
+            column.operator(MEATBAG_OT_muscle_select.bl_idname, text=muscle.name, icon="FORCE_LENNARDJONES",
+                            depress=active).name = muscle.name
+
+        obj = context.active_object
+        if obj and obj.type == "MESH" and obj.meatbag_muscle.skin is not None:
+            settings = obj.meatbag_muscle
+            box = layout.box()
+            box.label(text=f"{obj.name}: {settings.origin_bone} to {settings.insertion_bone}")
+            box.use_property_split = True
+            for prop in ("width", "thickness", "belly", "tendon", "volume", "offset"):
+                box.prop(settings, prop)
+            row = box.row(align=True)
+            row.operator(MEATBAG_OT_muscle_mirror.bl_idname, icon="MOD_MIRROR")
+            row.operator(MEATBAG_OT_muscle_remove.bl_idname, icon="X")
+
+
 class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
     bl_label = "Correctives"
     bl_idname = "MEATBAG_PT_correctives"
@@ -143,4 +180,4 @@ class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
         layout.operator(MEATBAG_OT_send_poses.bl_idname, icon="EXPORT")
 
 
-classes = (FV_PT_unreal, MEATBAG_PT_factory, MEATBAG_PT_contract, MEATBAG_PT_poses, MEATBAG_PT_correctives)
+classes = (FV_PT_unreal, MEATBAG_PT_factory, MEATBAG_PT_contract, MEATBAG_PT_poses, MEATBAG_PT_muscles, MEATBAG_PT_correctives)

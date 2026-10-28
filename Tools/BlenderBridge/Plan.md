@@ -58,6 +58,8 @@ Tools/BlenderBridge/
       solver.py                no bpy: helper bone solver (SSDR, port of Dem Bones)
       capture.py, apply.py     read the problem from the scene, write the solve back
       library.py               the pose library (hidden action) and preview blending
+      sculpt.py                the managed sculpt target
+      muscles.py, spindle.py   muscles that push the sculpt target's skin
       pose_asset.py            bake the library poses into an FBX animation
     preferences.py, scene_data.py, ui.py
   tests/                       plain Python tests for core/ and unreal_link/
@@ -133,6 +135,16 @@ You pose only one armature. The sculpt target is a hidden copy of the body (`<Bo
 - **Sculpt Pose** shows the active library pose, hides the body, shows the target with that pose's key active (made when missing, shown alone) and enters Sculpt mode. Blender maps the strokes on the posed mesh back into the key.
 - **Back** returns to the body and, with **Solve on Back**, solves that pose right away.
 - Renaming or removing a pose renames or removes its key. When the body's vertex count changes, delete the target and a new one is made (sculpts on the old one are lost).
+
+### Muscles
+
+Muscles shape the sculpt target the way a muscle simulation would, but follow each pose at once (no frames, no simulation), so the pose library and the solve drive them directly. Jiggle is left to Unreal at runtime.
+
+- **Add Muscle** between two bones (in Pose mode, select the origin bone, then the insertion bone as active). It makes an origin anchor and an insertion anchor (empties on the bones, at a fraction along each) and a spindle mesh between them, sized to sit inside the skin. Move the anchors to place it.
+- The spindle is our own procedural mesh: **Width** and **Thickness** of the belly, **Belly Position**, **Tendon** radius at the ends. It is parented to the origin anchor and stretched to the insertion anchor with Blender's Stretch To constraint keeping volume, so it thickens as it shortens (**Volume** scales that).
+- On the sculpt target each muscle adds a Shrinkwrap (skin inside the muscle moves to its surface, plus **Skin Offset**), masked by the two bones' weights faded out past the muscle's ends, and one Corrective Smooth after all muscles cleans up the pushed skin.
+- **Mirror Muscle** makes or replaces the other side's muscle from the contract's side names, mirrored across the armature's X. **Preview Skin** swaps the body and the target in the viewport.
+- Sculpt keys on the target still apply under the muscles, for shapes muscles can't make.
 
 ### Solve scope
 
