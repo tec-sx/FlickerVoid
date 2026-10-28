@@ -207,4 +207,84 @@ bool FFVPoseCommandsTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFVPoseBlendCommandsTest, "FlickerVoid.Animation.MeatbagFactory.InbetweensAndPaste",
+                                 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFVPoseBlendCommandsTest::RunTest(const FString& Parameters)
+{
+	using namespace FVPoseAuthoringTests;
+
+	USkeletalMesh* Mesh = LoadMannequin();
+	if (!TestNotNull(TEXT("Mannequin mesh"), Mesh))
+	{
+		return false;
+	}
+	UPoseAsset* Asset = MakePoseAsset(*Mesh);
+	FText Error;
+	const FQuat RefRotation = Mesh->GetRefSkeleton().GetRefBonePose()[Mesh->GetRefSkeleton().FindBoneIndex("thigh_l")].GetRotation();
+
+	FFVPoseSnapshot Pose = RefPose(*Mesh);
+	Rotate(Pose, "thigh_l", FQuat(FVector::YAxisVector, FMath::DegreesToRadians(80.0)));
+	FFVPoseAuthoring::WritePose(*Asset, "thigh_l_raise", Pose, Error);
+
+	TArray<FName> Inbetweens;
+	TestTrue(TEXT("Inbetweens"), FFVPoseAuthoring::CreateInbetweens(*Asset, "thigh_l_raise", 3, Inbetweens, Error));
+	TestTrue(TEXT("Inbetween names"), Inbetweens == TArray<FName>({ "thigh_l_raise_ib25", "thigh_l_raise_ib50", "thigh_l_raise_ib75" }));
+	FFVPoseSnapshot Half;
+	FFVPoseAuthoring::ReadPose(*Asset, "thigh_l_raise_ib50", Half);
+	const double HalfAngle = FMath::RadiansToDegrees(RefRotation.AngularDistance(Half.Bones.FindChecked("thigh_l").GetRotation()));
+	TestTrue(*FString::Printf(TEXT("Halfway is 40 degrees (%.2f)"), HalfAngle), FMath::IsNearlyEqual(HalfAngle, 40.0, 0.1));
+	TestFalse(TEXT("Inbetweens refuse existing names"), FFVPoseAuthoring::CreateInbetweens(*Asset, "thigh_l_raise", 1, Inbetweens, Error));
+
+	FFVPoseSnapshot Clipboard;
+	FFVPoseAuthoring::ReadPose(*Asset, "thigh_l_raise", Clipboard);
+	FFVPoseAuthoring::WritePose(*Asset, "target_l", RefPose(*Mesh), Error);
+	TestTrue(TEXT("Paste at 1.5"), FFVPoseAuthoring::PastePose(*Asset, { "target_l" }, Clipboard, { "thigh_l" }, 1.5f, Error));
+	FFVPoseSnapshot Pasted;
+	FFVPoseAuthoring::ReadPose(*Asset, "target_l", Pasted);
+	const double PastedAngle = FMath::RadiansToDegrees(RefRotation.AngularDistance(Pasted.Bones.FindChecked("thigh_l").GetRotation()));
+	TestTrue(*FString::Printf(TEXT("Multiplier exaggerates to 120 degrees (%.2f)"), PastedAngle), FMath::IsNearlyEqual(PastedAngle, 120.0, 0.1));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFVPoseCurvesTest, "FlickerVoid.Animation.MeatbagFactory.Curves",
+                                 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFVPoseCurvesTest::RunTest(const FString& Parameters)
+{
+	using namespace FVPoseAuthoringTests;
+
+	USkeletalMesh* Mesh = LoadMannequin();
+	if (!TestNotNull(TEXT("Mannequin mesh"), Mesh))
+	{
+		return false;
+	}
+	UPoseAsset* Asset = MakePoseAsset(*Mesh);
+	FText Error;
+
+	const TArray<FName> Curves = FFVPoseAuthoring::GetAddableCurves(*Asset);
+	if (Curves.IsEmpty())
+	{
+		AddInfo(TEXT("The mannequin skeleton has no curves; nothing to add."));
+		return true;
+	}
+
+	FFVPoseSnapshot Pose = RefPose(*Mesh);
+	Rotate(Pose, "hand_l", FQuat(FVector::XAxisVector, FMath::DegreesToRadians(30.0)));
+	FFVPoseAuthoring::WritePose(*Asset, "hand_l_twist", Pose, Error);
+	TestFalse(TEXT("Unknown curve refused"), FFVPoseAuthoring::SetCurveValue(*Asset, "hand_l_twist", Curves[0], 0.5f, Error));
+
+	TestTrue(TEXT("Add curve"), FFVPoseAuthoring::AddCurve(*Asset, Curves[0], Error));
+	TestTrue(TEXT("Curve added"), Asset->GetCurveFNames().Contains(Curves[0]));
+	TestEqual(TEXT("Single pose kept, no spare"), Asset->GetNumPoses(), 1);
+	TestTrue(TEXT("Pose name kept"), Asset->ContainsPose("hand_l_twist"));
+	TestTrue(TEXT("Set curve value"), FFVPoseAuthoring::SetCurveValue(*Asset, "hand_l_twist", Curves[0], 0.5f, Error));
+
+	FFVPoseSnapshot Read;
+	FFVPoseAuthoring::ReadPose(*Asset, "hand_l_twist", Read);
+	TestTrue(TEXT("Curve value stored"), FMath::IsNearlyEqual(Read.Curves.FindRef(Curves[0]), 0.5f));
+	TestTrue(TEXT("Bones kept"), Read.Bones.FindChecked("hand_l").GetRotation().Equals(Pose.Bones.FindChecked("hand_l").GetRotation(), 1.e-4));
+	return true;
+}
+
 #endif

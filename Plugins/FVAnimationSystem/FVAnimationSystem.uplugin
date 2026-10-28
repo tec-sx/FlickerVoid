@@ -35,6 +35,10 @@
   {
    "Name": "FVFramework",
    "Enabled": true
+  },
+  {
+   "Name": "DataValidation",
+   "Enabled": true
   }
  ]
 }

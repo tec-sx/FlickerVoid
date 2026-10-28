@@ -77,4 +77,24 @@ bool UFVPoseAuthoringLibrary::MirrorPoses(UPoseAsset* PoseAsset, const TArray<FN
 	return CheckAsset(PoseAsset, OutError) && FFVPoseMirror::MirrorPoses(*PoseAsset, Poses, Axis, OutMirroredPoses, OutError);
 }
 
+bool UFVPoseAuthoringLibrary::CreateInbetweens(UPoseAsset* PoseAsset, FName Pose, int32 Count, TArray<FName>& OutPoses, FText& OutError)
+{
+	return CheckAsset(PoseAsset, OutError) && FFVPoseAuthoring::CreateInbetweens(*PoseAsset, Pose, Count, OutPoses, OutError);
+}
+
+TArray<FName> UFVPoseAuthoringLibrary::GetAddableCurves(UPoseAsset* PoseAsset)
+{
+	return PoseAsset ? FFVPoseAuthoring::GetAddableCurves(*PoseAsset) : TArray<FName>();
+}
+
+bool UFVPoseAuthoringLibrary::AddCurve(UPoseAsset* PoseAsset, FName Curve, FText& OutError)
+{
+	return CheckAsset(PoseAsset, OutError) && FFVPoseAuthoring::AddCurve(*PoseAsset, Curve, OutError);
+}
+
+bool UFVPoseAuthoringLibrary::SetCurveValue(UPoseAsset* PoseAsset, FName Pose, FName Curve, float Value, FText& OutError)
+{
+	return CheckAsset(PoseAsset, OutError) && FFVPoseAuthoring::SetCurveValue(*PoseAsset, Pose, Curve, Value, OutError);
+}
+
 #undef LOCTEXT_NAMESPACE

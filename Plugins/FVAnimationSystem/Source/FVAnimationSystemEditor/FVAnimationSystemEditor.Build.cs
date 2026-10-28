@@ -16,11 +16,18 @@ public class FVAnimationSystemEditor : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
+			"AnimGraph",
+			"DataValidation",
 			"DeveloperSettings",
-			"UnrealEd",
+			"InputCore",
+			"Persona",
+			"PropertyEditor",
+			"SkeletalMeshEditor",
+			"SkeletonEditor",
 			"Slate",
 			"SlateCore",
 			"ToolMenus",
+			"UnrealEd",
 			"FVCoreEditor",
 		});
 	}

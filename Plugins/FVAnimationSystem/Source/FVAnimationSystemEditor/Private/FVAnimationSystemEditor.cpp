@@ -2,6 +2,7 @@
 
 #include "FVAnimationSettings.h"
 #include "FVCoreEditor.h"
+#include "MeatbagFactory/FVMeatbagFactoryTab.h"
 #include "ToolMenus.h"
 
 #define LOCTEXT_NAMESPACE "FFVAnimationSystemEditorModule"
@@ -10,6 +11,7 @@ static const FName AnimationMenuSection("AnimationSystem");
 
 void FFVAnimationSystemEditorModule::StartupModule()
 {
+	FVMeatbagFactoryTab::Register();
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateLambda([]
 	{
 		FFVCoreEditorModule::AddSettingsMenuAction(AnimationMenuSection, LOCTEXT("AnimationSection", "Animation System"), "GlobalSettings",
@@ -19,6 +21,7 @@ void FFVAnimationSystemEditorModule::StartupModule()
 
 void FFVAnimationSystemEditorModule::ShutdownModule()
 {
+	FVMeatbagFactoryTab::Unregister();
 	FFVCoreEditorModule::RemoveMenuSection(AnimationMenuSection);
 }
 
