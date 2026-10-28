@@ -18,7 +18,7 @@ It grows in small slices that follow the character work. Each slice is usable on
 | 2 | **Correctives**: Corrective Pose Exporter (poses and corrective shape keys named for the Meatbag Factory), **Get morphs** from UE | Plan |
 | 3 | **One body type**: Body Type Baker for a single extra type, pushed onto the same Skeleton | Plan |
 | 4 | **Garments**: Garment Fitter (weights from the reference body incl. shape bones, fitting proxy), **Get weights** from UE | Plan |
-| 5 | **LODs and collision**: characters send hand-made LOD0-1 and set UE reduction for LOD2+; props get LODs and collision from Blender (see below) | Plan |
+| 5 | **LODs and collision**: characters send hand-made LOD0-1 and set UE reduction for LOD2+; static meshes get LODs, colliders and impostors from the Static Mesh LOD tool (see below) | Plan |
 | 6 | **Texture link**: send to Substance Painter, import its exported textures and set up material instances | Plan |
 | 7 | As the work needs them: Item and Prop Checker, Hide Mask Baker, Seam Keeper, Face Pose Kit, Deformer Training Data | Ideas |
 
@@ -27,7 +27,7 @@ It grows in small slices that follow the character work. Each slice is usable on
 [blender-lod-generator](https://github.com/dyzlek/blender-lod-generator) (MIT) was reviewed on 2026-10-28. It decimates with Blender's Decimate modifier, guided by a protection mask (UV seams, open borders, materials, silhouette, skinning joints), then repairs UVs from LOD0, transfers LOD0 normals, and can bake normals and AO, make impostors and `UCX_`/`UBX_` colliders, and export an FBX `LodGroup`.
 
 - **Characters stay on UE's reduction.** That add-on applies modifiers, which Blender refuses on meshes with shape keys (it then skips decimation without stopping), and its export leaves out the armature. UE's skeletal reduction keeps skinning and remaps morph targets, removes bones per LOD, and regenerates LODs from every push.
-- **Props can use it.** Its seam-aware decimation, UV repair, normal transfer and colliders go further than UE's static mesh reduction for textured props. Push will export a `LodGroup` (LOD children and `UCX_` colliders) so its output, or hand-made LODs, go to UE as they are. Vendoring its core into this extension is an option later; its code and UI are in French.
+- **Static meshes use it, inside this extension** (decided 2026-10-28). Its core moves in as the static mesh LOD and collision tool: seam-aware decimation, UV repair from LOD0, normal transfer, culling of small parts, error-budget and screen-size modes, normal and AO bakes, impostors and `UCX_`/`UBX_` colliders. It is translated to English, keeps its MIT notice, and is refused on meshes with shape keys or an armature. Push exports the result as a `LodGroup` (LOD children and colliders), so UE imports the LODs as they are.
 
 Not built, because the engine does it: per-LOD bone stripping, animation retargeting, crowd vertex animation (AnimToTexture), physics assets, live sync.
 
