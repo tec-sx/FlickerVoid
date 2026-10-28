@@ -6,7 +6,14 @@ Status: plan for review, nothing implemented yet.
 
 Blender is the single source of truth for meshes, bones, weights and shape keys. Painting weights and sculpting morphs in UE's Skeletal Mesh Editor is faster to test in game, but those edits then have to come back to the source `.blend` without a manual FBX round trip.
 
-The tool is a Blender add-on with a **Get from Unreal** action: it copies chosen data from a UE skeletal mesh asset onto the matching source mesh in the open `.blend`. It never writes to UE. Pushing from Blender to UE (export, import options, LODs, collision, materials) is out of scope here and handled separately.
+This plan covers two parts of the FlickerVoid Blender extension, the single extension that holds all our Blender tools:
+
+- the **UE link** (remote execution client and vertex matcher), shared by every tool that talks to the editor;
+- **Get from Unreal**: copies chosen data from a UE skeletal mesh asset onto the matching source mesh in the open `.blend`. It never writes to UE.
+
+Push to Unreal, LODs, collision and the texture link are other parts of the same extension, planned separately; they reuse the UE link.
+
+The extension is self-contained so it can move to its own repo later: it shares no files or code with the game. It only reads the game project's config ini (contract values such as bone side pairs) and talks to the running editor.
 
 ## How it talks to Unreal
 
@@ -18,20 +25,24 @@ No UE plugin and nothing in `Content/`: the UE-side code is sent over the link w
 
 ## Where it lives
 
+In this repo until it moves to its own; only the parts from this plan are shown.
+
 ```
 Tools/BlenderBridge/
-  Plan.md                  this file
-  fv_unreal_bridge/        Blender extension (blender_manifest.toml)
-    remote_execution.py    copied from the engine's Python Editor Script Plugin
-    unreal_side.py         code sent to the editor, read-only (export only)
-    matching.py            vertex matching and weight diff, numpy only, no bpy
-    operators.py, ui.py
-  tests/                   matching.py tests, plain Python + numpy
+  Plan.md                    this file
+  <extension>/               the one Blender extension (blender_manifest.toml)
+    unreal_link/
+      remote_execution.py    copied from the engine's Python Editor Script Plugin
+      matching.py            vertex matching and weight diff, numpy only, no bpy
+    pull/
+      unreal_side.py         code sent to the editor, read-only (export only)
+      operators.py, ui.py
+  tests/                     matching.py tests, plain Python + numpy
 ```
 
 ## Link
 
-Each Blender mesh object stores the UE asset path in a custom property (`fv_ue_asset`, e.g. `/Game/Characters/Bartender/SK_Bartender`). The panel fills it from the asset selected in the Content Browser.
+The add-on preferences point at the UE project folder. Each Blender mesh object stores the UE asset path in a custom property (`fv_ue_asset`, e.g. `/Game/Characters/Bartender/SK_Bartender`). The panel fills it from the asset selected in the Content Browser.
 
 ## Get weights
 
@@ -54,26 +65,26 @@ From the same FBX: for each chosen morph target, delta = shape key minus basis o
 
 ## Out of scope
 
-Pushing to UE, UVs, normals, materials, LODs, collision, animation, live sync, and anything that writes to UE assets.
+Push, LODs, collision and textures (other parts of the extension), UVs, normals, animation, live sync, and anything in the pull that writes to UE assets.
 
 ## Workflow
 
-Paint or sculpt in UE and test in game, then in Blender press **Get weights** or **Get morphs**, check the report, save the `.blend`, and push again. Pushing before pulling overwrites the UE edits, so the panel warns when the linked asset has unpulled changes (asset dirty or newer than the last pull).
+Paint or sculpt in UE and test in game, then in Blender press **Get weights** or **Get morphs**, check the report, save the `.blend`, and push again with the extension's Push to Unreal. Pushing before pulling overwrites the UE edits, so the panel warns when the linked asset has unpulled changes (asset dirty or newer than the last pull).
 
 ## Phases
 
-Each phase ends with the owner testing on the real meshes, since cloud sessions can't run Blender with UE.
+The extension grows in small slices that follow the character work (Push and validator, then correctives, one body type, garments). These phases slot into them. Each ends with the owner testing on the real meshes, since cloud sessions can't run Blender with UE.
 
-0. **Setup**: enable the Python Editor Script Plugin and Remote Execution in the project (config lines only).
-1. **Spike**: a single script run from Blender's text editor: find the editor, export the source FBX, import it, print vertex count and order checks against the source mesh. Decides index vs KD-tree and FBX vs `SkinWeightModifier`.
-2. **Get weights** with both modes and the report.
-3. **Get morphs**.
-4. **Polish**: panel, asset picker, unpulled-changes warning, extension packaging, setup notes.
+0. **Setup** (with the Push slice): enable the Python Editor Script Plugin and Remote Execution in the project (config lines only).
+1. **UE link and spike** (with the Push slice): connect to the editor, export the source FBX, import it, print vertex count and order checks against the source mesh. Decides index vs KD-tree and FBX vs `SkinWeightModifier`.
+2. **Get morphs** (with the correctives slice), so a corrective sculpted in UE ends up in the `.blend`.
+3. **Get weights** with both modes and the report (with the garments slice).
+4. **Polish**: asset picker, unpulled-changes warning, setup notes.
 
 Estimated size: 600 to 900 lines of Python, most of it in matching and reporting.
 
 ## Open questions
 
 1. Manual weight fixes live in separate weight layers. Should a pull write into the final vertex groups, or into a fix layer (for example `FIX_<bone>` groups merged by modifiers)? How are those layers built today?
-2. Tools/BlenderBridge as the home, and `fv_unreal_bridge` as the add-on name: OK?
+2. One extension, later in its own repo (decided 2026-10-28). Until then, is `Tools/BlenderBridge/` the right folder, and what should the extension be called?
 3. Pull only LOD0 (LODs regenerate from it): OK?
