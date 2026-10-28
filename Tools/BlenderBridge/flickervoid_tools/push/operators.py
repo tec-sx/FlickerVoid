@@ -3,8 +3,8 @@ import bpy
 from . import export
 from .. import preferences, scene_data
 from ..unreal_link import link
-from ..validate import checks
-from ..validate.operators import store_issues, summary
+from ..meatbag_factory.contract import checks
+from ..meatbag_factory.contract.operators import store_issues, summary
 
 
 def _call(context, snippet, params=None):

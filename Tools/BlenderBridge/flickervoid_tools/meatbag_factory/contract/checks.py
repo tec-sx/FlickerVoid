@@ -1,8 +1,8 @@
 import bpy
 
-from .. import preferences, scene_data
-from ..core import rules
-from ..core.rules import ERROR, Issue
+from ... import preferences, scene_data
+from ...core import rules
+from ...core.rules import ERROR, Issue
 
 
 def run(context, objects):

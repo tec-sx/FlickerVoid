@@ -1,6 +1,6 @@
 # FlickerVoid Tools for Blender: plan
 
-Status: slice 1 implemented, waiting for the owner's test in Blender and UE; later slices are plans.
+Status: slice 1 and the Meatbag Factory correctives are implemented and waiting for the owner's test in Blender and UE; later slices are plans.
 
 ## Goal
 
@@ -8,14 +8,17 @@ Blender is the single source of truth for meshes, bones, weights and shape keys.
 
 The extension is self-contained so it can move to its own repo later: it shares no files or code with the game. It only reads the game project's config ini (contract values such as bone side pairs) and talks to the running editor.
 
+Everything that makes characters (contract checks, correctives, body types, garments) lives under **Meatbag Factory**, the name the project uses for character creation, in Blender and in Unreal.
+
 It grows in small slices that follow the character work. Each slice is usable on its own and adds its checks to the shared validator.
 
 ## Slices
 
 | Slice | Tools | Status |
 |---|---|---|
-| 1 | Core, UE link, **Push to Unreal**, first **Contract Validator** checks | Implemented, to test |
-| 2 | **Correctives**: Corrective Pose Exporter (poses and corrective shape keys named for the Meatbag Factory), **Get morphs** from UE | Plan |
+| 1 | Core, UE link, **Push to Unreal**, first **Contract** checks | Implemented, to test |
+| 2 | **Correctives**: helper bone solver (port of Dem Bones), residual `CR_` shape keys, **Send Poses to Unreal** into a Pose Asset | Implemented, to test (needs PR #66) |
+| 2b | **Get morphs** from UE | Plan |
 | 3 | **One body type**: Body Type Baker for a single extra type, pushed onto the same Skeleton | Plan |
 | 4 | **Garments**: Garment Fitter (weights from the reference body incl. shape bones, fitting proxy), **Get weights** from UE | Plan |
 | 5 | **LODs and collision**: characters send hand-made LOD0-1 and set UE reduction for LOD2+; static meshes get LODs and impostors from the Static Mesh LOD tool and colliders from the Collision tool (see below) | Plan |
@@ -49,13 +52,17 @@ Tools/BlenderBridge/
   flickervoid_tools/           the Blender extension (blender_manifest.toml)
     core/                      no bpy: contract (ini reader, side names), validation rules
     unreal_link/               no bpy: remote execution client, UE-side snippets
-    push/                      Push to Unreal
-    validate/                  Contract Validator operators and panel
+    push/                      Push to Unreal, FBX export
+    meatbag_factory/           character creation
+      contract/                Contract checks, operators
+      solver.py                no bpy: helper bone solver (SSDR, port of Dem Bones)
+      capture.py, apply.py     read the problem from the scene, write the solve back
+      pose_asset.py            bake the pose markers into an FBX animation
     preferences.py, scene_data.py, ui.py
   tests/                       plain Python tests for core/ and unreal_link/
 ```
 
-Code without `bpy` stays in `core/` and `unreal_link/`, so it is tested without Blender.
+Code without `bpy` stays in `core/`, `unreal_link/` and `meatbag_factory/solver.py`, so it is tested without Blender.
 
 ## Contract
 
@@ -95,7 +102,38 @@ Fixes are only the safe ones (limit influences, normalize), each one undo step. 
 
 Later slices add rest-pose symmetry, bone roll and axis checks, and the leaf rule for extra bones.
 
-## Get from Unreal (slices 2 and 4)
+## Slice 2: Meatbag Factory correctives
+
+Turns a target shape (a muscle simulation, a sculpt) into helper bone motion, so correctives are bone driven where bones can do it and morphs only carry the rest.
+
+### Setup in Blender
+
+- **Armature** with the main bones animated into the example poses, and helper bones (deform bones, usually parented to a main bone) in a bone collection, `Correctives` by default.
+- **Mesh**: the skinned body. Helpers need painted weights on the vertices they should move; a helper without weights can't be solved and is reported.
+- **Target**: a mesh with the same vertices that shows the wanted shape in each pose (the muscle simulation result, or a copy of the body with a sculpted shape key). Its modifiers may move vertices but not change their count.
+- One **timeline marker per pose**, named after the pose (`thigh_l_raise_90`). The names become the Pose Asset's pose names and the `CR_` shape key names, so they use the side tokens the Meatbag Factory mirrors.
+- The Armature modifier has Preserve Volume off, since Unreal skins linearly.
+
+### Solve Helper Bones
+
+A numpy port of the parts of [Dem Bones](https://github.com/electronicarts/dem-bones) (BSD-3) that apply: Smooth Skinning Decomposition with Rigid Bones, with the main bones locked and only the helpers solved.
+
+1. **Capture**: for each marker, the main bones' posed matrices with the helpers at rest, and the target's vertex positions, all in armature space.
+2. **Transforms**: Gauss-Seidel sweeps over the helpers. Each helper's rotation and translation (and uniform scale with **Allow Scale**) is the weighted Procrustes fit that brings its vertices closest to the target, with the other bones fixed.
+3. **Weights** (optional, **Solve Weights**): per vertex, non-negative least squares on how much it follows each helper it already has; the main bones keep their painted proportions in what is left, and the vertex keeps at most the contract's influence count. Alternates with step 2 for **Weight Rounds**.
+4. **Write back**: helpers keyed at each marker frame (location, rotation, scale), changed weights written, the largest remaining error per vertex in the point attribute `mf_residual` (view it as a color attribute), and, with **Residual Shape Keys**, a `CR_<pose>` shape key per pose whose error exceeds the **Threshold**. A residual key is stored in rest space, so the solved bones plus the key at 1 give the target exactly.
+
+The panel lists each pose's RMS error before and after. Helpers are never driven here: the corrective rig in Unreal drives them from the Pose Asset.
+
+### Send Poses to Unreal
+
+1. Each marker's full pose (every bone, after constraints and drivers) is baked into frame i of a temporary armature copy without constraints, exported as an armature-only FBX animation with the push preset.
+2. In Unreal, the snippet imports it as `<Pose Asset>_Source` on the mesh's Skeleton, creates the Pose Asset if it is missing (`CreatePoseAsset`, previewed on the linked mesh), and calls `SetPosesFromAnimation`: poses with a marker's name are updated (keeping their curve values), the others created, as one undo step.
+3. The source animation is deleted unless **Keep Source Animation** is on. Nothing is saved.
+
+Push the mesh first, so the Skeleton has the helper bones and the `CR_` morph targets. Right-side poses come from **Mirror All** in the Meatbag Factory window.
+
+## Get from Unreal (slices 2b and 4)
 
 Copies chosen data from a UE skeletal mesh asset onto the matching source mesh in the open `.blend`. It never writes to UE.
 

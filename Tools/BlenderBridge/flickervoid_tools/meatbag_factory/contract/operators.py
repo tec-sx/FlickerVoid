@@ -3,11 +3,11 @@ import json
 import bpy
 
 from . import checks
-from .. import preferences
-from ..core import rules
+from ... import preferences
+from ...core import rules
 
 
-class FVIssue(bpy.types.PropertyGroup):
+class MeatbagIssue(bpy.types.PropertyGroup):
     level: bpy.props.StringProperty()
     message: bpy.props.StringProperty()
     object_name: bpy.props.StringProperty()
@@ -17,7 +17,7 @@ class FVIssue(bpy.types.PropertyGroup):
 
 
 def store_issues(context, issues):
-    stored = context.window_manager.fv_issues
+    stored = context.window_manager.meatbag_issues
     stored.clear()
     for issue in issues:
         item = stored.add()
@@ -27,7 +27,7 @@ def store_issues(context, issues):
         item.item_kind = issue.item_kind
         item.items = json.dumps(issue.items)
         item.fix = issue.fix
-    context.window_manager.fv_issue_index = 0
+    context.window_manager.meatbag_issue_index = 0
 
 
 def summary(issues):
@@ -36,8 +36,8 @@ def summary(issues):
     return f"{errors} errors, {warnings} warnings" if issues else "No problems found"
 
 
-class FV_OT_validate(bpy.types.Operator):
-    bl_idname = "fv.validate"
+class MEATBAG_OT_check_contract(bpy.types.Operator):
+    bl_idname = "meatbag.check_contract"
     bl_label = "Check Contract"
     bl_description = "Check the selected armatures and meshes against the character contract"
 
@@ -52,8 +52,8 @@ class FV_OT_validate(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class FV_OT_select_issue(bpy.types.Operator):
-    bl_idname = "fv.select_issue"
+class MEATBAG_OT_select_issue(bpy.types.Operator):
+    bl_idname = "meatbag.select_issue"
     bl_label = "Select"
     bl_description = "Select the object, bones or vertices this problem is about"
     bl_options = {"REGISTER", "UNDO"}
@@ -61,7 +61,7 @@ class FV_OT_select_issue(bpy.types.Operator):
     index: bpy.props.IntProperty()
 
     def execute(self, context):
-        issue = context.window_manager.fv_issues[self.index]
+        issue = context.window_manager.meatbag_issues[self.index]
         obj = context.scene.objects.get(issue.object_name)
         if not obj:
             self.report({"WARNING"}, "Nothing to select")
@@ -96,8 +96,8 @@ class FV_OT_select_issue(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class FV_OT_fix_issue(bpy.types.Operator):
-    bl_idname = "fv.fix_issue"
+class MEATBAG_OT_fix_issue(bpy.types.Operator):
+    bl_idname = "meatbag.fix_issue"
     bl_label = "Fix"
     bl_description = "Apply the safe fix for this problem, then check again"
     bl_options = {"REGISTER", "UNDO"}
@@ -105,7 +105,7 @@ class FV_OT_fix_issue(bpy.types.Operator):
     index: bpy.props.IntProperty()
 
     def execute(self, context):
-        issue = context.window_manager.fv_issues[self.index]
+        issue = context.window_manager.meatbag_issues[self.index]
         obj = context.scene.objects.get(issue.object_name)
         if not obj or obj.type != "MESH" or not issue.fix:
             return {"CANCELLED"}
@@ -136,25 +136,25 @@ class FV_OT_fix_issue(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class FV_UL_issues(bpy.types.UIList):
+class MEATBAG_UL_issues(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_property, index=0, flt_flag=0):
         row = layout.row(align=True)
         row.label(text=f"{item.object_name}: {item.message}" if item.object_name else item.message,
                   icon="ERROR" if item.level == rules.ERROR else "INFO")
         if item.item_kind != rules.NONE or item.object_name:
-            row.operator(FV_OT_select_issue.bl_idname, text="", icon="RESTRICT_SELECT_OFF").index = index
+            row.operator(MEATBAG_OT_select_issue.bl_idname, text="", icon="RESTRICT_SELECT_OFF").index = index
         if item.fix:
-            row.operator(FV_OT_fix_issue.bl_idname, text="", icon="TOOL_SETTINGS").index = index
+            row.operator(MEATBAG_OT_fix_issue.bl_idname, text="", icon="TOOL_SETTINGS").index = index
 
 
-classes = (FVIssue, FV_OT_validate, FV_OT_select_issue, FV_OT_fix_issue, FV_UL_issues)
+classes = (MeatbagIssue, MEATBAG_OT_check_contract, MEATBAG_OT_select_issue, MEATBAG_OT_fix_issue, MEATBAG_UL_issues)
 
 
 def register_properties():
-    bpy.types.WindowManager.fv_issues = bpy.props.CollectionProperty(type=FVIssue)
-    bpy.types.WindowManager.fv_issue_index = bpy.props.IntProperty()
+    bpy.types.WindowManager.meatbag_issues = bpy.props.CollectionProperty(type=MeatbagIssue)
+    bpy.types.WindowManager.meatbag_issue_index = bpy.props.IntProperty()
 
 
 def unregister_properties():
-    del bpy.types.WindowManager.fv_issues
-    del bpy.types.WindowManager.fv_issue_index
+    del bpy.types.WindowManager.meatbag_issues
+    del bpy.types.WindowManager.meatbag_issue_index

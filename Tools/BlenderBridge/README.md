@@ -1,6 +1,6 @@
 # FlickerVoid Tools for Blender
 
-One Blender extension for the FlickerVoid character pipeline: push meshes to Unreal and check them against the character contract. The roadmap is in [Plan.md](Plan.md).
+One Blender extension for the FlickerVoid character pipeline: push meshes to Unreal, check them against the character contract, and solve corrective helper bones (the Meatbag Factory). The roadmap is in [Plan.md](Plan.md).
 
 Needs Blender 4.2 or later (tested headless on 5.2) and the Unreal Editor running on the same computer.
 
@@ -38,7 +38,7 @@ Or build a zip with `blender --command extension build --source-dir Tools/Blende
 
 The **FlickerVoid** tab in the 3D view sidebar.
 
-**Contract.** Select armatures or meshes and press **Check Contract**. Selecting an armature checks the meshes it deforms too. Each row has a select button (object, bones or vertices) and, where it's safe, a fix button (limit influences, normalize). Errors block a push; warnings don't.
+**Meatbag Factory > Contract.** Select armatures or meshes and press **Check Contract**. Selecting an armature checks the meshes it deforms too. Each row has a select button (object, bones or vertices) and, where it's safe, a fix button (limit influences, normalize). Errors block a push; warnings don't.
 
 **Unreal.**
 
@@ -47,6 +47,16 @@ The **FlickerVoid** tab in the 3D view sidebar.
 3. **Push to Unreal** checks the contract, exports each asset with the locked FBX preset and imports it onto its linked path (replacing the existing asset). Meshes linked to the same asset are pushed together, selected or not. Save in Unreal afterwards.
 
 The push exports multires at its base level and the armature in rest pose. It names the armature `Armature` for the export when its top bone is `root`, so Unreal doesn't add an extra root bone. Modifiers that change the vertex count drop shape keys in the FBX.
+
+**Meatbag Factory > Correctives.** Turns a target shape into helper bone motion. Details in [Plan.md](Plan.md#slice-2-meatbag-factory-correctives).
+
+1. Put the helper bones in a bone collection (`Correctives` by default) and paint their weights. Turn off Preserve Volume on the Armature modifier.
+2. Pose the main bones at a few frames and add a timeline marker at each, named after the pose (`thigh_l_raise_90`).
+3. Make the **Target**: a mesh with the same vertices showing the wanted shape in each pose (muscle simulation, or a sculpted copy).
+4. Pick **Armature**, **Mesh** and **Target**, press **Solve Helper Bones**. The helpers are keyed at each marker; the list shows each pose's error before and after (click the marker icon to jump to it). The `mf_residual` attribute shows where error is left, and **Residual Shape Keys** adds `CR_<pose>` keys for it.
+5. Push the mesh, set the **Pose Asset** path (or pick the selected one in Unreal with the eyedropper) and press **Send Poses to Unreal**. Poses with a marker's name are updated, the others created, and the asset is created when missing. Save in Unreal.
+
+Sending poses needs the Meatbag Factory commands from PR #66 in the Unreal build.
 
 ## 5. Tests
 
