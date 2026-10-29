@@ -48,8 +48,13 @@ void UFVInteractableHighlightComponent::OnInteractorLost(UFVInteractorComponent*
 
 void UFVInteractableHighlightComponent::CacheTargets()
 {
+	Targets.Reset();
+	CachedOverlays.Reset();
+	CachedRenderCustomDepth.Reset();
+	CachedStencilValues.Reset();
+
 	const UFVInteractableComponent* Found = Interactable.Get();
-	if (!Found || !Targets.IsEmpty())
+	if (!Found)
 	{
 		return;
 	}
@@ -76,13 +81,43 @@ void UFVInteractableHighlightComponent::RenderHighlight(const bool bIsInFocus)
 		return;
 	}
 
-	CacheTargets();
 	bIsHighlighted = bIsInFocus;
+	if (bIsInFocus)
+	{
+		ApplyHighlight();
+	}
+	else
+	{
+		RestoreTargets();
+	}
+}
+
+void UFVInteractableHighlightComponent::ApplyHighlight()
+{
+	// Cached on every focus, so primitives added later are included and the restored values are current.
+	CacheTargets();
 
 	const FFVInteractionHighlightSetup& Setup = bOverrideSetup
 		? HighlightSetup
 		: UFVInteractionSystemSettings::Get().InteractableBaseSettings.DefaultHighlightSetup;
 
+	for (UPrimitiveComponent* Target : Targets)
+	{
+		if (Setup.HighlightType == EFVHighlightType::PostProcessing)
+		{
+			Target->SetRenderCustomDepth(true);
+			Target->SetCustomDepthStencilValue(Setup.StencilID);
+		}
+		else if (UMeshComponent* Mesh = Cast<UMeshComponent>(Target))
+		{
+			UMaterialInterface* Material = Setup.HighlightMaterial.Get();
+			Mesh->SetOverlayMaterial(Material);
+		}
+	}
+}
+
+void UFVInteractableHighlightComponent::RestoreTargets()
+{
 	for (int32 Index = 0; Index < Targets.Num(); ++Index)
 	{
 		UPrimitiveComponent* Target = Targets[Index];
@@ -91,14 +126,11 @@ void UFVInteractableHighlightComponent::RenderHighlight(const bool bIsInFocus)
 			continue;
 		}
 
-		if (HighlightSetup.HighlightType == EFVHighlightType::PostProcessing)
+		Target->SetRenderCustomDepth(CachedRenderCustomDepth[Index]);
+		Target->SetCustomDepthStencilValue(CachedStencilValues[Index]);
+		if (UMeshComponent* Mesh = Cast<UMeshComponent>(Target))
 		{
-			Target->SetRenderCustomDepth(bIsInFocus ? true : CachedRenderCustomDepth[Index]);
-			Target->SetCustomDepthStencilValue(bIsInFocus ? HighlightSetup.StencilID : CachedStencilValues[Index]);
-		}
-		else if (UMeshComponent* Mesh = Cast<UMeshComponent>(Target))
-		{
-			Mesh->SetOverlayMaterial(bIsInFocus ? HighlightSetup.HighlightMaterial.Get() : nullptr);
+			Mesh->SetOverlayMaterial(CachedOverlays[Index]);
 		}
 	}
 }

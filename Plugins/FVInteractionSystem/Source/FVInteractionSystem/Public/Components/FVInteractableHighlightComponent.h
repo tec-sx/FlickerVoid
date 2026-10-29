@@ -39,6 +39,8 @@ private:
 	
 	void CacheTargets();
 	void RenderHighlight(const bool bIsInFocus);
+	void ApplyHighlight();
+	void RestoreTargets();
 	
 	TWeakObjectPtr<UFVInteractableComponent> Interactable;
 
