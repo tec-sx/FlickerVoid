@@ -184,6 +184,41 @@ void UFVSocialLibrary::ModifyRelationship(UObject* WorldContext, const UFVCharac
 	}
 }
 
+int32 UFVSocialLibrary::GetGiftRelationshipChange(const AActor* Receiver, const FGameplayTagContainer& GiftTags)
+{
+	const UFVCharacterDefinition* Definition = UFVIdentityComponent::GetActorDefinition(Receiver);
+	const FFVCharacterFragment_Gifts* Gifts = Definition ? Definition->FindFragment<FFVCharacterFragment_Gifts>() : nullptr;
+	if (!Gifts)
+	{
+		return 0;
+	}
+
+	int32 Change = 0;
+	bool bMatched = false;
+	for (const FFVGiftPreference& Preference : Gifts->Preferences)
+	{
+		if (Preference.Tag.IsValid() && GiftTags.HasTag(Preference.Tag))
+		{
+			Change += Preference.RelationshipChange;
+			bMatched = true;
+		}
+	}
+	return bMatched ? Change : Gifts->DefaultRelationshipChange;
+}
+
+int32 UFVSocialLibrary::ReceiveGift(UObject* WorldContext, const AActor* Receiver, const FGameplayTagContainer& GiftTags)
+{
+	const FFVCharacterFragment_Social* Social = FindSocialFragment(Receiver);
+	if (!Social || !Social->RelationshipFact.IsValid())
+	{
+		return 0;
+	}
+
+	const int32 Change = GetGiftRelationshipChange(Receiver, GiftTags);
+	ModifyRelationship(WorldContext, UFVIdentityComponent::GetActorDefinition(Receiver), Change);
+	return Change;
+}
+
 const FFVCharacterFragment_Social* UFVSocialLibrary::FindSocialFragment(const AActor* Actor)
 {
 	const UFVCharacterDefinition* Definition = UFVIdentityComponent::GetActorDefinition(Actor);
@@ -201,6 +236,52 @@ bool UFVSocialLibrary::IsDisguisedAs(const AActor* Actor, const UFVFactionDefini
 	return Faction
 		&& FVSocial::HasTag(Actor, Faction->DisguiseTag)
 		&& FMath::Max(GetNotoriety(Actor, Faction), GetGlobalNotoriety(Actor)) < Faction->DisguiseNotorietyLimit;
+}
+
+TArray<UFVFactionDefinition*> UFVSocialLibrary::GetFactions()
+{
+	TArray<UFVFactionDefinition*> Result;
+	for (const TSoftObjectPtr<UFVFactionDefinition>& Soft : UFVSocialSettings::Get().Factions)
+	{
+		if (UFVFactionDefinition* Faction = Soft.LoadSynchronous())
+		{
+			Result.Add(Faction);
+		}
+	}
+	return Result;
+}
+
+UFVFactionDefinition* UFVSocialLibrary::GetDisguiseFaction(const AActor* Actor)
+{
+	for (UFVFactionDefinition* Faction : GetFactions())
+	{
+		if (IsDisguisedAs(Actor, Faction))
+		{
+			return Faction;
+		}
+	}
+	return nullptr;
+}
+
+TArray<UFVCharacterDefinition*> UFVSocialLibrary::GetKnownCharacters(const UObject* WorldContext)
+{
+	TArray<UFVCharacterDefinition*> Result;
+	const UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext);
+	if (!Database)
+	{
+		return Result;
+	}
+
+	for (const TSoftObjectPtr<UFVCharacterDefinition>& Soft : UFVSocialSettings::Get().Relationships)
+	{
+		UFVCharacterDefinition* Character = Soft.LoadSynchronous();
+		const FFVCharacterFragment_Social* Social = Character ? Character->FindFragment<FFVCharacterFragment_Social>() : nullptr;
+		if (Social && Database->IsFactDefined(Social->RelationshipFact))
+		{
+			Result.Add(Character);
+		}
+	}
+	return Result;
 }
 
 EFVAttitude UFVSocialLibrary::GetAttitude(const UFVFactionDefinition* Faction, const AActor* Subject)

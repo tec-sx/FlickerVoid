@@ -6,13 +6,13 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "FVCheck.generated.h"
 
-UENUM(BlueprintType)
+UENUM(BlueprintType, meta = (ScriptName = "CheckRoll"))
 enum class EFVCheckRoll : uint8
 {
-	None,
-	D6x2,
-	D10,
-	D20
+	None UMETA(ToolTip = "No roll; the attribute and bonuses decide alone."),
+	D6x2 UMETA(DisplayName = "2d6", ToolTip = "Two six-sided dice."),
+	D10 UMETA(DisplayName = "d10"),
+	D20 UMETA(DisplayName = "d20")
 };
 
 /** A bonus that applies when its conditions pass, the same way interaction offers gate themselves. */
