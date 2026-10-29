@@ -79,7 +79,8 @@ void UFVCinematicSubsystem::HandleFinished()
 		Facts->SetFact(Finished->Id, 1);
 	}
 
-	Finished->OnFinished.Apply(UFVConditionLibrary::MakePlayerContext(GetWorld()));
+	const FFVConditionContext Context = UFVConditionLibrary::MakePlayerContext(GetWorld());
+	Finished->OnFinished.Apply(Context);
 	OnFinished.Broadcast();
 }
 

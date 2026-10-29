@@ -64,7 +64,8 @@ bool UFVKnowledgeLibrary::Learn(UObject* WorldContext, const UFVKnowledgeDefinit
 
 	Database->SetFact(Knowledge->Id, 1);
 
-	Knowledge->OnLearned.Apply(UFVConditionLibrary::MakePlayerContext(WorldContext));
+	const FFVConditionContext Context = UFVConditionLibrary::MakePlayerContext(WorldContext);
+	Knowledge->OnLearned.Apply(Context);
 	return true;
 }
 

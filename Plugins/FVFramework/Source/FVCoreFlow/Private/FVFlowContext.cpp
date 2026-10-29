@@ -5,5 +5,6 @@
 
 FFVConditionContext FVFlow::MakeContext(const UFlowNodeBase& Node)
 {
-	return UFVConditionLibrary::MakePlayerContext(Node.GetWorld(), Node.TryGetRootFlowActorOwner());
+	AActor* FlowOwner = Node.TryGetRootFlowActorOwner();
+	return UFVConditionLibrary::MakePlayerContext(Node.GetWorld(), FlowOwner);
 }
