@@ -620,17 +620,7 @@ One event, `OnInteractionProgress(FGameplayTag ActionTag, float Progress01)`, br
 
 ### 5.3 Getting the key/glyph to the UI without EnhancedInput in the plugin
 
-Keep `FInteractionKeyBinding { FKey Key; TSoftObjectPtr<UTexture2D> Glyph; }` in the plugin as **inert display data**, and put the *resolution* in the game module:
-
-```
-UI widget receives FInteraction (InputTag only)
-		|
-		v
-IFVInputGlyphProvider  -- game module, wraps EnhancedInput + CommonUI
-   ResolveGlyph(InputTag, CurrentDevice) -> FInteractionKeyBinding
-```
-
-Implement it as a game subsystem, or (better, given §2.1's no-interface rule) as a `UFVInputGlyphSubsystem` with a `UFUNCTION` lookup. On device change the subsystem broadcasts `OnInputDeviceChanged`; the prompt responder re-resolves. The plugin never learns what a mapping context is.
+The plugin carries no keys or glyphs. The prompt widget (game side) shows the key with a CommonUI **Common Action Widget**: `SetEnhancedInputAction(Action)` draws the glyph of the key mapped to that action for the device in use, from the Common Input controller data, and updates itself when the device changes. The game maps the offer's `InputTag` to its input action through `DA_InputConfig`; the plugin never learns what a mapping context is.
 
 ---
 
@@ -886,8 +876,8 @@ Because the registry now owns `Idle <-> Awake` (§2.2.2), the debug component's 
 												  (State stays Awake)
 		 L1 evaluate offers (Open: ok, Lockpick: HasItem ok)
 		 L2 OnFocusChanged(Door), OnOffersChanged([Open/Press, Lockpick/Hold])
-		 L3 PromptResponder -> widget shows 2 rows; asks GlyphSubsystem for
-			InputTag.Interaction.Primary/Secondary glyphs for current device
+		 L3 PromptResponder -> widget shows 2 rows; Common Action Widgets draw
+			the Primary/Secondary action glyphs for the current device
 
  t=1.00  Player presses Secondary
 		 L0 PC routes InputTag.Interaction.Secondary, Pressed
@@ -929,7 +919,7 @@ Note how many layers know about GAS: **one** (`UFVInteractionAbilityResponder`).
 | 6 | `PushInput(Tag, Phase)` + `EInteractionInputMode` FSM + `OnInteractionProgress` | Hold / mash / hover / automatic |
 | 7 | Arbitration (`Weight`, `InteractorTag`, `RequiredInteractorTags`, scoring) | Nested interactables, multi-interactor |
 | 8 | Requirement subclasses (`AbilityCanActivate`, `HasTags`, `InteractableState`) + event-driven re-eval | Prompts match ability truth; no per-tick eval |
-| 9 | Prompt responder + glyph subsystem + `FInteraction` extension | Real UI |
+| 9 | Prompt responder + Common Action Widget glyphs + `FInteraction` extension | Real UI |
 | 10 | Target-side responders (highlight, lifecycle, audio) + `EHighlightSetupType` auto-setup | Designer-authored interactables |
 | 11 | `EInteractorState` + suppression reasons + dependencies (suppression = `PauseTracing`) | Cutscenes, vehicles, menus |
 | 12 | Compile rules + debug component expansion | Safety net |
