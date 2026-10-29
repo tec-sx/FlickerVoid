@@ -61,6 +61,7 @@ Every plugin has three modules: runtime, `<Plugin>Debug` and `<Plugin>Editor`. F
 - Prefer FlowGraph (custom nodes) for story, quests and dialogue; StateTree and current UE5 features elsewhere.
 - Minimal comments: a short class description; comment a method only when its name or logic is unclear.
 - Don't nest calls: store a call's result in a variable before passing it to another call. Only very simple getters such as `GetWorld()` may be passed inline.
+- Don't chain ternaries (`a ? b : c ? d : e`); use `if`/`else` or a `switch`.
 - Headers list functions before properties: first what the class does, then what it needs to work. Short descriptions of UFUNCTIONs and UPROPERTYs go in `meta = (ToolTip = "...")`, not in comments.
 - Enum values are described with `UMETA(...)`, not comments, and the UENUM gets `meta = (ScriptName = "...")` without the `EFV` prefix (`EFVMapViewMode` is `MapViewMode`).
 - Log categories are `Log<PluginName>`, declared in the module header and defined in the module `.cpp`; reuse a plugin's category before adding one, and never declare the same name in two modules.

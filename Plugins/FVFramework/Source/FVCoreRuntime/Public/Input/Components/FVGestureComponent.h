@@ -42,7 +42,7 @@ public:
 	
 private:
 	EFVGestureStatus EvaluatePress();
-	EFVGestureStatus EvaluateHold();
+	EFVGestureStatus EvaluateDuration();
 	EFVGestureStatus EvaluateMash(const float DeltaTime);
 	
 	FGameplayTag ActiveInputTag;
