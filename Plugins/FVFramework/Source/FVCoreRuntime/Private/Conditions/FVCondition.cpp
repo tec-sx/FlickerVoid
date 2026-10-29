@@ -2,9 +2,11 @@
 
 #include "FVCoreRuntime.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FVCondition)
+
 #define LOCTEXT_NAMESPACE "FVCondition"
 
-AActor* FFVConditionContext::GetActor(const bool bTarget, const UScriptStruct* Requester) const
+AActor* FFVConditionContext::GetActor(const bool bTarget, const UStruct* Requester) const
 {
 	AActor* Actor = bTarget ? Target.Get() : Instigator.Get();
 #if !UE_BUILD_SHIPPING
@@ -88,6 +90,57 @@ FText FFVConditionSet::GetDescription() const
 
 	const FText Separator = Mode == EFVConditionMode::All ? LOCTEXT("And", " AND ") : LOCTEXT("Or", " OR ");
 	return FText::Join(Separator, Parts);
+}
+
+bool UFVCondition::Check(const FFVConditionContext& Context) const
+{
+	return Evaluate(Context) != bInvert;
+}
+
+bool UFVCondition::GetScore(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	return !bInvert && Score(Context, OutScore);
+}
+
+bool UFVCondition::Evaluate_Implementation(const FFVConditionContext& Context) const
+{
+	return true;
+}
+
+bool UFVCondition::Score_Implementation(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	return false;
+}
+
+FText UFVCondition::GetDescription_Implementation() const
+{
+	return GetClass()->GetDisplayNameText();
+}
+
+UWorld* UFVCondition::GetWorld() const
+{
+	return HasAnyFlags(RF_ClassDefaultObject) ? nullptr : GetOuter()->GetWorld();
+}
+
+FText FFVCondition_Object::GetDescription() const
+{
+	if (Condition == nullptr)
+	{
+		return FText::GetEmpty();
+	}
+
+	const FText Description = Condition->GetDescription();
+	return Condition->bInvert ? FText::Format(LOCTEXT("Not", "NOT {0}"), Description) : Description;
+}
+
+bool FFVCondition_Object::EvaluateImpl(const FFVConditionContext& Context) const
+{
+	return Condition == nullptr || Condition->Check(Context);
+}
+
+bool FFVCondition_Object::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	return Condition != nullptr && Condition->GetScore(Context, OutScore);
 }
 
 #undef LOCTEXT_NAMESPACE

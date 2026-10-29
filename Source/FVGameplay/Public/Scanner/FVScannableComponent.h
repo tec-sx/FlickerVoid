@@ -67,13 +67,5 @@ protected:
 	bool bScanned = false;
 
 private:
-	struct FPrimitiveState
-	{
-		TWeakObjectPtr<UPrimitiveComponent> Primitive;
-		bool bRenderCustomDepth = false;
-		int32 Stencil = 0;
-	};
-
-	TArray<FPrimitiveState> SavedStates;
 	bool bRevealed = false;
 };

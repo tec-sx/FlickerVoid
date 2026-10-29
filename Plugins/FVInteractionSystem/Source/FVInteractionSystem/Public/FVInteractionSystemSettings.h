@@ -19,12 +19,16 @@ struct FVINTERACTIONSYSTEM_API FFVInteractionHighlightSetup
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Highlight Setup", meta=(EditCondition="HighlightType==EFVHighlightType::PostProcessing"))
 	int32 StencilID;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Highlight Setup", meta=(EditCondition="HighlightType==EFVHighlightType::PostProcessing", ToolTip="Wins over other highlights on the same primitive (such as the scanner's) with a lower priority."))
+	int32 Priority;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Highlight Setup", meta=(EditCondition="HighlightType==EFVHighlightType::OverlayMaterial"))
 	TObjectPtr<UMaterialInterface> HighlightMaterial;
 
 	FFVInteractionHighlightSetup()
 		: HighlightType(EFVHighlightType::OverlayMaterial)
 		, StencilID(133)
+		, Priority(10)
 		, HighlightMaterial(nullptr)
 	{ }
 };

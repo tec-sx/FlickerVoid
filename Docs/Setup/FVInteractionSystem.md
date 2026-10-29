@@ -24,7 +24,7 @@ Modules: `FVInteractionSystem`, `FVInteractionSystemDebug`, `FVInteractionSystem
 ### Offers
 Each offer on an interactable definition has:
 - **Input Tag** (`InputTag.Interaction.Primary`, `.Secondary`, `.Alternate`) and **Action Tag** (`Interaction.Action.Talk`, `.Open`, `.Pickup`, `.Examine`, `.LockPick`...).
-- **Gesture**: Press, Hold (duration), Mash (press count), Hover or Automatic.
+- **Gesture**: Press, Hold (duration), Mash (press count, optional time limit in Duration), Hover (focused for the duration, no key) or Automatic (commits as soon as the offer is available, no key). Hover and Automatic start when the focused offers change, so an unlimited Automatic offer runs once per focus.
 - **Display**: name, description and icon shown in the prompt.
 - **Conditions**: when the offer is available. Its *Failure Presentation* hides the offer or shows it locked (with a reason).
 - **Effects**: what happens on commit. In this project the usual effect is **Activate Ability** (from the FVGameplay module), which sends a gameplay event (a tag under `Event.`, e.g. `Event.Interaction.Talk`) to the player. Grant the player an ability derived from `UFVInteractAbility` with an *Ability Trigger* of type *Gameplay Event* on that tag, or set its **Trigger Event Tag** (AngelScript: `default TriggerEventTag = GameplayTags::Event_...;`); it reads the interactable and does the work (see `Script/Abilities`: Talk, Examine, Lockpick; the item abilities, Pickup included, are in `Script/Items/Abilities`, see [Items](Items.md)).
@@ -72,6 +72,8 @@ Requires the FVFramework UI layout with a `UI.Layer.Game` layer.
 | Interaction UI Settings | `DA_InteractionUISettings` |
 
 For post-process highlighting, enable *Custom Depth-Stencil Pass: Enabled with Stencil* in Project Settings > Rendering and use a post-process material reading the stencil ID.
+
+Post-process highlights go through FVFramework's `UFVHighlightComponent`, which is added to the actor at runtime if it has none. It is the only writer of custom depth: interaction focus and the scanner push requests, and the one with the higher **Priority** shows (focus defaults to 10, scan categories to 0). Overlay-material highlights don't use it.
 
 ## 6. Gameplay tags
 

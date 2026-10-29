@@ -24,27 +24,20 @@ namespace
 
 FText FFVCondition_Attribute::GetDescription() const
 {
-	FText Comparison;
-	switch (Compare)
-	{
-	case EFVCompare::AtLeast: Comparison = LOCTEXT("AtLeast", "at least"); break;
-	case EFVCompare::AtMost: Comparison = LOCTEXT("AtMost", "at most"); break;
-	default: Comparison = LOCTEXT("Exactly", "exactly"); break;
-	}
-
+	const FText Comparison = FVCompare::GetDisplayName(Compare);
 	return FText::Format(LOCTEXT("AttributeDesc", "{0} {1} {2}"), AttributeName(Attribute), Comparison, FText::AsNumber(Value));
 }
 
 bool FFVCondition_Attribute::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
 {
 	const AActor* Actor = Context.GetActor(bCheckTarget, StaticStruct());
-	if (Compare != EFVCompare::AtLeast || !UFVAttributeLibrary::HasAttribute(Actor, Attribute))
+	if (!UFVAttributeLibrary::HasAttribute(Actor, Attribute))
 	{
 		return false;
 	}
 
-	OutScore = FFVConditionScore::AtLeast(UFVAttributeLibrary::GetValue(Actor, Attribute), Value);
-	return true;
+	const float Current = UFVAttributeLibrary::GetValue(Actor, Attribute);
+	return FVCompare::Score(Current, Compare, Value, OutScore);
 }
 
 bool FFVCondition_Attribute::EvaluateImpl(const FFVConditionContext& Context) const
@@ -56,13 +49,7 @@ bool FFVCondition_Attribute::EvaluateImpl(const FFVConditionContext& Context) co
 	}
 
 	const float Current = UFVAttributeLibrary::GetValue(Actor, Attribute);
-
-	switch (Compare)
-	{
-	case EFVCompare::AtLeast: return Current >= Value;
-	case EFVCompare::AtMost: return Current <= Value;
-	default: return FMath::IsNearlyEqual(Current, Value);
-	}
+	return FVCompare::Compare(Current, Compare, Value);
 }
 
 void FFVEffect_ModifyAttribute::Apply(const FFVConditionContext& Context) const

@@ -8,14 +8,6 @@
 
 class UGameplayEffect;
 
-UENUM(BlueprintType, meta = (ScriptName = "AttributeCompare"))
-enum class EFVCompare : uint8
-{
-	AtLeast UMETA(ToolTip = "Value is greater than or equal to the threshold."),
-	AtMost UMETA(ToolTip = "Value is less than or equal to the threshold."),
-	Equal UMETA(ToolTip = "Value equals the threshold.")
-};
-
 USTRUCT(BlueprintType, meta = (DisplayName = "Attribute"))
 struct FVATTRIBUTESYSTEM_API FFVCondition_Attribute : public FFVConditionBase
 {
@@ -27,7 +19,7 @@ struct FVATTRIBUTESYSTEM_API FFVCondition_Attribute : public FFVConditionBase
 	TObjectPtr<const UFVAttributeDefinition> Attribute;
 
 	UPROPERTY(EditAnywhere, Category = "Condition")
-	EFVCompare Compare = EFVCompare::AtLeast;
+	EFVCompare Compare = EFVCompare::GreaterOrEqual;
 
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	float Value = 0.f;

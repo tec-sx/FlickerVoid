@@ -88,11 +88,34 @@ Built-in types you can pick anywhere a rule appears:
 
 | Conditions | Effects |
 |---|---|
-| Fact, Time of Day, Group (nested set), Script | Fact (set, add or remove), Advance Time, Play Cinematic, Script |
+| Fact, Time of Day, Group (nested set), Object (Scale, or a C++ or AngelScript condition class) | Fact (set, add or remove), Advance Time, Play Cinematic, Object (Modify Scale, or a C++ or AngelScript effect class) |
 
 - A condition set has **Mode** (All or Any) and **Failure Presentation** (Hidden, Show Locked, Show Locked With Reason), which UIs use for offers and dialogue choices.
-- **Custom rules in AngelScript**: subclass `UFVScriptCondition` (override `Evaluate` and `GetDescription`) or `UFVScriptEffect` (override `Apply`), then pick the **Script** condition or effect in data and choose your class.
-- From Blueprint/AngelScript: `UFVConditionLibrary` > `Evaluate Condition Set`, `Apply Effects`, `Describe Condition Set`.
+- **Rule classes**: new conditions and effects are instanced objects, `UFVCondition` and `UFVEffect`, subclassed the same way from C++ and AngelScript. Override `Evaluate` (and `Score` for at-least conditions, see below) and `GetDescription`, or `Apply` and `GetDescription`. Every condition object has **Invert**. Pick them in data through the **Object** condition or effect, then choose the class; once condition sets hold objects directly, the Object step goes away.
+- Comparisons use one enum, `EFVCompare` (`Compare` in AngelScript: ==, !=, >, >=, <, <=). The Fact condition adds **defined** and **undefined**.
+- From Blueprint/AngelScript: `UFVConditionLibrary` > `Evaluate Condition Set`, `Apply Effects`, `Describe Condition Set`, `Compare Values`.
+
+### Scoring and ranking
+
+An at-least condition (`>` or `>=`, such as fame >= 80) also gives a **score**: its threshold, and how far the value is past it. A set's score sums its conditions' scores (Mode All, so more requirements rank higher) or takes the best one (Mode Any).
+
+- `Rank Condition Sets` returns the indices of the sets that hold, hardest first: highest threshold, then furthest past it. Sets with no scored condition come last, and ties keep the input order, so sort the input by your tie break. Use it to pick the best unlocked thing, such as the current title.
+- `Get Condition Set Score` and `Is Score Higher` give the same comparison one set at a time.
+- In a condition class, override `Score`: fill the score with `FFVConditionScore::AtLeast(Current, Threshold)` in C++, or set **Threshold** and **Excess** in AngelScript, and return true.
+
+### Scales
+
+A scale is a value with a range, bands and links, such as standing with a faction, fame or affinity with a character. Create a data asset of `FVScaleDefinition`:
+
+| Field | Meaning |
+|---|---|
+| Id | The fact holding the value. Give the fact a **Default Value** and a **Min/Max** in *FlickerVoid > Facts*; the scale uses that range (the validator warns when it has none). |
+| Bands | Up to 3 named ranges: **Threshold** (the band applies from this value up to the next band's), **Tag**, **Label**. Below every band there is no band. |
+| Links | Up to 3 scales that get part of every change: **Factor** (negative moves the other way) and **Magnitude** (pass on the size of the change whatever its direction). A change passed on doesn't travel further. |
+
+- In data: the **Scale** condition (compare, scored for at-least) and the **Modify Scale** effect, both through **Object**.
+- From Blueprint/AngelScript: `UFVScaleLibrary` (`FVScale::` in AngelScript) > `Get Value`, `Get Band`, `Get Range`, `Modify Scale` (returns the change that applied after clamping; only that change is passed on).
+- A scale's value is a fact, so it saves, shows in the facts debugger and fires the fact change events. Set it while testing with `FV.Facts.Set`.
 
 ## 6. World clock
 

@@ -16,29 +16,30 @@ bool FVFacts::Compare(const UFVFactDatabase& Database, FGameplayTag Fact, EFVFac
 	}
 }
 
-bool FVFacts::CompareValue(int32 Current, EFVFactCompare Compare, int32 Value)
+bool FVFacts::ToCompare(const EFVFactCompare Compare, EFVCompare& OutCompare)
 {
 	switch (Compare)
 	{
-	case EFVFactCompare::Equal:          return Current == Value;
-	case EFVFactCompare::NotEqual:       return Current != Value;
-	case EFVFactCompare::Greater:        return Current > Value;
-	case EFVFactCompare::GreaterOrEqual: return Current >= Value;
-	case EFVFactCompare::Less:           return Current < Value;
-	case EFVFactCompare::LessOrEqual:    return Current <= Value;
+	case EFVFactCompare::Equal:          OutCompare = EFVCompare::Equal; return true;
+	case EFVFactCompare::NotEqual:       OutCompare = EFVCompare::NotEqual; return true;
+	case EFVFactCompare::Greater:        OutCompare = EFVCompare::Greater; return true;
+	case EFVFactCompare::GreaterOrEqual: OutCompare = EFVCompare::GreaterOrEqual; return true;
+	case EFVFactCompare::Less:           OutCompare = EFVCompare::Less; return true;
+	case EFVFactCompare::LessOrEqual:    OutCompare = EFVCompare::LessOrEqual; return true;
 	default:                             return false;
 	}
 }
 
+bool FVFacts::CompareValue(const int32 Current, const EFVFactCompare Compare, const int32 Value)
+{
+	EFVCompare ValueCompare;
+	return ToCompare(Compare, ValueCompare) && FVCompare::Compare(Current, ValueCompare, Value);
+}
+
 bool FVFacts::CompareScore(const int32 Current, const EFVFactCompare Compare, const int32 Value, FFVConditionScore& OutScore)
 {
-	if (Compare != EFVFactCompare::Greater && Compare != EFVFactCompare::GreaterOrEqual)
-	{
-		return false;
-	}
-
-	OutScore = FFVConditionScore::AtLeast(Current, Value);
-	return true;
+	EFVCompare ValueCompare;
+	return ToCompare(Compare, ValueCompare) && FVCompare::Score(Current, ValueCompare, Value, OutScore);
 }
 
 bool FFVCondition_Fact::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
