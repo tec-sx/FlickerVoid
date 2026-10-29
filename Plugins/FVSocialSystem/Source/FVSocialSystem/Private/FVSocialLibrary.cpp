@@ -12,8 +12,6 @@
 
 namespace FVSocial
 {
-	constexpr int32 MaxNotoriety = 100;
-
 	int32 ReadFact(const UObject* WorldContext, const FGameplayTag Fact)
 	{
 		const UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext);
@@ -66,17 +64,22 @@ void UFVSocialLibrary::ModifyStanding(UObject* WorldContext, const UFVFactionDef
 		return;
 	}
 
-	AddClamped(WorldContext, Faction->Id, Delta, Faction->MinStanding, Faction->MaxStanding);
+	// Only the change that applied feeds the rest, so rewards at max or min standing earn nothing more.
+	const int32 Applied = AddClamped(WorldContext, Faction->Id, Delta, Faction->MinStanding, Faction->MaxStanding);
+	if (Applied == 0 || (Applied > 0) != (Delta > 0))
+	{
+		return;
+	}
 
 	// Standing with any faction makes the player talked about, and standing with the wrong sort makes them wanted.
-	ModifyFame(WorldContext, FMath::RoundToInt(FMath::Abs(Delta) * Faction->FameContribution));
-	ModifyGlobalNotoriety(WorldContext, FMath::RoundToInt(Delta * Faction->NotorietyContribution));
+	ModifyFame(WorldContext, FMath::RoundToInt(FMath::Abs(Applied) * Faction->FameContribution));
+	ModifyGlobalNotoriety(WorldContext, FMath::RoundToInt(Applied * Faction->NotorietyContribution));
 
 	for (const TPair<TObjectPtr<UFVFactionDefinition>, float>& Relation : Faction->Relations)
 	{
 		if (Relation.Key && Relation.Key != Faction)
 		{
-			AddClamped(WorldContext, Relation.Key->Id, FMath::RoundToInt(Delta * Relation.Value), Relation.Key->MinStanding, Relation.Key->MaxStanding);
+			AddClamped(WorldContext, Relation.Key->Id, FMath::RoundToInt(Applied * Relation.Value), Relation.Key->MinStanding, Relation.Key->MaxStanding);
 		}
 	}
 }
@@ -90,7 +93,7 @@ void UFVSocialLibrary::ModifyNotoriety(UObject* WorldContext, const UFVFactionDe
 {
 	if (Faction)
 	{
-		AddClamped(WorldContext, Faction->NotorietyFact, Delta, 0, FVSocial::MaxNotoriety);
+		AddClamped(WorldContext, Faction->NotorietyFact, Delta, 0, UFVSocialSettings::Get().MaxNotoriety);
 	}
 }
 
@@ -111,7 +114,8 @@ int32 UFVSocialLibrary::GetGlobalNotoriety(const UObject* WorldContext)
 
 void UFVSocialLibrary::ModifyGlobalNotoriety(UObject* WorldContext, const int32 Delta)
 {
-	AddClamped(WorldContext, UFVSocialSettings::Get().NotorietyFact, Delta, 0, FVSocial::MaxNotoriety);
+	const UFVSocialSettings& Settings = UFVSocialSettings::Get();
+	AddClamped(WorldContext, Settings.NotorietyFact, Delta, 0, Settings.MaxNotoriety);
 }
 
 bool UFVSocialLibrary::IsDisguised(const AActor* Actor)
@@ -305,14 +309,16 @@ EFVAttitude UFVSocialLibrary::GetAttitude(const UFVFactionDefinition* Faction, c
 	return Tier ? Tier->Attitude : EFVAttitude::Neutral;
 }
 
-void UFVSocialLibrary::AddClamped(UObject* WorldContext, const FGameplayTag Fact, const int32 Delta, const int32 Min, const int32 Max)
+int32 UFVSocialLibrary::AddClamped(UObject* WorldContext, const FGameplayTag Fact, const int32 Delta, const int32 Min, const int32 Max)
 {
 	UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext);
 	if (!Database || !Fact.IsValid() || Delta == 0)
 	{
-		return;
+		return 0;
 	}
 
-	const int64 Next = static_cast<int64>(Database->GetFact(Fact)) + Delta;
-	Database->SetFact(Fact, static_cast<int32>(FMath::Clamp<int64>(Next, Min, Max)));
+	const int32 Current = Database->GetFact(Fact);
+	const int32 Next = static_cast<int32>(FMath::Clamp<int64>(static_cast<int64>(Current) + Delta, Min, Max));
+	Database->SetFact(Fact, Next);
+	return static_cast<int32>(static_cast<int64>(Next) - Current);
 }

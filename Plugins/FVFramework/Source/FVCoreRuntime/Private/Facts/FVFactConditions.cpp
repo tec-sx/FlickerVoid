@@ -8,9 +8,16 @@
 
 bool FVFacts::Compare(const UFVFactDatabase& Database, FGameplayTag Fact, EFVFactCompare Compare, int32 Value)
 {
-	const bool bDefined = Database.IsFactDefined(Fact);
-	const int32 Current = Database.GetFact(Fact);
+	switch (Compare)
+	{
+	case EFVFactCompare::Defined:   return Database.IsFactDefined(Fact);
+	case EFVFactCompare::Undefined: return !Database.IsFactDefined(Fact);
+	default:                        return CompareValue(Database.GetFact(Fact), Compare, Value);
+	}
+}
 
+bool FVFacts::CompareValue(int32 Current, EFVFactCompare Compare, int32 Value)
+{
 	switch (Compare)
 	{
 	case EFVFactCompare::Equal:          return Current == Value;
@@ -19,8 +26,6 @@ bool FVFacts::Compare(const UFVFactDatabase& Database, FGameplayTag Fact, EFVFac
 	case EFVFactCompare::GreaterOrEqual: return Current >= Value;
 	case EFVFactCompare::Less:           return Current < Value;
 	case EFVFactCompare::LessOrEqual:    return Current <= Value;
-	case EFVFactCompare::Defined:        return bDefined;
-	case EFVFactCompare::Undefined:      return !bDefined;
 	default:                             return false;
 	}
 }
