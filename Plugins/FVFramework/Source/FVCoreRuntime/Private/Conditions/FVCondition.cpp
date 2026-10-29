@@ -1,6 +1,18 @@
 #include "Conditions/FVCondition.h"
 
+#include "FVCoreRuntime.h"
+
 #define LOCTEXT_NAMESPACE "FVCondition"
+
+AActor* FFVConditionContext::GetActor(const bool bTarget, const UScriptStruct* Requester) const
+{
+	AActor* Actor = bTarget ? Target.Get() : Instigator.Get();
+#if !UE_BUILD_SHIPPING
+	UE_CLOG(Actor == nullptr, LogFVCore, Warning, TEXT("%s needs a context %s but has none; it reads as empty."),
+		Requester ? *Requester->GetName() : TEXT("Condition"), bTarget ? TEXT("target") : TEXT("instigator"));
+#endif
+	return Actor;
+}
 
 bool FFVConditionSet::Evaluate(const FFVConditionContext& Context) const
 {

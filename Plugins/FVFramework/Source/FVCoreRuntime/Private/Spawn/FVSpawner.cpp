@@ -1,9 +1,9 @@
 #include "Spawn/FVSpawner.h"
 
 #include "Components/BillboardComponent.h"
+#include "Conditions/FVConditionLibrary.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
-#include "Kismet/GameplayStatics.h"
 #include "Misc/DataValidation.h"
 
 #define LOCTEXT_NAMESPACE "FVSpawner"
@@ -56,11 +56,7 @@ void AFVSpawner::HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewVa
 
 FFVConditionContext AFVSpawner::MakeContext() const
 {
-	FFVConditionContext Context;
-	Context.WorldContext = const_cast<AFVSpawner*>(this);
-	Context.Instigator = UGameplayStatics::GetPlayerPawn(this, 0);
-	Context.Target = SpawnedActor;
-	return Context;
+	return UFVConditionLibrary::MakePlayerContext(const_cast<AFVSpawner*>(this), SpawnedActor);
 }
 
 void AFVSpawner::Evaluate()

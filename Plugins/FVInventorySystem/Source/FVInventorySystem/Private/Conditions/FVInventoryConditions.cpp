@@ -12,11 +12,6 @@
 
 namespace FVInventoryConditions
 {
-	AActor* Pick(const FFVConditionContext& Context, const bool bTarget)
-	{
-		return bTarget ? Context.Target.Get() : Context.Instigator.Get();
-	}
-
 	FText ItemName(const UFVItemDefinition* Item)
 	{
 		return Item ? Item->Display.Name : LOCTEXT("None", "<none>");
@@ -25,7 +20,8 @@ namespace FVInventoryConditions
 
 bool FFVCondition_HasItem::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	const UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(FVInventoryConditions::Pick(Context, bCheckTarget));
+	AActor* Actor = Context.GetActor(bCheckTarget, StaticStruct());
+	const UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(Actor);
 	return Inventory && Inventory->HasItem(Item, Quantity);
 }
 
@@ -36,7 +32,8 @@ FText FFVCondition_HasItem::GetDescription() const
 
 bool FFVCondition_HasItemWithTag::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	const UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(FVInventoryConditions::Pick(Context, bCheckTarget));
+	AActor* Actor = Context.GetActor(bCheckTarget, StaticStruct());
+	const UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(Actor);
 	return Inventory && Tag.IsValid() && Inventory->GetQuantityWithTag(Tag) >= Quantity;
 }
 
@@ -47,7 +44,8 @@ FText FFVCondition_HasItemWithTag::GetDescription() const
 
 bool FFVCondition_HasMoney::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	const UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(FVInventoryConditions::Pick(Context, bCheckTarget));
+	AActor* Actor = Context.GetActor(bCheckTarget, StaticStruct());
+	const UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(Actor);
 	return Inventory && Inventory->CanAfford(Amount);
 }
 
@@ -58,7 +56,8 @@ FText FFVCondition_HasMoney::GetDescription() const
 
 bool FFVCondition_IsWearing::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	const UFVEquipmentComponent* Equipment = UFVEquipmentComponent::Find(FVInventoryConditions::Pick(Context, bCheckTarget));
+	AActor* Actor = Context.GetActor(bCheckTarget, StaticStruct());
+	const UFVEquipmentComponent* Equipment = UFVEquipmentComponent::Find(Actor);
 	if (!Equipment)
 	{
 		return false;
@@ -75,7 +74,7 @@ FText FFVCondition_IsWearing::GetDescription() const
 
 void FFVEffect_GiveItem::Apply(const FFVConditionContext& Context) const
 {
-	AActor* Receiver = FVInventoryConditions::Pick(Context, bGiveToTarget);
+	AActor* Receiver = Context.GetActor(bGiveToTarget, StaticStruct());
 	UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(Receiver);
 	// Story grants ignore carry limits so a reward is never lost; the player drops something later.
 	if (!Inventory || Inventory->AddStoryItem(Item, Quantity) <= 0 || !bEquip)
@@ -96,7 +95,8 @@ FText FFVEffect_GiveItem::GetDescription() const
 
 void FFVEffect_TakeItem::Apply(const FFVConditionContext& Context) const
 {
-	if (UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(FVInventoryConditions::Pick(Context, bTakeFromTarget)))
+	AActor* Actor = Context.GetActor(bTakeFromTarget, StaticStruct());
+	if (UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(Actor))
 	{
 		Inventory->RemoveItem(Item, Quantity);
 	}
@@ -109,7 +109,8 @@ FText FFVEffect_TakeItem::GetDescription() const
 
 void FFVEffect_GiveMoney::Apply(const FFVConditionContext& Context) const
 {
-	if (UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(FVInventoryConditions::Pick(Context, bGiveToTarget)))
+	AActor* Actor = Context.GetActor(bGiveToTarget, StaticStruct());
+	if (UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(Actor))
 	{
 		Inventory->AddMoney(Amount);
 	}
@@ -122,7 +123,8 @@ FText FFVEffect_GiveMoney::GetDescription() const
 
 void FFVEffect_TakeMoney::Apply(const FFVConditionContext& Context) const
 {
-	if (UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(FVInventoryConditions::Pick(Context, bTakeFromTarget)))
+	AActor* Actor = Context.GetActor(bTakeFromTarget, StaticStruct());
+	if (UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(Actor))
 	{
 		Inventory->RemoveMoney(Amount);
 	}
@@ -135,7 +137,8 @@ FText FFVEffect_TakeMoney::GetDescription() const
 
 void FFVEffect_GiveLoot::Apply(const FFVConditionContext& Context) const
 {
-	if (UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(FVInventoryConditions::Pick(Context, bGiveToTarget)))
+	AActor* Actor = Context.GetActor(bGiveToTarget, StaticStruct());
+	if (UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(Actor))
 	{
 		UFVLootLibrary::GiveLoot(Table, Inventory, Context.Instigator);
 	}
