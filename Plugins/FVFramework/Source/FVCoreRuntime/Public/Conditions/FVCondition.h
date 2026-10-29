@@ -17,6 +17,9 @@ struct FVCORERUNTIME_API FFVConditionContext
 
 	UPROPERTY(BlueprintReadWrite, Category = "Condition")
 	TObjectPtr<AActor> Target = nullptr;
+
+	/** The target or the instigator, for a condition or effect that needs it; warns outside Shipping, naming the Requester, when it's missing. */
+	AActor* GetActor(bool bTarget, const UScriptStruct* Requester) const;
 };
 
 /** How hard an at-least condition is to meet and how far past its threshold the value is. A higher threshold ranks first. */

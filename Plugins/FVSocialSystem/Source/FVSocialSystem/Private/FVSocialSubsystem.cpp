@@ -1,11 +1,14 @@
 #include "FVSocialSubsystem.h"
 
+#include "Conditions/FVConditionLibrary.h"
+#include "Engine/GameInstance.h"
 #include "Facts/FVFactDatabase.h"
 #include "FVSocialLibrary.h"
 #include "FVSocialSystem.h"
 #include "FVSocialTypes.h"
 #include "FVTitleDefinition.h"
-#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Controller.h"
+#include "GameFramework/Pawn.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVSocialSubsystem)
 
@@ -37,6 +40,11 @@ void UFVSocialSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 		FactChangedHandle = Facts->OnFactChangedNative().AddUObject(this, &UFVSocialSubsystem::HandleFactChanged);
 	}
 
+	if (UGameInstance* GameInstance = InWorld.GetGameInstance())
+	{
+		GameInstance->GetOnPawnControllerChanged().AddDynamic(this, &UFVSocialSubsystem::HandlePawnControllerChanged);
+	}
+
 	EvaluateTitles();
 }
 
@@ -48,12 +56,25 @@ void UFVSocialSubsystem::Deinitialize()
 	}
 	FactChangedHandle.Reset();
 
+	if (UGameInstance* GameInstance = GetWorld()->GetGameInstance())
+	{
+		GameInstance->GetOnPawnControllerChanged().RemoveDynamic(this, &UFVSocialSubsystem::HandlePawnControllerChanged);
+	}
+
 	Super::Deinitialize();
 }
 
 void UFVSocialSubsystem::HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue)
 {
 	EvaluateTitles();
+}
+
+void UFVSocialSubsystem::HandlePawnControllerChanged(APawn* Pawn, AController* Controller)
+{
+	if (Pawn && Pawn->GetWorld() == GetWorld() && Controller && Controller->IsLocalPlayerController())
+	{
+		EvaluateTitles();
+	}
 }
 
 void UFVSocialSubsystem::EvaluateTitles()
@@ -183,10 +204,7 @@ void UFVSocialSubsystem::MakeCurrent(const UFVTitleDefinition* Title)
 
 FFVConditionContext UFVSocialSubsystem::MakeTitleContext() const
 {
-	FFVConditionContext Context;
-	Context.WorldContext = const_cast<UFVSocialSubsystem*>(this);
-	Context.Instigator = UGameplayStatics::GetPlayerPawn(this, 0);
-	return Context;
+	return UFVConditionLibrary::MakePlayerContext(const_cast<UFVSocialSubsystem*>(this));
 }
 
 int32 UFVSocialSubsystem::GetTitleRank(const UFVTitleDefinition* Title) const
