@@ -1,13 +1,10 @@
 #include "FVFlowContext.h"
 
-#include "Kismet/GameplayStatics.h"
+#include "Conditions/FVConditionLibrary.h"
 #include "Nodes/FlowNodeBase.h"
 
 FFVConditionContext FVFlow::MakeContext(const UFlowNodeBase& Node)
 {
-	FFVConditionContext Context;
-	Context.WorldContext = Node.GetWorld();
-	Context.Instigator = UGameplayStatics::GetPlayerPawn(Context.WorldContext, 0);
-	Context.Target = Node.TryGetRootFlowActorOwner();
-	return Context;
+	AActor* FlowOwner = Node.TryGetRootFlowActorOwner();
+	return UFVConditionLibrary::MakePlayerContext(Node.GetWorld(), FlowOwner);
 }
