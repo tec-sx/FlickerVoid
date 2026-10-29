@@ -9,15 +9,30 @@
 
 namespace
 {
-	int32 MaxRoll(EFVCheckRoll Roll)
+	// Chance that the roll comes up Needed or higher; 2d6 counts its 36 outcomes.
+	float ChanceAtLeast(EFVCheckRoll Roll, int32 Needed)
 	{
+		int32 Faces = 0;
 		switch (Roll)
 		{
-		case EFVCheckRoll::D6x2: return 12;
-		case EFVCheckRoll::D10: return 10;
-		case EFVCheckRoll::D20: return 20;
-		default: return 0;
+		case EFVCheckRoll::D6x2:
+			{
+				int32 Hits = 0;
+				for (int32 First = 1; First <= 6; ++First)
+				{
+					for (int32 Second = 1; Second <= 6; ++Second)
+					{
+						Hits += First + Second >= Needed ? 1 : 0;
+					}
+				}
+				return static_cast<float>(Hits) / 36.f;
+			}
+		case EFVCheckRoll::D10: Faces = 10; break;
+		case EFVCheckRoll::D20: Faces = 20; break;
+		default: return Needed <= 0 ? 1.f : 0.f;
 		}
+
+		return static_cast<float>(FMath::Clamp(Faces - Needed + 1, 0, Faces)) / static_cast<float>(Faces);
 	}
 }
 
@@ -39,20 +54,7 @@ float UFVCheckLibrary::SuccessChance(const UFVCheckDefinition* Check, AActor* In
 	}
 
 	const FFVCheckResult Passive = PreviewCheck(Check, Instigator, Target, Difficulty);
-	const int32 Faces = MaxRoll(Check->Roll);
-
-	if (Faces == 0)
-	{
-		return Passive.bSuccess ? 1.f : 0.f;
-	}
-
-	const int32 Needed = Difficulty - Passive.Total;
-	if (Needed <= 1)
-	{
-		return 1.f;
-	}
-
-	return Needed > Faces ? 0.f : static_cast<float>(Faces - Needed + 1) / static_cast<float>(Faces);
+	return ChanceAtLeast(Check->Roll, Difficulty - Passive.Total);
 }
 
 FFVCheckResult UFVCheckLibrary::Build(const UFVCheckDefinition* Check, const FFVConditionContext& Context, int32 Difficulty, bool bRoll)
