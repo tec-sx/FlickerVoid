@@ -340,7 +340,16 @@ int32 UFVInventoryComponent::GetAcceptedQuantity(const UFVItemDefinition* Item, 
 
 int32 UFVInventoryComponent::AddItem(UFVItemDefinition* Item, const int32 Quantity)
 {
-	const int32 Added = GetAcceptedQuantity(Item, Quantity);
+	return AddUnits(Item, GetAcceptedQuantity(Item, Quantity));
+}
+
+int32 UFVInventoryComponent::AddItemOverLimits(UFVItemDefinition* Item, const int32 Quantity)
+{
+	return Item ? AddUnits(Item, Quantity) : 0;
+}
+
+int32 UFVInventoryComponent::AddUnits(UFVItemDefinition* Item, const int32 Added)
+{
 	if (Added <= 0)
 	{
 		return 0;
