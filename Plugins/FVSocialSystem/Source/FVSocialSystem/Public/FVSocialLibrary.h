@@ -95,10 +95,6 @@ public:
 
 	static const FFVCharacterFragment_Social* FindSocialFragment(const AActor* Actor);
 
-	/** Writes the title's fact and applies its effects. Returns false if it was already held. */
-	static bool GrantTitle(UObject* WorldContext, const UFVTitleDefinition* Title);
-	static void RevokeTitle(UObject* WorldContext, const UFVTitleDefinition* Title);
-
 	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (WorldContext = "WorldContext"))
 	static bool HasTitle(const UObject* WorldContext, const UFVTitleDefinition* Title);
 
