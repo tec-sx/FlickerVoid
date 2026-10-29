@@ -31,26 +31,41 @@ bool UFVDialogueSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType
 void UFVDialogueSubsystem::Deinitialize()
 {
 	CancelPending();
+	if (const UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(AbortTimer);
+		World->GetTimerManager().ClearTimer(CheckTimer);
+	}
 	Super::Deinitialize();
 }
 
 bool UFVDialogueSubsystem::StartConversation(UFlowAsset* InDialogue, AActor* InInstigator, AActor* InOwner)
 {
 	UGameInstance* GameInstance = GetWorld() ? GetWorld()->GetGameInstance() : nullptr;
-	UFlowSubsystem* Flow = GameInstance ? GameInstance->GetSubsystem<UFlowSubsystem>() : nullptr;
-	if (bActive || !InDialogue || !InOwner || !Flow)
+	UFlowSubsystem* FlowSubsystem = GameInstance ? GameInstance->GetSubsystem<UFlowSubsystem>() : nullptr;
+	if (bActive || !InDialogue || !InOwner || !FlowSubsystem)
 	{
 		UE_LOG(LogFVDialogueSystem, Warning, TEXT("Can't start conversation %s with %s."), *GetNameSafe(InDialogue), *GetNameSafe(InOwner));
 		return false;
 	}
 
-	BeginConversation(InInstigator, InOwner);
+	// A conversation ended this frame still has its flow instance, which would block the new one.
+	FlushPendingAbort();
+
+	UFlowAsset* Instance = FlowSubsystem->CreateRootFlow(InOwner, InDialogue, false);
+	if (!Instance)
+	{
+		UE_LOG(LogFVDialogueSystem, Warning, TEXT("Conversation %s with %s is already running."), *GetNameSafe(InDialogue), *GetNameSafe(InOwner));
+		return false;
+	}
+
+	BeginConversation(InInstigator, InOwner, Instance);
 	Dialogue = InDialogue;
-	Flow->StartRootFlow(InOwner, InDialogue, TScriptInterface<IFlowDataPinValueSupplierInterface>(), false);
+	Instance->StartFlow();
 	return true;
 }
 
-void UFVDialogueSubsystem::BeginConversation(AActor* InInstigator, AActor* InOwner)
+void UFVDialogueSubsystem::BeginConversation(AActor* InInstigator, AActor* InOwner, UFlowAsset* InFlow)
 {
 	if (bActive)
 	{
@@ -60,7 +75,19 @@ void UFVDialogueSubsystem::BeginConversation(AActor* InInstigator, AActor* InOwn
 	bActive = true;
 	Instigator = InInstigator ? InInstigator : UGameplayStatics::GetPlayerPawn(this, 0);
 	Owner = InOwner;
+	Flow = InFlow;
+	GetWorld()->GetTimerManager().SetTimer(CheckTimer, this, &UFVDialogueSubsystem::CheckConversation, 0.25f, true);
 	OnConversationStarted.Broadcast();
+}
+
+void UFVDialogueSubsystem::CheckConversation()
+{
+	const bool bFlowStopped = Flow.IsExplicitlyNull() ? false : !Flow.IsValid() || !Flow->IsActive();
+	if (bActive && (bFlowStopped || !Owner.IsValid()))
+	{
+		UE_LOG(LogFVDialogueSystem, Log, TEXT("Closing conversation %s: %s."), *GetNameSafe(Dialogue), bFlowStopped ? TEXT("its flow stopped") : TEXT("its owner is gone"));
+		Close(!bFlowStopped);
+	}
 }
 
 void UFVDialogueSubsystem::EndConversation()
@@ -81,6 +108,7 @@ void UFVDialogueSubsystem::Close(const bool bAbortFlow)
 	}
 
 	CancelPending();
+	GetWorld()->GetTimerManager().ClearTimer(CheckTimer);
 
 	AActor* FlowOwner = Owner.Get();
 	UFlowAsset* FlowTemplate = Dialogue;
@@ -88,27 +116,38 @@ void UFVDialogueSubsystem::Close(const bool bAbortFlow)
 	bActive = false;
 	Instigator.Reset();
 	Owner.Reset();
+	Flow.Reset();
 	Dialogue = nullptr;
 	CurrentLine = FFVDialogueLine();
 	Choices.Reset();
 
-	// Deferred so it's safe to end from inside a running node.
+	// Deferred so it's safe to end from inside a running node; a new conversation flushes it first.
 	if (bAbortFlow && FlowOwner && FlowTemplate)
 	{
-		TWeakObjectPtr<AActor> WeakOwner = FlowOwner;
-		TWeakObjectPtr<UFlowAsset> WeakTemplate = FlowTemplate;
-		TWeakObjectPtr<UGameInstance> WeakGameInstance = GetWorld()->GetGameInstance();
-		GetWorld()->GetTimerManager().SetTimerForNextTick([WeakOwner, WeakTemplate, WeakGameInstance]()
-		{
-			UFlowSubsystem* Flow = WeakGameInstance.IsValid() ? WeakGameInstance->GetSubsystem<UFlowSubsystem>() : nullptr;
-			if (Flow && WeakOwner.IsValid() && WeakTemplate.IsValid())
-			{
-				Flow->FinishRootFlow(WeakOwner.Get(), WeakTemplate.Get(), EFlowFinishPolicy::Abort);
-			}
-		});
+		FlushPendingAbort();
+		PendingAbortOwner = FlowOwner;
+		PendingAbortTemplate = FlowTemplate;
+		GetWorld()->GetTimerManager().SetTimer(AbortTimer, this, &UFVDialogueSubsystem::FlushPendingAbort, KINDA_SMALL_NUMBER, false);
 	}
 
 	OnConversationEnded.Broadcast();
+}
+
+void UFVDialogueSubsystem::FlushPendingAbort()
+{
+	GetWorld()->GetTimerManager().ClearTimer(AbortTimer);
+
+	AActor* AbortOwner = PendingAbortOwner.Get();
+	UFlowAsset* AbortTemplate = PendingAbortTemplate.Get();
+	PendingAbortOwner.Reset();
+	PendingAbortTemplate.Reset();
+
+	UGameInstance* GameInstance = GetWorld()->GetGameInstance();
+	UFlowSubsystem* FlowSubsystem = GameInstance ? GameInstance->GetSubsystem<UFlowSubsystem>() : nullptr;
+	if (FlowSubsystem && AbortOwner && AbortTemplate)
+	{
+		FlowSubsystem->FinishRootFlow(AbortOwner, AbortTemplate, EFlowFinishPolicy::Abort);
+	}
 }
 
 AActor* UFVDialogueSubsystem::ResolveSpeaker(const UFVCharacterDefinition* Speaker) const
@@ -228,6 +267,23 @@ void UFVDialogueSubsystem::Bark(AActor* Speaker, const FText& Text, const float 
 		Participant->OnBark.Broadcast(Text, Duration);
 	}
 	OnBark.Broadcast(Speaker, Text, Duration);
+}
+
+FName UFVDialogueSubsystem::GetLastBark(const AActor* Speaker) const
+{
+	return LastBarks.FindRef(const_cast<AActor*>(Speaker));
+}
+
+void UFVDialogueSubsystem::SetLastBark(AActor* Speaker, const FName Row)
+{
+	for (auto It = LastBarks.CreateIterator(); It; ++It)
+	{
+		if (!It.Key().IsValid())
+		{
+			It.RemoveCurrent();
+		}
+	}
+	LastBarks.Add(Speaker, Row);
 }
 
 void UFVDialogueSubsystem::StopVoice()
