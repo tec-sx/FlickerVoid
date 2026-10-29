@@ -63,6 +63,7 @@ The player needs an Ability System Component for disguises to be read.
 |---|---|
 | Fame Fact | Fact holding fame |
 | Notoriety Fact | Fact holding global notoriety |
+| Max Notoriety | Upper bound of global and per-faction notoriety (default 100) |
 | Titles | Every title evaluated on fact changes |
 | Factions | Factions listed by the debug HUD and commands, the menus (`Get Factions`) and disguise lookups (`Get Disguise Faction`) |
 | Relationships | Character definitions the menus list once their relationship fact has been set (`Get Known Characters`) |

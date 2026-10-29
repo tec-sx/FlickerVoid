@@ -85,6 +85,9 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Fame", meta = (Categories = "Fact"))
 	FGameplayTag NotorietyFact;
 
+	UPROPERTY(Config, EditAnywhere, Category = "Fame", meta = (ClampMin = 0, ToolTip = "Upper bound of global and per-faction notoriety."))
+	int32 MaxNotoriety = 100;
+
 	/** Titles the player can earn; each one watches the facts its conditions read. */
 	UPROPERTY(Config, EditAnywhere, Category = "Fame")
 	TArray<TSoftObjectPtr<UFVTitleDefinition>> Titles;

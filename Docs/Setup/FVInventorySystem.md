@@ -151,7 +151,7 @@ From Blueprint/AngelScript use `UFVLootLibrary` (`FVLoot::` in AngelScript): `Ro
 
 | Conditions | Effects |
 |---|---|
-| Has Item (quantity; Instigator or Target), Has Item With Tag (units of items whose definition Tags have the tag, e.g. a key or a tool), Has Money (at least Amount), Is Wearing (an item, or anything granting a tag) | Give Item (optionally equip), Take Item, Give Money, Take Money (nothing if there isn't enough; gate it with Has Money), Give Loot (rolls a loot table into the Instigator's or Target's inventory) |
+| Has Item (quantity; Instigator or Target), Has Item With Tag (units of items whose definition Tags have the tag, e.g. a key or a tool), Has Money (at least Amount), Is Wearing (an item, or anything granting a tag) | Give Item (optionally equip; ignores carry limits so a reward is never lost), Take Item, Give Money, Take Money (nothing if there isn't enough; gate it with Has Money), Give Loot (rolls a loot table into the Instigator's or Target's inventory) |
 
 Use *Is Wearing* with a granted tag for dress codes ("wear anything granting `Disguise.Faction.Police`").
 
