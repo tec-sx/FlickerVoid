@@ -28,7 +28,6 @@ class UFVPlayerStatusWidget : UUserWidget
     UTextBlock TitleText;
 
     private UFVEquipmentComponent Equipment;
-    private UFVTitleDefinition LatestTitle;
 
     UFUNCTION(BlueprintOverride)
     void Construct()
@@ -49,9 +48,7 @@ class UFVPlayerStatusWidget : UUserWidget
         UFVSocialSubsystem Social = UFVSocialSubsystem::Get();
         if (Social != nullptr)
         {
-            Social.OnTitleEarned.AddUFunction(this, n"HandleTitleEarned");
-            TArray<UFVTitleDefinition> Held = Social.GetHeldTitles();
-            LatestTitle = Held.Num() > 0 ? Held.Last() : nullptr;
+            Social.OnCurrentTitleChanged.AddUFunction(this, n"HandleCurrentTitleChanged");
         }
 
         Refresh();
@@ -75,7 +72,7 @@ class UFVPlayerStatusWidget : UUserWidget
         UFVSocialSubsystem Social = UFVSocialSubsystem::Get();
         if (Social != nullptr)
         {
-            Social.OnTitleEarned.UnbindObject(this);
+            Social.OnCurrentTitleChanged.UnbindObject(this);
         }
     }
 
@@ -112,14 +109,12 @@ class UFVPlayerStatusWidget : UUserWidget
             NotorietyBar.SetPercent(float32(FVUIText::Fraction(float(Notoriety), float(NotorietyScale))));
         }
 
-        if (LatestTitle != nullptr && !FVSocial::HasTitle(LatestTitle))
-        {
-            LatestTitle = nullptr;
-        }
+        UFVSocialSubsystem Social = UFVSocialSubsystem::Get();
+        UFVTitleDefinition CurrentTitle = Social != nullptr ? Social.GetCurrentTitle() : nullptr;
         if (TitleText != nullptr)
         {
-            TitleText.SetText(LatestTitle != nullptr ? LatestTitle.Display.Name : FText());
-            TitleText.SetVisibility(LatestTitle != nullptr ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+            TitleText.SetText(CurrentTitle != nullptr ? CurrentTitle.Display.Name : FText());
+            TitleText.SetVisibility(CurrentTitle != nullptr ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
         }
     }
 
@@ -150,19 +145,8 @@ class UFVPlayerStatusWidget : UUserWidget
     }
 
     UFUNCTION()
-    private void HandleTitleEarned(const UFVTitleDefinition Title)
+    private void HandleCurrentTitleChanged(const UFVTitleDefinition Title)
     {
-        UFVSocialSubsystem Social = UFVSocialSubsystem::Get();
-        if (Social != nullptr)
-        {
-            for (UFVTitleDefinition Held : Social.GetHeldTitles())
-            {
-                if (Held == Title)
-                {
-                    LatestTitle = Held;
-                }
-            }
-        }
         Refresh();
     }
 }
