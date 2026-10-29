@@ -16,7 +16,7 @@ class FVSOCIALSYSTEM_API UFVTitleDefinition : public UFVDefinition
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title", meta = (ToolTip = "Evaluated whenever a fact changes; usually fame, notoriety or a faction standing. Holding again after they lapsed makes the title current again."))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title", meta = (ToolTip = "Evaluated whenever a fact changes; usually fame, notoriety or a faction standing. Their at-least thresholds rank the title: the hardest held title is current."))
 	FFVConditionSet Conditions;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title", meta = (ToolTip = "Applied once, the first time the title is earned."))

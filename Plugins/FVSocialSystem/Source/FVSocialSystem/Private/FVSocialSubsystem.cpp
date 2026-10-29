@@ -5,6 +5,7 @@
 #include "FVSocialSystem.h"
 #include "FVSocialTypes.h"
 #include "FVTitleDefinition.h"
+#include "Kismet/GameplayStatics.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVSocialSubsystem)
 
@@ -80,29 +81,50 @@ void UFVSocialSubsystem::EvaluateTitles()
 
 void UFVSocialSubsystem::EvaluateTitlesOnce()
 {
-	FFVConditionContext Context;
-	Context.WorldContext = this;
+	const FFVConditionContext Context = MakeTitleContext();
+
+	const UFVTitleDefinition* Best = nullptr;
+	FFVConditionScore BestScore;
+	TArray<const UFVTitleDefinition*> NewTitles;
 
 	for (const TObjectPtr<const UFVTitleDefinition>& Title : Titles)
 	{
-		if (Title == nullptr)
+		if (Title == nullptr || !Title->Id.IsValid() || !Title->Conditions.Evaluate(Context))
 		{
 			continue;
 		}
 
-		if (!Title->Conditions.Evaluate(Context))
+		if (!UFVSocialLibrary::HasTitle(this, Title))
 		{
-			TitlesInCondition.Remove(Title);
-			continue;
+			NewTitles.Add(Title);
 		}
 
-		bool bAlreadyInCondition = false;
-		TitlesInCondition.Add(Title, &bAlreadyInCondition);
-
-		// A first pass only records which conditions hold, so held titles keep their order after a load.
-		if (!UFVSocialLibrary::HasTitle(this, Title) || (bTitlesTracked && !bAlreadyInCondition))
+		// Titles without an at-least condition (quest or item titles) score zero; equal scores go to the more recent title.
+		FFVConditionScore Score;
+		Title->Conditions.GetScore(Context, Score);
+		const bool bTie = !(Score < BestScore) && !(BestScore < Score);
+		if (Best == nullptr || BestScore < Score || (bTie && GetTitleRank(Title) > GetTitleRank(Best)))
 		{
-			PromoteTitle(Title);
+			Best = Title;
+			BestScore = Score;
+		}
+	}
+
+	// The first pass after a load only records the leader, so a title the story promoted stays current.
+	if (Best != LeadingTitle.Get())
+	{
+		LeadingTitle = Best;
+		if (Best != nullptr && (bTitlesTracked || !NewTitles.IsEmpty()))
+		{
+			PromoteTitle(Best);
+		}
+	}
+
+	for (const UFVTitleDefinition* Title : NewTitles)
+	{
+		if (!UFVSocialLibrary::HasTitle(this, Title))
+		{
+			EarnTitle(Title);
 		}
 	}
 
@@ -121,13 +143,27 @@ void UFVSocialSubsystem::PromoteTitle(const UFVTitleDefinition* Title)
 
 	if (bFirstTime)
 	{
-		FFVConditionContext Context;
-		Context.WorldContext = this;
-		Title->OnEarned.Apply(Context);
-		OnTitleEarned.Broadcast(Title);
+		ApplyEarned(Title);
 	}
 
 	OnCurrentTitleChanged.Broadcast(Title);
+}
+
+void UFVSocialSubsystem::EarnTitle(const UFVTitleDefinition* Title)
+{
+	// Rank 1 places it below every title that has been current.
+	if (UFVFactDatabase* Facts = UFVFactDatabase::Get(this))
+	{
+		Facts->SetFact(Title->Id, 1);
+	}
+
+	ApplyEarned(Title);
+}
+
+void UFVSocialSubsystem::ApplyEarned(const UFVTitleDefinition* Title)
+{
+	Title->OnEarned.Apply(MakeTitleContext());
+	OnTitleEarned.Broadcast(Title);
 }
 
 void UFVSocialSubsystem::MakeCurrent(const UFVTitleDefinition* Title)
@@ -143,6 +179,14 @@ void UFVSocialSubsystem::MakeCurrent(const UFVTitleDefinition* Title)
 	{
 		Facts->SetFact(Title->Id, TopRank + 1);
 	}
+}
+
+FFVConditionContext UFVSocialSubsystem::MakeTitleContext() const
+{
+	FFVConditionContext Context;
+	Context.WorldContext = const_cast<UFVSocialSubsystem*>(this);
+	Context.Instigator = UGameplayStatics::GetPlayerPawn(this, 0);
+	return Context;
 }
 
 int32 UFVSocialSubsystem::GetTitleRank(const UFVTitleDefinition* Title) const

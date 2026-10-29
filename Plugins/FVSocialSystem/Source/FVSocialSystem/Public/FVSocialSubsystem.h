@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Conditions/FVCondition.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "FVSocialSubsystem.generated.h"
 
@@ -11,7 +12,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnTitleChanged, const UFVTitleDef
 
 /**
  * Keeps the player's titles: earned ones are never lost, and the most relevant one is current.
- * A title becomes current when it is first earned, when its conditions hold again after lapsing, or when the story promotes it.
+ * Among titles whose conditions hold, the hardest to earn leads (highest threshold, then furthest past it); the leader
+ * becomes current whenever it changes. A title the story promotes stays current until the leader changes again.
  */
 UCLASS()
 class FVSOCIALSYSTEM_API UFVSocialSubsystem : public UWorldSubsystem
@@ -24,13 +26,13 @@ public:
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	virtual void Deinitialize() override;
 
-	UFUNCTION(BlueprintCallable, Category = "FV|Social", meta = (ToolTip = "Re-checks every title; called on fact changes and usable after loading a save."))
+	UFUNCTION(BlueprintCallable, Category = "FV|Social", meta = (ToolTip = "Re-checks every title; called on fact changes. Call it when a non-fact value a title checks changes, such as an attribute."))
 	void EvaluateTitles();
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Social", meta = (ToolTip = "Makes the title current, earning it first (with its On Earned effects) if the player doesn't hold it yet."))
 	void PromoteTitle(const UFVTitleDefinition* Title);
 
-	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "Held titles, current first, then from most to least recently current."))
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "Held titles, current first, then from most to least recently current, then those never current."))
 	TArray<UFVTitleDefinition*> GetHeldTitles() const;
 
 	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "The title shown as the player's current one; null when none is held."))
@@ -48,14 +50,18 @@ protected:
 private:
 	void HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue);
 	void EvaluateTitlesOnce();
+	void EarnTitle(const UFVTitleDefinition* Title);
+	void ApplyEarned(const UFVTitleDefinition* Title);
 	void MakeCurrent(const UFVTitleDefinition* Title);
 	int32 GetTitleRank(const UFVTitleDefinition* Title) const;
+	FFVConditionContext MakeTitleContext() const;
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<const UFVTitleDefinition>> Titles;
 
-	/** Titles whose conditions held on the last pass; a held title moving back in here becomes current. */
-	TSet<const UFVTitleDefinition*> TitlesInCondition;
+	/** The best-scoring title on the last pass; when another one takes the lead it becomes current. */
+	UPROPERTY(Transient)
+	TObjectPtr<const UFVTitleDefinition> LeadingTitle;
 
 	FDelegateHandle FactChangedHandle;
 	bool bEvaluating = false;

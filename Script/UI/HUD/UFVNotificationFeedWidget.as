@@ -271,7 +271,13 @@ class UFVNotificationFeedWidget : UUserWidget
     {
         if (Title != nullptr)
         {
-            JustEarnedTitle = Title;
+            // Earned straight into the current spot: skip the change notice that follows.
+            UFVSocialSubsystem Social = UFVSocialSubsystem::Get();
+            JustEarnedTitle = nullptr;
+            if (Social != nullptr && Social.GetCurrentTitle() == Title)
+            {
+                JustEarnedTitle = Title;
+            }
             Notify(Title.Display.Name, TitleEarnedLabel, Title.Display.Icon);
         }
     }

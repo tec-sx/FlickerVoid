@@ -18,7 +18,7 @@ Modules: `FVSocialSystem`, `FVSocialSystemDebug`, `FVSocialSystemEditor`. Uses G
 | Asset | Class | Key fields |
 |---|---|---|
 | `DA_Faction_<Name>` | `FVFactionDefinition` | **Id** = standing fact. **Min/Max Standing**, **Tiers** (min standing, tier tag, label, attitude; sorted ascending), **Relations** (other faction and the fraction of each change passed on, e.g. Police -0.5 for Gangs), **Fame Contribution**, **Notoriety Contribution** (raise for criminal factions), **Notoriety Fact**, **Hostile Notoriety**, **Disguise Tag**, **Disguise Notoriety Limit** |
-| `DA_Title_<Name>` | `FVTitleDefinition` | **Id** = fact holding the title's rank (0 = not earned; the highest rank is the current title). **Conditions** (e.g. fame >= 60 and standing with the dockers >= 40), **On Earned** effects (applied once). Earned titles are never lost. A title becomes current when first earned, when its conditions hold again after lapsing, or through the **Promote Title** effect |
+| `DA_Title_<Name>` | `FVTitleDefinition` | **Id** = fact holding the title's rank (0 = not earned; the highest rank is the current title). **Conditions** (e.g. fame >= 60 and standing with the dockers >= 40), **On Earned** effects (applied once). Earned titles are never lost. Among titles whose conditions hold, the hardest leads: the highest at-least thresholds (summed over the conditions), then how far past them the values are. The leader becomes current whenever it changes. The **Promote Title** effect makes a title current until the leader changes again |
 
 Tier tags: create them under your own root, e.g. `Faction.Tier.Hated`, `.Disliked`, `.Neutral`, `.Liked`, `.Trusted`.
 
@@ -78,7 +78,7 @@ The player needs an Ability System Component for disguises to be read.
 
 In dialogue the observer for *Attitude* is the Target (the NPC); in an NPC's StateTree it is the Instigator (the NPC itself).
 
-From Blueprint/AngelScript use `UFVSocialLibrary` (`FVSocial::` in AngelScript): `Get Standing`, `Get Tier`, `Get Attitude(Faction, Actor)`, `Get Recognized Fame`, `Is Disguised As`, `Get Actor Faction`, `Get Gift Relationship Change`, `Receive Gift`, and the Modify functions. `UFVSocialSubsystem` keeps the titles: `Get Current Title`, `Get Held Titles` (current first), `Promote Title`, and fires **On Title Earned** (first time) and **On Current Title Changed** for notifications.
+From Blueprint/AngelScript use `UFVSocialLibrary` (`FVSocial::` in AngelScript): `Get Standing`, `Get Tier`, `Get Attitude(Faction, Actor)`, `Get Recognized Fame`, `Is Disguised As`, `Get Actor Faction`, `Get Gift Relationship Change`, `Receive Gift`, and the Modify functions. `UFVSocialSubsystem` keeps the titles: `Get Current Title`, `Get Held Titles` (current first), `Promote Title`, `Evaluate Titles` (call it when an attribute a title checks changes, since titles re-check only on fact changes), and fires **On Title Earned** (first time) and **On Current Title Changed** for notifications.
 
 ## 7. Debug
 

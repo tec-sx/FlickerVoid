@@ -31,11 +31,21 @@ namespace FVSocialConditions
 	{
 		return Character ? Character : UFVIdentityComponent::GetActorDefinition(Context.Target);
 	}
+
+	int32 ReadFame(const FFVConditionContext& Context, const bool bIgnoreDisguise)
+	{
+		return bIgnoreDisguise ? UFVSocialLibrary::GetFame(Context.WorldContext) : UFVSocialLibrary::GetRecognizedFame(Context.Instigator);
+	}
 }
 
 bool FFVCondition_Standing::EvaluateImpl(const FFVConditionContext& Context) const
 {
 	return Faction && FVFacts::CompareValue(UFVSocialLibrary::GetStanding(Context.WorldContext, Faction), Compare, Value);
+}
+
+bool FFVCondition_Standing::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	return Faction && FVFacts::CompareScore(UFVSocialLibrary::GetStanding(Context.WorldContext, Faction), Compare, Value, OutScore);
 }
 
 FText FFVCondition_Standing::GetDescription() const
@@ -48,6 +58,11 @@ bool FFVCondition_Notoriety::EvaluateImpl(const FFVConditionContext& Context) co
 	return Faction && FVFacts::CompareValue(UFVSocialLibrary::GetNotoriety(Context.WorldContext, Faction), Compare, Value);
 }
 
+bool FFVCondition_Notoriety::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	return Faction && FVFacts::CompareScore(UFVSocialLibrary::GetNotoriety(Context.WorldContext, Faction), Compare, Value, OutScore);
+}
+
 FText FFVCondition_Notoriety::GetDescription() const
 {
 	return FText::Format(LOCTEXT("Notoriety", "{0} notoriety {1} {2}"), FVSocialConditions::Name(Faction), FVSocialConditions::Op(Compare), Value);
@@ -55,11 +70,12 @@ FText FFVCondition_Notoriety::GetDescription() const
 
 bool FFVCondition_Fame::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	const int32 Fame = bIgnoreDisguise
-		? UFVSocialLibrary::GetFame(Context.WorldContext)
-		: UFVSocialLibrary::GetRecognizedFame(Context.Instigator);
+	return FVFacts::CompareValue(FVSocialConditions::ReadFame(Context, bIgnoreDisguise), Compare, Value);
+}
 
-	return FVFacts::CompareValue(Fame, Compare, Value);
+bool FFVCondition_Fame::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	return FVFacts::CompareScore(FVSocialConditions::ReadFame(Context, bIgnoreDisguise), Compare, Value, OutScore);
 }
 
 FText FFVCondition_Fame::GetDescription() const
@@ -70,6 +86,11 @@ FText FFVCondition_Fame::GetDescription() const
 bool FFVCondition_GlobalNotoriety::EvaluateImpl(const FFVConditionContext& Context) const
 {
 	return FVFacts::CompareValue(UFVSocialLibrary::GetGlobalNotoriety(Context.WorldContext), Compare, Value);
+}
+
+bool FFVCondition_GlobalNotoriety::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	return FVFacts::CompareScore(UFVSocialLibrary::GetGlobalNotoriety(Context.WorldContext), Compare, Value, OutScore);
 }
 
 FText FFVCondition_GlobalNotoriety::GetDescription() const
@@ -91,6 +112,12 @@ bool FFVCondition_Relationship::EvaluateImpl(const FFVConditionContext& Context)
 {
 	const UFVCharacterDefinition* Resolved = FVSocialConditions::CharacterOrTarget(Character, Context);
 	return Resolved && FVFacts::CompareValue(UFVSocialLibrary::GetRelationship(Context.WorldContext, Resolved), Compare, Value);
+}
+
+bool FFVCondition_Relationship::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	const UFVCharacterDefinition* Resolved = FVSocialConditions::CharacterOrTarget(Character, Context);
+	return Resolved && FVFacts::CompareScore(UFVSocialLibrary::GetRelationship(Context.WorldContext, Resolved), Compare, Value, OutScore);
 }
 
 FText FFVCondition_Relationship::GetDescription() const

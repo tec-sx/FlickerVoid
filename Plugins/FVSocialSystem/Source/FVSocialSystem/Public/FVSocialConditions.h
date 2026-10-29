@@ -29,6 +29,7 @@ struct FVSOCIALSYSTEM_API FFVCondition_Standing : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Faction Notoriety"))
@@ -49,6 +50,7 @@ struct FVSOCIALSYSTEM_API FFVCondition_Notoriety : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 /** How widely the player is talked about. Checks what an onlooker reads, so a disguise hides most of it. */
@@ -71,6 +73,7 @@ struct FVSOCIALSYSTEM_API FFVCondition_Fame : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 /** How wanted the player is overall, across every faction. */
@@ -89,6 +92,7 @@ struct FVSOCIALSYSTEM_API FFVCondition_GlobalNotoriety : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 /** The player holds a title. */
@@ -125,6 +129,7 @@ struct FVSOCIALSYSTEM_API FFVCondition_Relationship : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 /**
