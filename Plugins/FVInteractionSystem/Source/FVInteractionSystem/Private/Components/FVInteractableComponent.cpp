@@ -143,6 +143,12 @@ void UFVInteractableComponent::BeginPlay()
 
 void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (UFVInteractorComponent* Interactor = TargetInteractor.Get())
+	{
+		TargetInteractor.Reset();
+		Interactor->HandleInteractableRemoved(this);
+	}
+
 	if (const UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(Timer_Cooldown);
@@ -233,6 +239,11 @@ void UFVInteractableComponent::DeactivateInteractions()
 	}
 	
 	SetState(EFVInteractableState::Idle);
+
+	if (UFVInteractorComponent* Interactor = TargetInteractor.Get())
+	{
+		Interactor->RequestOfferRefresh();
+	}
 }
 
 bool UFVInteractableComponent::SetState(EFVInteractableState NewState)
