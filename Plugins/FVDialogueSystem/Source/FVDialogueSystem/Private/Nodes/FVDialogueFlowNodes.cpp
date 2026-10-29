@@ -26,9 +26,11 @@ UFVDialogueSubsystem* UFVFlowNode_DialogueBase::EnsureConversation()
 	UFVDialogueSubsystem* Subsystem = UFVDialogueSubsystem::Get(this);
 	if (Subsystem && !Subsystem->IsInConversation())
 	{
+		UFlowAsset* Flow = GetFlowAsset();
+		AActor* FlowOwner = TryGetRootFlowActorOwner();
 		UE_LOG(LogFVDialogueSystem, Warning, TEXT("%s started a conversation outside Start Conversation; it ends at End Conversation or when %s stops."),
-			*GetName(), *GetNameSafe(GetFlowAsset()));
-		Subsystem->BeginConversation(nullptr, TryGetRootFlowActorOwner(), GetFlowAsset());
+			*GetName(), *GetNameSafe(Flow));
+		Subsystem->BeginConversation(nullptr, FlowOwner, Flow);
 	}
 	return Subsystem;
 }
