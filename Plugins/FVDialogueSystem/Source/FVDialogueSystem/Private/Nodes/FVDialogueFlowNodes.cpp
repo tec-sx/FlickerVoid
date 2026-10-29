@@ -3,6 +3,7 @@
 #include "Components/AudioComponent.h"
 #include "Data/FVCharacterDefinition.h"
 #include "Engine/World.h"
+#include "FlowAsset.h"
 #include "FVDialogueSubsystem.h"
 #include "FVDialogueSystem.h"
 #include "FVFlowContext.h"
