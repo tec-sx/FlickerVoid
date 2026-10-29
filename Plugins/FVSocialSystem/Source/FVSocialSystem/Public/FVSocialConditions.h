@@ -53,7 +53,7 @@ protected:
 	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
-/** How widely the player is talked about. Checks what an onlooker reads, so a disguise hides most of it. */
+/** How widely the player is talked about. Tests the real fame, or with Recognized what onlookers see through a disguise. */
 USTRUCT(BlueprintType, meta = (DisplayName = "Fame"))
 struct FVSOCIALSYSTEM_API FFVCondition_Fame : public FFVConditionBase
 {
@@ -65,9 +65,8 @@ struct FVSOCIALSYSTEM_API FFVCondition_Fame : public FFVConditionBase
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	int32 Value = 0;
 
-	/** Ignore any disguise and test the real value. */
-	UPROPERTY(EditAnywhere, Category = "Condition")
-	bool bIgnoreDisguise = false;
+	UPROPERTY(EditAnywhere, Category = "Condition", meta = (ToolTip = "Test the fame onlookers see, which a disguise on the instigator lowers, instead of the real fame."))
+	bool bRecognized = false;
 
 	virtual FText GetDescription() const override;
 

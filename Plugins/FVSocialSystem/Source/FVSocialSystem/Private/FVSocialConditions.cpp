@@ -22,19 +22,19 @@ namespace FVSocialConditions
 		return Definition ? Definition->Display.Name : LOCTEXT("None", "<none>");
 	}
 
-	AActor* Pick(const FFVConditionContext& Context, const EFVContextActor Which)
+	AActor* Pick(const FFVConditionContext& Context, const EFVContextActor Which, const UScriptStruct* Requester)
 	{
-		return Which == EFVContextActor::Instigator ? Context.Instigator.Get() : Context.Target.Get();
+		return Context.GetActor(Which == EFVContextActor::Target, Requester);
 	}
 
-	const UFVCharacterDefinition* CharacterOrTarget(const UFVCharacterDefinition* Character, const FFVConditionContext& Context)
+	const UFVCharacterDefinition* CharacterOrTarget(const UFVCharacterDefinition* Character, const FFVConditionContext& Context, const UScriptStruct* Requester)
 	{
-		return Character ? Character : UFVIdentityComponent::GetActorDefinition(Context.Target);
+		return Character ? Character : UFVIdentityComponent::GetActorDefinition(Context.GetActor(true, Requester));
 	}
 
-	int32 ReadFame(const FFVConditionContext& Context, const bool bIgnoreDisguise)
+	int32 ReadFame(const FFVConditionContext& Context, const bool bRecognized, const UScriptStruct* Requester)
 	{
-		return bIgnoreDisguise ? UFVSocialLibrary::GetFame(Context.WorldContext) : UFVSocialLibrary::GetRecognizedFame(Context.Instigator);
+		return bRecognized ? UFVSocialLibrary::GetRecognizedFame(Context.GetActor(false, Requester)) : UFVSocialLibrary::GetFame(Context.WorldContext);
 	}
 }
 
@@ -70,12 +70,12 @@ FText FFVCondition_Notoriety::GetDescription() const
 
 bool FFVCondition_Fame::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return FVFacts::CompareValue(FVSocialConditions::ReadFame(Context, bIgnoreDisguise), Compare, Value);
+	return FVFacts::CompareValue(FVSocialConditions::ReadFame(Context, bRecognized, StaticStruct()), Compare, Value);
 }
 
 bool FFVCondition_Fame::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
 {
-	return FVFacts::CompareScore(FVSocialConditions::ReadFame(Context, bIgnoreDisguise), Compare, Value, OutScore);
+	return FVFacts::CompareScore(FVSocialConditions::ReadFame(Context, bRecognized, StaticStruct()), Compare, Value, OutScore);
 }
 
 FText FFVCondition_Fame::GetDescription() const
@@ -110,13 +110,13 @@ FText FFVCondition_HasTitle::GetDescription() const
 
 bool FFVCondition_Relationship::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	const UFVCharacterDefinition* Resolved = FVSocialConditions::CharacterOrTarget(Character, Context);
+	const UFVCharacterDefinition* Resolved = FVSocialConditions::CharacterOrTarget(Character, Context, StaticStruct());
 	return Resolved && FVFacts::CompareValue(UFVSocialLibrary::GetRelationship(Context.WorldContext, Resolved), Compare, Value);
 }
 
 bool FFVCondition_Relationship::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
 {
-	const UFVCharacterDefinition* Resolved = FVSocialConditions::CharacterOrTarget(Character, Context);
+	const UFVCharacterDefinition* Resolved = FVSocialConditions::CharacterOrTarget(Character, Context, StaticStruct());
 	return Resolved && FVFacts::CompareScore(UFVSocialLibrary::GetRelationship(Context.WorldContext, Resolved), Compare, Value, OutScore);
 }
 
@@ -128,8 +128,8 @@ FText FFVCondition_Relationship::GetDescription() const
 
 bool FFVCondition_Attitude::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	const AActor* ObserverActor = FVSocialConditions::Pick(Context, Observer);
-	const AActor* Subject = FVSocialConditions::Pick(Context, Observer == EFVContextActor::Target ? EFVContextActor::Instigator : EFVContextActor::Target);
+	const AActor* ObserverActor = FVSocialConditions::Pick(Context, Observer, StaticStruct());
+	const AActor* Subject = FVSocialConditions::Pick(Context, Observer == EFVContextActor::Target ? EFVContextActor::Instigator : EFVContextActor::Target, StaticStruct());
 	const UFVFactionDefinition* ObserverFaction = Faction ? Faction.Get() : UFVSocialLibrary::GetActorFaction(ObserverActor);
 	return ObserverFaction && UFVSocialLibrary::GetAttitude(ObserverFaction, Subject) >= AtLeast;
 }
@@ -142,7 +142,7 @@ FText FFVCondition_Attitude::GetDescription() const
 
 bool FFVCondition_IsDisguised::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return UFVSocialLibrary::IsDisguisedAs(FVSocialConditions::Pick(Context, Subject), Faction);
+	return UFVSocialLibrary::IsDisguisedAs(FVSocialConditions::Pick(Context, Subject, StaticStruct()), Faction);
 }
 
 FText FFVCondition_IsDisguised::GetDescription() const
@@ -192,7 +192,7 @@ FText FFVEffect_ModifyGlobalNotoriety::GetDescription() const
 
 void FFVEffect_ModifyRelationship::Apply(const FFVConditionContext& Context) const
 {
-	UFVSocialLibrary::ModifyRelationship(Context.WorldContext, FVSocialConditions::CharacterOrTarget(Character, Context), Delta);
+	UFVSocialLibrary::ModifyRelationship(Context.WorldContext, FVSocialConditions::CharacterOrTarget(Character, Context, StaticStruct()), Delta);
 }
 
 FText FFVEffect_ModifyRelationship::GetDescription() const

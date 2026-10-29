@@ -1,5 +1,6 @@
 #include "Cinematic/FVCinematic.h"
 
+#include "Conditions/FVConditionLibrary.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
 #include "GameFramework/PlayerController.h"
@@ -78,9 +79,7 @@ void UFVCinematicSubsystem::HandleFinished()
 		Facts->SetFact(Finished->Id, 1);
 	}
 
-	FFVConditionContext Context;
-	Context.WorldContext = GetWorld();
-	Finished->OnFinished.Apply(Context);
+	Finished->OnFinished.Apply(UFVConditionLibrary::MakePlayerContext(GetWorld()));
 	OnFinished.Broadcast();
 }
 

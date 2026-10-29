@@ -1,6 +1,7 @@
 #include "Knowledge/FVKnowledge.h"
 
 #include "AssetRegistry/IAssetRegistry.h"
+#include "Conditions/FVConditionLibrary.h"
 #include "Facts/FVFactDatabase.h"
 #include "Knowledge/FVKnowledgeDefinition.h"
 
@@ -63,9 +64,7 @@ bool UFVKnowledgeLibrary::Learn(UObject* WorldContext, const UFVKnowledgeDefinit
 
 	Database->SetFact(Knowledge->Id, 1);
 
-	FFVConditionContext Context;
-	Context.WorldContext = WorldContext;
-	Knowledge->OnLearned.Apply(Context);
+	Knowledge->OnLearned.Apply(UFVConditionLibrary::MakePlayerContext(WorldContext));
 	return true;
 }
 
