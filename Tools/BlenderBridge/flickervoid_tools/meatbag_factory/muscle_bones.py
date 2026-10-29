@@ -51,12 +51,24 @@ def _joint_points(armature, fitter, joint):
 
 
 def _mirror_joints(joints, sides):
+    """The joints and their mirrors, each once."""
+    seen = set()
     for joint in joints:
-        yield joint
-        name = sides.mirror_name(joint.name)
-        parent, child = sides.mirror_bone(joint.parent), sides.mirror_bone(joint.child)
+        mirrored = None
+        name = sides.mirror_name(joint.name) if sides else None
+        parent = sides.mirror_bone(joint.parent) if sides else None
+        child = sides.mirror_bone(joint.child) if sides else None
         if name and parent and child:
-            yield anatomy.Joint(name, parent, child, joint.cap, joint.half, joint.band, joint.cap_size)
+            mirrored = anatomy.Joint(name, parent, child, joint.cap, joint.half, joint.band, joint.cap_size)
+        for entry in (joint, mirrored):
+            if entry is not None and entry.name not in seen:
+                seen.add(entry.name)
+                yield entry
+
+
+def _parent_bone(name):
+    """The bone a muscle bone hangs from: the joint's half bone for a pivot (`@Knee_l`), else the bone itself."""
+    return HALF + name.removeprefix(anatomy.PIVOT) if name.startswith(anatomy.PIVOT) else name
 
 
 def build(context, armature, skin, sides, joints=anatomy.JOINTS):
@@ -87,16 +99,6 @@ def build(context, armature, skin, sides, joints=anatomy.JOINTS):
         edit_bones = armature.data.edit_bones
         for bone in [bone for bone in edit_bones if _owned(bone.name)]:
             edit_bones.remove(bone)
-        for name, settings, belly, insertion in plan:
-            aim = insertion - belly
-            size = max(aim.length * 0.25, 1e-3)
-            target = edit_bones.new(TARGET + name)
-            target.head, target.tail = insertion, insertion + aim.normalized() * size * 0.4
-            target.parent = edit_bones[settings.insertion_bone]
-            target.use_deform = False
-            bone = edit_bones.new(BELLY + name)
-            bone.head, bone.tail = belly, belly + aim.normalized() * size
-            bone.parent = edit_bones[settings.origin_bone]
         for joint, point, direction, cap, length in joint_plan:
             child = edit_bones[joint.child]
             half = edit_bones.new(HALF + joint.name)
@@ -106,6 +108,16 @@ def build(context, armature, skin, sides, joints=anatomy.JOINTS):
             tip = edit_bones.new(CAP + joint.name)
             tip.head, tip.tail = cap, cap + direction * length * joint.cap_size
             tip.parent = child
+        for name, settings, belly, insertion in plan:
+            aim = insertion - belly
+            size = max(aim.length * 0.25, 1e-3)
+            target = edit_bones.new(TARGET + name)
+            target.head, target.tail = insertion, insertion + aim.normalized() * size * 0.4
+            target.parent = edit_bones[_parent_bone(settings.insertion_bone)]
+            target.use_deform = False
+            bone = edit_bones.new(BELLY + name)
+            bone.head, bone.tail = belly, belly + aim.normalized() * size
+            bone.parent = edit_bones[_parent_bone(settings.origin_bone)]
     finally:
         bpy.ops.object.mode_set(mode="OBJECT")
         context.view_layer.objects.active = active
@@ -193,6 +205,7 @@ def _ring_radii(muscle):
 
 
 def _bone_mask(names, weights, bones):
+    bones = [bone for name in bones for bone in anatomy.skin_bones(name)]
     columns = [names.index(bone) for bone in bones if bone in names]
     return np.clip(weights[:, columns].sum(axis=1), 0.0, 1.0) if columns else np.zeros(len(weights))
 

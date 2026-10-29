@@ -7,12 +7,14 @@ muscle moves to its surface), masked by a copy of the origin bone's weights, and
 It all follows the pose at once, with no frames, so the pose library and the solve drive it directly.
 """
 
+from contextlib import contextmanager
+
 import bmesh
 import bpy
 import numpy as np
 from mathutils import Matrix, Vector
 
-from . import spindle
+from . import anatomy, spindle
 
 COLLECTION = "MF_Muscles"
 PREFIX = "MF_"
@@ -44,15 +46,67 @@ def _bone_space(bone):
     return bone.matrix_local @ Matrix.Translation((0.0, bone.length, 0.0))
 
 
+def _rest_space(obj):
+    """Armature-space rest matrix of the space an object parented to a bone, or to a joint pivot, lives in."""
+    if obj.parent_type == "BONE":
+        return _bone_space(obj.parent.data.bones[obj.parent_bone])
+    return _rest_space(obj.parent) @ obj.parent.matrix_basis
+
+
+def armature_of(obj):
+    while obj is not None and obj.type != "ARMATURE":
+        obj = obj.parent
+    return obj
+
+
 def anchor_point(anchor):
     """The anchor's armature-space rest point."""
-    bone = anchor.parent.data.bones[anchor.parent_bone]
-    return _bone_space(bone) @ anchor.matrix_basis.translation
+    return _rest_space(anchor) @ anchor.matrix_basis.translation
+
+
+@contextmanager
+def rest_pose(context, armature):
+    """Shows the armature's rest pose while muscles are measured or placed."""
+    data = armature.data
+    position = data.pose_position
+    data.pose_position = "REST"
+    context.view_layer.update()
+    try:
+        yield
+    finally:
+        data.pose_position = position
+        context.view_layer.update()
+
+
+def pivot(armature, joint_name, collection):
+    """The joint's pivot: an empty at the joint on the parent bone that turns halfway with the child bone."""
+    joint = anatomy.joint(joint_name)
+    if joint is None:
+        raise MuscleError(f"No joint {joint_name}")
+    name = f"{PREFIX}{joint.name}_pivot"
+    existing = bpy.data.objects.get(name)
+    if existing is not None:
+        return existing
+    bones = armature.data.bones
+    child = bones[joint.child]
+    obj = bpy.data.objects.new(name, None)
+    obj.empty_display_type = "SPHERE"
+    obj.empty_display_size = ANCHOR_SIZE
+    collection.objects.link(obj)
+    obj.parent = armature
+    obj.parent_type = "BONE"
+    obj.parent_bone = joint.parent
+    obj.matrix_parent_inverse = Matrix.Identity(4)
+    obj.matrix_basis = _bone_space(bones[joint.parent]).inverted() @ child.matrix_local
+    turn = obj.constraints.new("COPY_ROTATION")
+    turn.target, turn.subtarget = armature, joint.child
+    turn.influence = joint.half
+    return obj
 
 
 def fitted_radius(armature, mesh, bone_name, start, end):
     """A radius inside the skin: 80% of the median distance from the muscle line of the bone's main vertices."""
-    group = mesh.vertex_groups.get(bone_name)
+    group = mesh.vertex_groups.get(anatomy.skin_bones(bone_name)[0])
     if group is None:
         return 3.0
     to_armature = armature.matrix_world.inverted() @ mesh.matrix_world
@@ -78,15 +132,19 @@ def _collection(skin):
 
 
 def _anchor(name, armature, bone_name, point, collection):
+    """An empty at `point` on a bone, or on a joint pivot for a bone written `@Knee_l`."""
     anchor = bpy.data.objects.new(name, None)
     anchor.empty_display_type = "PLAIN_AXES"
     anchor.empty_display_size = ANCHOR_SIZE
     collection.objects.link(anchor)
-    anchor.parent = armature
-    anchor.parent_type = "BONE"
-    anchor.parent_bone = bone_name
+    if bone_name.startswith(anatomy.PIVOT):
+        anchor.parent = pivot(armature, bone_name, collection)
+    else:
+        anchor.parent = armature
+        anchor.parent_type = "BONE"
+        anchor.parent_bone = bone_name
     anchor.matrix_parent_inverse = Matrix.Identity(4)
-    anchor.location = _bone_space(armature.data.bones[bone_name]).inverted() @ point
+    anchor.location = _rest_space(anchor).inverted() @ point
     return anchor
 
 
@@ -227,7 +285,6 @@ class Fitter:
         self.front, self.left, self.up = body_frame(armature)
 
     def bone(self, name):
-        from . import anatomy
         bone = anatomy.resolve_bone(name, self.bone_names)
         if bone is None:
             raise MuscleError(f"{self.armature.name} has no bone for {name}")
@@ -236,7 +293,10 @@ class Fitter:
     def point(self, attachment):
         """(bone, armature-space point) of a template attachment."""
         bone = self.bone(attachment.bone)
-        start = bone_point(self.armature, bone, attachment.along)
+        if bone.startswith(anatomy.PIVOT):
+            start = self.armature.data.bones[anatomy.joint(bone).child].head_local.copy()
+        else:
+            start = bone_point(self.armature, bone, attachment.along)
         front, left, up = attachment.direction
         direction = self.front * front + self.left * left + self.up * up
         if direction.length < 1e-6:
@@ -290,8 +350,9 @@ def fit_to_skin(context, muscle, fitter, room=0.85, grow=1.6, shrink=0.2):
 def fit_all(context, armature, skin):
     fitter = Fitter(armature, skin)
     fitted = muscles_of(context.scene, skin)
-    for muscle in fitted:
-        fit_to_skin(context, muscle, fitter)
+    with rest_pose(context, armature):
+        for muscle in fitted:
+            fit_to_skin(context, muscle, fitter)
     return fitted
 
 
@@ -299,17 +360,24 @@ GENERATED = "mf_generated"
 
 
 def generate(context, armature, skin, sides, template):
-    """Builds every template muscle on the left, mirrors it to the right, and replaces earlier generated muscles."""
-    from . import anatomy
+    """Builds every template muscle on the left, mirrors it to the right, and replaces earlier generated muscles.
+    Everything is placed and measured in the rest pose, whatever pose is shown."""
+    with rest_pose(context, armature):
+        return _generate(context, armature, skin, sides, template)
+
+
+def _generate(context, armature, skin, sides, template):
     for obj in [obj for obj in context.scene.objects
                 if obj.type == "MESH" and obj.meatbag_muscle.skin == skin and obj.get(GENERATED)]:
         remove(obj)
     fitter = Fitter(armature, skin)
     created = []
     for muscle in template:
-        for index, (origin, insertion) in enumerate(muscle.strands):
+        for index, (origin, insertion) in enumerate(anatomy.segments(muscle)):
             origin_bone, origin_point = fitter.point(origin)
             insertion_bone, insertion_point = fitter.point(insertion)
+            if origin_bone == insertion_bone:
+                continue  # an alias step that collapses on this skeleton, such as midspine on UE4
             radius = fitter.clearance(origin_point.lerp(insertion_point, muscle.belly))
             hooks = [fitter.point(hook) for hook in muscle.hooks]
             strand = create(context, armature, skin, anatomy.strand_name(muscle, index), origin_bone, insertion_bone,
@@ -333,6 +401,7 @@ def skin_mask(armature, skin, bones, origin, insertion, fade=0.1):
     the muscle can be pushed (skin past an end would otherwise snap to the tip)."""
     count = len(skin.data.vertices)
     weights = np.zeros(count)
+    bones = [bone for name in bones for bone in anatomy.skin_bones(name)]
     indices = {skin.vertex_groups[name].index for name in bones if name in skin.vertex_groups}
     for vertex in skin.data.vertices:
         for element in vertex.groups:
@@ -424,8 +493,12 @@ def remove(muscle):
         _update_smooth(skin)
     data = muscle.data
     hook_anchors = [modifier.object for modifier in muscle.modifiers if modifier.type == "HOOK"]
-    for obj in [muscle, *anchors(muscle), *hook_anchors]:
-        if obj is not None:
+    owned = [obj for obj in [muscle, *anchors(muscle), *hook_anchors] if obj is not None]
+    pivots = {obj.parent for obj in owned if obj.parent is not None and obj.parent.type == "EMPTY"} - set(owned)
+    for obj in owned:
+        bpy.data.objects.remove(obj)
+    for obj in pivots:
+        if not obj.children:
             bpy.data.objects.remove(obj)
     if data.users == 0:
         bpy.data.meshes.remove(data)
@@ -435,7 +508,7 @@ def mirror(context, muscle, sides):
     """The muscle's counterpart on the other side, from the side names of its bones and name."""
     settings = muscle.meatbag_muscle
     origin_anchor, insertion_anchor = anchors(muscle)
-    armature = origin_anchor.parent
+    armature = armature_of(origin_anchor)
     origin_bone = sides.mirror_bone(settings.origin_bone) or settings.origin_bone
     insertion_bone = sides.mirror_bone(settings.insertion_bone) or settings.insertion_bone
     name = sides.mirror_name(muscle.name)
