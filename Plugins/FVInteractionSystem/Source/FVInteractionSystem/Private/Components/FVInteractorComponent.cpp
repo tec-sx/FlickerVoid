@@ -789,6 +789,29 @@ void UFVInteractorComponent::RefreshOffers(bool bForceBroadcast)
 	{
 		OffersChanged.Broadcast(CachedOffers);
 	}
+
+	if (bChanged)
+	{
+		BeginKeylessInteraction();
+	}
+}
+
+void UFVInteractorComponent::BeginKeylessInteraction()
+{
+	if (State != EFVInteractorState::Awake)
+	{
+		return;
+	}
+
+	const FFVInteractionOfferData* Offer = CachedOffers.FindByPredicate([](const FFVInteractionOfferData& Candidate)
+	{
+		return Candidate.CanExecute() && (Candidate.Gesture.Mode == EFVGestureMode::Hover || Candidate.Gesture.Mode == EFVGestureMode::Automatic);
+	});
+
+	if (Offer)
+	{
+		BeginInteraction(FGameplayTag(Offer->InputTag));
+	}
 }
 
 bool UFVInteractorComponent::InteractableIsInReach(const UFVInteractableComponent* Target) const

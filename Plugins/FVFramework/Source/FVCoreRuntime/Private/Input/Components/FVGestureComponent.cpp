@@ -61,17 +61,24 @@ EFVGestureStatus UFVGestureComponent::UpdateGesture(const float DeltaTime)
 	if (GetWorld()->IsPaused())
 		return EFVGestureStatus::Running;
 	
-	const float GestureDelta = bIgnoreTimeDilation ? static_cast<float>(FApp::GetDeltaTime()) : DeltaTime;
+	// A zero delta is the evaluation on the press frame, which adds no time.
+	const float GestureDelta = DeltaTime <= 0.f ? 0.f : bIgnoreTimeDilation ? static_cast<float>(FApp::GetDeltaTime()) : DeltaTime;
 	Elapsed += GestureDelta;
 	
-	if (ActiveGesture->Mode == EFVGestureMode::Press)
+	switch (ActiveGesture->Mode)
+	{
+	case EFVGestureMode::Press:
+	case EFVGestureMode::Automatic:
 		return EvaluatePress();
-	if (ActiveGesture->Mode == EFVGestureMode::Hold)
-		return EvaluateHold();
-	if (ActiveGesture->Mode == EFVGestureMode::Mash)
+	case EFVGestureMode::Hold:
+		return bReleased ? EFVGestureStatus::Failed : EvaluateDuration();
+	case EFVGestureMode::Hover:
+		return EvaluateDuration();
+	case EFVGestureMode::Mash:
 		return EvaluateMash(GestureDelta);
-	
-	return EFVGestureStatus::Failed;
+	default:
+		return EFVGestureStatus::Failed;
+	}
 }
 
 void UFVGestureComponent::ResetGesture()
@@ -87,13 +94,8 @@ EFVGestureStatus UFVGestureComponent::EvaluatePress()
 	return EFVGestureStatus::Completed;
 }
 
-EFVGestureStatus UFVGestureComponent::EvaluateHold()
+EFVGestureStatus UFVGestureComponent::EvaluateDuration()
 {
-	if (bReleased)
-	{
-		return EFVGestureStatus::Failed;
-	}
-	
 	Progress = ActiveGesture->Duration > 0.f ? FMath::Min(Elapsed / ActiveGesture->Duration, 1.f) : 1.f;
 	return Progress >= 1.f ? EFVGestureStatus::Completed : EFVGestureStatus::Running;
 }
@@ -101,7 +103,7 @@ EFVGestureStatus UFVGestureComponent::EvaluateHold()
 EFVGestureStatus UFVGestureComponent::EvaluateMash(const float DeltaTime)
 {
 	Presses = FMath::Max(Presses - MashDecayPerSecond * DeltaTime, 0.f);
-	Progress = FMath::Min(Presses ? FMath::Max(ActiveGesture->PressCount, 1) : 1.f);
+	Progress = FMath::Min(Presses / FMath::Max(ActiveGesture->PressCount, 1), 1.f);
 	
 	if (Progress >= 1.f)
 	{
