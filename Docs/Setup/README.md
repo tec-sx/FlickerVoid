@@ -14,6 +14,7 @@ Read [FVFramework](FVFramework.md) first; every other plugin builds on its defin
 | [FVStorySystem](FVStorySystem.md) | Quests, knowledge (clues, topics, thoughts, documents), save and load |
 | [FVSocialSystem](FVSocialSystem.md) | Factions, standing, fame, notoriety, titles, relationships, gifts, disguise |
 | [FVNavigationSystem](FVNavigationSystem.md) | Maps, map markers, discovery, waypoint, minimap/compass/world map logic, map capture |
+| [FVAnimationSystem](FVAnimationSystem.md) | Side naming rules, Meatbag Factory pose authoring and mirroring for Pose Assets |
 | [Game UI](GameUI.md) | The game's HUD, hub menu (inventory, character, journal), map screen, main, pause and options menus: widgets, input and settings to create |
 
 Game layer guides (the game modules and AngelScript built on the plugins):
