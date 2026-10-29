@@ -145,6 +145,11 @@ Muscles shape the sculpt target the way a muscle simulation would, but follow ea
 - On the sculpt target each muscle adds a Shrinkwrap (skin inside the muscle moves to its surface, plus **Skin Offset**), masked by the two bones' weights faded out past the muscle's ends, and one Corrective Smooth after all muscles cleans up the pushed skin.
 - **Mirror Muscle** makes or replaces the other side's muscle from the contract's side names, mirrored across the armature's X. **Preview Skin** swaps the body and the target in the viewport.
 - Sculpt keys on the target still apply under the muscles, for shapes muscles can't make.
+- **Generate Muscles** builds the human template (`anatomy.py`) on an Unreal Mannequin skeleton (UE4 or UE5 bone names; `chest` and `midspine` resolve to the bones that exist), replacing earlier generated muscles and keeping hand-added ones. Every muscle is written for the left side and mirrored. An attachment is a bone, a fraction along it, a direction in the body's frame (front, left, up, from the skeleton) and a depth: the point is cast toward the skin in that direction and kept that far back under it, so placement fits any body. Each strand is sized to its clearance from the skin, so the skin doesn't move at rest.
+- A muscle with several attachments (pectoral, deltoid, trapezius, latissimus, quadriceps) is a **fan** of strands sharing a group name and a colour (`Pectoral1_l`..`Pectoral3_l`). A broad shape several joints bend (gluteus) is a **pad**: a flat strand that also follows extra bones through Hook modifiers with a smooth falloff.
+- View: per-muscle material colour with **Opacity** (Solid shading, Color: Material), Solid/Wire, **In Front** and show/hide in the Muscles panel.
+- Later, **muscle-driven solve**: helper bones fitted to the muscle surfaces instead of the skin (about one helper per muscle group).
+- Later, **fat**: a painted `MF_Fat` thickness map that raises the skin off the muscles (with a Fat Amount slider), pose-driven sag along gravity and squash at folding joints, and soft pads for belly, breasts and buttocks whose helpers can jiggle in Unreal at runtime.
 
 ### Solve scope
 

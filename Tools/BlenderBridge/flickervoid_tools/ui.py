@@ -3,7 +3,7 @@ import bpy
 from . import preferences
 from .push.operators import FV_OT_push, FV_OT_test_connection, FV_OT_use_selected_asset
 from .meatbag_factory import muscles
-from .meatbag_factory.muscle_operators import (MEATBAG_OT_muscle_add, MEATBAG_OT_muscle_mirror, MEATBAG_OT_muscle_remove,
+from .meatbag_factory.muscle_operators import (MEATBAG_OT_muscles_generate, MEATBAG_OT_muscle_add, MEATBAG_OT_muscle_mirror, MEATBAG_OT_muscle_remove,
                                                MEATBAG_OT_muscle_select, MEATBAG_OT_preview_skin)
 from .meatbag_factory.contract.operators import MEATBAG_OT_check_contract, MEATBAG_UL_issues
 from .meatbag_factory.operators import (MEATBAG_OT_pose_add, MEATBAG_OT_pose_move, MEATBAG_OT_pose_remove,
@@ -111,16 +111,30 @@ class MEATBAG_PT_muscles(_MeatbagSubpanel, bpy.types.Panel):
         if not s.armature or not s.mesh:
             layout.label(text="Pick the Armature (Poses) and the Mesh (Correctives)", icon="INFO")
             return
+        layout.operator(MEATBAG_OT_muscles_generate.bl_idname, icon="OUTLINER_OB_ARMATURE")
         row = layout.row(align=True)
         row.operator(MEATBAG_OT_muscle_add.bl_idname, icon="ADD")
         row.operator(MEATBAG_OT_preview_skin.bl_idname, icon="HIDE_OFF")
 
+        view = context.scene.meatbag_muscles
+        row = layout.row(align=True)
+        row.prop(view, "visible", text="", icon="HIDE_OFF" if view.visible else "HIDE_ON")
+        row.prop(view, "opacity", slider=True)
+        row.prop(view, "solid", text="", icon="SHADING_SOLID")
+        row.prop(view, "in_front", text="", icon="XRAY")
+
         target = s.mesh.meatbag_target
         column = layout.column(align=True)
+        groups = {}
         for muscle in muscles.muscles_of(context.scene, target):
-            active = muscle == context.active_object
-            column.operator(MEATBAG_OT_muscle_select.bl_idname, text=muscle.name, icon="FORCE_LENNARDJONES",
-                            depress=active).name = muscle.name
+            groups.setdefault(muscle.meatbag_muscle.group or muscle.name, []).append(muscle)
+        for group, strands in sorted(groups.items()):
+            row = column.row(align=True)
+            row.label(text=group, icon="FORCE_LENNARDJONES")
+            for number, strand in enumerate(sorted(strands, key=lambda obj: obj.name), 1):
+                text = str(number) if len(strands) > 1 else "Select"
+                row.operator(MEATBAG_OT_muscle_select.bl_idname, text=text,
+                             depress=strand == context.active_object).name = strand.name
 
         obj = context.active_object
         if obj and obj.type == "MESH" and obj.meatbag_muscle.skin is not None:

@@ -105,8 +105,10 @@ def build_mesh(muscle):
     data.update()
 
 
-def create(context, armature, skin, name, origin_bone, insertion_bone, origin, insertion, width=None, thickness=None):
-    """A muscle from armature-space rest points on the two bones, pushing the skin (the sculpt target)."""
+def create(context, armature, skin, name, origin_bone, insertion_bone, origin, insertion, width=None, thickness=None,
+           group="", hooks=(), color=None):
+    """A muscle from armature-space rest points on the two bones, pushing the skin (the sculpt target). `hooks` are
+    (bone, point) pairs the muscle also bends with; `group` names the muscle the strand belongs to."""
     if origin_bone == insertion_bone:
         raise MuscleError("Pick two different bones")
     if (insertion - origin).length < 1e-4:
@@ -124,10 +126,10 @@ def create(context, armature, skin, name, origin_bone, insertion_bone, origin, i
     collection.objects.link(muscle)
     muscle.parent = origin_anchor
     muscle.matrix_parent_inverse = Matrix.Identity(4)
-    muscle.display_type = "WIRE"
     muscle.hide_render = True
     settings = muscle.meatbag_muscle
     settings["skin"] = skin
+    settings["group"] = group or name
     settings["origin_bone"], settings["insertion_bone"] = origin_bone, insertion_bone
     settings["length"] = (insertion - origin).length
     settings["width"] = width or radius
@@ -140,8 +142,141 @@ def create(context, armature, skin, name, origin_bone, insertion_bone, origin, i
     stretch.rest_length = settings.length * armature.matrix_world.to_scale().y
     stretch.volume = "VOLUME_XZX"
     stretch.bulge = settings.volume
-    _add_skin(skin, muscle, skin_mask(armature, skin, (origin_bone, insertion_bone), origin, insertion))
+    muscle.data.materials.append(_material(settings.group, color, context.scene))
+    show(muscle, context.scene)
+    for index, (bone, point) in enumerate(hooks):
+        _add_hook(context, muscle, _anchor(f"{name}_hook{index + 1}", armature, bone, point, collection))
+    bones = (origin_bone, insertion_bone, *(bone for bone, _ in hooks))
+    _add_skin(skin, muscle, skin_mask(armature, skin, bones, origin, insertion))
     return muscle
+
+
+def _add_hook(context, muscle, anchor):
+    """Bends the muscle near `anchor` with the anchor's bone, on top of the stretch between its ends."""
+    context.view_layer.update()
+    hook = muscle.modifiers.new(anchor.name, "HOOK")
+    hook.object = anchor
+    to_local = muscle.matrix_world.inverted()
+    hook.center = to_local @ anchor.matrix_world.translation
+    hook.matrix_inverse = (to_local @ anchor.matrix_world).inverted()
+    hook.vertex_indices_set(range(len(muscle.data.vertices)))  # without indices or a group a hook moves nothing
+    hook.falloff_type = "SMOOTH"
+    hook.falloff_radius = max(muscle.meatbag_muscle.length * 0.6, 1e-3)
+    hook.show_expanded = False
+
+
+def hooks_of(muscle):
+    """(bone, armature-space rest point) of each hook, for mirroring."""
+    return [(modifier.object.parent_bone, anchor_point(modifier.object)) for modifier in muscle.modifiers
+            if modifier.type == "HOOK" and modifier.object is not None]
+
+
+def _material(group, color, scene):
+    base = group.rsplit("_", 1)[0]
+    name = f"{PREFIX}Muscle_{base}"
+    material = bpy.data.materials.get(name)
+    if material is None:
+        material = bpy.data.materials.new(name)
+        color = color or (0.75, 0.2, 0.2)
+        material.diffuse_color = (*color, 1.0)
+        material.surface_render_method = "BLENDED"
+    material.diffuse_color[3] = scene.meatbag_muscles.opacity
+    return material
+
+
+def show(muscle, scene):
+    """Applies the scene's muscle view settings to one muscle."""
+    view = scene.meatbag_muscles
+    muscle.display_type = "SOLID" if view.solid else "WIRE"
+    muscle.show_in_front = view.in_front
+    muscle.hide_viewport = not view.visible
+    for material in muscle.data.materials:
+        if material is not None:
+            material.diffuse_color[3] = view.opacity
+
+
+def show_all(scene):
+    for obj in scene.objects:
+        if obj.type == "MESH" and obj.meatbag_muscle.skin is not None:
+            show(obj, scene)
+
+
+def body_frame(armature):
+    """(front, left, up) unit vectors of the body in armature space, from the skeleton itself."""
+    bones = armature.data.bones
+    up = (bones["head"].head_local - bones["pelvis"].head_local).normalized()
+    left = bones["clavicle_l"].tail_local - bones["clavicle_r"].tail_local
+    left = (left - up * left.dot(up)).normalized()
+    return left.cross(up), left, up
+
+
+class Fitter:
+    """Places template attachments under the skin's rest surface and sizes muscles to the room they have."""
+
+    def __init__(self, armature, skin):
+        from mathutils.bvhtree import BVHTree
+        self.armature = armature
+        self.bone_names = set(armature.data.bones.keys())
+        to_armature = armature.matrix_world.inverted() @ skin.matrix_world
+        vertices = [to_armature @ vertex.co for vertex in skin.data.vertices]
+        self.tree = BVHTree.FromPolygons(vertices, [polygon.vertices for polygon in skin.data.polygons])
+        self.front, self.left, self.up = body_frame(armature)
+
+    def bone(self, name):
+        from . import anatomy
+        bone = anatomy.resolve_bone(name, self.bone_names)
+        if bone is None:
+            raise MuscleError(f"{self.armature.name} has no bone for {name}")
+        return bone
+
+    def point(self, attachment):
+        """(bone, armature-space point) of a template attachment."""
+        bone = self.bone(attachment.bone)
+        start = bone_point(self.armature, bone, attachment.along)
+        front, left, up = attachment.direction
+        direction = self.front * front + self.left * left + self.up * up
+        if direction.length < 1e-6:
+            return bone, start
+        hit, _, _, distance = self.tree.ray_cast(start, direction.normalized())
+        if hit is None:
+            return bone, start
+        return bone, start.lerp(hit, 1.0 - attachment.depth)
+
+    def clearance(self, point):
+        """Distance from a point to the skin."""
+        nearest = self.tree.find_nearest(point)
+        return nearest[3] if nearest[0] is not None else 3.0
+
+
+GENERATED = "mf_generated"
+
+
+def generate(context, armature, skin, sides, template):
+    """Builds every template muscle on the left, mirrors it to the right, and replaces earlier generated muscles."""
+    from . import anatomy
+    for obj in [obj for obj in context.scene.objects
+                if obj.type == "MESH" and obj.meatbag_muscle.skin == skin and obj.get(GENERATED)]:
+        remove(obj)
+    fitter = Fitter(armature, skin)
+    created = []
+    for muscle in template:
+        for index, (origin, insertion) in enumerate(muscle.strands):
+            origin_bone, origin_point = fitter.point(origin)
+            insertion_bone, insertion_point = fitter.point(insertion)
+            radius = fitter.clearance(origin_point.lerp(insertion_point, muscle.belly))
+            hooks = [fitter.point(hook) for hook in muscle.hooks]
+            strand = create(context, armature, skin, anatomy.strand_name(muscle, index), origin_bone, insertion_bone,
+                            origin_point, insertion_point, radius * muscle.width, radius * muscle.thickness,
+                            group=muscle.name, hooks=hooks, color=muscle.color)
+            settings = strand.meatbag_muscle
+            settings["belly"], settings["tendon"] = muscle.belly, muscle.tendon
+            build_mesh(strand)
+            strand[GENERATED] = True
+            created.append(strand)
+            mirrored = mirror(context, strand, sides)
+            mirrored[GENERATED] = True
+            created.append(mirrored)
+    return created
 
 
 def skin_mask(armature, skin, bones, origin, insertion, fade=0.1):
@@ -239,7 +374,8 @@ def remove(muscle):
             skin.vertex_groups.remove(group)
         _update_smooth(skin)
     data = muscle.data
-    for obj in [muscle, *anchors(muscle)]:
+    hook_anchors = [modifier.object for modifier in muscle.modifiers if modifier.type == "HOOK"]
+    for obj in [muscle, *anchors(muscle), *hook_anchors]:
         if obj is not None:
             bpy.data.objects.remove(obj)
     if data.users == 0:
@@ -251,11 +387,11 @@ def mirror(context, muscle, sides):
     settings = muscle.meatbag_muscle
     origin_anchor, insertion_anchor = anchors(muscle)
     armature = origin_anchor.parent
-    origin_bone = sides.mirror_bone(settings.origin_bone)
-    insertion_bone = sides.mirror_bone(settings.insertion_bone)
+    origin_bone = sides.mirror_bone(settings.origin_bone) or settings.origin_bone
+    insertion_bone = sides.mirror_bone(settings.insertion_bone) or settings.insertion_bone
     name = sides.mirror_name(muscle.name)
-    if not origin_bone or not insertion_bone or not name:
-        raise MuscleError(f"{muscle.name}: its name and both bones need a side token to mirror")
+    if not name:
+        raise MuscleError(f"{muscle.name}: its name needs a side token to mirror")
 
     def flipped(anchor):
         point = anchor_point(anchor)
@@ -264,8 +400,13 @@ def mirror(context, muscle, sides):
     existing = bpy.data.objects.get(name)
     if existing is not None and existing.meatbag_muscle.skin is not None:
         remove(existing)
+    hooks = []
+    for bone, point in hooks_of(muscle):
+        hooks.append((sides.mirror_bone(bone) or bone, Vector((-point.x, point.y, point.z))))
     created = create(context, armature, settings.skin, name, origin_bone, insertion_bone,
-                     flipped(origin_anchor), flipped(insertion_anchor), settings.width, settings.thickness)
+                     flipped(origin_anchor), flipped(insertion_anchor), settings.width, settings.thickness,
+                     group=sides.mirror_name(settings.group) or settings.group, hooks=hooks,
+                     color=tuple(muscle.data.materials[0].diffuse_color[:3]) if muscle.data.materials else None)
     other = created.meatbag_muscle
     for prop in ("belly", "tendon", "volume", "offset"):
         other[prop] = getattr(settings, prop)

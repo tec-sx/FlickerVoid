@@ -2,7 +2,7 @@
 
 import bpy
 
-from . import muscles, sculpt
+from . import anatomy, muscles, sculpt
 from .. import preferences
 
 
@@ -25,6 +25,7 @@ class MeatbagMuscle(bpy.types.PropertyGroup):
     skin: bpy.props.PointerProperty(type=bpy.types.Object, name="Skin", description="Sculpt target this muscle pushes")
     origin_bone: bpy.props.StringProperty(name="Origin Bone")
     insertion_bone: bpy.props.StringProperty(name="Insertion Bone")
+    group: bpy.props.StringProperty(name="Muscle", description="The muscle this strand belongs to")
     length: bpy.props.FloatProperty(name="Length", subtype="DISTANCE", unit="LENGTH", options={"HIDDEN"})
     width: bpy.props.FloatProperty(name="Width", default=3.0, min=0.01, subtype="DISTANCE", unit="LENGTH",
                                    update=_shape_changed, description="Belly radius along the muscle's X axis")
@@ -38,6 +39,53 @@ class MeatbagMuscle(bpy.types.PropertyGroup):
                                     description="How much the muscle thickens as it shortens; 1 keeps its volume")
     offset: bpy.props.FloatProperty(name="Skin Offset", default=0.0, subtype="DISTANCE", unit="LENGTH", update=_settings_changed,
                                     description="Skin thickness kept over the muscle")
+
+
+def _view_changed(view, context):
+    muscles.show_all(context.scene)
+
+
+class MeatbagMuscleView(bpy.types.PropertyGroup):
+    visible: bpy.props.BoolProperty(name="Show Muscles", default=True, update=_view_changed)
+    opacity: bpy.props.FloatProperty(name="Opacity", default=0.5, min=0.0, max=1.0, subtype="FACTOR", update=_view_changed,
+                                     description="Muscle opacity in Solid shading (Color: Material)")
+    solid: bpy.props.BoolProperty(name="Solid", default=True, update=_view_changed,
+                                  description="Draw muscles as coloured surfaces, else as wireframes")
+    in_front: bpy.props.BoolProperty(name="In Front", default=False, update=_view_changed,
+                                     description="Draw muscles over the body")
+
+
+class MEATBAG_OT_muscles_generate(bpy.types.Operator):
+    bl_idname = "meatbag.muscles_generate"
+    bl_label = "Generate Muscles"
+    bl_description = ("Build the human muscle template on a Mannequin skeleton, fitted under the skin, on both sides. "
+                      "Replaces muscles generated before; hand-added muscles stay")
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        s = _settings(context)
+        return bool(s.armature and s.mesh)
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
+    def execute(self, context):
+        s = _settings(context)
+        missing = anatomy.missing_bones(s.armature.data.bones.keys())
+        if missing:
+            self.report({"ERROR"}, f"Not a Mannequin skeleton; missing {', '.join(missing[:6])}")
+            return {"CANCELLED"}
+        try:
+            skin = sculpt.ensure_target(s.mesh)
+            if context.mode != "OBJECT":
+                bpy.ops.object.mode_set(mode="OBJECT")
+            created = muscles.generate(context, s.armature, skin, preferences.contract(context).sides, anatomy.TEMPLATE)
+        except (muscles.MuscleError, sculpt.SculptError) as error:
+            self.report({"ERROR"}, str(error))
+            return {"CANCELLED"}
+        self.report({"INFO"}, f"Generated {len(created)} muscle strands; Preview Skin to see the skin")
+        return {"FINISHED"}
 
 
 def _selected_bones(context, armature):
@@ -191,6 +239,8 @@ class MEATBAG_OT_preview_skin(bpy.types.Operator):
 
 classes = (
     MeatbagMuscle,
+    MeatbagMuscleView,
+    MEATBAG_OT_muscles_generate,
     MEATBAG_OT_muscle_add,
     MEATBAG_OT_muscle_mirror,
     MEATBAG_OT_muscle_remove,
@@ -201,7 +251,9 @@ classes = (
 
 def register_properties():
     bpy.types.Object.meatbag_muscle = bpy.props.PointerProperty(type=MeatbagMuscle)
+    bpy.types.Scene.meatbag_muscles = bpy.props.PointerProperty(type=MeatbagMuscleView)
 
 
 def unregister_properties():
     del bpy.types.Object.meatbag_muscle
+    del bpy.types.Scene.meatbag_muscles
