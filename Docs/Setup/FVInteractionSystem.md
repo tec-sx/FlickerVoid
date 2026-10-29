@@ -74,6 +74,8 @@ Requires the FVFramework UI layout with a `UI.Layer.Game` layer.
 
 For post-process highlighting, enable *Custom Depth-Stencil Pass: Enabled with Stencil* in Project Settings > Rendering and use a post-process material reading the stencil ID.
 
+Post-process highlights go through FVFramework's `UFVHighlightComponent`, which is added to the actor at runtime if it has none. It is the only writer of custom depth: interaction focus and the scanner push requests, and the one with the higher **Priority** shows (focus defaults to 10, scan categories to 0). Overlay-material highlights don't use it.
+
 ## 6. Gameplay tags
 
 Defined natively, nothing to create: `Interactable.*`, `Interaction.Action.*`, `InputTag.Interaction.*`, `Interactor.Tag.*`, `Interactor.Mode.*`, `Interaction.Cancel.*`, `Interaction.Suppression.*`. Add children for new types and actions (e.g. `Interaction.Action.Sit`).
