@@ -50,7 +50,7 @@ private:
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UMaterialInterface>> CachedOverlays;
 
-	TArray<bool> CachedRenderCustomDepth;
-	TArray<int32> CachedStencilValues;
 	bool bIsHighlighted = false;
+
+	static const FName HighlightSource;
 };

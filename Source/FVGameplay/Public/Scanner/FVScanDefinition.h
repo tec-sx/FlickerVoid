@@ -62,6 +62,9 @@ struct FLICKERVOIDGAMEPLAY_API FFVScanCategory
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scan", meta = (ClampMin = 1, ClampMax = 255))
 	int32 Stencil = 1;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scan", meta = (ToolTip = "Wins over other highlights on the same primitive with a lower priority; interaction focus defaults to 10."))
+	int32 Priority = 0;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scan")
 	FLinearColor Color = FLinearColor::White;
 };
