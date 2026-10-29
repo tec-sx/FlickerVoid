@@ -70,4 +70,7 @@ struct FVCORERUNTIME_API FFVEffect_Fact : public FFVEffectBase
 namespace FVFacts
 {
 	FVCORERUNTIME_API bool Compare(const UFVFactDatabase& Database, FGameplayTag Fact, EFVFactCompare Compare, int32 Value);
+
+	/** Compares a value read from anywhere; Defined and Undefined need a fact and return false. */
+	FVCORERUNTIME_API bool CompareValue(int32 Current, EFVFactCompare Compare, int32 Value);
 }

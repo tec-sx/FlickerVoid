@@ -11,20 +11,6 @@
 
 namespace FVSocialConditions
 {
-	bool Compare(const int32 Current, const EFVFactCompare Op, const int32 Value)
-	{
-		switch (Op)
-		{
-		case EFVFactCompare::Equal:          return Current == Value;
-		case EFVFactCompare::NotEqual:       return Current != Value;
-		case EFVFactCompare::Greater:        return Current > Value;
-		case EFVFactCompare::GreaterOrEqual: return Current >= Value;
-		case EFVFactCompare::Less:           return Current < Value;
-		case EFVFactCompare::LessOrEqual:    return Current <= Value;
-		default:                             return false;
-		}
-	}
-
 	FText Op(const EFVFactCompare Compare)
 	{
 		return StaticEnum<EFVFactCompare>()->GetDisplayNameTextByValue(static_cast<int64>(Compare));
@@ -48,7 +34,7 @@ namespace FVSocialConditions
 
 bool FFVCondition_Standing::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return Faction && FVSocialConditions::Compare(UFVSocialLibrary::GetStanding(Context.WorldContext, Faction), Compare, Value);
+	return Faction && FVFacts::CompareValue(UFVSocialLibrary::GetStanding(Context.WorldContext, Faction), Compare, Value);
 }
 
 FText FFVCondition_Standing::GetDescription() const
@@ -58,7 +44,7 @@ FText FFVCondition_Standing::GetDescription() const
 
 bool FFVCondition_Notoriety::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return Faction && FVSocialConditions::Compare(UFVSocialLibrary::GetNotoriety(Context.WorldContext, Faction), Compare, Value);
+	return Faction && FVFacts::CompareValue(UFVSocialLibrary::GetNotoriety(Context.WorldContext, Faction), Compare, Value);
 }
 
 FText FFVCondition_Notoriety::GetDescription() const
@@ -72,7 +58,7 @@ bool FFVCondition_Fame::EvaluateImpl(const FFVConditionContext& Context) const
 		? UFVSocialLibrary::GetFame(Context.WorldContext)
 		: UFVSocialLibrary::GetRecognizedFame(Context.Instigator);
 
-	return FVSocialConditions::Compare(Fame, Compare, Value);
+	return FVFacts::CompareValue(Fame, Compare, Value);
 }
 
 FText FFVCondition_Fame::GetDescription() const
@@ -82,7 +68,7 @@ FText FFVCondition_Fame::GetDescription() const
 
 bool FFVCondition_GlobalNotoriety::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return FVSocialConditions::Compare(UFVSocialLibrary::GetGlobalNotoriety(Context.WorldContext), Compare, Value);
+	return FVFacts::CompareValue(UFVSocialLibrary::GetGlobalNotoriety(Context.WorldContext), Compare, Value);
 }
 
 FText FFVCondition_GlobalNotoriety::GetDescription() const
@@ -103,7 +89,7 @@ FText FFVCondition_HasTitle::GetDescription() const
 bool FFVCondition_Relationship::EvaluateImpl(const FFVConditionContext& Context) const
 {
 	const UFVCharacterDefinition* Resolved = FVSocialConditions::CharacterOrTarget(Character, Context);
-	return Resolved && FVSocialConditions::Compare(UFVSocialLibrary::GetRelationship(Context.WorldContext, Resolved), Compare, Value);
+	return Resolved && FVFacts::CompareValue(UFVSocialLibrary::GetRelationship(Context.WorldContext, Resolved), Compare, Value);
 }
 
 FText FFVCondition_Relationship::GetDescription() const
