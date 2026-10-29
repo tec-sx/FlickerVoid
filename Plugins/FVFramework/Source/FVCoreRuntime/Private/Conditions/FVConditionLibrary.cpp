@@ -1,5 +1,22 @@
 #include "Conditions/FVConditionLibrary.h"
 
+#include "GameFramework/Pawn.h"
+#include "Kismet/GameplayStatics.h"
+
+FFVConditionContext UFVConditionLibrary::MakePlayerContext(UObject* WorldContext, AActor* Target)
+{
+	FFVConditionContext Context;
+	Context.WorldContext = WorldContext;
+	Context.Instigator = GetPlayerPawn(WorldContext);
+	Context.Target = Target;
+	return Context;
+}
+
+APawn* UFVConditionLibrary::GetPlayerPawn(const UObject* WorldContext)
+{
+	return UGameplayStatics::GetPlayerPawn(WorldContext, 0);
+}
+
 FFVConditionContext UFVConditionLibrary::MakeContext(AActor* Instigator, AActor* Target)
 {
 	FFVConditionContext Context;

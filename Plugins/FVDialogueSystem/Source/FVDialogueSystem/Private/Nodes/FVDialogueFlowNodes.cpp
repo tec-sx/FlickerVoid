@@ -3,7 +3,9 @@
 #include "Components/AudioComponent.h"
 #include "Data/FVCharacterDefinition.h"
 #include "Engine/World.h"
+#include "FlowAsset.h"
 #include "FVDialogueSubsystem.h"
+#include "FVDialogueSystem.h"
 #include "FVFlowContext.h"
 #include "GameplayTagAssetInterface.h"
 #include "Kismet/GameplayStatics.h"
@@ -25,7 +27,11 @@ UFVDialogueSubsystem* UFVFlowNode_DialogueBase::EnsureConversation()
 	UFVDialogueSubsystem* Subsystem = UFVDialogueSubsystem::Get(this);
 	if (Subsystem && !Subsystem->IsInConversation())
 	{
-		Subsystem->BeginConversation(nullptr, TryGetRootFlowActorOwner());
+		UFlowAsset* Flow = GetFlowAsset();
+		AActor* FlowOwner = TryGetRootFlowActorOwner();
+		UE_LOG(LogFVDialogueSystem, Warning, TEXT("%s started a conversation outside Start Conversation; it ends at End Conversation or when %s stops."),
+			*GetName(), *GetNameSafe(Flow));
+		Subsystem->BeginConversation(nullptr, FlowOwner, Flow);
 	}
 	return Subsystem;
 }
@@ -195,8 +201,6 @@ void UFVFlowNode_EndConversation::ExecuteInput(const FName& PinName)
 	Finish();
 }
 
-TMap<TWeakObjectPtr<AActor>, FName> UFVFlowNode_Bark::LastRowBySpeaker;
-
 UFVFlowNode_Bark::UFVFlowNode_Bark()
 {
 #if WITH_EDITOR
@@ -216,7 +220,11 @@ void UFVFlowNode_Bark::ExecuteInput(const FName& PinName)
 		return;
 	}
 
-	LastRowBySpeaker.FindOrAdd(Speaker) = RowName;
+	UFVDialogueSubsystem* Subsystem = UFVDialogueSubsystem::Get(this);
+	if (Subsystem)
+	{
+		Subsystem->SetLastBark(Speaker, RowName);
+	}
 
 	float WaitTime = Row->DisplayDuration;
 	if (USoundBase* Sound = Row->Voice.LoadSynchronous())
@@ -225,7 +233,7 @@ void UFVFlowNode_Bark::ExecuteInput(const FName& PinName)
 		WaitTime = FMath::Max(WaitTime, Sound->GetDuration());
 	}
 
-	if (UFVDialogueSubsystem* Subsystem = UFVDialogueSubsystem::Get(this))
+	if (Subsystem)
 	{
 		Subsystem->Bark(Speaker, Row->Text, WaitTime);
 	}
@@ -266,9 +274,10 @@ const FFVBarkTableRow* UFVFlowNode_Bark::PickRow(AActor* Speaker, FName& OutRowN
 		}
 	});
 
-	if (const FName* Last = LastRowBySpeaker.Find(Speaker); Last && Valid.Num() > 1)
+	const UFVDialogueSubsystem* Subsystem = UFVDialogueSubsystem::Get(this);
+	if (const FName Last = Subsystem ? Subsystem->GetLastBark(Speaker) : NAME_None; !Last.IsNone() && Valid.Num() > 1)
 	{
-		Valid.RemoveAll([Last](const TPair<FName, const FFVBarkTableRow*>& Pair) { return Pair.Key == *Last; });
+		Valid.RemoveAll([Last](const TPair<FName, const FFVBarkTableRow*>& Pair) { return Pair.Key == Last; });
 	}
 
 	if (Valid.IsEmpty())
