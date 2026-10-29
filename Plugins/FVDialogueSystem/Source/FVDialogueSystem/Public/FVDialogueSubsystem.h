@@ -84,8 +84,8 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "FV|Dialogue")
 	FFVOnBark OnBark;
 
-	/** Opens a conversation without starting a flow (graph already running, e.g. started by a Flow component). */
-	void BeginConversation(AActor* InInstigator, AActor* InOwner);
+	/** Opens a conversation without starting a flow (graph already running, e.g. started by a Flow component). It closes when Flow stops running or Owner goes away. */
+	void BeginConversation(AActor* InInstigator, AActor* InOwner, UFlowAsset* InFlow = nullptr);
 
 	/** Ends without touching the flow; used by End Conversation, which finishes the graph itself. */
 	void EndConversationFromFlow();
@@ -98,6 +98,10 @@ public:
 
 	void Bark(AActor* Speaker, const FText& Text, float Duration);
 
+	/** The bark row Speaker said last, so the next bark can pick another. */
+	FName GetLastBark(const AActor* Speaker) const;
+	void SetLastBark(AActor* Speaker, FName Row);
+
 	virtual void Deinitialize() override;
 
 protected:
@@ -107,6 +111,10 @@ private:
 	void FinishLine();
 	void StopVoice();
 	void Close(bool bAbortFlow);
+	void FlushPendingAbort();
+
+	/** Closes a conversation whose flow stopped without an End Conversation node, or whose owner is gone. */
+	void CheckConversation();
 	float ComputeDuration(const FFVDialogueLine& Line) const;
 
 	TWeakObjectPtr<AActor> Instigator;
@@ -114,6 +122,16 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UFlowAsset> Dialogue;
+
+	/** The running flow instance the conversation belongs to. */
+	TWeakObjectPtr<UFlowAsset> Flow;
+
+	TWeakObjectPtr<AActor> PendingAbortOwner;
+	TWeakObjectPtr<UFlowAsset> PendingAbortTemplate;
+	FTimerHandle AbortTimer;
+	FTimerHandle CheckTimer;
+
+	TMap<TWeakObjectPtr<AActor>, FName> LastBarks;
 
 	UPROPERTY(Transient)
 	FFVDialogueLine CurrentLine;
