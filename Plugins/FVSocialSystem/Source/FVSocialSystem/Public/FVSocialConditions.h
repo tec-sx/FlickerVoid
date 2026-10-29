@@ -239,3 +239,16 @@ struct FVSOCIALSYSTEM_API FFVEffect_ModifyRelationship : public FFVEffectBase
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
 };
+
+/** Makes a title the player's current one, earning it first if needed. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Promote Title"))
+struct FVSOCIALSYSTEM_API FFVEffect_PromoteTitle : public FFVEffectBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Effect")
+	TObjectPtr<UFVTitleDefinition> Title;
+
+	virtual void Apply(const FFVConditionContext& Context) const override;
+	virtual FText GetDescription() const override;
+};

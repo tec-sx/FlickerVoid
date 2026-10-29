@@ -2,6 +2,7 @@
 
 #include "FVFactionDefinition.h"
 #include "FVSocialLibrary.h"
+#include "FVSocialSubsystem.h"
 #include "FVTitleDefinition.h"
 #include "Identity/FVIdentityComponent.h"
 
@@ -171,6 +172,19 @@ FText FFVEffect_ModifyRelationship::GetDescription() const
 {
 	const FText Who = Character ? Character->Display.Name : LOCTEXT("Target", "target");
 	return FText::Format(LOCTEXT("ModRelationship", "Relationship with {0} {1}"), Who, FText::AsNumber(Delta));
+}
+
+void FFVEffect_PromoteTitle::Apply(const FFVConditionContext& Context) const
+{
+	if (UFVSocialSubsystem* Social = UFVSocialSubsystem::Get(Context.WorldContext))
+	{
+		Social->PromoteTitle(Title);
+	}
+}
+
+FText FFVEffect_PromoteTitle::GetDescription() const
+{
+	return FText::Format(LOCTEXT("PromoteTitle", "Promote title {0}"), FVSocialConditions::Name(Title));
 }
 
 #undef LOCTEXT_NAMESPACE

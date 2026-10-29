@@ -57,7 +57,7 @@ void UFVSocialSubsystem::HandleFactChanged(FGameplayTag Tag, int32 OldValue, int
 
 void UFVSocialSubsystem::EvaluateTitles()
 {
-	// Granting a title writes facts and runs its effects, which call back in here; those changes re-run the pass.
+	// Earning a title writes facts and runs its effects, which call back in here; those changes re-run the pass.
 	if (bEvaluating)
 	{
 		bDirty = true;
@@ -75,7 +75,7 @@ void UFVSocialSubsystem::EvaluateTitles()
 	}
 	while (bDirty && ++Pass < MaxPasses);
 
-	UE_CLOG(bDirty, LogFVSocialSystem, Warning, TEXT("Titles still changing after %d passes; check titles whose effects earn or revoke each other."), MaxPasses);
+	UE_CLOG(bDirty, LogFVSocialSystem, Warning, TEXT("Titles still changing after %d passes; check titles whose effects earn each other."), MaxPasses);
 }
 
 void UFVSocialSubsystem::EvaluateTitlesOnce()
@@ -90,34 +90,65 @@ void UFVSocialSubsystem::EvaluateTitlesOnce()
 			continue;
 		}
 
-		const bool bHeld = UFVSocialLibrary::HasTitle(this, Title);
-		const bool bEarned = Title->Conditions.Evaluate(Context);
+		if (!Title->Conditions.Evaluate(Context))
+		{
+			TitlesInCondition.Remove(Title);
+			continue;
+		}
 
-		if (bEarned && !bHeld && !IsReplacedByHeldTitle(Title))
+		bool bAlreadyInCondition = false;
+		TitlesInCondition.Add(Title, &bAlreadyInCondition);
+
+		// A first pass only records which conditions hold, so held titles keep their order after a load.
+		if (!UFVSocialLibrary::HasTitle(this, Title) || (bTitlesTracked && !bAlreadyInCondition))
 		{
-			UFVSocialLibrary::GrantTitle(this, Title);
-			OnTitleEarned.Broadcast(Title);
+			PromoteTitle(Title);
 		}
-		else if (!bEarned && bHeld && Title->bTransient)
-		{
-			UFVSocialLibrary::RevokeTitle(this, Title);
-			OnTitleLost.Broadcast(Title);
-		}
+	}
+
+	bTitlesTracked = true;
+}
+
+void UFVSocialSubsystem::PromoteTitle(const UFVTitleDefinition* Title)
+{
+	if (Title == nullptr || !Title->Id.IsValid() || GetCurrentTitle() == Title)
+	{
+		return;
+	}
+
+	const bool bFirstTime = !UFVSocialLibrary::HasTitle(this, Title);
+	MakeCurrent(Title);
+
+	if (bFirstTime)
+	{
+		FFVConditionContext Context;
+		Context.WorldContext = this;
+		Title->OnEarned.Apply(Context);
+		OnTitleEarned.Broadcast(Title);
+	}
+
+	OnCurrentTitleChanged.Broadcast(Title);
+}
+
+void UFVSocialSubsystem::MakeCurrent(const UFVTitleDefinition* Title)
+{
+	// A title's fact holds its rank: the highest rank is the current title, 0 means not earned.
+	int32 TopRank = 0;
+	for (const TObjectPtr<const UFVTitleDefinition>& Other : Titles)
+	{
+		TopRank = FMath::Max(TopRank, GetTitleRank(Other));
+	}
+
+	if (UFVFactDatabase* Facts = UFVFactDatabase::Get(this))
+	{
+		Facts->SetFact(Title->Id, TopRank + 1);
 	}
 }
 
-bool UFVSocialSubsystem::IsReplacedByHeldTitle(const UFVTitleDefinition* Title) const
+int32 UFVSocialSubsystem::GetTitleRank(const UFVTitleDefinition* Title) const
 {
-	auto IsTitle = [Title](const TObjectPtr<UFVTitleDefinition>& Replaced) { return Replaced.Get() == Title; };
-
-	for (const TObjectPtr<const UFVTitleDefinition>& Other : Titles)
-	{
-		if (Other != nullptr && Other != Title && Other->Replaces.ContainsByPredicate(IsTitle) && UFVSocialLibrary::HasTitle(this, Other))
-		{
-			return true;
-		}
-	}
-	return false;
+	const UFVFactDatabase* Facts = UFVFactDatabase::Get(this);
+	return Facts && Title && Title->Id.IsValid() ? FMath::Max(0, Facts->GetFact(Title->Id)) : 0;
 }
 
 TArray<UFVTitleDefinition*> UFVSocialSubsystem::GetHeldTitles() const
@@ -125,10 +156,18 @@ TArray<UFVTitleDefinition*> UFVSocialSubsystem::GetHeldTitles() const
 	TArray<UFVTitleDefinition*> Held;
 	for (const TObjectPtr<const UFVTitleDefinition>& Title : Titles)
 	{
-		if (UFVSocialLibrary::HasTitle(this, Title))
+		if (GetTitleRank(Title) > 0)
 		{
 			Held.Add(const_cast<UFVTitleDefinition*>(Title.Get()));
 		}
 	}
+
+	Held.Sort([this](const UFVTitleDefinition& A, const UFVTitleDefinition& B) { return GetTitleRank(&A) > GetTitleRank(&B); });
 	return Held;
+}
+
+UFVTitleDefinition* UFVSocialSubsystem::GetCurrentTitle() const
+{
+	const TArray<UFVTitleDefinition*> Held = GetHeldTitles();
+	return Held.IsEmpty() ? nullptr : Held[0];
 }
