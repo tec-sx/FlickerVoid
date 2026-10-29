@@ -1,5 +1,5 @@
 // Character section about how the world sees the player: who they are, what they wear, whether they pass as someone
-// else, fame, notoriety and titles. Reads the identity, equipment and FVSocialSystem; refreshes on fact and outfit changes.
+// else, fame, notoriety and titles. Reads the identity, equipment and social scales; refreshes on fact and outfit changes.
 UCLASS(Abstract)
 class UFVCharacterIdentitySection : UFVHubSectionWidget
 {
@@ -11,12 +11,6 @@ class UFVCharacterIdentitySection : UFVHubSectionWidget
 
     UPROPERTY(EditDefaultsOnly, Category = "Identity")
     FText NothingWornText;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Identity", meta = (ToolTip = "Fame that fills the fame bar."))
-    int FameScale = 100;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Identity", meta = (ToolTip = "Notoriety that fills the notoriety bar; the social system clamps it to 100."))
-    int NotorietyScale = 100;
 
     UPROPERTY(BindWidgetOptional)
     UTextBlock NameText;
@@ -90,10 +84,10 @@ class UFVCharacterIdentitySection : UFVHubSectionWidget
             DisguiseText.SetText(Disguise != nullptr ? Disguise.Display.Name : NotDisguisedText);
         }
 
-        int Fame = FVSocial::GetFame();
-        int Notoriety = FVSocial::GetGlobalNotoriety();
-        SetValue(FameText, FameBar, Fame, FameScale);
-        SetValue(NotorietyText, NotorietyBar, Notoriety, NotorietyScale);
+        UFVScaleDefinition FameScale = FVSocial::GetFameScale();
+        UFVScaleDefinition NotorietyScale = FVSocial::GetNotorietyScale();
+        SetValue(FameText, FameBar, FameScale);
+        SetValue(NotorietyText, NotorietyBar, NotorietyScale);
 
         if (TitlesText != nullptr)
         {
@@ -170,15 +164,16 @@ class UFVCharacterIdentitySection : UFVHubSectionWidget
         return Titles.IsEmpty() ? NoTitlesText : FText::FromString(Titles);
     }
 
-    private void SetValue(UTextBlock Text, UProgressBar Bar, int Value, int Scale)
+    private void SetValue(UTextBlock Text, UProgressBar Bar, UFVScaleDefinition Scale)
     {
         if (Text != nullptr)
         {
+            int Value = FVScale::GetValue(Scale);
             Text.SetText(FText::FromString(f"{Value}"));
         }
         if (Bar != nullptr)
         {
-            Bar.SetPercent(float32(FVUIText::Fraction(float(Value), float(Scale))));
+            Bar.SetPercent(float32(FVUIText::ScaleFraction(Scale)));
         }
     }
 

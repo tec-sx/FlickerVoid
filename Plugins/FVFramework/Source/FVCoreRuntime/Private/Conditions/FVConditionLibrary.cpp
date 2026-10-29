@@ -92,6 +92,18 @@ bool UFVConditionLibrary::CompareValues(const float Current, const EFVCompare Co
 	return FVCompare::Compare(Current, Compare, Value);
 }
 
+bool UFVConditionLibrary::ScoreValue(const float Current, const EFVCompare Compare, const float Value, FFVConditionScore& OutScore)
+{
+	return FVCompare::Score(Current, Compare, Value, OutScore);
+}
+
+FText UFVConditionLibrary::DescribeCompare(const EFVCompare Compare, const float Value)
+{
+	const FText Operator = FVCompare::GetDisplayName(Compare);
+	const FText Number = FText::AsNumber(Value);
+	return FText::Format(NSLOCTEXT("FVConditionLibrary", "Compare", "{0} {1}"), Operator, Number);
+}
+
 void UFVConditionLibrary::ApplyEffects(const FFVEffectList& Effects, AActor* Instigator, AActor* Target)
 {
 	Effects.Apply(MakeContext(Instigator, Target));

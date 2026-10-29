@@ -2,15 +2,16 @@
 
 #include "Data/FVCharacterDefinition.h"
 #include "Equipment/FVEquipmentComponent.h"
-#include "FVFactionDefinition.h"
 #include "FVGameplayTags.h"
-#include "FVSocialLibrary.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Identity/FVIdentityComponent.h"
 #include "Inventory/FVItemStackLibrary.h"
 #include "Items/FVItemDefinition.h"
 #include "Items/FVItemMessages.h"
+#include "Scales/FVScaleLibrary.h"
+#include "Social/FVFactionDefinition.h"
+#include "Social/FVSocialLibrary.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVMerchantComponent)
 
@@ -173,7 +174,8 @@ float UFVMerchantComponent::GetPriceAdjustment(const AActor* Customer) const
 		return 0.f;
 	}
 
-	float Adjustment = UFVSocialLibrary::GetStanding(this, MerchantFaction) * StandingPriceFactor;
+	const int32 Standing = UFVScaleLibrary::GetValue(this, MerchantFaction->Standing);
+	float Adjustment = Standing * StandingPriceFactor;
 	if (Customer && UFVSocialLibrary::IsDisguisedAs(Customer, MerchantFaction))
 	{
 		Adjustment += DisguiseDiscount;

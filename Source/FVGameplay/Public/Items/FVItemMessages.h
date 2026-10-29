@@ -47,6 +47,9 @@ struct FLICKERVOIDGAMEPLAY_API FFVItemGiveMessage
 
 	UPROPERTY(BlueprintReadWrite, Category = "Item", meta = (ToolTip = "The item and money changed hands."))
 	bool bSucceeded = false;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Item", meta = (ToolTip = "Given as a gift: the receiver reacts by their gift preferences."))
+	bool bAsGift = false;
 };
 
 /** Message.Item.Stolen: something was stolen, or a theft was noticed. */

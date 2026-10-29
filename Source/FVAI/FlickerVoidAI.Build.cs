@@ -21,7 +21,6 @@ public class FlickerVoidAI : ModuleRules
             "StateTreeModule",
             "GameplayStateTreeModule",
             "FVCoreRuntime",
-            "FVSocialSystem",
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));

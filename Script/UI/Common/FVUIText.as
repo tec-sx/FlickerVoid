@@ -31,4 +31,18 @@ namespace FVUIText
     {
         return Max > 0.0 ? Math::Clamp(Value / Max, 0.0, 1.0) : 0.0;
     }
+
+    // Where a scale's current value sits in its range from the Facts settings; 0 when the scale has no range.
+    float ScaleFraction(UFVScaleDefinition Scale)
+    {
+        int Min = 0;
+        int Max = 0;
+        if (!FVScale::GetRange(Scale, Min, Max))
+        {
+            return 0.0;
+        }
+
+        int Value = FVScale::GetValue(Scale);
+        return Fraction(float(Value - Min), float(Max - Min));
+    }
 }

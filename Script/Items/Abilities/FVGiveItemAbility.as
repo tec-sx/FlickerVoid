@@ -197,7 +197,7 @@ class UFVGiveItemAbility : UFVItemMontageAbility
 
 	private void Transfer()
 	{
-		bSucceeded = FVItem::GiveItem(Giver, Receiver, GivenItem, GivenQuantity, GivenMoney, bAsGift);
+		bSucceeded = FVItem::GiveItem(Giver, Receiver, GivenItem, GivenQuantity, GivenMoney);
 	}
 
 	// The item's prop in the character's right hand; none removes it.
@@ -221,6 +221,7 @@ class UFVGiveItemAbility : UFVItemMontageAbility
 		Message.Quantity = GivenQuantity;
 		Message.Money = GivenMoney;
 		Message.bSucceeded = bSucceeded;
+		Message.bAsGift = bAsGift;
 
 		UGameplayMessageSubsystem::Get().BroadcastMessage(GameplayTags::Message_Item_GiveFinished, Message);
 	}
