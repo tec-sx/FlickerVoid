@@ -9,6 +9,7 @@
 #include "FVUILayout.generated.h"
 
 class UCommonActivatableWidget;
+class UInputMappingContext;
 class UCommonActivatableWidgetContainerBase;
 class AHUD;
 
@@ -48,6 +49,12 @@ public:
 	/** Warn when the layout is lazily created because the HUD is not an AFVHUD. */
 	UPROPERTY(Config, EditAnywhere, Category = "UI")
 	bool bWarnIfHUDMissing = true;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Input", meta = (ToolTip = "Mapping context added while any Menu-mode screen is open (Tab, Q/E, Escape...). Its actions reach screens through Bind Input Action, whatever has focus."))
+	TSoftObjectPtr<UInputMappingContext> MenuInputContext;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Input", meta = (ToolTip = "Priority of the menu context; keep it above the gameplay contexts so its keys win while a menu is open."))
+	int32 MenuInputContextPriority = 100;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFVOnUIStackChanged);
@@ -80,10 +87,20 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FV|UI")
 	UFVUILayout* GetLayout() const { return Layout; }
 
+	void AddMenuInput();
+	void RemoveMenuInput();
+
 	UPROPERTY(BlueprintAssignable, Category = "FV|UI")
 	FFVOnUIStackChanged OnStackChanged;
 
 private:
+	void RestoreGameInput() const;
+
 	UPROPERTY(Transient)
 	TObjectPtr<UFVUILayout> Layout;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UInputMappingContext> ActiveMenuContext;
+
+	int32 MenuInputCount = 0;
 };

@@ -1,7 +1,11 @@
 #include "Layout/FVUILayout.h"
 
 #include "CommonActivatableWidget.h"
+#include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Input/CommonUIActionRouterBase.h"
+#include "InputMappingContext.h"
 #include "FVCoreUI.h"
 #include "HUD/FVHUD.h"
 #include "Layout/FVUserWidgetHost.h"
@@ -63,6 +67,12 @@ void UFVUIManagerSubsystem::ReleaseLayout()
 		Layout = nullptr;
 		OnStackChanged.Broadcast();
 	}
+
+	if (MenuInputCount > 0)
+	{
+		MenuInputCount = 1;
+		RemoveMenuInput();
+	}
 }
 
 UCommonActivatableWidget* UFVUIManagerSubsystem::PushScreen(FGameplayTag LayerTag, TSubclassOf<UCommonActivatableWidget> WidgetClass)
@@ -118,4 +128,50 @@ void UFVUIManagerSubsystem::PopUserWidget(UUserWidget* Widget)
 		Host = Widget->GetParent()->GetTypedOuter<UFVUserWidgetHost>();
 	}
 	PopScreen(Host);
+}
+
+void UFVUIManagerSubsystem::AddMenuInput()
+{
+	if (MenuInputCount++ > 0)
+	{
+		return;
+	}
+
+	const UFVUISettings* Settings = GetDefault<UFVUISettings>();
+	UEnhancedInputLocalPlayerSubsystem* Input = GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+	ActiveMenuContext = Settings->MenuInputContext.LoadSynchronous();
+	if (Input && ActiveMenuContext)
+	{
+		Input->AddMappingContext(ActiveMenuContext, Settings->MenuInputContextPriority);
+	}
+}
+
+void UFVUIManagerSubsystem::RemoveMenuInput()
+{
+	if (MenuInputCount == 0 || --MenuInputCount > 0)
+	{
+		return;
+	}
+
+	UEnhancedInputLocalPlayerSubsystem* Input = GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+	if (Input && ActiveMenuContext)
+	{
+		Input->RemoveMappingContext(ActiveMenuContext);
+	}
+	ActiveMenuContext = nullptr;
+
+	RestoreGameInput();
+}
+
+void UFVUIManagerSubsystem::RestoreGameInput() const
+{
+	if (UCommonUIActionRouterBase* Router = GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UCommonUIActionRouterBase>() : nullptr)
+	{
+		Router->SetActiveUIInputConfig(FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently));
+	}
+	
+	if (FSlateApplication::IsInitialized())
+	{
+		FSlateApplication::Get().SetAllUserFocusToGameViewport();
+	}
 }

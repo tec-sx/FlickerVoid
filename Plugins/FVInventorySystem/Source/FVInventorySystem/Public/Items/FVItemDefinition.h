@@ -34,6 +34,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Item", meta = (ToolTip = "Slots the item can be worn in (any one of them); empty if not equippable."))
 	FGameplayTagContainer GetEquipmentSlots() const;
 
+	UFUNCTION(BlueprintPure, Category = "Item", meta = (ToolTip = "The category is under one of the settings' Key Item Categories: listed under Keys and Quest, takes no weight and no cells."))
+	bool IsKeyItem() const;
+
 	virtual void PostLoad() override;
 
 #if WITH_EDITOR

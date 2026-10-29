@@ -82,6 +82,14 @@ void AFVPlayerController::SetupInputComponent()
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Jump, ETriggerEvent::Completed, this, &ThisClass::Input_JumpCompleted, false);
 	FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Aim, ETriggerEvent::Started, this, &ThisClass::Input_AimStarted, false);
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Aim, ETriggerEvent::Completed, this, &ThisClass::Input_AimCompleted, false);
+
+	for (const FFVInputAction& Action : InputConfig->NativeInputActions)
+	{
+		if (Action.InputAction && Action.InputTag.MatchesTag(FVCoreTags::InputTag_UI))
+		{
+			AbilityBindHandles.Add(FVIC->BindAction(Action.InputAction, ETriggerEvent::Started, this, &ThisClass::Input_UIPressed, Action.InputTag).GetHandle());
+		}
+	}
 }
 
 void AFVPlayerController::AddInputMappingContexts()
@@ -246,6 +254,11 @@ void AFVPlayerController::Input_AimCompleted(const FInputActionValue& Value)
 	{
 		Locomotion->SetAiming(false);
 	}
+}
+
+void AFVPlayerController::Input_UIPressed(FGameplayTag InputTag)
+{
+	OnUIInputPressed(InputTag);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst

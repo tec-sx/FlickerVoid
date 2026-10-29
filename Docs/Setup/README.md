@@ -7,14 +7,21 @@ Read [FVFramework](FVFramework.md) first; every other plugin builds on its defin
 | Guide | You get |
 |---|---|
 | [FVFramework](FVFramework.md) | Definitions, facts, conditions and effects, characters, UI layout, world clock, cinematics, spawners, Flow and StateTree nodes, debug HUD |
-| [FVInteractionSystem](FVInteractionSystem.md) | Look-at interaction: offers, prompts, focus indicator, highlight, locks, doors |
-| [FVAttributeSystem](FVAttributeSystem.md) | Attributes, attribute sets, modifiers, skill checks |
-| [FVInventorySystem](FVInventorySystem.md) | Items, carrying (weight and space), outfits and equipment slots, pickups |
+| [FVInteractionSystem](FVInteractionSystem.md) | Look-at interaction: offers, prompts, focus indicator, highlight, locks and keys, doors |
+| [FVAttributeSystem](FVAttributeSystem.md) | Attribute definitions over GAS attributes, Gameplay Effect conditions/effects, skill checks |
+| [FVInventorySystem](FVInventorySystem.md) | Items, carrying (weight and space), Keys and Quest list, money, outfits and equipment slots, pickups, loot tables |
 | [FVDialogueSystem](FVDialogueSystem.md) | Conversations and barks on FlowGraph |
-| [FVStorySystem](FVStorySystem.md) | Quests, knowledge (clues, topics, thoughts), save and load |
-| [FVSocialSystem](FVSocialSystem.md) | Factions, standing, fame, notoriety, titles, relationships, disguise |
+| [FVStorySystem](FVStorySystem.md) | Quests, knowledge (clues, topics, thoughts, documents), save and load |
+| [FVSocialSystem](FVSocialSystem.md) | Factions, standing, fame, notoriety, titles, relationships, gifts, disguise |
 | [FVNavigationSystem](FVNavigationSystem.md) | Maps, map markers, discovery, waypoint, minimap/compass/world map logic, map capture |
-| [Character movement](CharacterMovement.md) (game module) | Mover-driven characters, movement sets and AngelScript movement modes, traversal, animation on UAF |
+| [Game UI](GameUI.md) | The game's HUD, hub menu (inventory, character, journal), map screen, main, pause and options menus: widgets, input and settings to create |
+
+Game layer guides (the game modules and AngelScript built on the plugins):
+
+| Guide | You get |
+|---|---|
+| [Items](Items.md) | Item types, world items, notes and investigation, money, loot containers, keys, item abilities and animations, held and thrown items, intoxication, trading, pickpocketing, giving from dialogue |
+| [Character movement](CharacterMovement.md) | Mover-driven characters, movement sets and AngelScript movement modes, traversal, animation on UAF |
 
 ## Shared conventions
 
@@ -35,3 +42,5 @@ Read [FVFramework](FVFramework.md) first; every other plugin builds on its defin
 4. FVDialogueSystem + FVStorySystem: a talkable NPC, a quest, some knowledge.
 5. FVSocialSystem: factions and the player's reputation.
 6. FVNavigationSystem: map images, markers, minimap and compass.
+7. Items: item settings, interactables and the player's item abilities.
+8. Game UI: HUD, hub menu and menus on top of all of the above.

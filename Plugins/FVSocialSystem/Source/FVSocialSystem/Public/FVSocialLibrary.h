@@ -63,6 +63,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FV|Social", meta = (WorldContext = "WorldContext"))
 	static void ModifyRelationship(UObject* WorldContext, const UFVCharacterDefinition* Character, int32 Delta);
 
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "Relationship change a gift with these tags (its definition Tags and Category) makes on the receiver: the sum of their matching gift preferences, else their default."))
+	static int32 GetGiftRelationshipChange(const AActor* Receiver, const FGameplayTagContainer& GiftTags);
+
+	UFUNCTION(BlueprintCallable, Category = "FV|Social", meta = (WorldContext = "WorldContext", ToolTip = "Changes the player's relationship with the receiver by their gift preferences. Returns the change; 0 when the receiver has no relationship fact."))
+	static int32 ReceiveGift(UObject* WorldContext, const AActor* Receiver, const FGameplayTagContainer& GiftTags);
+
 	/** Faction of an actor through its identity's Social fragment. */
 	UFUNCTION(BlueprintPure, Category = "FV|Social")
 	static UFVFactionDefinition* GetActorFaction(const AActor* Actor);
@@ -70,6 +76,15 @@ public:
 	/** Actor carries the faction's disguise tag and the faction's notoriety is below its disguise limit. */
 	UFUNCTION(BlueprintPure, Category = "FV|Social")
 	static bool IsDisguisedAs(const AActor* Actor, const UFVFactionDefinition* Faction);
+
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "Factions registered in the Social settings."))
+	static TArray<UFVFactionDefinition*> GetFactions();
+
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "The registered faction the actor currently passes as a member of, or null."))
+	static UFVFactionDefinition* GetDisguiseFaction(const AActor* Actor);
+
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (WorldContext = "WorldContext", ToolTip = "Characters from the Social settings' Relationships list whose relationship fact has been set."))
+	static TArray<UFVCharacterDefinition*> GetKnownCharacters(const UObject* WorldContext);
 
 	/**
 	 * How members of Faction treat Subject: members and accepted disguises are Allied,

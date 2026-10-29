@@ -11,14 +11,6 @@ public class FVAttributeSystemEditor : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
-            "Slate",
-            "SlateCore",
-            "GameplayTags",
-            "DeveloperSettings",
-            "UnrealEd",
-            "ToolMenus",
-            "FVCoreRuntime",
-            "FVCoreEditor",
             "FVAttributeSystem"
         });
     }

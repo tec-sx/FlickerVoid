@@ -75,6 +75,10 @@ protected:
 
     void Input_AbilityInputPressed(FGameplayTag InputTag);
     void Input_AbilityInputReleased(FGameplayTag InputTag);
+    void Input_UIPressed(FGameplayTag InputTag);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlickerVoid|UI", meta = (ToolTip = "A native input action of the input config whose tag is under InputTag.UI was pressed (hub menu, map, pause)."))
+	void OnUIInputPressed(FGameplayTag InputTag);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "FlivkerVoid|Input")

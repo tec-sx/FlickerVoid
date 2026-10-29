@@ -1,6 +1,6 @@
 # FlickerVoid Framework Design
 
-Status: implemented in `feature/framework-dev`, revised after the owner's answers of 2026-10-05. The answers are recorded at the end; nothing has been compiled yet.
+Status: implemented in `feature/framework-dev`, revised after the owner's answers of 2026-10-05 (recorded at the end). The architecture decisions of 2026-10-16 (layers, ontology, AngelScript and C++ boundary, module and folder structure) are in Layers through Folders and naming; the code still has the old module layout until that refactor.
 
 ## Goals
 
@@ -22,9 +22,19 @@ Status: implemented in `feature/framework-dev`, revised after the owner's answer
 
 ## Layers
 
+Decided 2026-10-16. Functional layers stack vertically and dependencies only point down. The ontology domains (next section) cut across them horizontally.
+
 ```
-Plugins (FV*System, feature based)  ->  Game modules (domain based)  ->  AngelScript (game objects)  ->  Blueprints (data + cosmetics)
+Content (data assets, meshes, textures, materials, FX, Blueprint world actors, Widget Blueprints)
+  -> AngelScript (most of the game: actors, characters, game modes, abilities, rules, widget logic)
+    -> Game module (FlickerVoid: setup, components, hosts)
+      -> Plugins (FV*System, feature based, generic)
+        -> FVFramework (the ontological "Game": blocks for Gameplay, Interface and Presentation)
 ```
+
+- **Down only.** A layer depends only on the layers below it. AngelScript calls plugin APIs directly; the game module doesn't wrap them.
+- **Across only through the shared language.** Domains never call each other. They meet through definitions, tags, facts and conditions/effects: a quest uses Inventory's "has item" condition and "give item" effect instead of calling the inventory component. Interface and Presentation observe Gameplay (getters, delegates) and send intents back; Gameplay never knows them.
+- **One owner per node per layer.** Each ontology node has one plugin that owns its mechanism (a plugin can own several nodes) and one folder per layer named after the node.
 
 ### Plugins
 
@@ -32,30 +42,167 @@ Plugins (FV*System, feature based)  ->  Game modules (domain based)  ->  AngelSc
 | --- | --- | --- |
 | **FVFramework** | kept, extended | Facts, conditions/effects, definitions, **fragments**, **character definition + identity component**, world clock, cinematics, spawner, input, UI layout, StateTree nodes. New module **FVCoreFlow**: generic Flow nodes (Branch, Apply Effects, Wait For Conditions, Conditions predicate). |
 | **FVInteractionSystem** | kept as is | Interactor/interactable, offers, focus. |
-| **FVAttributeSystem** | new | Attribute and attribute set definitions, attribute component with modifiers, skill checks, attribute conditions/effects. |
-| **FVInventorySystem** | new (replaces the Mountea fork) | Item definition + fragments (equippable, usable, container), inventory with weight and grid space, layered equipment slots, pickup and item receiver, item conditions/effects. |
+| **FVAttributeSystem** | new, on GAS | Attributes are GAS attributes in attribute sets (AngelScript, base `UFVAttributeSet` clamps to definitions); Gameplay Effects change them (starting values, perks, kinks, statuses). Attribute definitions (display, range), attribute component (change events, save), skill checks, attribute and Gameplay Effect conditions/effects. |
+| **FVInventorySystem** | new (replaces the Mountea fork) | Item definition + fragments (equippable, usable, container, charges, value), inventory with weight and grid space, a Keys and Quest list without weight or space, money, stack instance data (charges left, stolen), layered equipment slots, pickup and item receiver, loot tables, item conditions/effects. |
 | **FVDialogueSystem** | new (replaces the Yap fork) | Flow-based conversations: Line, Choice, End Conversation, Bark nodes; dialogue subsystem for UI; participant component for animation/voice. |
 | **FVStorySystem** | reworked | Quests (+ optional quest Flow graph), knowledge, save. Yap bridge removed; reputation moved to Social. |
 | **FVSocialSystem** | new | Factions and standing tiers, one global fame and one global notoriety, titles, relationships, disguise-aware recognition. |
 | **FVNavigationSystem** | new | Map definitions with layers (floors, interiors), marker definitions with view fragments, marker component, discovery, tracked marker, waypoint, driving logic for minimap, world map and compass. Editor: Map Capture panel and capture actor that render layer images. |
 | FVStealthSystem | phase 2 (proposed) | Visibility (light, stance, disguise), hiding spots, suspicion meters for NPCs (StateTree + AI perception). |
 
-Every plugin depends only on FVFramework (and Flow where it has graph nodes). Plugins never depend on each other; they meet through **facts, gameplay tags, conditions/effects and components on actors**.
+Every plugin depends only on FVFramework (and Flow where it has graph nodes, engine GAS where it uses the ability system). Plugins never depend on each other; they meet through **facts, gameplay tags, conditions/effects and components on actors**.
 
-### Game modules
+### Game module
 
-| Module | Role | Change |
+Target: one runtime module `FlickerVoid` plus `FlickerVoidDebug` and `FlickerVoidEditor`, the same pattern as every plugin. C++ there is limited to three kinds; everything else is AngelScript.
+
+| Kind | What | Examples |
 | --- | --- | --- |
-| FVCore | logging, tags, flow triggers | kept |
-| FVCharacter | locomotion, animation, traversal | kept |
-| FVGameplay | GAS: ASC, abilities, interaction ability base, scanner | attribute sets, checks and the personality system removed |
-| FVAI | NPC config, StateTree tasks | faction now from FVSocialSystem |
-| FVNarrative | narrative tags | memory and psychology systems removed |
-| FVWorld | world objects (doors, hiding spots), world tags | `UFVWorldStateSubsystem` removed, facts and the clock are the single source |
-| FVUI | HUD, journal, dialogue, scanner widgets | kept |
-| FVGameplay | also owns the **scanner** now (`Scanner/`), built on the interaction registry | scanner moved in from a plugin |
-| FVItems | — | **removed**: pickup/receiver/item definition moved to FVInventorySystem |
-| FlickerVoidGame | game mode, player, asset manager | kept |
+| **Setup** | configures the game | game mode base (loads game data), game state, player state, player controller (forwards Enhanced Input, which the AngelScript fork can't bind), asset manager, settings |
+| **Shapes** | types C++ must know | components, definitions, data asset types, the fragments, conditions and effects C++ systems need, runtime item data |
+| **Hosts** | engine extension points AngelScript can't create | Flow nodes, struct-based StateTree tasks, rig units, anim instances (until UAF replaces them), custom Mover input and layered move data |
+
+### Module structure (refactor plan)
+
+| Today | Goes to |
+| --- | --- |
+| FlickerVoid (`Source/FlickerVoidGame`) | stays as the game module. `AFVGameModeBase` keeps the data loading; Explore and Story game modes and the player character move to AngelScript. |
+| FlickerVoidCore | Flow trigger nodes and the trigger component are generic and move to FVFramework's FVCoreFlow; trigger box and sphere actors and Blueprint-base StateTree tasks/conditions move to AngelScript; the struct StateTree task and tagged physical material stay in the game module. |
+| FlickerVoidCharacter | **dropped** (owner, 2026-10-16). The Mover pieces (locomotion component, movement set component, movement sets, ground mode, locomotion inputs; PR #63) and the traversal component go to `Gameplay/`; the anim instance (until UAF replaces it), rig units and animation data go to `Presentation/`; `AFVTraversable` becomes an AngelScript actor with a C++ component the traversal component finds; `UFVCharacterDataAsset` is deleted (obsolete, it extended the retired pawn data) and the player is set up through its `UFVCharacterDefinition` like every character; characters move to AngelScript (below). |
+| FlickerVoidGameplay | ability fragment, ability set, tag relationship map, scanner, the ActivateAbility effect and the item layer (fragments, settings, library, components, Give Item Flow node; PR #59) stay in the game module; the debug StateTree task moves to AngelScript; scanner debug goes to FlickerVoidDebug. |
+| FlickerVoidAI | NPC fact conditions/effects, StateTree schema, StateTree AI component, AI controller and the random location task stay; the perception evaluator moves to AngelScript; `AFVAICharacter` becomes an AngelScript character, on Mover once Mover's NavWalking is set up for AI paths (until then it stays on the Character Movement Component, PR #63). |
+| FlickerVoidWorld | world object actors move to AngelScript. |
+| FlickerVoidNarrative, FlickerVoidUI | deleted (the journal is AngelScript UI, PR #55). |
+| FlickerVoidCoreEditor | renamed FlickerVoidEditor. |
+
+Moving a class to another module changes its `/Script/<Module>` path: add one `+PackageRedirects=(OldName="/Script/<OldModule>",NewName="/Script/FlickerVoid")` per removed module to `Config/DefaultEngine.ini` (plus class redirects for renamed classes) so assets keep loading until they are resaved.
+
+**Characters.** Protagonist and residents are both characters: one AngelScript base composed of C++ components, with `Protagonist` and `Resident` classes on top. Characters move with Mover (owner, 2026-10-19; PR #63), so the base is a pawn, not an `ACharacter`. What has to change first:
+
+1. Movement state moves off `AFVCharacter` into `UFVLocomotionComponent`, and movement modes into movement sets on `UFVMovementSetComponent`. The anim instance, traversal component and player controller read the locomotion component instead of casting to `AFVCharacter` (PR #63, player only so far).
+2. Ability granting on first possession (`AFVPlayerCharacter::PossessedBy`, PR #58) moves into the ability system component, which listens for its pawn's controller change.
+3. What `AFVCharacter` still does in C++ moves into its components: installing the starting movement sets, pointing Mover at the mesh and reporting Mover's velocity as the pawn's (`GetVelocity`). The AngelScript base then declares the capsule, mesh, Character Mover, locomotion and movement set components itself, and `AFVCharacter` goes. If one of these can't move into a component, a thin C++ pawn base stays.
+4. AngelScript classes can't implement `IGameplayTagAssetInterface` or `IAbilitySystemInterface`. FVDialogueSystem (`FVDialogueFlowNodes.cpp`) and FVSocialSystem (`FVSocialLibrary.cpp`) cast actors to the tag interface and must read owned tags from a component instead. GAS's `GetAbilitySystemComponentFromActor` already falls back to a component lookup.
+5. `AFVPlayerController` stops caching `AFVPlayerCharacter` and uses components only.
+
+**Character looks.** Meshes assigned from a data asset at runtime (`BeginPlay`) don't show in the Blueprint editor, which makes character setups hard to tweak visually. So:
+
+- The skeletal mesh, animation (the Anim Blueprint, or the UAF component's system once animation moves to UAF) and physics asset of a character are set directly on its Blueprint (Content layer), one Blueprint per distinct look. Definitions and data assets hold gameplay data only; the cosmetics in `UCharacterDataAsset.as` move onto the Blueprints.
+- Looks that must come from data, such as outfits on the body or variants of a resident, are applied in the construction script (AngelScript `ConstructionScript()`) or in a C++ component's `OnRegister()`. Both run in the Blueprint editor viewport and the level editor, so the result stays visible; the interactable AI character script and PR #59's world item already work this way. The data asset has to be set on the Blueprint's defaults (not only per placed instance) to show in the Blueprint editor, and soft references are loaded synchronously only in the editor.
+
+## Ontology
+
+Decided 2026-10-16 (owner). The ontology is the game's vocabulary and the horizontal axis of the architecture. Every node has three children (rule of three). `Script/` folders follow it, and `Source/FlickerVoid` mirrors the same paths where C++ is needed.
+
+```mermaid
+flowchart LR
+  GAM[Game] --> UI[Interface]
+  GAM --> GPL[Gameplay]
+  GAM --> PRN[Presentation]
+
+  UI --> MMN[MainMenu]
+  UI --> IGM[In-Game Menu]
+  UI --> HUD[HUD]
+
+  GPL --> PRT[Protagonist]
+  GPL --> WRD[World]
+  GPL --> NAR[Narrative]
+
+  PRT --> ID[Identity]
+  PRT --> STA[State]
+  PRT --> RSC[Resources]
+  ID --> APR[Appearance]
+  ID --> PRS[Personality]
+  ID --> SOC[Social]
+  PRS --> SKL[Skills]
+  PRS --> PRK[Perks]
+  PRS --> KNK[Kinks]
+  SOC --> AFF[Affiliation]
+  SOC --> REL[Relationships]
+  SOC --> FAM[Fame]
+  STA --> PHY[Physical]
+  STA --> MNT["Mental (Sanity)"]
+  STA --> SPI[Spiritual]
+  RSC --> POS[Possessions]
+  RSC --> KNW[Knowledge]
+  RSC --> CON[Connections]
+
+  WRD --> ENV[Environment]
+  WRD --> OBJ[Objects]
+  WRD --> SCT[Society]
+  ENV --> URB[Urban]
+  ENV --> SRB[Suburban]
+  ENV --> NTR[Nature]
+  URB --> ENT[Entertainment]
+  URB --> BSN[Business]
+  URB --> RSD[Residential]
+  SRB --> SLM[Slums]
+  SRB --> SQR[Square]
+  SRB --> IND[Industrial]
+  NTR --> MED[Meadow]
+  NTR --> SMT[Summit]
+  NTR --> FRS[Forest]
+  SCT --> FCT[Factions]
+  SCT --> RSN[Residents]
+  SCT --> ECN[Economy]
+
+  NAR --> PLT[Plot]
+  NAR --> EMT[Emotion]
+  NAR --> DSC[Discovery]
+  PLT --> MAR[MainArc]
+  PLT --> CAR[CharacterArc]
+  PLT --> HIS[WorldHistory]
+  EMT --> SMB[Symbolism]
+  EMT --> VSL[Visuals]
+  EMT --> MSC[Music]
+  DSC --> DIA[Dialogue]
+  DSC --> MFG[MemoryFragments]
+  DSC --> QST[Quests]
+  DIA --> EXC[Exchange]
+  DIA --> CHO[Choice]
+  DIA --> DREL[Relationship]
+  QST --> QMN[Main]
+  QST --> QSD[Side]
+  QST --> QPR[Progression]
+```
+
+- Dialogue's Exchange, Choice and Relationship are kinds of dialogue line; a Relationship line improves or reduces a relationship and helps discovery.
+- Quests' Progression means transit quests that only connect main quests.
+- Still open: the children of Presentation and Objects.
+
+## AngelScript and C++
+
+- **Components are always C++** (plugin or game module). AngelScript composes actors from them and never declares components.
+- AngelScript has no struct inheritance, so definition fragments, conditions and effects become instanced UObjects, the Lyra pattern (owner, 2026-10-16):
+  - `UFVFragment` (FVFramework) is an abstract, `EditInlineNew`, `DefaultToInstanced`, Blueprintable `UObject`. Definitions hold `UPROPERTY(Instanced) TArray<TObjectPtr<UFVFragment>> Fragments`, and `UFVDefinition::FindFragment(TSubclassOf<UFVFragment>)` uses `DeterminesOutputType`, so AngelScript gets a typed result (`Definition.FindFragment(UWearableFragment)`).
+  - Fragments are subobjects of the definition asset: created when the asset loads, one per definition (not per item), never constructed by gameplay code, and released only with the definition. The memory cost is one small object per fragment per definition.
+  - Fragments are read-only and shared by everything that uses the definition. Mutable state never goes in a fragment.
+  - C++ fragment classes are the ones C++ systems read (equippable, container, abilities, map views...). AngelScript adds game-specific fragments that only AngelScript reads, so C++ still never names a script class.
+  - Runtime data stays in structs: item stacks and per-instance data (`FFVItemInstanceFragment`) are plain structs, saved through the save system. No UObject per stack; this game is single-player and needs no replication.
+  - Conditions and effects follow the same pattern: abstract instanced `UFVCondition` / `UFVEffect` bases, held by `FFVConditionSet` / `FFVEffectList`. C++ and AngelScript subclass them directly, so the `FFVCondition_Script` / `FFVEffect_Script` structs and the `UFVScriptCondition` / `UFVScriptEffect` wrapper go away. They are stateless: each call reads the properties set in the editor and the context it is given (instigator, target), and writes its result to the world (facts, components, inventory), never to its own members. The same object runs every time its line, quest step or item use runs, so anything that must survive between calls (a wait, an "already applied" flag) lives in the host (Flow node, subsystem) or in facts.
+  - Migration for conditions and effects: about 40 types (22 conditions, 22 effects) in about 40 properties across 8 plugins and the game modules; nothing builds them at runtime, so no `NewObject` calls appear. FVFramework's StateTree nodes (`FVStateTreeNodes.h`) become UObject nodes (`UStateTreeConditionBlueprintBase` for FV Conditions, `UStateTreeTaskBlueprintBase` for FV Apply Effects) that hold the condition set and effect lists directly, so the instanced objects are subobjects of the node, which the StateTree compiler copies into the tree like any Blueprint-base node. Check once in a packaged build.
+  - Migration for fragments: about 16 fragment structs (items, characters, map markers) become `UFVFragment` classes and about 30 `FVFragments::Find` call sites switch to `FindFragment`.
+  - Content: changing a property from structs to objects drops what is saved in it, for fragments on data assets and for conditions and effects in dialogue, quests, Flow graphs, interaction offers and StateTrees. Only one condition or effect is authored so far, so they are re-entered by hand after the change, with no converter. Fragments are re-entered the same way unless many definitions are authored by the time they migrate; then the old property stays as `_DEPRECATED` for one version and the owner's `PostLoad` converts it (matching each struct to its class by name and copying properties by reflection), the assets are resaved and the property is deleted. Renaming or deleting one of these classes (C++ or AngelScript) drops it from assets the same way unless a class redirect is added.
+- AngelScript can't implement interfaces, so C++ never casts an actor to an interface, engine interfaces included; it finds a component.
+- C++ never names an AngelScript class. It reaches script-built things in three ways:
+  - **Find**: look up a C++ component on the actor and call it or broadcast its delegates.
+  - **Spawn**: data or config holds a class typed as a C++ base (Default Pawn Class, ability sets on the character definition and the attribute sets they grant), and the engine or C++ instantiates the AngelScript subclass.
+  - **Host**: a generic C++ container holds an instanced, Blueprintable C++ base that AngelScript subclasses: fragments, conditions and effects (`UFVFragment`, `UFVCondition`, `UFVEffect`) are subclassed directly; StateTree hosts tasks deriving from `UStateTreeTaskBlueprintBase`; movement sets host Mover movement modes and transitions, so a mode such as swimming is written in AngelScript. The Branch, Apply Effects and Wait For Conditions Flow nodes host conditions and effects, so AngelScript logic already runs in Flow graphs; a new C++ Flow node is needed only for a new graph shape (pins, async waits, add-ons).
+
+## Folders and naming
+
+- Each ontology node is a **folder** (inner node with code below it), a **class** (leaf with behaviour, such as a door or a game mode) or **data** (a tag such as a district type, a definition such as an attribute or faction, or a fact such as fame). No empty folders or classes to complete the tree.
+- Files at the root of `Script/` belong to Game itself: game modes, player controller.
+- `Source/FlickerVoid/Public` and `Private` mirror the `Script/` paths, so the C++ half of a feature sits at the same path as its script half:
+
+  ```
+  Source/FlickerVoid/Public/Gameplay/World/Society/Residents/   NPC fact conditions and effects (structs)
+  Script/Gameplay/World/Society/Residents/                      resident character, AI behaviour
+  Script/Gameplay/World/Objects/Door.as                          composes the Interactable and Lock components
+  ```
+
+- Code used by several nodes lives at their lowest common ancestor: character movement and traversal (protagonist and residents) go in `Gameplay/`, animation and rig units in `Presentation/`.
+- C++ classes keep the `FV` prefix (`UFVTraversalComponent`). AngelScript classes drop it (`ADoor`, `AStoryGameMode`, `UTradeEffect`), and each `.as` file is named after its main class without the type prefix (`Door.as`, `StoryGameMode.as`). A class moving from C++ to AngelScript never clashes with its old name.
 
 ## Data model
 
@@ -63,14 +210,17 @@ Every plugin depends only on FVFramework (and Flow where it has graph nodes). Pl
 UFVDefinition (Id tag, Display, Tags)                        FVFramework
  ├─ UFVCharacterDefinition  + Fragments<FFVCharacterFragment> FVFramework
  │     FFVCharacterFragment_Social { Faction, RelationshipFact }      (Social)
- ├─ UFVAttributeDefinition  { Category, Default, Min, Max }     FVAttributeSystem
- ├─ UFVAttributeSetDefinition { Parents, Attributes }           FVAttributeSystem
+ ├─ UFVAttributeDefinition  { Attribute (GAS), Category, Min, Max }  FVAttributeSystem
  ├─ UFVCheckDefinition      { Attribute, Roll, Modifiers<Conditions> }  FVAttributeSystem
  ├─ UFVItemDefinition       { Weight, GridSize, MaxQuantity } + Fragments<FFVItemFragment>  FVInventorySystem
  │     FFVItemFragment_Equippable { Slots, BlockedSlots, GrantedTags }
- │     FFVItemFragment_Usable     { Effects, bConsume }
+ │     FFVItemFragment_Usable     { UseConditions, Effects, bConsumeOnUse }
  │     FFVItemFragment_Container  { Cells, WeightBonus }
- │     (inventory stacks: InstanceId + InstanceData<FFVItemInstanceFragment>)
+ │     FFVItemFragment_Charges    { Charges }
+ │     FFVItemFragment_Value      { BasePrice, bSellable }
+ │     FFVItemFragment_World / _Animation / _Throwable                          (FVGameplay)
+ │     (inventory stacks: InstanceId + InstanceData<FFVItemInstanceFragment>: Charges Left, Stolen)
+ ├─ UFVLootTableDefinition  { Entries{Item or Table, Min/Max, Chance, Conditions}, Min/MaxMoney }  FVInventorySystem
  ├─ UFVFactionDefinition    { standing range, tiers->attitude, relations, NotorietyFact, DisguiseTag }  FVSocialSystem
  ├─ UFVTitleDefinition      { Conditions, OnEarned, Replaces }   FVSocialSystem
  ├─ UFVScanDefinition       { Category, Duration, Entries, OnScanned effects }  FVGameplay
@@ -91,13 +241,18 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | `UFVIdentityComponent` | FVFramework | any character: links actor <-> `UFVCharacterDefinition` |
 | `UFVInventoryComponent`, `UFVEquipmentComponent`, `UFVItemReceiverComponent` | Inventory | player, containers, NPCs |
 | `UFVPickupComponent` | Inventory | world items |
+| `UFVLootComponent` | Inventory | containers, bodies: rolls a loot table into their inventory once |
 | `UFVDialogueParticipantComponent` | Dialogue | speakers: events for lines (anim, lip sync, barks) |
-| `UFVAttributeComponent` | Attributes | any character with attributes |
+| `UFVAttributeComponent` | Attributes | characters whose attribute changes are listened to or saved (values live on the ability system) |
 | `UFVScannerComponent` | FVGameplay | player |
 | `UFVScannableComponent` | FVGameplay | anything scannable (needs an interactable component too) |
 | `UFVMapMarkerComponent` | Navigation | anything shown on the map, minimap or compass (shops, quest givers, points of interest) |
 | `UFVNavigatorComponent` | Navigation | player pawn: active map, discovery, minimap/compass/world map views |
 | `AFVMapCaptureActor` | Navigation | editor-only camera placed over an area to capture a map layer image |
+| `UFVHeldItemComponent`, `UFVIntoxicationComponent` | FVGameplay | player; held items also on NPCs that hold things |
+| `UFVHeldItemBehaviourComponent`, `UFVThrownItemComponent` | FVGameplay | held item actors (e.g. a flashlight); thrown items, added by the throw ability |
+| `UFVMerchantComponent` | FVGameplay | merchants, next to their inventory |
+| `UFVExamineSecretsComponent` | FVGameplay | readables and other examinable actors with secrets |
 
 ## Key flows
 
@@ -130,6 +285,13 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 2. Pockets (`BasePocketCells`) plus the container fragments of equipped bags and backpacks give the space; the base limit plus their `WeightBonus` gives the weight allowance.
 3. The game layer adds allowance from attributes with `SetBonuses`, which keeps the inventory plugin independent of the attribute plugin.
 4. A pickup that does not fit is refused, or takes only part of the pile and leaves the rest in the world.
+5. Keys and quest items (settings `KeyItemCategories`) sit in their own list and take no weight or space. Money is a number on the inventory, not an item.
+
+**Items in the world** (game layer, `Docs/Setup/Items.md`)
+1. An item is data: a category tag and fragments. One generic world actor (`AFVWorldItem`) takes its mesh and offers from the definition; notes are knowledge on an `AFVReadable`, never items.
+2. An offer's *Activate Ability* sends an `Event.Item.*` event; an AngelScript item ability (trigger event tag set in script) plays the montage from the character's item animation styles and acts on its `Event.Item.Notify.Apply` notify.
+3. Loot containers roll a loot table once; contents with an owner are marked stolen when taken. Merchants price items from the Value fragment, standing and disguise. Dialogue gives items through the *FV Give Item* Flow node, which waits for `Message.Item.GiveFinished`.
+4. Screens and other systems listen to `Message.Item.*` gameplay messages.
 
 **Navigation**
 1. Maps are listed in Navigation settings. The navigator finds the highest-priority available map with a layer under the player, so walking into a building swaps to its interior map and climbing stairs swaps the floor (`OnActiveMapChanged`).
@@ -149,7 +311,7 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 - No `UINTERFACE` exposed to Blueprint/AngelScript. Plugins talk through components with multicast delegates, facts, tags and instanced condition/effect structs.
 - New data types build on `UFVDefinition`; extensions are fragments, not subclasses.
 - Every plugin has three modules: runtime, `*Debug` (console variables, console commands, on-screen readouts) and `*Editor` (settings entry in the FlickerVoid menu, validation).
-- Extension points are open without editing existing code: new attributes, items, factions, titles, scans and checks are new data assets, and `UFVScriptCondition` / `UFVScriptEffect` let AngelScript add rules that plug into the same condition sets the offers use.
+- Extension points are open without editing existing code: new items, factions, titles, scans and checks are new data assets, a new attribute is one property in an AngelScript attribute set plus its definition asset, and `UFVCondition` / `UFVEffect` subclasses, in C++ or AngelScript, add rules that plug into the same condition sets the offers use.
 - Comments minimal.
 
 ## Where a setting belongs
@@ -158,7 +320,7 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | --- | --- | --- |
 | **Gameplay tags** | identity and classification that data assets and conditions match on | `Equipment.Slot.Coat`, `Item.Outfit`, `Disguise.Faction.Police`, `Scan.Category.*`, fact tags |
 | **Facts** | world and player state that must save and be testable | faction standing, fame, notoriety, titles, quest state, knowledge |
-| **Config (`UDeveloperSettings`)** | per-project defaults a designer tunes once, under the FlickerVoid settings category | weight and space limits, scan categories and dilation, dialogue timing, default attribute set |
+| **Config (`UDeveloperSettings`)** | per-project defaults a designer tunes once, under the FlickerVoid settings category | weight and space limits, scan categories and dilation, dialogue timing |
 | **Console variables (`FVCvar.*`)** | switches for debugging and playtesting, never for shipping balance | `FVCvar.Inventory.EnforceWeight`, `FVCvar.*.Debug.HUD`, `FVCvar.Interaction.Debug.Draw` |
 | **Console commands (`FV.*`)** | one-off actions while testing | `FV.Inventory.Give`, `FV.Quest.Start`, `FV.Social.Notoriety`, `FV.Facts.Set` |
 
@@ -171,7 +333,7 @@ A CVar that changes a rule (such as the two inventory limits) reads `-1` by defa
 3. **One global notoriety**, fed by faction standing. **No decay**: the player sets the pace.
 4. Factions keep standing; the global value is **fame** rather than reputation. Standing with a disliked faction raises notoriety, and fame earns **titles** as facts. Changing appearance lowers what onlookers read.
 5. **One affinity value** per character, open to extension.
-6. Attributes are **data assets** with modifiers and condition-gated checks, so new ones can come from AngelScript.
+6. Attributes are **data assets** with modifiers and condition-gated checks, so new ones can come from AngelScript. Superseded 2026-10-19: attributes are GAS attributes declared in AngelScript attribute sets, Gameplay Effects replace the modifiers, and definitions keep their display data and range.
 7. Obsolete code **removed**: world state subsystem, memory subsystem, personality attributes, SUDS leftovers.
 8. **Stealth is the next PR** (visibility, hiding spots, suspicion).
 9. Flow stays an **external submodule**, pinned on `5.x`.
@@ -183,5 +345,6 @@ A CVar that changes a rule (such as the two inventory limits) reads `-1` by defa
 
 - 2D grid placement: space is counted in cells rather than packed into a layout. Real placement (rotation, per-slot grids) can come later if the game needs it.
 - Outfit meshes are not applied visually yet; the equipment component broadcasts and the game layer dresses the character.
+- Item screens (take, trade, reader) and the hub's Use, Wear, Hold and Drop actions follow the hub menu PR (#55); the item layer already exposes the functions, events and messages they need.
 - Quest flow graphs restart from their beginning after a load.
 - Navigation: the waypoint and the tracked marker are not saved yet; there is no fog of war over unexplored map areas; navigation HUD widgets come later.

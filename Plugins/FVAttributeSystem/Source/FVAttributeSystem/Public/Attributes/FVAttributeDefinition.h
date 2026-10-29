@@ -1,12 +1,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AttributeSet.h"
 #include "Data/FVDefinition.h"
 #include "FVAttributeDefinition.generated.h"
 
 /**
- * One attribute (Perception, Stealth, Health, ...). New attributes are new data assets, so game
- * modules, AngelScript and Blueprints can add them without changing C++.
+ * Display and range data for one Gameplay Ability System attribute (Perception, Stealth, Sanity...).
+ * The value lives in an attribute set on the actor's ability system; Gameplay Effects change it.
  */
 UCLASS(BlueprintType)
 class FVATTRIBUTESYSTEM_API UFVAttributeDefinition : public UFVDefinition
@@ -14,57 +15,25 @@ class FVATTRIBUTESYSTEM_API UFVAttributeDefinition : public UFVDefinition
 	GENERATED_BODY()
 
 public:
-	/** Groups attributes in the UI and in debug output, e.g. Attribute.Skill or Attribute.Vital. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute", meta = (Categories = "Attribute"))
-	FGameplayTag Category;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute")
-	float DefaultValue = 0.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute")
-	float Min = 0.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute")
-	float Max = 100.f;
-
-	/** Rounds the final value, for attributes used as whole numbers. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute")
-	bool bInteger = false;
-
+	UFUNCTION(BlueprintPure, Category = "FV|Attributes", meta = (ToolTip = "Clamps to [Min, Max] and rounds when Integer is set."))
 	float Clamp(float Value) const;
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 #endif
-};
 
-/** Initial value for one attribute, used by attribute sets and character fragments. */
-USTRUCT(BlueprintType)
-struct FVATTRIBUTESYSTEM_API FFVAttributeValue
-{
-	GENERATED_BODY()
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute", meta = (ToolTip = "The attribute set property this definition describes."))
+	FGameplayAttribute Attribute;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attribute")
-	TObjectPtr<const UFVAttributeDefinition> Attribute;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute", meta = (Categories = "Attribute", ToolTip = "Groups attributes in the UI and debug output, e.g. Attribute.Skill or Attribute.Mental."))
+	FGameplayTag Category;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attribute")
-	float Value = 0.f;
-};
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute", meta = (ToolTip = "Lowest value; attribute sets deriving from FVAttributeSet clamp to it."))
+	float Min = 0.f;
 
-/** A reusable block of starting attributes, e.g. "Civilian" or "Guard". */
-UCLASS(BlueprintType)
-class FVATTRIBUTESYSTEM_API UFVAttributeSetDefinition : public UFVDefinition
-{
-	GENERATED_BODY()
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute", meta = (ToolTip = "Highest value; attribute sets deriving from FVAttributeSet clamp to it."))
+	float Max = 100.f;
 
-public:
-	/** Applied in order, so a later set overrides an earlier one. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute Set")
-	TArray<TObjectPtr<const UFVAttributeSetDefinition>> Parents;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute Set", meta = (TitleProperty = "Attribute"))
-	TArray<FFVAttributeValue> Attributes;
-
-	/** Flattens Parents and this set into one list. */
-	void Collect(TArray<FFVAttributeValue>& OutValues) const;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attribute", meta = (ToolTip = "Rounds the value, for attributes used as whole numbers."))
+	bool bInteger = false;
 };

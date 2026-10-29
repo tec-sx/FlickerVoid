@@ -51,6 +51,23 @@ void UFVGameplayAbility::TryActivateAbilityOnSpawn(const FGameplayAbilityActorIn
 	}
 }
 
+FGameplayTag UFVGameplayAbility::GetExtraTriggerEventTag() const
+{
+	if (!TriggerEventTag.IsValid())
+	{
+		return FGameplayTag();
+	}
+
+	for (const FAbilityTriggerData& Trigger : AbilityTriggers)
+	{
+		if (Trigger.TriggerSource == EGameplayAbilityTriggerSource::GameplayEvent && Trigger.TriggerTag == TriggerEventTag)
+		{
+			return FGameplayTag();
+		}
+	}
+	return TriggerEventTag;
+}
+
 void UFVGameplayAbility::NativeOnAbilityFailedToActivate(const FGameplayTagContainer& FailedReason) const
 {
 	bool bSimpleFailureFound = false;
