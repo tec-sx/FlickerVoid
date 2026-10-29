@@ -3,9 +3,6 @@
 UCLASS(Abstract)
 class UFVPlayerStatusWidget : UUserWidget
 {
-    UPROPERTY(EditDefaultsOnly, Category = "Status", meta = (ToolTip = "Notoriety that fills the bar; the social system clamps it to 100."))
-    int NotorietyScale = 100;
-
     UPROPERTY(BindWidgetOptional)
     UWidget DisguisePanel;
 
@@ -95,7 +92,8 @@ class UFVPlayerStatusWidget : UUserWidget
             DisguiseIcon.SetBrushFromSoftTexture(Disguise.Display.Icon, false);
         }
 
-        int Notoriety = FVSocial::GetGlobalNotoriety();
+        UFVScaleDefinition NotorietyScale = FVSocial::GetNotorietyScale();
+        int Notoriety = FVScale::GetValue(NotorietyScale);
         if (NotorietyPanel != nullptr)
         {
             NotorietyPanel.SetVisibility(Notoriety > 0 ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
@@ -106,7 +104,7 @@ class UFVPlayerStatusWidget : UUserWidget
         }
         if (NotorietyBar != nullptr)
         {
-            NotorietyBar.SetPercent(float32(FVUIText::Fraction(float(Notoriety), float(NotorietyScale))));
+            NotorietyBar.SetPercent(float32(FVUIText::ScaleFraction(NotorietyScale)));
         }
 
         UFVSocialSubsystem Social = UFVSocialSubsystem::Get();

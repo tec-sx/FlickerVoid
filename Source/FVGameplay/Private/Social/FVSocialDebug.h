@@ -1,7 +1,7 @@
 #pragma once
 
 #include "FVDebugHUDSubsystem.h"
-#include "FVSocialDebugSubsystem.generated.h"
+#include "FVSocialDebug.generated.h"
 
 /** Shows standing, fame, notoriety and titles while FVCvar.Social.Debug.HUD is on. */
 UCLASS()

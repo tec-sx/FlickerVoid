@@ -8,10 +8,9 @@
 
 class UAISenseConfig;
 class UAISense;
-class UFVFactionDefinition;
 class UStateTree;
 
-/** Data for one NPC type: identity, faction, behavior and perception. */
+/** Data for one NPC type: identity, behavior and perception. Faction membership is on the character definition's Social fragment. */
 UCLASS()
 class FLICKERVOIDAI_API UFVAIConfigData : public UPrimaryDataAsset
 {
@@ -24,9 +23,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity")
 	FFVDisplayInfo Display;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity")
-	TObjectPtr<UFVFactionDefinition> Faction;
 
 	/** Used when the character has no StateTree set on the instance. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Behavior")

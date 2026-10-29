@@ -1,24 +1,26 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "Conditions/FVCondition.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
+#include "GameplayTagContainer.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "FVSocialSubsystem.generated.h"
 
 class AController;
 class APawn;
 class UFVTitleDefinition;
+struct FFVItemGiveMessage;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnTitleChanged, const UFVTitleDefinition*, Title);
 
 /**
- * Keeps the player's titles: earned ones are never lost, and the most relevant one is current.
- * Among titles whose conditions hold, the hardest to earn leads (highest threshold, then furthest past it); the leader
- * becomes current whenever it changes. A title the story promotes stays current until the leader changes again.
+ * Keeps the player's titles: earned ones are never lost, and the hardest one to earn whose conditions hold is current
+ * (highest threshold, then furthest past it); the leader becomes current whenever it changes. A title the story
+ * promotes stays current until the leader changes again. Also applies gift reactions when an item is given as a gift.
  */
 UCLASS()
-class FVSOCIALSYSTEM_API UFVSocialSubsystem : public UWorldSubsystem
+class FLICKERVOIDGAMEPLAY_API UFVSocialSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
@@ -56,6 +58,8 @@ private:
 	UFUNCTION()
 	void HandlePawnControllerChanged(APawn* Pawn, AController* Controller);
 
+	void HandleGiveFinished(FGameplayTag Channel, const FFVItemGiveMessage& Message);
+
 	void EvaluateTitlesOnce();
 	void EarnTitle(const UFVTitleDefinition* Title);
 	void ApplyEarned(const UFVTitleDefinition* Title);
@@ -66,11 +70,12 @@ private:
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<const UFVTitleDefinition>> Titles;
 
-	/** The best-scoring title on the last pass; when another one takes the lead it becomes current. */
+	/** The best-ranked title on the last pass; when another one takes the lead it becomes current. */
 	UPROPERTY(Transient)
 	TObjectPtr<const UFVTitleDefinition> LeadingTitle;
 
 	FDelegateHandle FactChangedHandle;
+	FGameplayMessageListenerHandle GiveListener;
 	bool bEvaluating = false;
 	bool bDirty = false;
 	bool bTitlesTracked = false;

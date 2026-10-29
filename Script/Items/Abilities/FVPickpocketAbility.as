@@ -141,7 +141,7 @@ class UFVPickpocketAbility : UFVInteractAbility
 
 		if (Faction != nullptr && NoticedNotoriety > 0)
 		{
-			FVSocial::ModifyNotoriety(Faction, NoticedNotoriety);
+			FVScale::ModifyScale(Faction.Notoriety, NoticedNotoriety);
 		}
 	}
 }

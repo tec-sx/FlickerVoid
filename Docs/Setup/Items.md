@@ -2,7 +2,7 @@
 
 How items work in FlickerVoid on top of the plugins: the item types in data, the world actors (items, notes, money, loot containers), the item abilities and their animations, keys, held and thrown items, intoxication, trading, pickpocketing and giving from dialogue.
 
-Builds on FVInventorySystem (items, inventory, money, loot; read [its guide](FVInventorySystem.md) first), FVInteractionSystem (offers, locks), FVStorySystem (knowledge), FVSocialSystem (factions, gifts) and FVAttributeSystem (attributes, checks). C++ (fragments, settings, the item library, the item components and the Give Item node) lives in `Source/FVGameplay/.../Items` (module `FlickerVoidGameplay`); AngelScript in `Script/Items` builds the actors and abilities from it.
+Builds on FVInventorySystem (items, inventory, money, loot; read [its guide](FVInventorySystem.md) first), FVInteractionSystem (offers, locks), FVStorySystem (knowledge), the game's social rules ([Social](Social.md): factions, gifts) and FVAttributeSystem (attributes, checks). C++ (fragments, settings, the item library, the item components and the Give Item node) lives in `Source/FVGameplay/.../Items` (module `FlickerVoidGameplay`); AngelScript in `Script/Items` builds the actors and abilities from it.
 
 ## 1. Quick start
 
@@ -232,7 +232,7 @@ The **FV Give Item** Flow node (category FlickerVoid) moves an item and money be
 | Direction | Player Gives or Player Receives |
 | Item, Quantity | What changes hands (optional when Money is set) |
 | Money | Money handed over with it |
-| As Gift | Player Gives only: the receiver's relationship changes by their **Gifts** fragment (FVSocialSystem), matched against the item's Tags and Category |
+| As Gift | Player Gives only: the give message carries **As Gift**, and the social subsystem changes the receiver's relationship by their **Gifts** fragment, matched against the item's Tags and Category |
 
 Pins: **In**; **Success** and **Failed**. It fails at once when the giver lacks the item or money, or the receiver's inventory can't take the item. Otherwise it sends `Event.Item.Give` to the player and waits for `Message.Item.GiveFinished`. With no ability taking the event it gives at once without animation. Items change hands as plain units: instance data (Charges Left, a Stolen mark) is dropped.
 
@@ -241,7 +241,7 @@ Pins: **In**; **Success** and **Failed**. It fails at once when the giver lacks 
 - Else the player's give montage (`Animation.Item.Give`): the item changes hands on Apply, and its prop shows in the player's hand while the player gives or after the player receives.
 - Else at once.
 
-It always broadcasts `Message.Item.GiveFinished` (Giver, Receiver, Item, Quantity, Money, Succeeded), also when the give fails or is cancelled, so the node never waits forever.
+It always broadcasts `Message.Item.GiveFinished` (Giver, Receiver, Item, Quantity, Money, Succeeded, As Gift), also when the give fails or is cancelled, so the node never waits forever.
 
 ## 16. Gameplay messages
 
@@ -274,7 +274,7 @@ Content isn't in this repository; make these in the editor.
 - **Interactable definitions** with their offers and Activate Ability event tags (section 5); category entries in Interactables By Category.
 - **Ability set** entries for the player (section 6), and Blueprint children of the abilities that need data (Steal Check, Give Scene, Pickup Montage).
 - **Attributes**: Intoxication and Health, set on the player's Intoxication component (section 11).
-- **Character definitions**: Item Animations fragment (montages, hold poses), Gifts fragment, Social fragment (faction, relationship fact) for gift receivers, pickpocket victims and merchants.
+- **Character definitions**: Item Animations fragment (montages, hold poses), Gifts fragment, Social fragment (faction, relationship scale) for gift receivers, pickpocket victims and merchants.
 - **Montages** with FV Gameplay Event notifies (Attach, Apply, Release, Handover) and a motion warping window named `Item`; optionally a Contextual Anim Scene for giving.
 - **Skeletons**: sockets `hand_r_item` and `hand_l_item`.
 - **AnimBP**: hold pose blend (section 8).
