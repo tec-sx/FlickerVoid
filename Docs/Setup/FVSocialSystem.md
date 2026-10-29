@@ -39,6 +39,13 @@ Add the **Social** fragment to an `FVCharacterDefinition`:
 
 The NPC actor needs an **FV Identity Component** pointing at that definition.
 
+### Gifts
+Add the **Gifts** fragment to make a character care what they are given:
+- **Preferences**: up to about three, each a **Tag** matched against the gift's definition Tags and Category (a parent tag matches every child, so `Item.Consumable.Drink` covers wine and beer) and a **Relationship Change** (negative for gifts they dislike).
+- **Default Relationship Change**: used when no preference matches.
+
+Matching preferences add up. `Get Gift Relationship Change(Receiver, Gift Tags)` previews the change; `Receive Gift(Receiver, Gift Tags)` applies it to the receiver's **Relationship Fact** (Social fragment) and returns it (0 without a relationship fact). The game's give ability calls `Receive Gift` with the item's Tags plus its Category when a dialogue gives an item as a gift.
+
 ## 4. Disguises
 
 1. Create disguise tags under a root, e.g. `Disguise.Faction.Police`, and set *FlickerVoid > Social > Disguise Root* to `Disguise`.
@@ -57,7 +64,8 @@ The player needs an Ability System Component for disguises to be read.
 | Fame Fact | Fact holding fame |
 | Notoriety Fact | Fact holding global notoriety |
 | Titles | Every title evaluated on fact changes |
-| Factions | Factions listed by the debug HUD and commands |
+| Factions | Factions listed by the debug HUD and commands, the menus (`Get Factions`) and disguise lookups (`Get Disguise Faction`) |
+| Relationships | Character definitions the menus list once their relationship fact has been set (`Get Known Characters`) |
 | Disguise Root | Tags under this root count as disguises |
 | Disguise Recognition | Fraction of fame and notoriety onlookers read while the player is disguised |
 
@@ -69,7 +77,7 @@ The player needs an Ability System Component for disguises to be read.
 
 In dialogue the observer for *Attitude* is the Target (the NPC); in an NPC's StateTree it is the Instigator (the NPC itself).
 
-From Blueprint/AngelScript use `UFVSocialLibrary` (`FVSocial::` in AngelScript): `Get Standing`, `Get Tier`, `Get Attitude(Faction, Actor)`, `Get Recognized Fame`, `Is Disguised As`, `Get Actor Faction`, and the Modify functions. `UFVSocialSubsystem` fires **On Title Earned** and **On Title Lost** for notifications.
+From Blueprint/AngelScript use `UFVSocialLibrary` (`FVSocial::` in AngelScript): `Get Standing`, `Get Tier`, `Get Attitude(Faction, Actor)`, `Get Recognized Fame`, `Is Disguised As`, `Get Actor Faction`, `Get Gift Relationship Change`, `Receive Gift`, and the Modify functions. `UFVSocialSubsystem` fires **On Title Earned** and **On Title Lost** for notifications.
 
 ## 7. Debug
 

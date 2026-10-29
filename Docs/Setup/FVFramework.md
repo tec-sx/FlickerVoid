@@ -41,7 +41,7 @@ UI.Layer.GameMenu   // in-game screens: world map, inventory, journal, character
 UI.Layer.Menu       // pause menu, settings, main menu
 UI.Layer.Modal      // confirmations, popups
 ```
-Create the tags (Project Settings > GameplayTags). A layer you don't register simply can't be pushed to.
+The five tags are declared in code (FlickerVoidUI). A layer you don't register simply can't be pushed to. The game's own screens are listed in [Game UI](GameUI.md).
 
 ### `WBP_FVUILayout` (parent class `FVUILayout`)
 The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own to change the layers.
@@ -51,13 +51,14 @@ The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own to c
 4. Set it in *FlickerVoid > UI > Layout Class*.
 
 ### The main HUD: `WBP_GameHUD`
-1. Create `WBP_GameHUD` with parent class **Common Activatable Widget**. Leave *Is Back Handler* off and set its input config to *Game* so it doesn't take the mouse.
+1. Create `WBP_GameHUD` with parent class **FV Activatable Widget** (the game uses `FVGameHUDWidget`, see Game UI). Leave *Is Back Handler* off and set **Input Mode** to *Game* so it doesn't take the mouse.
 2. Lay out the always-on widgets in it: `WBP_Minimap`, `WBP_Compass`, quest tracker, notification area. Each child is a plain User Widget that finds its own data (the navigator, the quest subsystem...) in its Construct; the HUD widget itself holds no logic.
 3. Push it once when the layout is ready: make `BP_FVHUD` (parent `FVHUD`), and in **On Layout Ready** call `Get UFVUIManagerSubsystem > Push Screen(UI.Layer.HUD, WBP_GameHUD)`. Set `BP_FVHUD` as the game mode's HUD class (or in *FlickerVoid > UI > Default HUD Class*).
 4. Optional: hide the HUD while a menu is open. Bind the UI manager's **On Stack Changed** in `WBP_GameHUD` and set its visibility to *Collapsed* when `Layout > Get Layer(UI.Layer.GameMenu) > Get Active Widget` is valid.
 
 ### Screens and menus
-- Screens (world map, inventory) are **Common Activatable Widgets**. Open one with `Push Screen(UI.Layer.GameMenu, WBP_WorldMap)` from an input action; close it with `Pop Screen(Widget)` or *Deactivate Widget* (e.g. from a Back action). Set their input config to *Menu* so the mouse shows and game input stops.
+- Screens (world map, inventory) are **FV Activatable Widgets** (a Common Activatable Widget whose **Input Mode** property sets the CommonUI input config: Game, Game And Menu or Menu). Open one with `Push Screen(UI.Layer.GameMenu, WBP_WorldMap)` from an input action; close it with `Pop Screen(Widget)` or *Deactivate Widget* (e.g. from a Back action). Set **Input Mode** to *Menu* so the mouse shows and game input stops.
+- Screens in Menu mode don't pass keys to the game. While any of them is active, the UI manager adds *FlickerVoid > UI > Menu Input Context* (an `IMC_Menu` with the menu keys) and screens call **Bind Input Action** on their actions; CommonUI then calls **On Input Action** whatever has focus (needs *Common Input Settings > Enable Enhanced Input Support*). With **Show In Action Bar** the action, labelled with its *Action Description*, appears in any **Common Bound Action Bar** on screen while that screen has input. When the last Menu-mode widget closes, the context is removed and the Game input config is restored. `UFVUILibrary` (`FVUI::` in AngelScript) still has `Is Key For Action`, `Get Keys For Action`, `Get Action Key Text` and `Get Context Mappings` for key hints and control lists.
 - `Push User Widget` / `Pop User Widget` push a plain User Widget wrapped in a host; plugin UIs use this (the interaction prompt goes to the layer in `DA_InteractionUISettings`, `UI.Layer.Game` by default).
 - Never add widgets or the layout to the viewport yourself; always go through `UFVUIManagerSubsystem`.
 
@@ -69,6 +70,8 @@ The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own to c
 | Layout Class | `WBP_FVUILayout` |
 | Default HUD Class | `BP_FVHUD` |
 | Warn If HUD Missing | on |
+| Menu Input Context | `IMC_Menu` (added while a screen is open) |
+| Menu Input Context Priority | 100 |
 
 ## 4. Characters and identity
 
@@ -170,6 +173,8 @@ Add a group for a new system by declaring its tag (natively in the system's modu
 | `FVCvar.Relevance.Debug.Group Scan` | Limit the relevance readout to groups containing this text |
 | `FV.Relevance.List [Group]` | Log relevance components with band and distance |
 | `FV.ValidateAll` (editor) | Run data validation on every definition |
+
+Data validation also warns when an array tagged `meta = (MaxEntries = N)` (C++ or AngelScript, in a data asset or a Blueprint's class defaults) holds more than N entries; the game uses it for the rule of three.
 
 Every plugin's debug readout stacks on the same on-screen panel (`UFVDebugHUDSubsystem`).
 
