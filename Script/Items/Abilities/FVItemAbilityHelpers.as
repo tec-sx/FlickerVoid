@@ -180,11 +180,11 @@ namespace FVItemWorld
 	FTransform GetDropTransform(AActor Character)
 	{
 		FVector Location = Character.GetActorLocation() + Character.GetActorForwardVector() * FVItem::GetSettings().DropDistance;
-		ACharacter AsCharacter = Cast<ACharacter>(Character);
+		UCapsuleComponent Capsule = Cast<UCapsuleComponent>(Character.RootComponent);
 
-		if (AsCharacter != nullptr)
+		if (Capsule != nullptr)
 		{
-			Location.Z -= AsCharacter.CapsuleComponent.GetScaledCapsuleHalfHeight();
+			Location.Z -= Capsule.GetScaledCapsuleHalfHeight();
 		}
 
 		Location.Z += 20.0;

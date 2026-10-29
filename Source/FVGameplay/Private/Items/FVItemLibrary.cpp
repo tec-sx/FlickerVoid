@@ -4,6 +4,7 @@
 #include "AbilitySystemGlobals.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimSequenceBase.h"
+#include "Character/FVCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -172,10 +173,9 @@ FGameplayTag UFVItemLibrary::GetPickupStyle(const AActor* Character, const FVect
 	}
 
 	double FeetZ = Character->GetActorLocation().Z;
-	const ACharacter* AsCharacter = Cast<ACharacter>(Character);
-	if (AsCharacter && AsCharacter->GetCapsuleComponent())
+	if (const UCapsuleComponent* Capsule = Cast<UCapsuleComponent>(Character->GetRootComponent()))
 	{
-		FeetZ -= AsCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+		FeetZ -= Capsule->GetScaledCapsuleHalfHeight();
 	}
 
 	const double Height = ItemLocation.Z - FeetZ;
@@ -204,6 +204,10 @@ FGameplayTag UFVItemLibrary::GetHandSlot(const bool bRightHand)
 
 USkeletalMeshComponent* UFVItemLibrary::GetCharacterMesh(const AActor* Character)
 {
+	if (const AFVCharacter* AsCharacter = Cast<AFVCharacter>(Character))
+	{
+		return AsCharacter->GetMesh();
+	}
 	if (const ACharacter* AsCharacter = Cast<ACharacter>(Character))
 	{
 		return AsCharacter->GetMesh();

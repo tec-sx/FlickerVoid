@@ -8,7 +8,7 @@
 #include "FVCharacterTypes.h"
 #include "FVCharacterAnimInstance.generated.h"
 
-class AFVCharacter;
+class UFVLocomotionComponent;
 class UFVAnimationConfigData;
 
 /**
@@ -45,7 +45,7 @@ public:
 	float YawDelta;
 
 private:
-	TWeakObjectPtr<AFVCharacter> CharacterPtr;
+	TWeakObjectPtr<UFVLocomotionComponent> LocomotionPtr;
 	FTransform PreviousTransform;
 	FVector PreviousVelocity;
 };
@@ -116,7 +116,7 @@ private:
 	FFVCharacterAnimInstanceProxy Proxy;
 
 	UPROPERTY(Transient)
-	TObjectPtr<AFVCharacter> CachedCharacter;
+	TObjectPtr<UFVLocomotionComponent> CachedLocomotion;
 	
 	friend struct FFVCharacterAnimInstanceProxy;
 };
