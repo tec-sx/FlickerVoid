@@ -74,7 +74,7 @@ The player needs an Ability System Component for disguises to be read.
 
 | Conditions | Effects |
 |---|---|
-| Faction Standing, Faction Notoriety, Fame (as onlookers read it, or real), Global Notoriety, Has Title, Relationship, Attitude (observer's faction toward the other actor), Is Disguised As | Modify Standing (passes on to related factions once), Modify Notoriety, Modify Fame, Modify Global Notoriety, Modify Relationship, Promote Title (makes a title current, earning it first if needed) |
+| Faction Standing, Faction Notoriety, Fame (real, or as onlookers read it), Global Notoriety, Has Title, Relationship, Attitude (observer's faction toward the other actor), Is Disguised As | Modify Standing (passes on to related factions once), Modify Notoriety, Modify Fame, Modify Global Notoriety, Modify Relationship, Promote Title (makes a title current, earning it first if needed) |
 
 In dialogue the observer for *Attitude* is the Target (the NPC); in an NPC's StateTree it is the Instigator (the NPC itself).
 
