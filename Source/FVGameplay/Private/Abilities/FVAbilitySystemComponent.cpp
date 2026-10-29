@@ -95,6 +95,34 @@ void UFVAbilitySystemComponent::AbilitySpecInputReleased(FGameplayAbilitySpec& S
 	}
 }
 
+void UFVAbilitySystemComponent::OnGiveAbility(FGameplayAbilitySpec& AbilitySpec)
+{
+	Super::OnGiveAbility(AbilitySpec);
+
+	const UFVGameplayAbility* Ability = Cast<UFVGameplayAbility>(AbilitySpec.Ability);
+	const FGameplayTag EventTag = Ability ? Ability->GetExtraTriggerEventTag() : FGameplayTag();
+	if (EventTag.IsValid())
+	{
+		GameplayEventTriggeredAbilities.FindOrAdd(EventTag).AddUnique(AbilitySpec.Handle);
+	}
+}
+
+void UFVAbilitySystemComponent::OnRemoveAbility(FGameplayAbilitySpec& AbilitySpec)
+{
+	Super::OnRemoveAbility(AbilitySpec);
+
+	const UFVGameplayAbility* Ability = Cast<UFVGameplayAbility>(AbilitySpec.Ability);
+	const FGameplayTag EventTag = Ability ? Ability->GetExtraTriggerEventTag() : FGameplayTag();
+	if (TArray<FGameplayAbilitySpecHandle>* Handles = EventTag.IsValid() ? GameplayEventTriggeredAbilities.Find(EventTag) : nullptr)
+	{
+		Handles->Remove(AbilitySpec.Handle);
+		if (Handles->Num() == 0)
+		{
+			GameplayEventTriggeredAbilities.Remove(EventTag);
+		}
+	}
+}
+
 void UFVAbilitySystemComponent::CancelAbilitiesByFunc(TShouldCancelAbilityFunc ShouldCancelFunc)
 {
 	ABILITYLIST_SCOPE_LOCK();
