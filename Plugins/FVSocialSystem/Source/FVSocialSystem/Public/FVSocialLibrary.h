@@ -103,5 +103,6 @@ public:
 	static bool HasTitle(const UObject* WorldContext, const UFVTitleDefinition* Title);
 
 private:
-	static void AddClamped(UObject* WorldContext, FGameplayTag Fact, int32 Delta, int32 Min, int32 Max);
+	/** Returns the change actually applied after clamping. */
+	static int32 AddClamped(UObject* WorldContext, FGameplayTag Fact, int32 Delta, int32 Min, int32 Max);
 };
