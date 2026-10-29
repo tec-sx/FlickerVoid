@@ -78,7 +78,7 @@ void FFVEffect_GiveItem::Apply(const FFVConditionContext& Context) const
 	AActor* Receiver = FVInventoryConditions::Pick(Context, bGiveToTarget);
 	UFVInventoryComponent* Inventory = UFVInventoryComponent::Find(Receiver);
 	// Story grants ignore carry limits so a reward is never lost; the player drops something later.
-	if (!Inventory || Inventory->AddItemOverLimits(Item, Quantity) <= 0 || !bEquip)
+	if (!Inventory || Inventory->AddStoryItem(Item, Quantity) <= 0 || !bEquip)
 	{
 		return;
 	}

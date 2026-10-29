@@ -90,8 +90,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FV|Inventory", meta = (ToolTip = "Returns the quantity actually added (limited by weight and space)."))
 	int32 AddItem(UFVItemDefinition* Item, int32 Quantity = 1);
 
-	UFUNCTION(BlueprintCallable, Category = "FV|Inventory", meta = (ToolTip = "Adds every unit, ignoring weight and space, for grants the story must not lose (quest rewards). Returns the quantity added."))
-	int32 AddItemOverLimits(UFVItemDefinition* Item, int32 Quantity = 1);
+	UFUNCTION(BlueprintCallable, Category = "FV|Inventory", meta = (ToolTip = "Use for items the story grants (quest rewards, story items): adds every unit, ignoring weight and space, so they are never lost. Returns the quantity added."))
+	int32 AddStoryItem(UFVItemDefinition* Item, int32 Quantity = 1);
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Inventory", meta = (ToolTip = "Adds the whole stack as a new entry, keeping its instance data. Returns its InstanceId, or an invalid id if it didn't fit."))
 	FGuid AddStack(FFVItemStack Stack);

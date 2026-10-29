@@ -343,7 +343,7 @@ int32 UFVInventoryComponent::AddItem(UFVItemDefinition* Item, const int32 Quanti
 	return AddUnits(Item, GetAcceptedQuantity(Item, Quantity));
 }
 
-int32 UFVInventoryComponent::AddItemOverLimits(UFVItemDefinition* Item, const int32 Quantity)
+int32 UFVInventoryComponent::AddStoryItem(UFVItemDefinition* Item, const int32 Quantity)
 {
 	return Item ? AddUnits(Item, Quantity) : 0;
 }
