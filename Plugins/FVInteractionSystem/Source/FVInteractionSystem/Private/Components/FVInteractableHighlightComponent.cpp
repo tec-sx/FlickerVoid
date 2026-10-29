@@ -5,8 +5,11 @@
 #include "Components/PrimitiveComponent.h"
 #include "FVInteractionSystemSettings.h"
 #include "GameFramework/Actor.h"
+#include "Highlight/FVHighlightComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractableHighlightComponent)
+
+const FName UFVInteractableHighlightComponent::HighlightSource(TEXT("Interaction"));
 
 void UFVInteractableHighlightComponent::BeginPlay()
 {
@@ -48,8 +51,11 @@ void UFVInteractableHighlightComponent::OnInteractorLost(UFVInteractorComponent*
 
 void UFVInteractableHighlightComponent::CacheTargets()
 {
+	Targets.Reset();
+	CachedOverlays.Reset();
+
 	const UFVInteractableComponent* Found = Interactable.Get();
-	if (!Found || !Targets.IsEmpty())
+	if (!Found)
 	{
 		return;
 	}
@@ -64,8 +70,6 @@ void UFVInteractableHighlightComponent::CacheTargets()
 		const UMeshComponent* Mesh = Cast<UMeshComponent>(Target);
 		Targets.Add(Target);
 		CachedOverlays.Add(Mesh ? Mesh->GetOverlayMaterial() : nullptr);
-		CachedRenderCustomDepth.Add(Target->bRenderCustomDepth);
-		CachedStencilValues.Add(Target->CustomDepthStencilValue);
 	}
 }
 
@@ -76,29 +80,64 @@ void UFVInteractableHighlightComponent::RenderHighlight(const bool bIsInFocus)
 		return;
 	}
 
-	CacheTargets();
 	bIsHighlighted = bIsInFocus;
+	if (bIsInFocus)
+	{
+		ApplyHighlight();
+	}
+	else
+	{
+		RestoreTargets();
+	}
+}
+
+void UFVInteractableHighlightComponent::ApplyHighlight()
+{
+	// Cached on every focus, so primitives added later are included and the restored overlays are current.
+	CacheTargets();
 
 	const FFVInteractionHighlightSetup& Setup = bOverrideSetup
 		? HighlightSetup
 		: UFVInteractionSystemSettings::Get().InteractableBaseSettings.DefaultHighlightSetup;
 
-	for (int32 Index = 0; Index < Targets.Num(); ++Index)
+	if (Setup.HighlightType == EFVHighlightType::PostProcessing)
 	{
-		UPrimitiveComponent* Target = Targets[Index];
-		if (!IsValid(Target))
+		TArray<UPrimitiveComponent*> Primitives;
+		for (UPrimitiveComponent* Target : Targets)
 		{
-			continue;
+			Primitives.Add(Target);
 		}
 
-		if (HighlightSetup.HighlightType == EFVHighlightType::PostProcessing)
+		if (UFVHighlightComponent* Highlight = UFVHighlightComponent::FindOrAdd(GetOwner()))
 		{
-			Target->SetRenderCustomDepth(bIsInFocus ? true : CachedRenderCustomDepth[Index]);
-			Target->SetCustomDepthStencilValue(bIsInFocus ? HighlightSetup.StencilID : CachedStencilValues[Index]);
+			Highlight->PushHighlight(HighlightSource, Setup.StencilID, Setup.Priority, Primitives);
 		}
-		else if (UMeshComponent* Mesh = Cast<UMeshComponent>(Target))
+		return;
+	}
+
+	UMaterialInterface* Material = Setup.HighlightMaterial.Get();
+	for (UPrimitiveComponent* Target : Targets)
+	{
+		if (UMeshComponent* Mesh = Cast<UMeshComponent>(Target))
 		{
-			Mesh->SetOverlayMaterial(bIsInFocus ? HighlightSetup.HighlightMaterial.Get() : nullptr);
+			Mesh->SetOverlayMaterial(Material);
+		}
+	}
+}
+
+void UFVInteractableHighlightComponent::RestoreTargets()
+{
+	if (UFVHighlightComponent* Highlight = GetOwner()->FindComponentByClass<UFVHighlightComponent>())
+	{
+		Highlight->PopHighlight(HighlightSource);
+	}
+
+	for (int32 Index = 0; Index < Targets.Num(); ++Index)
+	{
+		UMeshComponent* Mesh = Cast<UMeshComponent>(Targets[Index]);
+		if (IsValid(Mesh))
+		{
+			Mesh->SetOverlayMaterial(CachedOverlays[Index]);
 		}
 	}
 }
