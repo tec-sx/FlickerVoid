@@ -11,11 +11,6 @@
 
 namespace
 {
-	AActor* PickActor(const FFVConditionContext& Context, bool bTarget)
-	{
-		return bTarget ? Context.Target : Context.Instigator;
-	}
-
 	FText AttributeName(const UFVAttributeDefinition* Attribute)
 	{
 		return Attribute != nullptr ? Attribute->Display.Name : FText::GetEmpty();
@@ -42,7 +37,7 @@ FText FFVCondition_Attribute::GetDescription() const
 
 bool FFVCondition_Attribute::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
 {
-	const AActor* Actor = PickActor(Context, bCheckTarget);
+	const AActor* Actor = Context.GetActor(bCheckTarget, StaticStruct());
 	if (Compare != EFVCompare::AtLeast || !UFVAttributeLibrary::HasAttribute(Actor, Attribute))
 	{
 		return false;
@@ -54,7 +49,7 @@ bool FFVCondition_Attribute::GetScoreImpl(const FFVConditionContext& Context, FF
 
 bool FFVCondition_Attribute::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	const AActor* Actor = PickActor(Context, bCheckTarget);
+	const AActor* Actor = Context.GetActor(bCheckTarget, StaticStruct());
 	if (!UFVAttributeLibrary::HasAttribute(Actor, Attribute))
 	{
 		return false;
@@ -72,7 +67,8 @@ bool FFVCondition_Attribute::EvaluateImpl(const FFVConditionContext& Context) co
 
 void FFVEffect_ModifyAttribute::Apply(const FFVConditionContext& Context) const
 {
-	UFVAttributeLibrary::AddToBaseValue(PickActor(Context, bApplyToTarget), Attribute, Delta);
+	AActor* Actor = Context.GetActor(bApplyToTarget, StaticStruct());
+	UFVAttributeLibrary::AddToBaseValue(Actor, Attribute, Delta);
 }
 
 FText FFVEffect_ModifyAttribute::GetDescription() const
@@ -82,7 +78,8 @@ FText FFVEffect_ModifyAttribute::GetDescription() const
 
 void FFVEffect_SetAttribute::Apply(const FFVConditionContext& Context) const
 {
-	UFVAttributeLibrary::SetBaseValue(PickActor(Context, bApplyToTarget), Attribute, Value);
+	AActor* Actor = Context.GetActor(bApplyToTarget, StaticStruct());
+	UFVAttributeLibrary::SetBaseValue(Actor, Attribute, Value);
 }
 
 FText FFVEffect_SetAttribute::GetDescription() const
@@ -92,7 +89,8 @@ FText FFVEffect_SetAttribute::GetDescription() const
 
 void FFVEffect_ApplyGameplayEffect::Apply(const FFVConditionContext& Context) const
 {
-	UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(PickActor(Context, bApplyToTarget));
+	AActor* Actor = Context.GetActor(bApplyToTarget, StaticStruct());
+	UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
 	if (AbilitySystem == nullptr || Effect == nullptr)
 	{
 		return;
@@ -110,7 +108,8 @@ FText FFVEffect_ApplyGameplayEffect::GetDescription() const
 
 void FFVEffect_RemoveGameplayEffect::Apply(const FFVConditionContext& Context) const
 {
-	if (UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(PickActor(Context, bApplyToTarget)))
+	AActor* Actor = Context.GetActor(bApplyToTarget, StaticStruct());
+	if (UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor))
 	{
 		if (Effect != nullptr)
 		{

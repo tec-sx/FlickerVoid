@@ -1,6 +1,7 @@
 #include "FVDialogueSubsystem.h"
 
 #include "Components/AudioComponent.h"
+#include "Conditions/FVConditionLibrary.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -73,7 +74,7 @@ void UFVDialogueSubsystem::BeginConversation(AActor* InInstigator, AActor* InOwn
 	}
 
 	bActive = true;
-	Instigator = InInstigator ? InInstigator : UGameplayStatics::GetPlayerPawn(this, 0);
+	Instigator = InInstigator ? InInstigator : UFVConditionLibrary::GetPlayerPawn(this);
 	Owner = InOwner;
 	Flow = InFlow;
 	GetWorld()->GetTimerManager().SetTimer(CheckTimer, this, &UFVDialogueSubsystem::CheckConversation, 0.25f, true);

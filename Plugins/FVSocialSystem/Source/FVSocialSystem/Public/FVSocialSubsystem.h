@@ -6,6 +6,8 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "FVSocialSubsystem.generated.h"
 
+class AController;
+class APawn;
 class UFVTitleDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnTitleChanged, const UFVTitleDefinition*, Title);
@@ -49,6 +51,11 @@ protected:
 
 private:
 	void HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue);
+
+	/** Titles check the player pawn, which may spawn or change after world begin play. */
+	UFUNCTION()
+	void HandlePawnControllerChanged(APawn* Pawn, AController* Controller);
+
 	void EvaluateTitlesOnce();
 	void EarnTitle(const UFVTitleDefinition* Title);
 	void ApplyEarned(const UFVTitleDefinition* Title);

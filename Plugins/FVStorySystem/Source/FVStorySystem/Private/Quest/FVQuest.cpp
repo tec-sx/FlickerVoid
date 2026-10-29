@@ -1,5 +1,6 @@
 #include "Quest/FVQuest.h"
 
+#include "Conditions/FVConditionLibrary.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
@@ -8,7 +9,6 @@
 #include "FVStorySystem.h"
 #include "Interfaces/FlowDataPinValueSupplierInterface.h"
 #include "TimerManager.h"
-#include "Kismet/GameplayStatics.h"
 #include "Misc/DataValidation.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVQuest)
@@ -335,10 +335,7 @@ void UFVQuestSubsystem::StartActiveQuestFlows()
 
 FFVConditionContext UFVQuestSubsystem::MakeContext() const
 {
-	FFVConditionContext Context;
-	Context.WorldContext = GetWorld();
-	Context.Instigator = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	return Context;
+	return UFVConditionLibrary::MakePlayerContext(GetWorld());
 }
 
 UFVFactDatabase* UFVQuestSubsystem::GetFacts() const
