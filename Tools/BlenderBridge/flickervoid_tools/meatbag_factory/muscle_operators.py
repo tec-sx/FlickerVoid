@@ -88,6 +88,27 @@ class MEATBAG_OT_muscles_generate(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class MEATBAG_OT_muscles_fit(bpy.types.Operator):
+    bl_idname = "meatbag.muscles_fit"
+    bl_label = "Fit to Skin"
+    bl_description = ("Reshape every muscle to the room under the skin at rest: each ring follows the distance to the "
+                      "skin around it. Run it again after moving anchors or changing the body")
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        s = _settings(context)
+        return bool(s.armature and s.mesh and s.mesh.meatbag_target)
+
+    def execute(self, context):
+        s = _settings(context)
+        if context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
+        fitted = muscles.fit_all(context, s.armature, s.mesh.meatbag_target)
+        self.report({"INFO"}, f"Fitted {len(fitted)} muscles")
+        return {"FINISHED"}
+
+
 def _selected_bones(context, armature):
     """(origin, insertion) from pose mode: the other selected bone and the active bone."""
     if context.mode != "POSE" or context.active_object != armature:
@@ -241,6 +262,7 @@ classes = (
     MeatbagMuscle,
     MeatbagMuscleView,
     MEATBAG_OT_muscles_generate,
+    MEATBAG_OT_muscles_fit,
     MEATBAG_OT_muscle_add,
     MEATBAG_OT_muscle_mirror,
     MEATBAG_OT_muscle_remove,

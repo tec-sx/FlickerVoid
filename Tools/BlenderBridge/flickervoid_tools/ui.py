@@ -3,7 +3,7 @@ import bpy
 from . import preferences
 from .push.operators import FV_OT_push, FV_OT_test_connection, FV_OT_use_selected_asset
 from .meatbag_factory import muscles
-from .meatbag_factory.muscle_operators import (MEATBAG_OT_muscles_generate, MEATBAG_OT_muscle_add, MEATBAG_OT_muscle_mirror, MEATBAG_OT_muscle_remove,
+from .meatbag_factory.muscle_operators import (MEATBAG_OT_muscles_generate, MEATBAG_OT_muscles_fit, MEATBAG_OT_muscle_add, MEATBAG_OT_muscle_mirror, MEATBAG_OT_muscle_remove,
                                                MEATBAG_OT_muscle_select, MEATBAG_OT_preview_skin)
 from .meatbag_factory.contract.operators import MEATBAG_OT_check_contract, MEATBAG_UL_issues
 from .meatbag_factory.operators import (MEATBAG_OT_pose_add, MEATBAG_OT_pose_move, MEATBAG_OT_pose_remove,
@@ -111,7 +111,9 @@ class MEATBAG_PT_muscles(_MeatbagSubpanel, bpy.types.Panel):
         if not s.armature or not s.mesh:
             layout.label(text="Pick the Armature (Poses) and the Mesh (Correctives)", icon="INFO")
             return
-        layout.operator(MEATBAG_OT_muscles_generate.bl_idname, icon="OUTLINER_OB_ARMATURE")
+        row = layout.row(align=True)
+        row.operator(MEATBAG_OT_muscles_generate.bl_idname, icon="OUTLINER_OB_ARMATURE")
+        row.operator(MEATBAG_OT_muscles_fit.bl_idname, icon="MOD_SHRINKWRAP")
         row = layout.row(align=True)
         row.operator(MEATBAG_OT_muscle_add.bl_idname, icon="ADD")
         row.operator(MEATBAG_OT_preview_skin.bl_idname, icon="HIDE_OFF")

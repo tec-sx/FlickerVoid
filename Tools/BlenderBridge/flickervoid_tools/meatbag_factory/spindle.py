@@ -14,18 +14,22 @@ def radius_profile(t, belly, tendon):
     return tendon + (1.0 - tendon) * bump
 
 
-def spindle(length, width, thickness, belly=0.45, tendon=0.15, rings=12, segments=12):
-    """(vertices, faces): rings of segments around +Y, closed by one vertex at each end."""
+def spindle(length, width, thickness, belly=0.45, tendon=0.15, rings=12, segments=12, fit=None):
+    """(vertices, faces): rings of segments around +Y, closed by one vertex at each end. `fit` scales each ring
+    vertex's radius, (rings - 2) x segments, to follow the room around the muscle."""
     rings = max(rings, 3)
     segments = max(segments, 3)
     t = np.linspace(0.0, 1.0, rings)[1:-1]
     radius = radius_profile(t, belly, tendon)
     angle = np.linspace(0.0, 2.0 * math.pi, segments, endpoint=False)
 
+    scale = np.ones((len(t), segments)) if fit is None else np.asarray(fit, dtype=float).reshape(len(t), segments)
+
     vertices = [(0.0, 0.0, 0.0)]
-    for ring_t, ring_radius in zip(t, radius):
-        for a in angle:
-            vertices.append((math.cos(a) * width * ring_radius, ring_t * length, math.sin(a) * thickness * ring_radius))
+    for ring, (ring_t, ring_radius) in enumerate(zip(t, radius)):
+        for segment, a in enumerate(angle):
+            r = ring_radius * scale[ring, segment]
+            vertices.append((math.cos(a) * width * r, ring_t * length, math.sin(a) * thickness * r))
     vertices.append((0.0, length, 0.0))
 
     inner = len(t)

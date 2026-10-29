@@ -31,6 +31,15 @@ class SpindleTest(unittest.TestCase):
                 edges[key] = edges.get(key, 0) + 1
         self.assertTrue(all(count == 2 for count in edges.values()), "the spindle must be closed")
 
+    def test_fit_scales_each_ring_vertex(self):
+        plain, _ = spindle.spindle(10.0, 2.0, 2.0)
+        fit = np.ones((10, 12))
+        fit[4, 3] = 0.5
+        fitted, _ = spindle.spindle(10.0, 2.0, 2.0, fit=fit)
+        index = 1 + 4 * 12 + 3
+        self.assertAlmostEqual(np.hypot(fitted[index][0], fitted[index][2]), 0.5 * np.hypot(plain[index][0], plain[index][2]))
+        self.assertEqual(fitted[index + 1], plain[index + 1])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -19,6 +19,8 @@ PREFIX = "MF_"
 SMOOTH = "MF_Smooth"
 STRETCH = "MF_Stretch"
 ANCHOR_SIZE = 2.0
+FIT = "mf_fit"
+FIT_SIZE = 10 * 12  # inner rings x segments of the spindle
 
 
 class MuscleError(RuntimeError):
@@ -91,7 +93,9 @@ def _anchor(name, armature, bone_name, point, collection):
 def build_mesh(muscle):
     """Regenerates the spindle from the muscle's settings."""
     settings = muscle.meatbag_muscle
-    vertices, faces = spindle.spindle(settings.length, settings.width, settings.thickness, settings.belly, settings.tendon)
+    fit = muscle.get(FIT)
+    vertices, faces = spindle.spindle(settings.length, settings.width, settings.thickness, settings.belly, settings.tendon,
+                                      fit=list(fit) if fit is not None and len(fit) == FIT_SIZE else None)
     data = muscle.data
     data.clear_geometry()
     data.from_pydata(vertices, [], faces)
@@ -248,6 +252,48 @@ class Fitter:
         return nearest[3] if nearest[0] is not None else 3.0
 
 
+def fit_to_skin(context, muscle, fitter, room=0.85, grow=1.6, shrink=0.2):
+    """Gives every ring vertex its own radius: `room` of the distance to the skin straight out from the muscle's
+    line, so it flattens under flat skin and fills round limbs. Growth is capped, so a muscle doesn't fill the
+    body cavity behind it. Kept on the muscle and reapplied when its shape settings change."""
+    settings = muscle.meatbag_muscle
+    muscle.pop(FIT, None)
+    build_mesh(muscle)
+    context.view_layer.update()
+    to_armature = fitter.armature.matrix_world.inverted() @ muscle.matrix_world
+    to_local = to_armature.inverted()
+    vertices = muscle.data.vertices
+    scale = np.ones(FIT_SIZE)
+    for index in range(FIT_SIZE):
+        local = vertices[index + 1].co  # vertex 0 is the origin tip
+        centre = Vector((0.0, local.y, 0.0))
+        start = to_armature @ centre
+        direction = (to_armature @ local - start)
+        if direction.length < 1e-9:
+            continue
+        hit, _, _, _ = fitter.tree.ray_cast(start, direction.normalized())
+        if hit is None:
+            continue
+        room_local = ((to_local @ hit) - centre).length * room
+        current = (local - centre).length
+        taper = spindle.radius_profile(local.y / settings.length, settings.belly, settings.tendon)
+        scale[index] = room_local * float(taper) / current  # the belly fills the room, the tendons keep their taper
+    # Smoothed around each ring to avoid spikes from single rays, never past the room a ray found.
+    raw = scale.reshape(-1, 12)
+    rings = np.minimum(raw, (raw + np.roll(raw, 1, axis=1) + np.roll(raw, -1, axis=1)) / 3.0)
+    rings = np.clip(rings, shrink, grow)
+    muscle[FIT] = rings.ravel().tolist()
+    build_mesh(muscle)
+
+
+def fit_all(context, armature, skin):
+    fitter = Fitter(armature, skin)
+    fitted = muscles_of(context.scene, skin)
+    for muscle in fitted:
+        fit_to_skin(context, muscle, fitter)
+    return fitted
+
+
 GENERATED = "mf_generated"
 
 
@@ -276,6 +322,8 @@ def generate(context, armature, skin, sides, template):
             mirrored = mirror(context, strand, sides)
             mirrored[GENERATED] = True
             created.append(mirrored)
+    for strand in created:
+        fit_to_skin(context, strand, fitter)
     return created
 
 
