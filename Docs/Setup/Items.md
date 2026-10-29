@@ -74,7 +74,7 @@ Every offer's effect is **Activate Ability** with the event tag below; the abili
 | `DA_Interactable_Consumable` (category `Item.Consumable`) | Drinks, food, medicine | Take; Use: `Interaction.Action.Use`, `Event.Item.Use` |
 | `DA_Interactable_Outfit` (category `Item.Outfit`) | Clothes | Take; Wear: `Interaction.Action.Wear`, `Event.Item.Wear` |
 | `DA_Interactable_Held` (category `Item.Held`) | Flashlights, crates | Take; Hold: `Interaction.Action.Hold`, `Event.Item.Hold` |
-| `DA_Interactable_Readable` | `AFVReadable` | Read: `Interaction.Action.Read`, `Event.Item.Read`, condition *Script > FV Needs Investigation Condition* with **Invert**; Investigate: `Interaction.Action.Investigate`, the event of your Examine offer, condition *Script > FV Needs Investigation Condition* |
+| `DA_Interactable_Readable` | `AFVReadable` | Read: `Interaction.Action.Read`, `Event.Item.Read`, condition *Object > FV Needs Investigation Condition* with **Invert**; Investigate: `Interaction.Action.Investigate`, the event of your Examine offer, condition *Object > FV Needs Investigation Condition* |
 | `DA_Interactable_Money` | `AFVMoneyPickup` | Take: `Interaction.Action.Pickup`, `Event.Item.Pickup` |
 | `DA_Interactable_LootContainer` | `AFVLootContainer` | Take All: `Interaction.Action.TakeAll`, `Event.Item.TakeAll` |
 | Character interactables | NPCs | Pickpocket: `Interaction.Action.Pickpocket`, `Event.Item.Pickpocket` (NPCs with an inventory). Merchants: Trade: `Interaction.Action.Trade`, effect *Script > FV Trade Effect* (no ability) |
@@ -132,7 +132,7 @@ A montage is looked up in the character definition's **Item Animations** fragmen
 An `AFVReadable` shows a note; its **Knowledge** (Kind **Document**) is what reading teaches.
 - **Read** (`UFVReadAbility`) learns it and broadcasts `Message.Item.Read` (Reader, Knowledge, Source); the reader screen opens on it (section 16). **Hide When Read** removes the note afterwards.
 - A note with secrets must be **investigated** first. Its **Secrets** component (`UFVExamineSecretsComponent`, C++) lists up to three secrets (validation warns about more), each a **View Angle** (rotation in the examine view) and a **Clue** (knowledge), matched within **Angle Tolerance**. The Investigate offer starts the examine ability; turning the note to a secret's angle learns its clue. When every clue is known the note is read (its knowledge learned) and the view closes. Cancelling keeps the clues found and leaves the note unsolved in the world.
-- The *FV Needs Investigation Condition* (Script condition) is true while the target readable has unfound secrets; use it as in section 5 so only one of Read and Investigate shows.
+- The *FV Needs Investigation Condition* (Object condition) is true while the target readable has unfound secrets; use it as in section 5 so only one of Read and Investigate shows.
 
 Any examinable actor can have a Secrets component; only readables are solved by finding them all.
 
@@ -193,7 +193,7 @@ Prices start from the item's **Value** fragment: buying = Base Price x Buy Multi
 
 Functions: `Get Buy Price(Item, Buyer)`, `Get Sell Price(Stack, Seller)`, `Can Buy` / `Buy(Buyer, Stock Instance Id, Quantity)`, `Buy Item(Buyer, Item, Quantity)` (stack by stack; returns the units bought), `Can Sell` / `Sell(Seller, Instance Id, Quantity)` (a Stolen mark stays on the goods), `Request Trade(Customer)` (broadcasts `Message.Item.TradeRequested`), `Get Stock`, `Get Price Faction`.
 
-Script effects for dialogue and offers (*Script* effect, Instigator = the customer, Target = the merchant):
+AngelScript effects for dialogue and offers (*Object* effect, Instigator = the customer, Target = the merchant):
 - **FV Buy Item Effect** (`Item`, `Quantity`): buys from the stock without the trade screen, e.g. a drink at a bar; gate the choice with *Has Money*.
 - **FV Trade Effect**: requests the trade screen.
 
