@@ -2,6 +2,7 @@
 
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
+#include "FVCoreRuntime.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVWorldClock)
 
@@ -26,6 +27,7 @@ bool UFVWorldClock::DoesSupportWorldType(const EWorldType::Type WorldType) const
 void UFVWorldClock::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
+	ValidatePhases();
 
 	const UFVWorldClockSettings* Settings = GetDefault<UFVWorldClockSettings>();
 	const UFVFactDatabase* Facts = UFVFactDatabase::Get(&InWorld);
@@ -33,30 +35,30 @@ void UFVWorldClock::OnWorldBeginPlay(UWorld& InWorld)
 
 	TotalMinutes = bRestore ? Facts->GetFact(Settings->MinutesFact) : Settings->StartHour * 60.0;
 	CurrentPhase = ResolvePhase(GetHour());
-	WriteCalendarFacts();
+	WriteDayFact();
 }
 
-void UFVWorldClock::WriteCalendarFacts() const
+void UFVWorldClock::WriteDayFact() const
 {
 	const UFVWorldClockSettings* Settings = GetDefault<UFVWorldClockSettings>();
 	UFVFactDatabase* Facts = UFVFactDatabase::Get(this);
-	if (!Facts)
-	{
-		return;
-	}
-
-	if (Settings->PhaseFact.IsValid())
-	{
-		const int32 PhaseIndex = Settings->Phases.IndexOfByPredicate([this](const FFVDayPhase& Phase) { return Phase.Phase == CurrentPhase; });
-		if (PhaseIndex != INDEX_NONE)
-		{
-			Facts->SetFact(Settings->PhaseFact, PhaseIndex);
-		}
-	}
-
-	if (Settings->DayFact.IsValid())
+	if (Facts && Settings->DayFact.IsValid())
 	{
 		Facts->SetFact(Settings->DayFact, GetDay());
+	}
+}
+
+void UFVWorldClock::ValidatePhases()
+{
+	const TArray<FFVDayPhase>& Phases = GetDefault<UFVWorldClockSettings>()->Phases;
+	TSet<FGameplayTag> Seen;
+	for (int32 Index = 0; Index < Phases.Num(); ++Index)
+	{
+		const FFVDayPhase& Phase = Phases[Index];
+		UE_CLOG(!Phase.Phase.IsValid(), LogFVCore, Warning, TEXT("World Clock phase %d has no tag."), Index);
+		UE_CLOG(Phase.Phase.IsValid() && Seen.Contains(Phase.Phase), LogFVCore, Warning, TEXT("World Clock phase %s is listed twice."), *Phase.Phase.ToString());
+		UE_CLOG(Index > 0 && Phase.StartHour <= Phases[Index - 1].StartHour, LogFVCore, Warning, TEXT("World Clock phase %d starts at or before the one above it; sort phases by start hour."), Index);
+		Seen.Add(Phase.Phase);
 	}
 }
 
@@ -115,13 +117,12 @@ void UFVWorldClock::SetTotalMinutes(double NewMinutes)
 	if (NewPhase != CurrentPhase)
 	{
 		CurrentPhase = NewPhase;
-		WriteCalendarFacts();
 		OnPhaseChanged.Broadcast();
 	}
 
 	if (GetDay() != OldDay)
 	{
-		WriteCalendarFacts();
+		WriteDayFact();
 		OnDayChanged.Broadcast();
 	}
 }

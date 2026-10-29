@@ -597,7 +597,11 @@
 		},
 		{
 			"Name": "ToneMapFX",
-			"Enabled":  true
+			"Enabled": true
+		},
+		{
+			"Name": "ModelViewViewModelPreview",
+			"Enabled": true
 		}
 	]
 }

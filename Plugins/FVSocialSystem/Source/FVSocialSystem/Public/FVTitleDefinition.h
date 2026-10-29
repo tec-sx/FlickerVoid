@@ -8,7 +8,7 @@
 
 /**
  * A name the world gives the player once its conditions hold, e.g. "the one who robbed the docks".
- * Id is the fact that records it, so dialogue and quests can test it like any other fact.
+ * Earned titles are kept for good; Id is the fact that records the title's place in that history (0 = not earned).
  */
 UCLASS(BlueprintType)
 class FVSOCIALSYSTEM_API UFVTitleDefinition : public UFVDefinition
@@ -16,20 +16,11 @@ class FVSOCIALSYSTEM_API UFVTitleDefinition : public UFVDefinition
 	GENERATED_BODY()
 
 public:
-	/** Evaluated whenever a fact changes; usually fame, notoriety or a faction standing. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title", meta = (ToolTip = "Evaluated whenever a fact changes; usually fame, notoriety or a faction standing. Their at-least thresholds rank the title: the hardest held title is current."))
 	FFVConditionSet Conditions;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title", meta = (ToolTip = "Applied once, the first time the title is earned."))
 	FFVEffectList OnEarned;
-
-	/** Titles that fall away once this one is earned, e.g. a lesser version of the same story. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title")
-	TArray<TObjectPtr<UFVTitleDefinition>> Replaces;
-
-	/** A title the player can lose again when its conditions stop holding. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title")
-	bool bTransient = false;
 
 protected:
 	virtual bool RequiresId() const override { return true; }

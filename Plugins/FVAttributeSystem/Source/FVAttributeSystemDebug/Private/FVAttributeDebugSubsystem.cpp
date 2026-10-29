@@ -1,6 +1,8 @@
 #include "FVAttributeDebugSubsystem.h"
 
-#include "Attributes/FVAttributeComponent.h"
+#include "Attributes/FVAttributeDefinition.h"
+#include "Attributes/FVAttributeLibrary.h"
+#include "Attributes/FVAttributeSubsystem.h"
 #include "Checks/FVCheck.h"
 #include "FVDebugUtils.h"
 #include "GameFramework/Pawn.h"
@@ -20,16 +22,20 @@ bool UFVAttributeDebugSubsystem::IsEnabled() const
 
 void UFVAttributeDebugSubsystem::CollectLines(TArray<FString>& OutLines) const
 {
-	const UFVAttributeComponent* Attributes = UFVAttributeComponent::Find(FVDebug::GetPlayerPawn(GetWorld()));
-	if (Attributes == nullptr)
+	const UFVAttributeSubsystem* Subsystem = UFVAttributeSubsystem::Get(GetWorld());
+	const APawn* Pawn = FVDebug::GetPlayerPawn(GetWorld());
+	if (Subsystem == nullptr || Pawn == nullptr)
 	{
 		return;
 	}
 
-	for (const UFVAttributeDefinition* Attribute : Attributes->GetKnownAttributes())
+	for (const UFVAttributeDefinition* Attribute : Subsystem->GetDefinitions())
 	{
-		OutLines.Add(FString::Printf(TEXT("%s = %.1f (base %.1f)"),
-			*Attribute->GetName(), Attributes->GetValue(Attribute), Attributes->GetBaseValue(Attribute)));
+		if (UFVAttributeLibrary::HasAttribute(Pawn, Attribute))
+		{
+			OutLines.Add(FString::Printf(TEXT("%s = %.1f (base %.1f)"), *Attribute->GetName(),
+				UFVAttributeLibrary::GetValue(Pawn, Attribute), UFVAttributeLibrary::GetBaseValue(Pawn, Attribute)));
+		}
 	}
 	OutLines.Sort();
 }
@@ -39,13 +45,8 @@ static FAutoConsoleCommandWithWorldAndArgs CmdAttributeSet(
 	TEXT("FV.Attributes.Set <AttributeIdOrAsset> <Value> - set a base value on the player."),
 	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
 	{
-		UFVAttributeComponent* Attributes = UFVAttributeComponent::Find(FVDebug::GetPlayerPawn(World));
 		const UFVAttributeDefinition* Attribute = Args.Num() > 0 ? FVDebug::FindDefinition<UFVAttributeDefinition>(Args[0]) : nullptr;
-
-		if (Attributes != nullptr && Attribute != nullptr)
-		{
-			Attributes->SetBaseValue(Attribute, Args.Num() > 1 ? FCString::Atof(*Args[1]) : 0.f);
-		}
+		UFVAttributeLibrary::SetBaseValue(FVDebug::GetPlayerPawn(World), Attribute, Args.Num() > 1 ? FCString::Atof(*Args[1]) : 0.f);
 	}));
 
 static FAutoConsoleCommandWithWorldAndArgs CmdCheckRoll(

@@ -8,21 +8,44 @@
 
 bool FVFacts::Compare(const UFVFactDatabase& Database, FGameplayTag Fact, EFVFactCompare Compare, int32 Value)
 {
-	const bool bDefined = Database.IsFactDefined(Fact);
-	const int32 Current = Database.GetFact(Fact);
-
 	switch (Compare)
 	{
-	case EFVFactCompare::Equal:          return Current == Value;
-	case EFVFactCompare::NotEqual:       return Current != Value;
-	case EFVFactCompare::Greater:        return Current > Value;
-	case EFVFactCompare::GreaterOrEqual: return Current >= Value;
-	case EFVFactCompare::Less:           return Current < Value;
-	case EFVFactCompare::LessOrEqual:    return Current <= Value;
-	case EFVFactCompare::Defined:        return bDefined;
-	case EFVFactCompare::Undefined:      return !bDefined;
+	case EFVFactCompare::Defined:   return Database.IsFactDefined(Fact);
+	case EFVFactCompare::Undefined: return !Database.IsFactDefined(Fact);
+	default:                        return CompareValue(Database.GetFact(Fact), Compare, Value);
+	}
+}
+
+bool FVFacts::ToCompare(const EFVFactCompare Compare, EFVCompare& OutCompare)
+{
+	switch (Compare)
+	{
+	case EFVFactCompare::Equal:          OutCompare = EFVCompare::Equal; return true;
+	case EFVFactCompare::NotEqual:       OutCompare = EFVCompare::NotEqual; return true;
+	case EFVFactCompare::Greater:        OutCompare = EFVCompare::Greater; return true;
+	case EFVFactCompare::GreaterOrEqual: OutCompare = EFVCompare::GreaterOrEqual; return true;
+	case EFVFactCompare::Less:           OutCompare = EFVCompare::Less; return true;
+	case EFVFactCompare::LessOrEqual:    OutCompare = EFVCompare::LessOrEqual; return true;
 	default:                             return false;
 	}
+}
+
+bool FVFacts::CompareValue(const int32 Current, const EFVFactCompare Compare, const int32 Value)
+{
+	EFVCompare ValueCompare;
+	return ToCompare(Compare, ValueCompare) && FVCompare::Compare(Current, ValueCompare, Value);
+}
+
+bool FVFacts::CompareScore(const int32 Current, const EFVFactCompare Compare, const int32 Value, FFVConditionScore& OutScore)
+{
+	EFVCompare ValueCompare;
+	return ToCompare(Compare, ValueCompare) && FVCompare::Score(Current, ValueCompare, Value, OutScore);
+}
+
+bool FFVCondition_Fact::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	const UFVFactDatabase* Database = UFVFactDatabase::Get(Context.WorldContext);
+	return Database && FVFacts::CompareScore(Database->GetFact(Fact), Compare, Value, OutScore);
 }
 
 bool FFVCondition_Fact::EvaluateImpl(const FFVConditionContext& Context) const

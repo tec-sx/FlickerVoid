@@ -186,6 +186,4 @@ private:
 
 	FTimerHandle Timer;
 	TWeakObjectPtr<class UAudioComponent> PlayingVoice;
-
-	static TMap<TWeakObjectPtr<AActor>, FName> LastRowBySpeaker;
 };

@@ -1,5 +1,7 @@
 #include "Knowledge/FVKnowledge.h"
 
+#include "AssetRegistry/IAssetRegistry.h"
+#include "Conditions/FVConditionLibrary.h"
 #include "Facts/FVFactDatabase.h"
 #include "Knowledge/FVKnowledgeDefinition.h"
 
@@ -11,6 +13,28 @@ bool UFVKnowledgeLibrary::Knows(const UObject* WorldContext, const UFVKnowledgeD
 {
 	const UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext);
 	return Database && Knowledge && Database->GetFact(Knowledge->Id) > 0;
+}
+
+TArray<UFVKnowledgeDefinition*> UFVKnowledgeLibrary::GetKnownKnowledge(const UObject* WorldContext, const TArray<EFVKnowledgeKind>& Kinds)
+{
+	TArray<UFVKnowledgeDefinition*> Result;
+	const IAssetRegistry* Registry = IAssetRegistry::Get();
+	if (!Registry)
+	{
+		return Result;
+	}
+
+	TArray<FAssetData> Assets;
+	Registry->GetAssetsByClass(UFVKnowledgeDefinition::StaticClass()->GetClassPathName(), Assets, true);
+	for (const FAssetData& Asset : Assets)
+	{
+		UFVKnowledgeDefinition* Knowledge = Cast<UFVKnowledgeDefinition>(Asset.GetAsset());
+		if (Knowledge && (Kinds.IsEmpty() || Kinds.Contains(Knowledge->Kind)) && Knows(WorldContext, Knowledge))
+		{
+			Result.Add(Knowledge);
+		}
+	}
+	return Result;
 }
 
 bool UFVKnowledgeLibrary::CanLearn(const UObject* WorldContext, const UFVKnowledgeDefinition* Knowledge)
@@ -40,8 +64,7 @@ bool UFVKnowledgeLibrary::Learn(UObject* WorldContext, const UFVKnowledgeDefinit
 
 	Database->SetFact(Knowledge->Id, 1);
 
-	FFVConditionContext Context;
-	Context.WorldContext = WorldContext;
+	const FFVConditionContext Context = UFVConditionLibrary::MakePlayerContext(WorldContext);
 	Knowledge->OnLearned.Apply(Context);
 	return true;
 }

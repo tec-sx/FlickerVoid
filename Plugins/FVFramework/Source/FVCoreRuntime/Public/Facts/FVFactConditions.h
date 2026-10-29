@@ -8,6 +8,7 @@
 
 class UFVFactDatabase;
 
+/** EFVCompare plus the existence checks only facts have. */
 UENUM(BlueprintType)
 enum class EFVFactCompare : uint8
 {
@@ -47,6 +48,7 @@ struct FVCORERUNTIME_API FFVCondition_Fact : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Fact"))
@@ -70,4 +72,13 @@ struct FVCORERUNTIME_API FFVEffect_Fact : public FFVEffectBase
 namespace FVFacts
 {
 	FVCORERUNTIME_API bool Compare(const UFVFactDatabase& Database, FGameplayTag Fact, EFVFactCompare Compare, int32 Value);
+
+	/** Compares a value read from anywhere; Defined and Undefined need a fact and return false. */
+	FVCORERUNTIME_API bool CompareValue(int32 Current, EFVFactCompare Compare, int32 Value);
+
+	/** The value comparison behind a fact comparison; false for Defined and Undefined. */
+	FVCORERUNTIME_API bool ToCompare(EFVFactCompare Compare, EFVCompare& OutCompare);
+
+	/** Scores a greater comparison (see FFVConditionBase::GetScore); false for the others. */
+	FVCORERUNTIME_API bool CompareScore(int32 Current, EFVFactCompare Compare, int32 Value, FFVConditionScore& OutScore);
 }

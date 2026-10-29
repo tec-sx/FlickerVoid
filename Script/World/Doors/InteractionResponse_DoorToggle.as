@@ -46,8 +46,14 @@ class UInteractionResponse_DoorToggle : UFVInteractableResponseComponent_Toggle
 	}
 
 	UFUNCTION(BlueprintOverride)
-	void OnToggleBlocked(bool bOpen)
+	void OnToggleBlocked(bool bOpen, UFVInteractorComponent Interactor)
 	{
+        // A key the interactor carries unlocks the door; the toggle then goes ahead.
+        if (IsValid(Interactor) && FVItemKeys::TryUnlockWithKey(Interactor.GetOwner(), UFVLockComponent::Get(GetOwner())))
+        {
+            return;
+        }
+
         UTimelineComponent Timeline = GetOwner().GetComponentByClass(UTimelineComponent);
         if (!IsValid(Timeline))
         {

@@ -86,9 +86,6 @@ class UInteractionSetWidget : UFVInteractionWidget
 
             FInteractionSlotStyle Style; 
             InteractionSlotStyles.FindRow(Offer.ActionTag.GetTagName(), Style);
-            
-            // FInteractionKeyBinding Binding;
-            // ResolveKeyBinding(Prompt.InputTag, Binding);   
 
             OfferWidget.SetSlotData(Style, Offer.bAvailable);
         }

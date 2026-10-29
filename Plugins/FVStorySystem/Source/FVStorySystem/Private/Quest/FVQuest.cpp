@@ -1,13 +1,14 @@
 #include "Quest/FVQuest.h"
 
+#include "Conditions/FVConditionLibrary.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
 #include "FlowAsset.h"
 #include "FlowSubsystem.h"
+#include "FVStorySystem.h"
 #include "Interfaces/FlowDataPinValueSupplierInterface.h"
 #include "TimerManager.h"
-#include "Kismet/GameplayStatics.h"
 #include "Misc/DataValidation.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVQuest)
@@ -143,6 +144,9 @@ void UFVQuestSubsystem::Evaluate()
 	}
 
 	TGuardValue<bool> Guard(bEvaluating, true);
+
+	constexpr int32 MaxPasses = 8;
+	int32 Pass = 0;
 	do
 	{
 		bDirty = false;
@@ -150,7 +154,9 @@ void UFVQuestSubsystem::Evaluate()
 		{
 			EvaluateQuest(Quest);
 		}
-	} while (bDirty);
+	} while (bDirty && ++Pass < MaxPasses);
+
+	UE_CLOG(bDirty, LogFVStorySystem, Warning, TEXT("Quests still changing after %d passes; check quests whose effects start or finish each other."), MaxPasses);
 }
 
 TArray<FSoftObjectPath> UFVQuestSubsystem::GetTrackedQuestPaths() const
@@ -329,10 +335,7 @@ void UFVQuestSubsystem::StartActiveQuestFlows()
 
 FFVConditionContext UFVQuestSubsystem::MakeContext() const
 {
-	FFVConditionContext Context;
-	Context.WorldContext = GetWorld();
-	Context.Instigator = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	return Context;
+	return UFVConditionLibrary::MakePlayerContext(GetWorld());
 }
 
 UFVFactDatabase* UFVQuestSubsystem::GetFacts() const

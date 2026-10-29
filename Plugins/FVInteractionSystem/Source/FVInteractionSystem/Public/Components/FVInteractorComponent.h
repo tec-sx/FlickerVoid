@@ -185,6 +185,9 @@ private:
 	bool PerformOcclusionTest(const FVector& Start, const FVector& End, const AActor* Target) const;
 	void ReleaseTargetInteractable();
 	void RefreshOffers(bool bForceBroadcast = true);
+
+	/** Starts the first Hover or Automatic offer (both commit from focus, without a key) when the offers change. */
+	void BeginHoverInteraction();
 	bool InteractableIsInReach(const UFVInteractableComponent* Target) const;
 	bool IsOfferAvailable(const FFVInteractionOffer& Offer) const;
 	

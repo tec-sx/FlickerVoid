@@ -41,7 +41,7 @@ UI.Layer.GameMenu   // in-game screens: world map, inventory, journal, character
 UI.Layer.Menu       // pause menu, settings, main menu
 UI.Layer.Modal      // confirmations, popups
 ```
-Create the tags (Project Settings > GameplayTags). A layer you don't register simply can't be pushed to.
+The five tags are declared in code (FlickerVoidUI). A layer you don't register simply can't be pushed to. The game's own screens are listed in [Game UI](GameUI.md).
 
 ### `WBP_FVUILayout` (parent class `FVUILayout`)
 The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own to change the layers.
@@ -51,13 +51,14 @@ The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own to c
 4. Set it in *FlickerVoid > UI > Layout Class*.
 
 ### The main HUD: `WBP_GameHUD`
-1. Create `WBP_GameHUD` with parent class **Common Activatable Widget**. Leave *Is Back Handler* off and set its input config to *Game* so it doesn't take the mouse.
+1. Create `WBP_GameHUD` with parent class **FV Activatable Widget** (the game uses `FVGameHUDWidget`, see Game UI). Leave *Is Back Handler* off and set **Input Mode** to *Game* so it doesn't take the mouse.
 2. Lay out the always-on widgets in it: `WBP_Minimap`, `WBP_Compass`, quest tracker, notification area. Each child is a plain User Widget that finds its own data (the navigator, the quest subsystem...) in its Construct; the HUD widget itself holds no logic.
 3. Push it once when the layout is ready: make `BP_FVHUD` (parent `FVHUD`), and in **On Layout Ready** call `Get UFVUIManagerSubsystem > Push Screen(UI.Layer.HUD, WBP_GameHUD)`. Set `BP_FVHUD` as the game mode's HUD class (or in *FlickerVoid > UI > Default HUD Class*).
 4. Optional: hide the HUD while a menu is open. Bind the UI manager's **On Stack Changed** in `WBP_GameHUD` and set its visibility to *Collapsed* when `Layout > Get Layer(UI.Layer.GameMenu) > Get Active Widget` is valid.
 
 ### Screens and menus
-- Screens (world map, inventory) are **Common Activatable Widgets**. Open one with `Push Screen(UI.Layer.GameMenu, WBP_WorldMap)` from an input action; close it with `Pop Screen(Widget)` or *Deactivate Widget* (e.g. from a Back action). Set their input config to *Menu* so the mouse shows and game input stops.
+- Screens (world map, inventory) are **FV Activatable Widgets** (a Common Activatable Widget whose **Input Mode** property sets the CommonUI input config: Game, Game And Menu or Menu). Open one with `Push Screen(UI.Layer.GameMenu, WBP_WorldMap)` from an input action; close it with `Pop Screen(Widget)` or *Deactivate Widget* (e.g. from a Back action). Set **Input Mode** to *Menu* so the mouse shows and game input stops.
+- Screens in Menu mode don't pass keys to the game. While any of them is active, the UI manager adds *FlickerVoid > UI > Menu Input Context* (an `IMC_Menu` with the menu keys) and screens call **Bind Input Action** on their actions; CommonUI then calls **On Input Action** whatever has focus (needs *Common Input Settings > Enable Enhanced Input Support*). With **Show In Action Bar** the action, labelled with its *Action Description*, appears in any **Common Bound Action Bar** on screen while that screen has input. When the last Menu-mode widget closes, the context is removed and the Game input config is restored. `UFVUILibrary` (`FVUI::` in AngelScript) still has `Is Key For Action`, `Get Keys For Action`, `Get Action Key Text` and `Get Context Mappings` for key hints and control lists.
 - `Push User Widget` / `Pop User Widget` push a plain User Widget wrapped in a host; plugin UIs use this (the interaction prompt goes to the layer in `DA_InteractionUISettings`, `UI.Layer.Game` by default).
 - Never add widgets or the layout to the viewport yourself; always go through `UFVUIManagerSubsystem`.
 
@@ -69,6 +70,8 @@ The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own to c
 | Layout Class | `WBP_FVUILayout` |
 | Default HUD Class | `BP_FVHUD` |
 | Warn If HUD Missing | on |
+| Menu Input Context | `IMC_Menu` (added while a screen is open) |
+| Menu Input Context Priority | 100 |
 
 ## 4. Characters and identity
 
@@ -85,11 +88,34 @@ Built-in types you can pick anywhere a rule appears:
 
 | Conditions | Effects |
 |---|---|
-| Fact, Time of Day, Group (nested set), Script | Fact (set, add or remove), Advance Time, Play Cinematic, Script |
+| Fact, Time of Day, Group (nested set), Object (Scale, or a C++ or AngelScript condition class) | Fact (set, add or remove), Advance Time, Play Cinematic, Object (Modify Scale, or a C++ or AngelScript effect class) |
 
 - A condition set has **Mode** (All or Any) and **Failure Presentation** (Hidden, Show Locked, Show Locked With Reason), which UIs use for offers and dialogue choices.
-- **Custom rules in AngelScript**: subclass `UFVScriptCondition` (override `Evaluate` and `GetDescription`) or `UFVScriptEffect` (override `Apply`), then pick the **Script** condition or effect in data and choose your class.
-- From Blueprint/AngelScript: `UFVConditionLibrary` > `Evaluate Condition Set`, `Apply Effects`, `Describe Condition Set`.
+- **Rule classes**: new conditions and effects are instanced objects, `UFVCondition` and `UFVEffect`, subclassed the same way from C++ and AngelScript. Override `Evaluate` (and `Score` for at-least conditions, see below) and `GetDescription`, or `Apply` and `GetDescription`. Every condition object has **Invert**. Pick them in data through the **Object** condition or effect, then choose the class; once condition sets hold objects directly, the Object step goes away.
+- Comparisons use one enum, `EFVCompare` (`Compare` in AngelScript: ==, !=, >, >=, <, <=). The Fact condition adds **defined** and **undefined**.
+- From Blueprint/AngelScript: `UFVConditionLibrary` > `Evaluate Condition Set`, `Apply Effects`, `Describe Condition Set`, `Compare Values`.
+
+### Scoring and ranking
+
+An at-least condition (`>` or `>=`, such as fame >= 80) also gives a **score**: its threshold, and how far the value is past it. A set's score sums its conditions' scores (Mode All, so more requirements rank higher) or takes the best one (Mode Any).
+
+- `Rank Condition Sets` returns the indices of the sets that hold, hardest first: highest threshold, then furthest past it. Sets with no scored condition come last, and ties keep the input order, so sort the input by your tie break. Use it to pick the best unlocked thing, such as the current title.
+- `Get Condition Set Score` and `Is Score Higher` give the same comparison one set at a time.
+- In a condition class, override `Score`: fill the score with `FFVConditionScore::AtLeast(Current, Threshold)` in C++, or set **Threshold** and **Excess** in AngelScript, and return true.
+
+### Scales
+
+A scale is a value with a range, bands and links, such as standing with a faction, fame or affinity with a character. Create a data asset of `FVScaleDefinition`:
+
+| Field | Meaning |
+|---|---|
+| Id | The fact holding the value. Give the fact a **Default Value** and a **Min/Max** in *FlickerVoid > Facts*; the scale uses that range (the validator warns when it has none). |
+| Bands | Up to 3 named ranges: **Threshold** (the band applies from this value up to the next band's), **Tag**, **Label**. Below every band there is no band. |
+| Links | Up to 3 scales that get part of every change: **Factor** (negative moves the other way) and **Magnitude** (pass on the size of the change whatever its direction). A change passed on doesn't travel further. |
+
+- In data: the **Scale** condition (compare, scored for at-least) and the **Modify Scale** effect, both through **Object**.
+- From Blueprint/AngelScript: `UFVScaleLibrary` (`FVScale::` in AngelScript) > `Get Value`, `Get Band`, `Get Range`, `Modify Scale` (returns the change that applied after clamping; only that change is passed on).
+- A scale's value is a fact, so it saves, shows in the facts debugger and fires the fact change events. Set it while testing with `FV.Facts.Set`.
 
 ## 6. World clock
 
@@ -99,10 +125,10 @@ Built-in types you can pick anywhere a rule appears:
 |---|---|
 | Seconds Per Hour | Real seconds per in-game hour; 0 means time moves only through **Advance Time** (player-paced) |
 | Start Hour | Hour when a new game starts |
-| Phases | `Time.Phase.*` tags with a start hour, sorted ascending (Dawn 5, Day 8, Dusk 19, Night 21) |
-| Minutes Fact, Phase Fact, Day Fact | Fact tags the clock writes, so time saves with the facts |
+| Phases | Phase tags with a start hour, one tag each, sorted ascending (`World.TimeOfDay.Morning` 6, `Noon` 11, `Afternoon` 14, `Evening` 18, `Night` 21); the clock warns on begin play about a missing or repeated tag or unsorted hours |
+| Minutes Fact, Day Fact | Fact tags the clock writes, so time saves with the facts |
 
-Use the **Time of Day** condition for schedules and the **Advance Time** effect for sleeping or waiting.
+Use the **Time of Day** condition (a phase tag, or an hour range) for schedules and the **Advance Time** effect for sleeping or waiting. The phase isn't a fact: it follows from the saved time, so check it with the condition or listen to `OnPhaseChanged`.
 
 ## 7. Cinematics
 
@@ -143,6 +169,8 @@ Place an `AFVSpawner` (or a Blueprint of it) in the level and set its **Definiti
 | `FV.Facts.Dump [Filter]` | Log all facts |
 | `FV.Facts.Reset` | Reset facts to their declared defaults |
 | `FV.ValidateAll` (editor) | Run data validation on every definition |
+
+Data validation also warns when an array tagged `meta = (MaxEntries = N)` (C++ or AngelScript, in a data asset or a Blueprint's class defaults) holds more than N entries; the game uses it for the rule of three.
 
 Every plugin's debug readout stacks on the same on-screen panel (`UFVDebugHUDSubsystem`).
 
