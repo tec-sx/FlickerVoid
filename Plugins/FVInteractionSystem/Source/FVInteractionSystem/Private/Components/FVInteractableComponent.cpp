@@ -7,7 +7,7 @@
 #include "Data/FVInteractableDefinition.h"
 #include "FVInteractionSystem.h"
 #include "FVInteractionSystemSettings.h"
-#include "Subsystems/FVInteractionRegistrySubsystem.h"
+#include "Relevance/FVRelevanceComponent.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -38,7 +38,7 @@ void UFVInteractableComponent::SetDefinition(UFVInteractableDefinition* NewDefin
 {
 	Definition = NewDefinition;
 
-	// Before Begin Play nothing is read from it yet; the registry never reads it.
+	// Before Begin Play nothing has read it yet.
 	if (!HasBegunPlay())
 	{
 		return;
@@ -133,11 +133,11 @@ void UFVInteractableComponent::BeginPlay()
 
 	ProcessDependencies();
 
-	Registry = GetWorld()->GetSubsystem<UFVInteractionRegistrySubsystem>();
-
-	if (IsValid(Registry))
+	Relevance = UFVRelevanceComponent::FindOrAdd(GetOwner(), FVInteractionGameplayTags::Relevance_Interactable);
+	if (IsValid(Relevance))
 	{
-		Registry->Register(this);
+		Relevance->OnBandChanged.AddDynamic(this, &UFVInteractableComponent::HandleRelevanceBandChanged);
+		HandleRelevanceBandChanged(Relevance->GetBand(), EFVRelevanceBand::Far);
 	}
 }
 
@@ -147,13 +147,25 @@ void UFVInteractableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		World->GetTimerManager().ClearTimer(Timer_Cooldown);
 
-		if (IsValid(Registry))
+		if (IsValid(Relevance))
 		{
-			Registry->Unregister(this);
+			Relevance->OnBandChanged.RemoveDynamic(this, &UFVInteractableComponent::HandleRelevanceBandChanged);
 		}
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void UFVInteractableComponent::HandleRelevanceBandChanged(const EFVRelevanceBand NewBand, EFVRelevanceBand)
+{
+	if (NewBand == EFVRelevanceBand::Near)
+	{
+		ActivateInteractions();
+	}
+	else
+	{
+		DeactivateInteractions();
+	}
 }
 
 bool UFVInteractableComponent::IsTransitionAllowed(EFVInteractableState From, EFVInteractableState To)
@@ -366,7 +378,7 @@ void UFVInteractableComponent::RemoveSuppression(FGameplayTag Reason)
 	{
 		EFVInteractableState NewState = EFVInteractableState::Idle;
 
-		if (IsValid(Registry) && Registry->GetActiveInteractables().Contains(this))
+		if (IsValid(Relevance) && Relevance->IsNear())
 		{
 			NewState = EFVInteractableState::Awake;
 		}

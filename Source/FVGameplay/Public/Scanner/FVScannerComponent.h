@@ -13,8 +13,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScanCompleted, UFVScannableComp
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScannerModeChanged, bool, bActive);
 
 /**
- * Player scanner. In scan mode it reveals scannables in range, focuses the one closest to the view
- * direction, and scans it while scanning is held.
+ * Player scanner. In scan mode it reveals scannables in range (the Near band of Relevance.ScanTarget),
+ * focuses the one closest to the view direction, and scans it while scanning is held.
  */
 UCLASS(ClassGroup = (FV), meta = (BlueprintSpawnableComponent))
 class FLICKERVOIDGAMEPLAY_API UFVScannerComponent : public UActorComponent
@@ -64,9 +64,6 @@ public:
 
 protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scanner", meta = (ClampMin = 0, Units = "cm"))
-	float Range = 2500.f;
 
 	/** Max angle between view direction and target to be focused. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Scanner", meta = (ClampMin = 0, ClampMax = 90, Units = "deg"))

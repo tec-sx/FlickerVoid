@@ -37,13 +37,13 @@ Refactor in progress: the old `Source/FV*` modules still exist and fold into `Fl
 
 | Plugin | Purpose |
 |---|---|
-| FVFramework | Core: `UFVDefinition`, fragments, facts DB, conditions/effects, identity, Flow nodes, debug HUD base (FVCoreDebug), editor helpers (FVCoreEditor) |
+| FVFramework | Core: `UFVDefinition`, fragments, facts DB, conditions/effects, identity, relevance (distance bands on the Significance Manager), Flow nodes, debug HUD base (FVCoreDebug), editor helpers (FVCoreEditor) |
 | FVAttributeSystem | Definitions for GAS attributes (attribute sets in AngelScript, Gameplay Effects change them), checks |
 | FVInventorySystem | Items, weight + grid limits, granular outfit slots, pickup |
 | FVDialogueSystem | Dialogue on FlowGraph |
 | FVStorySystem | Quests, knowledge |
 | FVSocialSystem | Factions, standing, fame, notoriety, titles, disguise, affinity |
-| FVInteractionSystem | Interaction offers, registry subsystem, focus |
+| FVInteractionSystem | Interaction offers, wake-up by relevance (`Relevance.Interactable`), focus |
 | FVNavigationSystem | Maps and layers, map markers, discovery, waypoint and tracking, minimap/world map/compass view logic, map capture tool |
 | Flow | FlowGraph (MothCocoon), external git submodule; don't edit |
 

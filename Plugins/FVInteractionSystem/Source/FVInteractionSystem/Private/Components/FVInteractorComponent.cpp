@@ -12,7 +12,7 @@
 #include "GameFramework/PlayerController.h"
 #include "FVInteractionSystem.h"
 #include "FVInteractionSystemSettings.h"
-#include "Subsystems/FVInteractionRegistrySubsystem.h"
+#include "Relevance/FVRelevanceSubsystem.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Input/Components/FVGestureComponent.h"
@@ -80,19 +80,19 @@ void UFVInteractorComponent::BeginPlay()
 		return;
 	}
 
-	Registry = GetWorld()->GetSubsystem<UFVInteractionRegistrySubsystem>();
-	
-	if (IsValid(Registry))
-	{
-		Registry->RegisterInteractor(this);
-	}
-	
+	Relevance = UFVRelevanceSubsystem::Get(this);
+
 	SetComponentTickInterval(ActiveDetection.TickInterval);
+	EnableTracing();
 
 #if !UE_BUILD_SHIPPING
 	if (const UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
 	{
 		DebugSubsystem = GameInstance->GetSubsystem<UFVInteractionDebugSubsystem>();
+		if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
+		{
+			Debug->Register(this);
+		}
 	}
 #endif
 }
@@ -111,9 +111,15 @@ void UFVInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	if (State == EFVInteractorState::Idle || State == EFVInteractorState::Awake)
 	{
-		const bool bHasInteractablesInRange = IsValid(Registry) && !Registry->GetActiveInteractables().IsEmpty();
-		SetState(bHasInteractablesInRange ? EFVInteractorState::Awake : EFVInteractorState::Idle);
+		SetState(HasInteractablesInRange() ? EFVInteractorState::Awake : EFVInteractorState::Idle);
 	}
+
+#if !UE_BUILD_SHIPPING
+	if (DebugSubsystem.IsValid())
+	{
+		UFVInteractionDebugSubsystem::VisualizeRange(GetWorld(), this, ActiveDetection.TickInterval);
+	}
+#endif
 	
 	if (State != EFVInteractorState::Awake)
 	{
@@ -137,10 +143,12 @@ void UFVInteractorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	DisableTracing();
 
-	if (IsValid(Registry))
+#if !UE_BUILD_SHIPPING
+	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
 	{
-		Registry->UnregisterInteractor();
+		Debug->Unregister();
 	}
+#endif
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -183,7 +191,7 @@ void UFVInteractorComponent::RemoveSuppression(const FGameplayTag Reason)
 	{
 		EFVInteractorState NewState = EFVInteractorState::Idle;
 
-		if (IsValid(Registry) && Registry->GetActiveInteractables().Num() > 0)
+		if (HasInteractablesInRange())
 		{
 			NewState = EFVInteractorState::Awake;
 		}
@@ -789,6 +797,11 @@ void UFVInteractorComponent::RefreshOffers(bool bForceBroadcast)
 	{
 		OffersChanged.Broadcast(CachedOffers);
 	}
+}
+
+bool UFVInteractorComponent::HasInteractablesInRange() const
+{
+	return IsValid(Relevance) && Relevance->HasNearComponents(FVInteractionGameplayTags::Relevance_Interactable);
 }
 
 bool UFVInteractorComponent::InteractableIsInReach(const UFVInteractableComponent* Target) const
