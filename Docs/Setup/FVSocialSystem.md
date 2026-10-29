@@ -18,7 +18,7 @@ Modules: `FVSocialSystem`, `FVSocialSystemDebug`, `FVSocialSystemEditor`. Uses G
 | Asset | Class | Key fields |
 |---|---|---|
 | `DA_Faction_<Name>` | `FVFactionDefinition` | **Id** = standing fact. **Min/Max Standing**, **Tiers** (min standing, tier tag, label, attitude; sorted ascending), **Relations** (other faction and the fraction of each change passed on, e.g. Police -0.5 for Gangs), **Fame Contribution**, **Notoriety Contribution** (raise for criminal factions), **Notoriety Fact**, **Hostile Notoriety**, **Disguise Tag**, **Disguise Notoriety Limit** |
-| `DA_Title_<Name>` | `FVTitleDefinition` | **Id** = fact set while held. **Conditions** (e.g. fame >= 60 and standing with the dockers >= 40), **On Earned** effects, **Replaces** (lesser titles it removes), **Transient** (lost again when the conditions stop holding) |
+| `DA_Title_<Name>` | `FVTitleDefinition` | **Id** = fact set while held. **Conditions** (e.g. fame >= 60 and standing with the dockers >= 40), **On Earned** effects, **Replaces** (lesser titles it removes; they stay away while this one is held, and a title may not replace itself through the chain), **Transient** (lost again when the conditions stop holding) |
 
 Tier tags: create them under your own root, e.g. `Faction.Tier.Hated`, `.Disliked`, `.Neutral`, `.Liked`, `.Trusted`.
 

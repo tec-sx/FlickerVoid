@@ -39,10 +39,15 @@ protected:
 
 private:
 	void HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue);
+	void EvaluateTitlesOnce();
+
+	/** A title another held title replaces stays away until that one is lost. */
+	bool IsReplacedByHeldTitle(const UFVTitleDefinition* Title) const;
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<const UFVTitleDefinition>> Titles;
 
 	FDelegateHandle FactChangedHandle;
 	bool bEvaluating = false;
+	bool bDirty = false;
 };

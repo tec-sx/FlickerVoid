@@ -31,6 +31,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title")
 	bool bTransient = false;
 
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
+#endif
+
 protected:
 	virtual bool RequiresId() const override { return true; }
 };

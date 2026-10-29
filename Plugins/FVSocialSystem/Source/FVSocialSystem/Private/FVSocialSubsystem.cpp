@@ -2,6 +2,7 @@
 
 #include "Facts/FVFactDatabase.h"
 #include "FVSocialLibrary.h"
+#include "FVSocialSystem.h"
 #include "FVSocialTypes.h"
 #include "FVTitleDefinition.h"
 
@@ -56,14 +57,29 @@ void UFVSocialSubsystem::HandleFactChanged(FGameplayTag Tag, int32 OldValue, int
 
 void UFVSocialSubsystem::EvaluateTitles()
 {
-	// Granting a title writes a fact, which calls back in here.
+	// Granting a title writes facts and runs its effects, which call back in here; those changes re-run the pass.
 	if (bEvaluating)
 	{
+		bDirty = true;
 		return;
 	}
 
 	TGuardValue<bool> Guard(bEvaluating, true);
 
+	constexpr int32 MaxPasses = 8;
+	int32 Pass = 0;
+	do
+	{
+		bDirty = false;
+		EvaluateTitlesOnce();
+	}
+	while (bDirty && ++Pass < MaxPasses);
+
+	UE_CLOG(bDirty, LogFVSocialSystem, Warning, TEXT("Titles still changing after %d passes; check titles whose effects earn or revoke each other."), MaxPasses);
+}
+
+void UFVSocialSubsystem::EvaluateTitlesOnce()
+{
 	FFVConditionContext Context;
 	Context.WorldContext = this;
 
@@ -77,7 +93,7 @@ void UFVSocialSubsystem::EvaluateTitles()
 		const bool bHeld = UFVSocialLibrary::HasTitle(this, Title);
 		const bool bEarned = Title->Conditions.Evaluate(Context);
 
-		if (bEarned && !bHeld)
+		if (bEarned && !bHeld && !IsReplacedByHeldTitle(Title))
 		{
 			UFVSocialLibrary::GrantTitle(this, Title);
 			OnTitleEarned.Broadcast(Title);
@@ -88,6 +104,20 @@ void UFVSocialSubsystem::EvaluateTitles()
 			OnTitleLost.Broadcast(Title);
 		}
 	}
+}
+
+bool UFVSocialSubsystem::IsReplacedByHeldTitle(const UFVTitleDefinition* Title) const
+{
+	auto IsTitle = [Title](const TObjectPtr<UFVTitleDefinition>& Replaced) { return Replaced.Get() == Title; };
+
+	for (const TObjectPtr<const UFVTitleDefinition>& Other : Titles)
+	{
+		if (Other != nullptr && Other != Title && Other->Replaces.ContainsByPredicate(IsTitle) && UFVSocialLibrary::HasTitle(this, Other))
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 TArray<UFVTitleDefinition*> UFVSocialSubsystem::GetHeldTitles() const
