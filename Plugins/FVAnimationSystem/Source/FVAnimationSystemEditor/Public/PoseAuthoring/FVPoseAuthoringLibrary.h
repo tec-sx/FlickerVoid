@@ -5,8 +5,29 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "FVPoseAuthoringLibrary.generated.h"
 
+class UAnimSequence;
 class UPoseAsset;
+class USkeletalMesh;
 class USkeletalMeshComponent;
+
+/** What SetPosesFromAnimation did, or why it refused. A struct rather than a bool so Python gets the error too. */
+USTRUCT(BlueprintType)
+struct FVANIMATIONSYSTEMEDITOR_API FFVPoseImportResult
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "FV|Animation|Meatbag Factory")
+	bool bSucceeded = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FV|Animation|Meatbag Factory")
+	TArray<FName> Created;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FV|Animation|Meatbag Factory")
+	TArray<FName> Updated;
+
+	UPROPERTY(BlueprintReadOnly, Category = "FV|Animation|Meatbag Factory")
+	FText Error;
+};
 
 /** Editor scripting for the Meatbag Factory: name-keyed Pose Asset commands, each one undo step. */
 UCLASS()
@@ -56,4 +77,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Animation|Meatbag Factory")
 	static bool SetCurveValue(UPoseAsset* PoseAsset, FName Pose, FName Curve, float Value, FText& OutError);
+
+	UFUNCTION(BlueprintCallable, Category = "FV|Animation|Meatbag Factory", meta = (ToolTip = "Creates an empty, unsaved Pose Asset for the mesh's skeleton at Asset Path (/Game/Folder/PA_Name), with the mesh as preview mesh. None with the error when it refuses."))
+	static UPoseAsset* CreatePoseAsset(const FString& AssetPath, USkeletalMesh* Mesh, FText& OutError);
+
+	UFUNCTION(BlueprintCallable, Category = "FV|Animation|Meatbag Factory", meta = (ToolTip = "Frame i of Animation becomes pose Poses[i]: updated when the asset has it (keeping its curve values), created otherwise. One undo step, all or nothing. Used by the Blender tools to send poses."))
+	static FFVPoseImportResult SetPosesFromAnimation(UPoseAsset* PoseAsset, UAnimSequence* Animation, const TArray<FName>& Poses);
 };

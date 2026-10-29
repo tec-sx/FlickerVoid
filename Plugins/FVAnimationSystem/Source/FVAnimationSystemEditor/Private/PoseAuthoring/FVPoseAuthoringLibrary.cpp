@@ -1,5 +1,6 @@
 #include "PoseAuthoring/FVPoseAuthoringLibrary.h"
 
+#include "Animation/AnimSequence.h"
 #include "Animation/PoseAsset.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "PoseAuthoring/FVPoseAuthoring.h"
@@ -110,6 +111,29 @@ bool UFVPoseAuthoringLibrary::AddCurve(UPoseAsset* PoseAsset, FName Curve, FText
 bool UFVPoseAuthoringLibrary::SetCurveValue(UPoseAsset* PoseAsset, FName Pose, FName Curve, float Value, FText& OutError)
 {
 	return CheckAsset(PoseAsset, OutError) && FFVPoseAuthoring::SetCurveValue(*PoseAsset, Pose, Curve, Value, OutError);
+}
+
+UPoseAsset* UFVPoseAuthoringLibrary::CreatePoseAsset(const FString& AssetPath, USkeletalMesh* Mesh, FText& OutError)
+{
+	if (!Mesh)
+	{
+		OutError = LOCTEXT("ErrNoMesh", "No skeletal mesh given.");
+		return nullptr;
+	}
+	return FFVPoseAuthoring::CreatePoseAsset(AssetPath, *Mesh, OutError);
+}
+
+FFVPoseImportResult UFVPoseAuthoringLibrary::SetPosesFromAnimation(UPoseAsset* PoseAsset, UAnimSequence* Animation, const TArray<FName>& Poses)
+{
+	FFVPoseImportResult Result;
+	if (!Animation)
+	{
+		Result.Error = LOCTEXT("ErrNoAnimation", "No animation given.");
+		return Result;
+	}
+	Result.bSucceeded = CheckAsset(PoseAsset, Result.Error)
+		&& FFVPoseAuthoring::SetPosesFromAnimation(*PoseAsset, *Animation, Poses, Result.Created, Result.Updated, Result.Error);
+	return Result;
 }
 
 #undef LOCTEXT_NAMESPACE
