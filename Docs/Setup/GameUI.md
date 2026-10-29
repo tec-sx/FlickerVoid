@@ -83,7 +83,7 @@ Parent `FVGameHUDWidget` (input mode Game). Three areas, laid out as you like; t
 | Widget | Parent | Bound widgets | Class defaults |
 |---|---|---|---|
 | `WBP_QuestTracker` | `FVQuestTrackerWidget` | **QuestList** (Vertical Box) | **Entry Class**, **Max Quests** (1-3). Shows active quests, last changed first, with their current objective |
-| `WBP_Notifications` | `FVNotificationFeedWidget` | **NotificationList** (Vertical Box) | **Entry Class**, **Max Visible** (1-3), **Duration**, **Knowledge Fact Root** (the root of knowledge Ids, e.g. `Knowledge`), labels (Picked up, Removed, Quest started/updated/completed/failed, Title earned/lost, New note) |
+| `WBP_Notifications` | `FVNotificationFeedWidget` | **NotificationList** (Vertical Box) | **Entry Class**, **Max Visible** (1-3), **Duration**, **Knowledge Fact Root** (the root of knowledge Ids, e.g. `Knowledge`), labels (Picked up, Removed, Quest started/updated/completed/failed, Title earned, Title current again, New note) |
 | `WBP_PlayerStatus` | `FVPlayerStatusWidget` | *DisguisePanel*, *DisguiseText*, *DisguiseIcon*, *NotorietyPanel*, *NotorietyText*, *NotorietyBar*, *TitleText* | **Notoriety Scale** |
 | `WBP_ScannerReadout` | `FVScannerReadoutWidget` | *TargetNameText*, *ScanProgressBar*, *EntriesText* | Shown only in scan mode (scanner component on the pawn) |
 | `WBP_KeyHints` | `FVContextHintsWidget` | **HintList** (Horizontal Box) | **Hints** (up to 3: action + label, e.g. IA_HubMenu "Hub", IA_Map "Map", IA_Pause "Pause"; an empty label uses the action's name), **Hint Entry Class** `WBP_InputHint`. Hints whose action has no key mapped are skipped |

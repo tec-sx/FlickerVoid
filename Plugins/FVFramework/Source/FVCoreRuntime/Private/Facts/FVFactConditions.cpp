@@ -30,6 +30,23 @@ bool FVFacts::CompareValue(int32 Current, EFVFactCompare Compare, int32 Value)
 	}
 }
 
+bool FVFacts::CompareScore(const int32 Current, const EFVFactCompare Compare, const int32 Value, FFVConditionScore& OutScore)
+{
+	if (Compare != EFVFactCompare::Greater && Compare != EFVFactCompare::GreaterOrEqual)
+	{
+		return false;
+	}
+
+	OutScore = FFVConditionScore::AtLeast(Current, Value);
+	return true;
+}
+
+bool FFVCondition_Fact::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	const UFVFactDatabase* Database = UFVFactDatabase::Get(Context.WorldContext);
+	return Database && FVFacts::CompareScore(Database->GetFact(Fact), Compare, Value, OutScore);
+}
+
 bool FFVCondition_Fact::EvaluateImpl(const FFVConditionContext& Context) const
 {
 	const UFVFactDatabase* Database = UFVFactDatabase::Get(Context.WorldContext);

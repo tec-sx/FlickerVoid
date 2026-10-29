@@ -47,6 +47,7 @@ struct FVCORERUNTIME_API FFVCondition_Fact : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Fact"))
@@ -73,4 +74,7 @@ namespace FVFacts
 
 	/** Compares a value read from anywhere; Defined and Undefined need a fact and return false. */
 	FVCORERUNTIME_API bool CompareValue(int32 Current, EFVFactCompare Compare, int32 Value);
+
+	/** Scores a greater comparison (see FFVConditionBase::GetScore); false for the others. */
+	FVCORERUNTIME_API bool CompareScore(int32 Current, EFVFactCompare Compare, int32 Value, FFVConditionScore& OutScore);
 }
