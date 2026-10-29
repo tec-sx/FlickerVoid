@@ -37,6 +37,7 @@ struct FVATTRIBUTESYSTEM_API FFVCondition_Attribute : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Modify Attribute"))

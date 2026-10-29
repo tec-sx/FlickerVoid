@@ -19,6 +19,17 @@ struct FVCORERUNTIME_API FFVConditionContext
 	TObjectPtr<AActor> Target = nullptr;
 };
 
+/** How hard an at-least condition is to meet and how far past its threshold the value is. A higher threshold ranks first. */
+struct FVCORERUNTIME_API FFVConditionScore
+{
+	float Threshold = 0.f;
+	float Excess = 0.f;
+
+	static FFVConditionScore AtLeast(const float Current, const float InThreshold) { return { InThreshold, Current - InThreshold }; }
+
+	bool operator<(const FFVConditionScore& Other) const { return Threshold != Other.Threshold ? Threshold < Other.Threshold : Excess < Other.Excess; }
+};
+
 USTRUCT(BlueprintType, meta = (Hidden))
 struct FVCORERUNTIME_API FFVConditionBase
 {
@@ -32,8 +43,12 @@ struct FVCORERUNTIME_API FFVConditionBase
 	bool Evaluate(const FFVConditionContext& Context) const { return EvaluateImpl(Context) != bInvert; }
 	virtual FText GetDescription() const { return FText::GetEmpty(); }
 
+	/** Scores an at-least condition (fame >= 80) to rank what it unlocks; false for other conditions and inverted ones. */
+	bool GetScore(const FFVConditionContext& Context, FFVConditionScore& OutScore) const { return !bInvert && GetScoreImpl(Context, OutScore); }
+
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const { return true; }
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const { return false; }
 };
 
 UENUM(BlueprintType)
@@ -71,6 +86,9 @@ struct FVCORERUNTIME_API FFVConditionSet
 	bool IsEmpty() const { return Conditions.IsEmpty(); }
 	bool Evaluate(const FFVConditionContext& Context) const;
 	FText GetDescription() const;
+
+	/** Sum of the scored conditions (All, so more requirements rank higher) or the best one (Any); false when none is scored. */
+	bool GetScore(const FFVConditionContext& Context, FFVConditionScore& OutScore) const;
 };
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Group"))
@@ -85,4 +103,5 @@ struct FVCORERUNTIME_API FFVCondition_Group : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override { return Set.Evaluate(Context); }
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override { return Set.GetScore(Context, OutScore); }
 };
