@@ -15,9 +15,9 @@ UENUM(BlueprintType, meta=(ScriptName="GestureMode"))
 enum class EFVGestureMode : uint8
 {
 	Press		UMETA(DisplayName="Press", Tooltip="Completes immediately on press."),
-	Hold		UMETA(DisplayName="Hold", Tooltip="Completes after the key is held for InteractionPeriod."),
-	Mash		UMETA(DisplayName="Mash", Tooltip="Completes after RequiredPresses within InteractionPeriod."),
-	Hover		UMETA(DisplayName="Hover", Tooltip="Completes after being focused for InteractionPeriod, no key needed."),
+	Hold		UMETA(DisplayName="Hold", Tooltip="Completes after the key is held for Duration."),
+	Mash		UMETA(DisplayName="Mash", Tooltip="Completes after PressCount presses, within Duration when it's above 0."),
+	Hover		UMETA(DisplayName="Hover", Tooltip="Completes after being focused for Duration, no key needed."),
 	Automatic	UMETA(DisplayName="Automatic", Tooltip="Completes as soon as the offer becomes available."),
 };
 
@@ -38,7 +38,7 @@ struct FVCORERUNTIME_API FFVGesture
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(Categories="Gestures"))
 	EFVGestureMode Mode = EFVGestureMode::Press;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin="0", Units="s", EditCondition="Mode == EFVGestureMode::Hold", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin="0", Units="s", EditCondition="Mode == EFVGestureMode::Hold || Mode == EFVGestureMode::Mash || Mode == EFVGestureMode::Hover", EditConditionHides))
 	float Duration = 0.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin="1", EditCondition="Mode == EFVGestureMode::Mash", EditConditionHides))
