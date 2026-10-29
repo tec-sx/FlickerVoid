@@ -1,5 +1,5 @@
 // Asks the target's merchant to trade with the instigator, from a dialogue choice or an interaction offer: broadcasts Message.Item.TradeRequested, on which the trade screen (follow-up) opens.
-class UFVTradeEffect : UFVScriptEffect
+class UFVTradeEffect : UFVEffect
 {
 	UFUNCTION(BlueprintOverride)
 	void Apply(FFVConditionContext Context) const

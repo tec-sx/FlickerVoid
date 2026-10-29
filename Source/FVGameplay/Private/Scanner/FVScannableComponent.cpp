@@ -4,8 +4,14 @@
 #include "Conditions/FVConditionLibrary.h"
 #include "Scanner/FVScannerSubsystem.h"
 #include "GameFramework/Actor.h"
+#include "Highlight/FVHighlightComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVScannableComponent)
+
+namespace FVScannable
+{
+	const FName HighlightSource(TEXT("Scanner"));
+}
 
 UFVScannableComponent::UFVScannableComponent()
 {
@@ -69,31 +75,20 @@ void UFVScannableComponent::SetRevealed(const bool bInRevealed)
 	{
 		const FFVScanCategory* Category = Definition ? GetDefault<UFVScannerSettings>()->FindCategory(Definition->Category) : nullptr;
 		const int32 Stencil = Category ? Category->Stencil : 1;
+		const int32 Priority = Category ? Category->Priority : 0;
 
 		TArray<UPrimitiveComponent*> Primitives;
 		GetOwner()->GetComponents(Primitives);
-		for (UPrimitiveComponent* Primitive : Primitives)
+		Primitives.RemoveAll([](const UPrimitiveComponent* Primitive) { return !Primitive->IsVisible(); });
+
+		if (UFVHighlightComponent* Highlight = UFVHighlightComponent::FindOrAdd(GetOwner()))
 		{
-			if (!Primitive->IsVisible())
-			{
-				continue;
-			}
-			SavedStates.Add({ Primitive, Primitive->bRenderCustomDepth != 0, Primitive->CustomDepthStencilValue });
-			Primitive->SetRenderCustomDepth(true);
-			Primitive->SetCustomDepthStencilValue(Stencil);
+			Highlight->PushHighlight(FVScannable::HighlightSource, Stencil, Priority, Primitives);
 		}
 	}
-	else
+	else if (UFVHighlightComponent* Highlight = GetOwner()->FindComponentByClass<UFVHighlightComponent>())
 	{
-		for (const FPrimitiveState& State : SavedStates)
-		{
-			if (UPrimitiveComponent* Primitive = State.Primitive.Get())
-			{
-				Primitive->SetRenderCustomDepth(State.bRenderCustomDepth);
-				Primitive->SetCustomDepthStencilValue(State.Stencil);
-			}
-		}
-		SavedStates.Reset();
+		Highlight->PopHighlight(FVScannable::HighlightSource);
 	}
 
 	OnRevealChanged.Broadcast(bRevealed);
