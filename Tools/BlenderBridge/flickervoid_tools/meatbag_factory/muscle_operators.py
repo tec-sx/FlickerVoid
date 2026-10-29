@@ -2,8 +2,9 @@
 
 import bpy
 
-from . import anatomy, muscles, sculpt
+from . import anatomy, muscle_bones, muscles, sculpt
 from .. import preferences
+from ..unreal_link import link
 
 
 def _settings(context):
@@ -53,6 +54,15 @@ class MeatbagMuscleView(bpy.types.PropertyGroup):
                                   description="Draw muscles as coloured surfaces, else as wireframes")
     in_front: bpy.props.BoolProperty(name="In Front", default=False, update=_view_changed,
                                      description="Draw muscles over the body")
+    bone_strength: bpy.props.FloatProperty(name="Muscle Weight", default=0.5, min=0.0, max=1.0, subtype="FACTOR",
+                                           description="Share of the skin over a muscle's belly its bone takes")
+    joint_strength: bpy.props.FloatProperty(name="Joint Weight", default=0.6, min=0.0, max=1.0, subtype="FACTOR",
+                                            description="Share of the skin at a knee or elbow its half bone takes")
+    spread: bpy.props.FloatProperty(name="Spread", default=1.0, min=0.1, soft_max=3.0,
+                                    description="How far past a muscle's surface its weight reaches, in belly radii")
+    control_rig: bpy.props.StringProperty(name="Control Rig",
+                                          description="Unreal Control Rig the muscle bones are driven by, made when missing "
+                                                      "(e.g. /Game/Characters/CR_MuscleBones)")
 
 
 class MEATBAG_OT_muscles_generate(bpy.types.Operator):
@@ -106,6 +116,114 @@ class MEATBAG_OT_muscles_fit(bpy.types.Operator):
             bpy.ops.object.mode_set(mode="OBJECT")
         fitted = muscles.fit_all(context, s.armature, s.mesh.meatbag_target)
         self.report({"INFO"}, f"Fitted {len(fitted)} muscles")
+        return {"FINISHED"}
+
+
+def _project(context, s, view):
+    return muscle_bones.project_weights(context, s.armature, s.mesh, s.mesh.meatbag_target, view.bone_strength,
+                                        view.joint_strength, spread=view.spread,
+                                        sides=preferences.contract(context).sides)
+
+
+class MEATBAG_OT_muscle_bones_build(bpy.types.Operator):
+    bl_idname = "meatbag.muscle_bones_build"
+    bl_label = "Build Muscle Bones"
+    bl_description = ("Add a bone that follows each muscle and a half bone and cap bone at each knee and elbow, then "
+                      "project their weights onto the body from the muscles. Rebuilds them if they exist")
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        s = _settings(context)
+        return bool(s.armature and s.mesh and s.mesh.meatbag_target)
+
+    def execute(self, context):
+        s = _settings(context)
+        try:
+            strands, joints = muscle_bones.build(context, s.armature, s.mesh.meatbag_target, preferences.contract(context).sides)
+            _project(context, s, context.scene.meatbag_muscles)
+        except (muscle_bones.MuscleBoneError, muscles.MuscleError) as error:
+            self.report({"ERROR"}, str(error))
+            return {"CANCELLED"}
+        self.report({"INFO"}, f"Built {len(strands)} muscle bones and {len(joints)} joints; weights projected onto {s.mesh.name}")
+        return {"FINISHED"}
+
+
+class MEATBAG_OT_muscle_bones_weights(bpy.types.Operator):
+    bl_idname = "meatbag.muscle_bones_weights"
+    bl_label = "Project Weights"
+    bl_description = "Project the muscle and joint bone weights onto the body again, with the current weights and spread"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        s = _settings(context)
+        return bool(s.armature and s.mesh and s.mesh.meatbag_target)
+
+    def execute(self, context):
+        s = _settings(context)
+        try:
+            columns = _project(context, s, context.scene.meatbag_muscles)
+        except muscle_bones.MuscleBoneError as error:
+            self.report({"ERROR"}, str(error))
+            return {"CANCELLED"}
+        self.report({"INFO"}, f"Projected {len(columns)} bone weights")
+        return {"FINISHED"}
+
+
+class MEATBAG_OT_muscle_bones_remove(bpy.types.Operator):
+    bl_idname = "meatbag.muscle_bones_remove"
+    bl_label = "Remove Muscle Bones"
+    bl_description = "Remove the muscle and joint bones and give their weights back to the other bones"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        s = _settings(context)
+        return bool(s.armature)
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
+    def execute(self, context):
+        s = _settings(context)
+        muscle_bones.remove(context, s.armature, s.mesh)
+        return {"FINISHED"}
+
+
+class MEATBAG_OT_send_muscle_rig(bpy.types.Operator):
+    bl_idname = "meatbag.send_muscle_rig"
+    bl_label = "Send Muscle Rig to Unreal"
+    bl_description = ("Make or update the Control Rig that drives the muscle and joint bones in Unreal, so they follow "
+                      "every pose at runtime. Push the mesh first so Unreal has the bones")
+
+    @classmethod
+    def poll(cls, context):
+        s = _settings(context)
+        return bool(s.armature and s.mesh and context.scene.meatbag_muscles.control_rig)
+
+    def execute(self, context):
+        s = _settings(context)
+        path = context.scene.meatbag_muscles.control_rig
+        if not path.startswith("/"):
+            self.report({"ERROR"}, "The Control Rig path must start with /Game or a plugin mount")
+            return {"CANCELLED"}
+        if not s.mesh.fv_ue_asset:
+            self.report({"ERROR"}, f"{s.mesh.name} isn't linked to an Unreal skeletal mesh; link it in the Unreal panel and push it first")
+            return {"CANCELLED"}
+        definition = muscle_bones.rig_definition(s.armature)
+        if not definition["stretch"] and not definition["follow"]:
+            self.report({"ERROR"}, "No muscle bones; build them first")
+            return {"CANCELLED"}
+        params = {"control_rig": path, "mesh": s.mesh.fv_ue_asset, **definition}
+        try:
+            sent, _ = link.call("send_muscle_rig", params, preferences.remote_config(context), preferences.project_dir(context))
+        except link.LinkError as error:
+            self.report({"ERROR"}, str(error))
+            return {"CANCELLED"}
+        made = "Created" if sent["created"] else "Updated"
+        self.report({"INFO"}, f"{made} {sent['control_rig']} with {len(definition['stretch'])} muscles and "
+                              f"{len(definition['follow'])} joints. Save in Unreal to keep it.")
         return {"FINISHED"}
 
 
@@ -263,6 +381,10 @@ classes = (
     MeatbagMuscleView,
     MEATBAG_OT_muscles_generate,
     MEATBAG_OT_muscles_fit,
+    MEATBAG_OT_muscle_bones_build,
+    MEATBAG_OT_muscle_bones_weights,
+    MEATBAG_OT_muscle_bones_remove,
+    MEATBAG_OT_send_muscle_rig,
     MEATBAG_OT_muscle_add,
     MEATBAG_OT_muscle_mirror,
     MEATBAG_OT_muscle_remove,

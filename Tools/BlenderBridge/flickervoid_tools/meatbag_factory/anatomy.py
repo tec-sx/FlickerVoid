@@ -108,6 +108,26 @@ TEMPLATE = (
 )
 
 
+@dataclass(frozen=True)
+class Joint:
+    """A hinge the skin folds around. The half bone sits at the joint and turns halfway with the child bone, holding
+    volume in the fold; the cap bone rides on the child bone at the bony point outside the bend (kneecap, elbow
+    tip), keeping it hard as the skin stretches over it."""
+    name: str
+    parent: str
+    child: str
+    cap: tuple  # direction of the bony point, front/left/up of the body
+    half: float = 0.5
+    band: float = 0.18  # half bone weight reach either side of the joint, relative to the mean bone length
+    cap_size: float = 0.12  # cap weight radius, relative to the child bone length
+
+
+JOINTS = (
+    Joint("Elbow_l", "upperarm_l", "lowerarm_l", (-1.0, 0.0, 0.0)),
+    Joint("Knee_l", "thigh_l", "calf_l", (1.0, 0.0, 0.0)),
+)
+
+
 def resolve_bone(name, bone_names):
     """The skeleton's bone for a template bone name, or None."""
     for candidate in ALIASES.get(name, (name,)):
