@@ -76,11 +76,20 @@ namespace FVMuscleBones
 		const FQuat Turn = FQuat::FindBetweenNormals(AxisNow, Aim / Length);
 		const FQuat Rotation = (Turn * Current.GetRotation()).GetNormalized();
 
-		// Matches Blender's Stretch To with XZX volume: the aim axis scales by the stretch, the others by its
-		// inverse square root raised to the volume.
+		// Matches Blender's Stretch To with XZX volume and a Limit Scale on the aim axis: the other axes scale by
+		// the inverse square root of the full stretch raised to the volume, the aim axis by the clamped stretch.
 		const float Ratio = Length / RestLength;
+		float AxisScale = Ratio;
+		if (Muscle.MinStretch > 0.0f)
+		{
+			AxisScale = FMath::Max(AxisScale, Muscle.MinStretch);
+		}
+		if (Muscle.MaxStretch > 0.0f)
+		{
+			AxisScale = FMath::Min(AxisScale, Muscle.MaxStretch);
+		}
 		FVector Scale(FMath::Pow(Ratio, -0.5f * Muscle.Volume));
-		Scale[DominantAxis(Axis)] = Ratio;
+		Scale[DominantAxis(Axis)] = AxisScale;
 
 		FTransform Driven = Current;
 		Driven.SetRotation(FQuat::Slerp(Current.GetRotation(), Rotation, Alpha).GetNormalized());

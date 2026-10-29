@@ -18,6 +18,12 @@ struct FVANIMATIONSYSTEM_API FFVMuscleStretch
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Muscle", meta = (ClampMin = "0.0", ToolTip = "How much the bone thickens as it shortens; 1 keeps its volume."))
 	float Volume = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Muscle", meta = (ClampMin = "0.0", ToolTip = "Least lengthwise scale; the thickening still follows the full shortening. 0 means no limit."))
+	float MinStretch = 0.85f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Muscle", meta = (ClampMin = "0.0", ToolTip = "Most lengthwise scale. 0 means no limit."))
+	float MaxStretch = 1.15f;
 };
 
 /** A joint helper bone that turns part of the way with another bone, holding volume in a fold. */

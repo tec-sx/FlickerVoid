@@ -54,7 +54,7 @@ class MeatbagMuscleView(bpy.types.PropertyGroup):
                                   description="Draw muscles as coloured surfaces, else as wireframes")
     in_front: bpy.props.BoolProperty(name="In Front", default=False, update=_view_changed,
                                      description="Draw muscles over the body")
-    bone_strength: bpy.props.FloatProperty(name="Muscle Weight", default=0.5, min=0.0, max=1.0, subtype="FACTOR",
+    bone_strength: bpy.props.FloatProperty(name="Muscle Weight", default=0.4, min=0.0, max=1.0, subtype="FACTOR",
                                            description="Share of the skin over a muscle's belly its bone takes")
     joint_strength: bpy.props.FloatProperty(name="Joint Weight", default=0.6, min=0.0, max=1.0, subtype="FACTOR",
                                             description="Share of the skin at a knee or elbow its half bone takes")

@@ -13,7 +13,8 @@ def _quote(name):
 
 
 def _muscles(entries):
-    items = [f"(Bone={_quote(e['bone'])},Target={_quote(e['target'])},Volume={float(e['volume'])})" for e in entries]
+    items = [f"(Bone={_quote(e['bone'])},Target={_quote(e['target'])},Volume={float(e['volume'])},"
+             f"MinStretch={float(e.get('min_stretch', 0.0))},MaxStretch={float(e.get('max_stretch', 0.0))})" for e in entries]
     return "(" + ",".join(items) + ")"
 
 

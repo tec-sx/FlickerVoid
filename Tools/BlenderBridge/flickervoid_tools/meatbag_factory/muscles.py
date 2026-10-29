@@ -290,21 +290,38 @@ class Fitter:
             raise MuscleError(f"{self.armature.name} has no bone for {name}")
         return bone
 
+    def landmark_start(self, mark):
+        bones = self.armature.data.bones
+        thigh = bones["thigh_l"]
+        length = (thigh.tail_local - thigh.head_local).length
+        if mark.hip:
+            start = bones[mark.hip].head_local.copy()
+        else:
+            start = bones["thigh_l"].head_local.lerp(bones["thigh_r"].head_local, 0.5)
+        return start + self.up * mark.raise_ * length, length
+
+    def cast(self, start, direction, depth):
+        """The point `depth` of the way back from the skin, cast from `start` along body-frame `direction`."""
+        front, left, up = direction
+        vector = self.front * front + self.left * left + self.up * up
+        if vector.length < 1e-6:
+            return start
+        hit, _, _, _ = self.tree.ray_cast(start, vector.normalized())
+        return start if hit is None else start.lerp(hit, 1.0 - depth)
+
     def point(self, attachment):
         """(bone, armature-space point) of a template attachment."""
+        if attachment.bone.startswith(anatomy.LANDMARK):
+            # A muscle on a landmark starts under it: cast the landmark's way, at the attachment's depth.
+            mark = anatomy.landmark(attachment.bone)
+            start, _ = self.landmark_start(mark)
+            return "pelvis", self.cast(start, mark.direction, attachment.depth)
         bone = self.bone(attachment.bone)
         if bone.startswith(anatomy.PIVOT):
             start = self.armature.data.bones[anatomy.joint(bone).child].head_local.copy()
         else:
             start = bone_point(self.armature, bone, attachment.along)
-        front, left, up = attachment.direction
-        direction = self.front * front + self.left * left + self.up * up
-        if direction.length < 1e-6:
-            return bone, start
-        hit, _, _, distance = self.tree.ray_cast(start, direction.normalized())
-        if hit is None:
-            return bone, start
-        return bone, start.lerp(hit, 1.0 - attachment.depth)
+        return bone, self.cast(start, attachment.direction, attachment.depth)
 
     def clearance(self, point):
         """Distance from a point to the skin."""

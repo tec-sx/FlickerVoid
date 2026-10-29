@@ -47,6 +47,7 @@ class Muscle:
     belly: float = 0.45
     tendon: float = 0.15
     color: tuple = (0.75, 0.2, 0.2)
+    bones: int = 1  # muscle bones for the whole muscle; 2 splits its strands in two halves
 
 
 def _a(bone, along, front=0.0, left=0.0, up=0.0, depth=0.4):
@@ -74,22 +75,23 @@ TEMPLATE = (
            width=0.6, thickness=0.6, color=PINK),
     Muscle("Trapezius_l", _fan((_a("neck", 0.3, -1, 0.2), _a("chest", 0.6, -1, 0.15), _a("midspine", 0.3, -1, 0.1)),
                                _a("clavicle_l", 0.8, -0.5, 0, 1)),
-           width=0.7, thickness=0.5, tendon=0.3, color=DARK),
+           width=0.7, thickness=0.5, tendon=0.3, color=DARK, bones=2),
     Muscle("Deltoid_l", ((_a("clavicle_l", 0.8, 1, 0, 0.5), _a("upperarm_l", 0.4, 0.3, 0, 1)),
                          (_a("clavicle_l", 1.0, 0, 0, 1), _a("upperarm_l", 0.4, 0, 0, 1)),
                          (_a("clavicle_l", 0.8, -1, 0, 0.5), _a("upperarm_l", 0.4, -0.3, 0, 1))),
-           width=0.8, thickness=0.8, belly=0.35, color=RED),
+           width=0.8, thickness=0.8, belly=0.35, color=RED, bones=2),
     # Chest and back
     Muscle("Pectoral_l", _fan((_a("clavicle_l", 0.4, 1, 0, 0.2), _a("chest", 0.4, 1, 0.15), _a("midspine", 0.6, 1, 0.2)),
                               _a("upperarm_l", 0.12, 1, 0.3, depth=0.5)),
-           width=0.7, thickness=0.5, tendon=0.3, color=RED),
+           width=0.7, thickness=0.5, tendon=0.3, color=RED, bones=2),
     Muscle("Latissimus_l", _fan((_a("midspine", 0.0, -1, 0.1), _a("spine_01", 0.5, -1, 0.2)),
                                 _a("upperarm_l", 0.12, -1, -0.3, depth=0.5)),
            width=0.7, thickness=0.5, tendon=0.3, color=DARK),
-    Muscle("ErectorSpinae_l", _spine(0.5, -1, 0.25), width=0.5, thickness=0.6, belly=0.5, tendon=0.5, color=DARK),
+    Muscle("ErectorSpinae_l", _spine(0.5, -1, 0.25), width=0.5, thickness=0.6, belly=0.5, tendon=0.5, color=DARK,
+           bones=2),
     # Abdomen
     Muscle("RectusAbdominis_l", _spine(0.5, 1, 0.25, start=0.3, end=0.0), width=0.5, thickness=0.4, belly=0.5,
-           tendon=0.6, color=PINK),
+           tendon=0.6, color=PINK, bones=2),
     Muscle("Oblique_l", ((_a("pelvis", 0.8, 0.3, 1), _a("spine_02", 0.3, 0.5, 1), _a("midspine", 0.8, 0.6, 1)),),
            width=0.6, thickness=0.5, belly=0.5, tendon=0.5, color=PINK),
     # Arms
@@ -104,15 +106,17 @@ TEMPLATE = (
     Muscle("Gluteus_l", ((_a("pelvis", 0.5, -1, 0.5), _a("thigh_l", 0.2, -1, 0.5)),), kind=PAD,
            hooks=(_a("spine_01", 0.0, -1, 0.3), _a("thigh_l", 0.05, 0, 1)),
            width=0.85, thickness=0.75, belly=0.5, tendon=0.5),
-    Muscle("Quadriceps_l", _fan((_a("thigh_l", 0.05, 1), _a("thigh_l", 0.15, 0.6, 1), _a("thigh_l", 0.2, 0.6, -1)),
-                                _a("@Knee_l", 0.0, 1, depth=0.3)),
-           width=0.7, thickness=0.7, belly=0.55),
+    # Rectus femoris starts on the ilium and crosses the hip, so it stretches when the leg rises.
+    Muscle("RectusFemoris_l", ((_a("%ilium_l", 0.0, 1, 0.2, -0.3, depth=0.3), _a("@Knee_l", 0.0, 1, depth=0.3)),),
+           width=0.6, thickness=0.6, belly=0.5),
+    Muscle("Vasti_l", _fan((_a("thigh_l", 0.15, 0.6, 1), _a("thigh_l", 0.2, 0.6, -1)), _a("@Knee_l", 0.0, 1, depth=0.3)),
+           width=0.7, thickness=0.7, belly=0.6),
     Muscle("PatellarTendon_l", ((_a("@Knee_l", 0.0, 1, depth=0.3), _a("calf_l", 0.1, 1, depth=0.3)),),
            width=0.35, thickness=0.3, belly=0.5, tendon=0.8, color=PINK),
     Muscle("Hamstrings_l", _fan((_a("pelvis", 0.0, -1, 0.5), _a("pelvis", 0.0, -1, 0.3)),
                                 _a("calf_l", 0.08, -1, depth=0.4)),
            width=0.7, thickness=0.7, color=DARK),
-    Muscle("Adductors_l", ((_a("pelvis", 0.0, 0.5, 0.3, -1), _a("thigh_l", 0.6, 0, -1)),), width=0.7, thickness=0.6, color=PINK),
+    Muscle("Adductors_l", ((_a("%pubis", 0.0, 0.3, 0.3, -1, depth=0.5), _a("thigh_l", 0.6, 0, -1)),), width=0.7, thickness=0.6, color=PINK),
     # Starts above the knee and ends on the heel behind the ankle, so it shortens when the foot points and the knee bends.
     Muscle("Gastrocnemius_l", _fan((_a("thigh_l", 0.92, -1, 0.4), _a("thigh_l", 0.92, -1, -0.4)),
                                    _a("foot_l", 0.0, -1, 0, -0.3, depth=0.15)),
@@ -142,6 +146,34 @@ JOINTS = (
     Joint("Knee_r", "thigh_r", "calf_r", (1.0, 0.0, 0.0)),
 )
 PIVOT = "@"
+LANDMARK = "%"
+
+
+@dataclass(frozen=True)
+class Landmark:
+    """A bony point on the pelvis: a rigid bone that holds the skin around it and anchors muscles (`%ilium_l`).
+    It starts between the hip joints, or at one hip joint, raised by `raise_` thigh lengths, and is cast toward the
+    skin like an attachment."""
+    name: str
+    hip: str  # thigh bone whose head is the start, or "" for the middle of both
+    raise_: float
+    direction: tuple
+    depth: float
+    size: float  # weight radius, in thigh lengths
+
+
+LANDMARKS = (
+    Landmark("ilium_l", "thigh_l", 0.22, (0.6, 1.0, 0.0), 0.25, 0.12),
+    Landmark("ilium_r", "thigh_r", 0.22, (0.6, -1.0, 0.0), 0.25, 0.12),
+    Landmark("pubis", "", 0.0, (1.0, 0.0, 0.0), 0.3, 0.1),
+    Landmark("genital", "", -0.1, (1.0, 0.0, -0.4), 0.12, 0.08),
+)
+
+
+def landmark(name):
+    """The landmark for `ilium_l` or `%ilium_l`, or None."""
+    name = name.removeprefix(LANDMARK)
+    return next((entry for entry in LANDMARKS if entry.name == name), None)
 
 
 def joint(name):
@@ -151,7 +183,10 @@ def joint(name):
 
 
 def skin_bones(name):
-    """The skeleton bones that move a template bone: a joint pivot moves with both of its bones."""
+    """The skeleton bones that move a template bone: a joint pivot moves with both of its bones, a landmark with
+    the pelvis."""
+    if name.startswith(LANDMARK):
+        return ("pelvis",)
     found = joint(name) if name.startswith(PIVOT) else None
     return (found.parent, found.child) if found else (name,)
 
@@ -161,6 +196,9 @@ def resolve_bone(name, bone_names):
     if name.startswith(PIVOT):
         found = joint(name)
         return name if found and found.parent in bone_names and found.child in bone_names else None
+    if name.startswith(LANDMARK):
+        found = landmark(name)
+        return "pelvis" if found and "pelvis" in bone_names and "thigh_l" in bone_names and "thigh_r" in bone_names else None
     for candidate in ALIASES.get(name, (name,)):
         if candidate in bone_names:
             return candidate
