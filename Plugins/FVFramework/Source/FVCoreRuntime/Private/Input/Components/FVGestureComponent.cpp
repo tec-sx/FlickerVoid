@@ -103,7 +103,8 @@ EFVGestureStatus UFVGestureComponent::EvaluateDuration()
 EFVGestureStatus UFVGestureComponent::EvaluateMash(const float DeltaTime)
 {
 	Presses = FMath::Max(Presses - MashDecayPerSecond * DeltaTime, 0.f);
-	Progress = FMath::Min(Presses / FMath::Max(ActiveGesture->PressCount, 1), 1.f);
+	const int32 PressCount = FMath::Max(ActiveGesture->PressCount, 1);
+	Progress = FMath::Min(Presses / PressCount, 1.f);
 	
 	if (Progress >= 1.f)
 	{

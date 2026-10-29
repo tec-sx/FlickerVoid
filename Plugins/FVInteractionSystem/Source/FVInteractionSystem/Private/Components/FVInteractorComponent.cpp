@@ -810,7 +810,9 @@ void UFVInteractorComponent::BeginKeylessInteraction()
 
 	if (Offer)
 	{
-		BeginInteraction(FGameplayTag(Offer->InputTag));
+		// Copied because starting the interaction refreshes the offers this points into.
+		const FGameplayTag InputTag = Offer->InputTag;
+		BeginInteraction(InputTag);
 	}
 }
 
