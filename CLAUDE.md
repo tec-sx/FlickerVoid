@@ -56,7 +56,7 @@ Every plugin has three modules: runtime, `<Plugin>Debug` and `<Plugin>Editor`. F
 - Definitions (items, characters, attributes, factions, titles...) derive from `UFVDefinition` (FVCoreRuntime) and extend through instanced `UFVFragment` objects (being migrated from `TInstancedStruct`; see the design doc). `UFVItemDataAsset` is outdated.
 - **Rule of three**: the game is split in threes, at most 3 of anything (HUD sections, hub pages, page sections, menu entries, dialogue choices + cancel). Data-driven lists that must stay small get `meta = (MaxEntries = 3)`; the FVCoreEditor validator warns above it.
 - Data-driven, composition over inheritance, SOLID/KISS/YAGNI, open/closed. Reuse FVFramework before adding base types.
-- Rules extend through `FFVConditionSet` / `FFVEffectList`, which hold instanced `UFVCondition` / `UFVEffect` objects; C++ and AngelScript subclass them the same way (being migrated from `TInstancedStruct` and the `UFVScriptCondition` / `UFVScriptEffect` wrapper).
+- Rules extend through `FFVConditionSet` / `FFVEffectList`, which hold instanced `UFVCondition` / `UFVEffect` objects; C++ and AngelScript subclass them the same way (being migrated from `TInstancedStruct`; until then the Object condition/effect holds them). Comparisons use `EFVCompare`; bounded values with bands and links are scales (`UFVScaleDefinition`), and at-least conditions score so rules can rank what they unlock.
 - Plugins stay independent of each other; they meet through facts, gameplay tags, conditions/effects and components on actors.
 - Prefer FlowGraph (custom nodes) for story, quests and dialogue; StateTree and current UE5 features elsewhere.
 - Minimal comments: a short class description; comment a method only when its name or logic is unclear.
