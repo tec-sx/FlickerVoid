@@ -1,5 +1,5 @@
 // The instigator buys units of an item from the target's merchant stock, e.g. a drink ordered in dialogue without the trade screen. Buys what the stock and the instigator's money allow, up to Quantity; gate it with Has Money.
-class UFVBuyItemEffect : UFVScriptEffect
+class UFVBuyItemEffect : UFVEffect
 {
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	UFVItemDefinition Item;

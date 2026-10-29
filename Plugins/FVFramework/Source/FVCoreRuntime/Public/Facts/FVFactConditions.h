@@ -8,6 +8,7 @@
 
 class UFVFactDatabase;
 
+/** EFVCompare plus the existence checks only facts have. */
 UENUM(BlueprintType)
 enum class EFVFactCompare : uint8
 {
@@ -74,6 +75,9 @@ namespace FVFacts
 
 	/** Compares a value read from anywhere; Defined and Undefined need a fact and return false. */
 	FVCORERUNTIME_API bool CompareValue(int32 Current, EFVFactCompare Compare, int32 Value);
+
+	/** The value comparison behind a fact comparison; false for Defined and Undefined. */
+	FVCORERUNTIME_API bool ToCompare(EFVFactCompare Compare, EFVCompare& OutCompare);
 
 	/** Scores a greater comparison (see FFVConditionBase::GetScore); false for the others. */
 	FVCORERUNTIME_API bool CompareScore(int32 Current, EFVFactCompare Compare, int32 Value, FFVConditionScore& OutScore);
