@@ -83,7 +83,7 @@ void UFVDialogueSubsystem::BeginConversation(AActor* InInstigator, AActor* InOwn
 
 void UFVDialogueSubsystem::CheckConversation()
 {
-	const bool bFlowStopped = Flow.IsExplicitlyNull() ? false : !Flow.IsValid() || !Flow->IsActive();
+	const bool bFlowStopped = !Flow.IsExplicitlyNull() && (!Flow.IsValid() || !Flow->IsActive());
 	if (bActive && (bFlowStopped || !Owner.IsValid()))
 	{
 		UE_LOG(LogFVDialogueSystem, Log, TEXT("Closing conversation %s: %s."), *GetNameSafe(Dialogue), bFlowStopped ? TEXT("its flow stopped") : TEXT("its owner is gone"));
