@@ -141,38 +141,6 @@ bool UFVSocialLibrary::HasTitle(const UObject* WorldContext, const UFVTitleDefin
 	return Title != nullptr && FVSocial::ReadFact(WorldContext, Title->Id) > 0;
 }
 
-bool UFVSocialLibrary::GrantTitle(UObject* WorldContext, const UFVTitleDefinition* Title)
-{
-	UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext);
-	if (Database == nullptr || Title == nullptr || !Title->Id.IsValid() || HasTitle(WorldContext, Title))
-	{
-		return false;
-	}
-
-	Database->SetFact(Title->Id, 1);
-
-	for (const TObjectPtr<UFVTitleDefinition>& Replaced : Title->Replaces)
-	{
-		RevokeTitle(WorldContext, Replaced);
-	}
-
-	FFVConditionContext Context;
-	Context.WorldContext = WorldContext;
-	Title->OnEarned.Apply(Context);
-	return true;
-}
-
-void UFVSocialLibrary::RevokeTitle(UObject* WorldContext, const UFVTitleDefinition* Title)
-{
-	if (UFVFactDatabase* Database = UFVFactDatabase::Get(WorldContext))
-	{
-		if (Title != nullptr && Title->Id.IsValid())
-		{
-			Database->SetFact(Title->Id, 0);
-		}
-	}
-}
-
 int32 UFVSocialLibrary::GetRelationship(const UObject* WorldContext, const UFVCharacterDefinition* Character)
 {
 	const FFVCharacterFragment_Social* Social = Character ? Character->FindFragment<FFVCharacterFragment_Social>() : nullptr;
