@@ -30,9 +30,6 @@ def ensure_target(mesh):
     target = mesh.copy()
     target.data = mesh.data.copy()
     target.name = target.data.name = mesh.name + TARGET_SUFFIX
-    from . import muscle_bones
-    rig = next((modifier.object for modifier in target.modifiers if modifier.type == "ARMATURE"), None)
-    muscle_bones.strip_weights(target, muscle_bones.owned_landmarks(rig))  # the target shows the muscles; muscle bones would push it twice
     target.shape_key_clear()
     target.shape_key_add(name=BASIS, from_mix=False)
     for modifier in list(target.modifiers):

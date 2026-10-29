@@ -12,8 +12,6 @@ public class FVAnimationSystem : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"DeveloperSettings",
-			"ControlRig",
-			"RigVM",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]

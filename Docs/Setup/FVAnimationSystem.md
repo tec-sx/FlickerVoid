@@ -68,12 +68,6 @@ How capture works: **Create** and **Update** save the pose last opened with **Go
 
 `UFVAnimationLibrary` (runtime): `GetBoneSide`, `GetMirrorBoneName`, `GetNameSide`, `GetMirrorName`, using the same side pairs.
 
-## 7. Muscle bones
-
-The Blender tools' **Build Muscle Bones** adds a belly bone (`mb_`) per muscle strand, aimed at a target bone (`mt_`) on the insertion bone, and a half bone (`jh_`) plus a cap bone (`jc_`) at each knee and elbow. Push the mesh so the skeleton has them, then **Send Muscle Rig to Unreal**: it makes or updates a Control Rig (path set in Blender) with the bones imported from the mesh and one **FV Muscle Bones** node (`FFVRigUnit_MuscleBones`) in Forward Solve, filled with every muscle and joint.
-
-The node repeats Blender's constraints from the reference pose, so the bones follow any pose: a muscle bone turns to keep aiming at its target and scales along that axis by how far it is from it, the other axes by the inverse square root raised to **Volume**; a half bone turns **Weight** of the way with its source bone. **Alpha** blends it in. Run the Control Rig after animation and IK and before correctives (post-process Anim Blueprint, or the UAF Control Rig task). The bones are ordinary skin bones, so the pose library's **Send Poses** bakes them into Pose Asset poses too, when a pose-driven setup is wanted instead.
-
-## 8. Debugging
+## 7. Debugging
 
 No debug readout or console commands yet. Automation tests: *Session Frontend > Automation*, filter `FlickerVoid.Animation`. They load the mannequin read-only and work on transient Pose Assets.
