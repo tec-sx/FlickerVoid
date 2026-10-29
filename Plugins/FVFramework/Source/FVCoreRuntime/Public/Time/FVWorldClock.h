@@ -39,16 +39,12 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Time", meta = (ClampMin = 0, ClampMax = 24))
 	float StartHour = 8.f;
 
-	UPROPERTY(Config, EditAnywhere, Category = "Time")
+	UPROPERTY(Config, EditAnywhere, Category = "Time", meta = (ToolTip = "Day phases, each a distinct tag, sorted by start hour. Conditions check the current one with Time of Day; it isn't stored as a fact because it follows from the saved time."))
 	TArray<FFVDayPhase> Phases;
 
 	/** Fact storing total elapsed minutes, so time is saved with facts. */
 	UPROPERTY(Config, EditAnywhere, Category = "Time")
 	FGameplayTag MinutesFact;
-
-	/** Fact receiving the index of the current phase in Phases. */
-	UPROPERTY(Config, EditAnywhere, Category = "Time")
-	FGameplayTag PhaseFact;
 
 	/** Fact receiving the current day number. */
 	UPROPERTY(Config, EditAnywhere, Category = "Time")
@@ -95,7 +91,8 @@ public:
 private:
 	void SetTotalMinutes(double NewMinutes);
 	FGameplayTag ResolvePhase(float Hour) const;
-	void WriteCalendarFacts() const;
+	void WriteDayFact() const;
+	static void ValidatePhases();
 
 	double TotalMinutes = 0.0;
 	FGameplayTag CurrentPhase;

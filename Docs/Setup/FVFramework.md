@@ -102,10 +102,10 @@ Built-in types you can pick anywhere a rule appears:
 |---|---|
 | Seconds Per Hour | Real seconds per in-game hour; 0 means time moves only through **Advance Time** (player-paced) |
 | Start Hour | Hour when a new game starts |
-| Phases | `Time.Phase.*` tags with a start hour, sorted ascending (Dawn 5, Day 8, Dusk 19, Night 21) |
-| Minutes Fact, Phase Fact, Day Fact | Fact tags the clock writes, so time saves with the facts |
+| Phases | Phase tags with a start hour, one tag each, sorted ascending (`World.TimeOfDay.Morning` 6, `Noon` 11, `Afternoon` 14, `Evening` 18, `Night` 21); the clock warns on begin play about a missing or repeated tag or unsorted hours |
+| Minutes Fact, Day Fact | Fact tags the clock writes, so time saves with the facts |
 
-Use the **Time of Day** condition for schedules and the **Advance Time** effect for sleeping or waiting.
+Use the **Time of Day** condition (a phase tag, or an hour range) for schedules and the **Advance Time** effect for sleeping or waiting. The phase isn't a fact: it follows from the saved time, so check it with the condition or listen to `OnPhaseChanged`.
 
 ## 7. Cinematics
 
