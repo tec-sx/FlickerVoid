@@ -37,7 +37,7 @@ class UFVNotificationFeedWidget : UUserWidget
     FText TitleEarnedLabel;
 
     UPROPERTY(EditDefaultsOnly, Category = "Notifications|Labels")
-    FText TitleLostLabel;
+    FText TitleCurrentLabel;
 
     UPROPERTY(EditDefaultsOnly, Category = "Notifications|Labels")
     FText KnowledgeLabel;
@@ -50,6 +50,7 @@ class UFVNotificationFeedWidget : UUserWidget
     private TArray<UFVListEntryWidget> Rows;
     private TMap<UFVQuestDefinition, EFVQuestState> QuestStates;
     private UFVInventoryComponent Inventory;
+    private const UFVTitleDefinition JustEarnedTitle;
 
     UFUNCTION(BlueprintOverride)
     void Construct()
@@ -78,7 +79,7 @@ class UFVNotificationFeedWidget : UUserWidget
         if (Social != nullptr)
         {
             Social.OnTitleEarned.AddUFunction(this, n"HandleTitleEarned");
-            Social.OnTitleLost.AddUFunction(this, n"HandleTitleLost");
+            Social.OnCurrentTitleChanged.AddUFunction(this, n"HandleCurrentTitleChanged");
         }
 
         UFVFactDatabase Facts = UFVFactDatabase::Get();
@@ -109,7 +110,7 @@ class UFVNotificationFeedWidget : UUserWidget
         if (Social != nullptr)
         {
             Social.OnTitleEarned.UnbindObject(this);
-            Social.OnTitleLost.UnbindObject(this);
+            Social.OnCurrentTitleChanged.UnbindObject(this);
         }
         UFVFactDatabase Facts = UFVFactDatabase::Get();
         if (Facts != nullptr)
@@ -270,17 +271,26 @@ class UFVNotificationFeedWidget : UUserWidget
     {
         if (Title != nullptr)
         {
+            // Earned straight into the current spot: skip the change notice that follows.
+            UFVSocialSubsystem Social = UFVSocialSubsystem::Get();
+            JustEarnedTitle = nullptr;
+            if (Social != nullptr && Social.GetCurrentTitle() == Title)
+            {
+                JustEarnedTitle = Title;
+            }
             Notify(Title.Display.Name, TitleEarnedLabel, Title.Display.Icon);
         }
     }
 
+    // A title held before became current again; a new one already got its earned notice.
     UFUNCTION()
-    private void HandleTitleLost(const UFVTitleDefinition Title)
+    private void HandleCurrentTitleChanged(const UFVTitleDefinition Title)
     {
-        if (Title != nullptr)
+        if (Title != nullptr && Title != JustEarnedTitle)
         {
-            Notify(Title.Display.Name, TitleLostLabel, Title.Display.Icon);
+            Notify(Title.Display.Name, TitleCurrentLabel, Title.Display.Icon);
         }
+        JustEarnedTitle = nullptr;
     }
 
     UFUNCTION()

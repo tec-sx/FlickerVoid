@@ -40,6 +40,18 @@ FText FFVCondition_Attribute::GetDescription() const
 	return FText::Format(LOCTEXT("AttributeDesc", "{0} {1} {2}"), AttributeName(Attribute), Comparison, FText::AsNumber(Value));
 }
 
+bool FFVCondition_Attribute::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	const AActor* Actor = PickActor(Context, bCheckTarget);
+	if (Compare != EFVCompare::AtLeast || !UFVAttributeLibrary::HasAttribute(Actor, Attribute))
+	{
+		return false;
+	}
+
+	OutScore = FFVConditionScore::AtLeast(UFVAttributeLibrary::GetValue(Actor, Attribute), Value);
+	return true;
+}
+
 bool FFVCondition_Attribute::EvaluateImpl(const FFVConditionContext& Context) const
 {
 	const AActor* Actor = PickActor(Context, bCheckTarget);

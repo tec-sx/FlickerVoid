@@ -29,6 +29,39 @@ bool FFVConditionSet::Evaluate(const FFVConditionContext& Context) const
 	return bAll || Conditions.IsEmpty();
 }
 
+bool FFVConditionSet::GetScore(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
+{
+	const bool bAll = Mode == EFVConditionMode::All;
+	bool bFound = false;
+
+	for (const TInstancedStruct<FFVConditionBase>& Condition : Conditions)
+	{
+		FFVConditionScore Score;
+		const FFVConditionBase* Ptr = Condition.GetPtr();
+		if (Ptr == nullptr || !Ptr->GetScore(Context, Score))
+		{
+			continue;
+		}
+
+		if (!bFound)
+		{
+			OutScore = Score;
+		}
+		else if (bAll)
+		{
+			OutScore.Threshold += Score.Threshold;
+			OutScore.Excess += Score.Excess;
+		}
+		else if (OutScore < Score)
+		{
+			OutScore = Score;
+		}
+		bFound = true;
+	}
+
+	return bFound;
+}
+
 FText FFVConditionSet::GetDescription() const
 {
 	TArray<FText> Parts;

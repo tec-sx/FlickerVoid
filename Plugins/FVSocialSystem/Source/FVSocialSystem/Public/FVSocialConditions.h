@@ -29,6 +29,7 @@ struct FVSOCIALSYSTEM_API FFVCondition_Standing : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Faction Notoriety"))
@@ -49,6 +50,7 @@ struct FVSOCIALSYSTEM_API FFVCondition_Notoriety : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 /** How widely the player is talked about. Checks what an onlooker reads, so a disguise hides most of it. */
@@ -71,6 +73,7 @@ struct FVSOCIALSYSTEM_API FFVCondition_Fame : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 /** How wanted the player is overall, across every faction. */
@@ -89,6 +92,7 @@ struct FVSOCIALSYSTEM_API FFVCondition_GlobalNotoriety : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 /** The player holds a title. */
@@ -125,6 +129,7 @@ struct FVSOCIALSYSTEM_API FFVCondition_Relationship : public FFVConditionBase
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
+	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
 
 /**
@@ -235,6 +240,19 @@ struct FVSOCIALSYSTEM_API FFVEffect_ModifyRelationship : public FFVEffectBase
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	int32 Delta = 0;
+
+	virtual void Apply(const FFVConditionContext& Context) const override;
+	virtual FText GetDescription() const override;
+};
+
+/** Makes a title the player's current one, earning it first if needed. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Promote Title"))
+struct FVSOCIALSYSTEM_API FFVEffect_PromoteTitle : public FFVEffectBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Effect")
+	TObjectPtr<UFVTitleDefinition> Title;
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
