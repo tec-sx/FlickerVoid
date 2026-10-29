@@ -39,6 +39,8 @@ private:
 	
 	void CacheTargets();
 	void RenderHighlight(const bool bIsInFocus);
+	void ApplyHighlight();
+	void RestoreTargets();
 	
 	TWeakObjectPtr<UFVInteractableComponent> Interactable;
 
@@ -48,7 +50,7 @@ private:
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UMaterialInterface>> CachedOverlays;
 
-	TArray<bool> CachedRenderCustomDepth;
-	TArray<int32> CachedStencilValues;
 	bool bIsHighlighted = false;
+
+	static const FName HighlightSource;
 };

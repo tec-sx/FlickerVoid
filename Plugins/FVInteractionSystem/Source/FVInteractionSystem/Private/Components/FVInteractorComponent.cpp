@@ -789,6 +789,31 @@ void UFVInteractorComponent::RefreshOffers(bool bForceBroadcast)
 	{
 		OffersChanged.Broadcast(CachedOffers);
 	}
+
+	if (bChanged)
+	{
+		BeginHoverInteraction();
+	}
+}
+
+void UFVInteractorComponent::BeginHoverInteraction()
+{
+	if (State != EFVInteractorState::Awake)
+	{
+		return;
+	}
+
+	const FFVInteractionOfferData* Offer = CachedOffers.FindByPredicate([](const FFVInteractionOfferData& Candidate)
+	{
+		return Candidate.CanExecute() && (Candidate.Gesture.Mode == EFVGestureMode::Hover || Candidate.Gesture.Mode == EFVGestureMode::Automatic);
+	});
+
+	if (Offer)
+	{
+		// Copied because starting the interaction refreshes the offers this points into.
+		const FGameplayTag InputTag = Offer->InputTag;
+		BeginInteraction(InputTag);
+	}
 }
 
 bool UFVInteractorComponent::InteractableIsInReach(const UFVInteractableComponent* Target) const

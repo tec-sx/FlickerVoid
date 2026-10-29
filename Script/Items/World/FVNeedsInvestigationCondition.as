@@ -1,5 +1,5 @@
 // True when the target is a readable that must be investigated before it can be read. Use it inverted on the Read offer.
-class UFVNeedsInvestigationCondition : UFVScriptCondition
+class UFVNeedsInvestigationCondition : UFVCondition
 {
 	UFUNCTION(BlueprintOverride)
 	bool Evaluate(FFVConditionContext Context) const
