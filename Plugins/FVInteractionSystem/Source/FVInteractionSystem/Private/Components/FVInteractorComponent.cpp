@@ -792,11 +792,11 @@ void UFVInteractorComponent::RefreshOffers(bool bForceBroadcast)
 
 	if (bChanged)
 	{
-		BeginKeylessInteraction();
+		BeginHoverInteraction();
 	}
 }
 
-void UFVInteractorComponent::BeginKeylessInteraction()
+void UFVInteractorComponent::BeginHoverInteraction()
 {
 	if (State != EFVInteractorState::Awake)
 	{

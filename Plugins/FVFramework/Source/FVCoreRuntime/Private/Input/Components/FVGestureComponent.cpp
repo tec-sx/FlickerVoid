@@ -62,7 +62,11 @@ EFVGestureStatus UFVGestureComponent::UpdateGesture(const float DeltaTime)
 		return EFVGestureStatus::Running;
 	
 	// A zero delta is the evaluation on the press frame, which adds no time.
-	const float GestureDelta = DeltaTime <= 0.f ? 0.f : bIgnoreTimeDilation ? static_cast<float>(FApp::GetDeltaTime()) : DeltaTime;
+	float GestureDelta = 0.f;
+	if (DeltaTime > 0.f)
+	{
+		GestureDelta = bIgnoreTimeDilation ? static_cast<float>(FApp::GetDeltaTime()) : DeltaTime;
+	}
 	Elapsed += GestureDelta;
 	
 	switch (ActiveGesture->Mode)

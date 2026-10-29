@@ -186,8 +186,8 @@ private:
 	void ReleaseTargetInteractable();
 	void RefreshOffers(bool bForceBroadcast = true);
 
-	/** Starts the first Hover or Automatic offer, which commit without a key, when the offers change. */
-	void BeginKeylessInteraction();
+	/** Starts the first Hover or Automatic offer (both commit from focus, without a key) when the offers change. */
+	void BeginHoverInteraction();
 	bool InteractableIsInReach(const UFVInteractableComponent* Target) const;
 	bool IsOfferAvailable(const FFVInteractionOffer& Offer) const;
 	
