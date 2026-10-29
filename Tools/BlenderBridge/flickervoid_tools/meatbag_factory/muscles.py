@@ -143,7 +143,7 @@ def create(context, armature, skin, name, origin_bone, insertion_bone, origin, i
     stretch = muscle.constraints.new("STRETCH_TO")
     stretch.name = STRETCH
     stretch.target = insertion_anchor
-    stretch.rest_length = settings.length * armature.matrix_world.to_scale().y
+    stretch.rest_length = settings.length
     stretch.volume = "VOLUME_XZX"
     stretch.bulge = settings.volume
     muscle.data.materials.append(_material(settings.group, color, context.scene))
@@ -257,6 +257,7 @@ def fit_to_skin(context, muscle, fitter, room=0.85, grow=1.6, shrink=0.2):
     line, so it flattens under flat skin and fills round limbs. Growth is capped, so a muscle doesn't fill the
     body cavity behind it. Kept on the muscle and reapplied when its shape settings change."""
     settings = muscle.meatbag_muscle
+    apply_settings(muscle)
     muscle.pop(FIT, None)
     build_mesh(muscle)
     context.view_layer.update()
@@ -467,6 +468,9 @@ def apply_settings(muscle):
     """Pushes volume and offset onto the constraint and the skin modifier."""
     settings = muscle.meatbag_muscle
     if STRETCH in muscle.constraints:
+        # Stretch To measures in the muscle's own scaled space, so the rest length is in armature units whatever
+        # the armature's object scale.
+        muscle.constraints[STRETCH].rest_length = settings.length
         muscle.constraints[STRETCH].bulge = settings.volume
     skin = settings.skin
     modifier = skin.modifiers.get(muscle.name) if skin else None
