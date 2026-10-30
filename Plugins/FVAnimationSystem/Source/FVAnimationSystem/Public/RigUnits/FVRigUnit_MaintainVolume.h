@@ -8,9 +8,9 @@
 UENUM(BlueprintType, meta = (ScriptName = "MaintainVolumeMode"))
 enum class EFVMaintainVolumeMode : uint8
 {
-	Strict UMETA(ToolTip = "The other two axes are set from the free axis alone, overriding their own scale."),
-	Uniform UMETA(ToolTip = "Volume holds against the combined scale of all three axes; uniform scaling keeps the volume."),
-	SingleAxis UMETA(DisplayName = "Single Axis", ToolTip = "Volume holds against the free axis; the other axes keep their own scale on top.")
+	Strict UMETA(ToolTip = "The volume is always kept, overriding the other two axes' own scaling (their ratio stays)."),
+	Uniform UMETA(ToolTip = "The volume is kept when the bone scales uniformly; other-axis scaling passes through."),
+	SingleAxis UMETA(DisplayName = "Single Axis", ToolTip = "The volume is kept when only the free axis scales; other-axis scaling passes through.")
 };
 
 UENUM(BlueprintType, meta = (ScriptName = "VolumeAxis"))
@@ -22,9 +22,9 @@ enum class EFVVolumeAxis : uint8
 };
 
 /**
- * Keeps a bone's volume while its free axis scales, like Blender's Maintain Volume constraint in local space:
- * the other two axes scale by the square root of Volume over the free axis scale. Scale is measured against the
- * reference pose. Place it after whatever scales the bone (animation, Pose Asset, stretch).
+ * Keeps a bone's volume while its free axis scales, like Blender's Maintain Volume constraint: the other two axes
+ * are multiplied by sqrt(Volume / Total), where Total depends on the mode. Scale is measured against the reference
+ * pose. Place it after whatever scales the bone (animation, Pose Asset, stretch).
  */
 USTRUCT(meta = (DisplayName = "FV Maintain Volume", Category = "FlickerVoid|Animation", Keywords = "Volume,Squash,Stretch,Bulge,Scale,Muscle,Corrective"))
 struct FVANIMATIONSYSTEM_API FFVRigUnit_MaintainVolume : public FRigUnitMutable
@@ -42,6 +42,9 @@ struct FVANIMATIONSYSTEM_API FFVRigUnit_MaintainVolume : public FRigUnitMutable
 
 	UPROPERTY(meta = (Input, ToolTip = "The axis that scales freely; the other two compensate."))
 	EFVVolumeAxis FreeAxis = EFVVolumeAxis::X;
+
+	UPROPERTY(meta = (Input, ToolTip = "Local Space reads the bone's own scale, like Blender's Local Space; Global Space includes inherited scale, like Blender's World and Pose Space."))
+	ERigVMTransformSpace Space = ERigVMTransformSpace::LocalSpace;
 
 	UPROPERTY(meta = (Input, ClampMin = "0.001", ToolTip = "Volume to keep, relative to the reference pose; 1 keeps it, above 1 bulges."))
 	float Volume = 1.0f;
