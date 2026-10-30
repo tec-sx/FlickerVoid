@@ -68,6 +68,23 @@ How capture works: **Create** and **Update** save the pose last opened with **Go
 
 `UFVAnimationLibrary` (runtime): `GetBoneSide`, `GetMirrorBoneName`, `GetNameSide`, `GetMirrorName`, using the same side pairs.
 
-## 7. Debugging
+## 7. Rig units
+
+Control Rig nodes under *FlickerVoid > Animation* (the plugin enables Control Rig).
+
+**FV Maintain Volume** (`FFVRigUnit_MaintainVolume`) works like Blender's Maintain Volume constraint in local space. When the bone's **Free Axis** scales by s, the other two axes scale by √(Volume / s), so stretching thins the bone and squashing bulges it. Scale is measured against the reference pose, so a bone at rest stays untouched.
+
+| Input | Does |
+|---|---|
+| Item | The bone |
+| Mode | **Strict** sets the other axes from the free axis alone. **Uniform** measures against all three axes, so uniform scaling keeps its volume. **Single Axis** measures the free axis, and the other axes keep their own scale on top |
+| Free Axis | X for UE Mannequin bones; Y is the Blender bone axis, which the FBX export usually turns into X |
+| Volume | 1 keeps the volume, above 1 bulges |
+| Alpha | Blend from the incoming scale to the kept scale |
+| Propagate To Children | On, children move with the bone; off, they keep their global transforms |
+
+Use one node per bone, after the step that scales it (animation, Pose Asset, a stretch). For a different spread across the two axes, use a stock Set Scale with sx = s^-a and sz = s^-b, where a + b = 1.
+
+## 8. Debugging
 
 No debug readout or console commands yet. Automation tests: *Session Frontend > Automation*, filter `FlickerVoid.Animation`. They load the mannequin read-only and work on transient Pose Assets.
