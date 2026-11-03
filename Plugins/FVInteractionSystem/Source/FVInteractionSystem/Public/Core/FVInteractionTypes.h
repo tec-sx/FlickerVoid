@@ -75,6 +75,9 @@ struct FVINTERACTIONSYSTEM_API FFVInteractionCommit
 	
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UFVInteractableComponent> Interactable;
+
+	UPROPERTY(BlueprintReadOnly, meta = (Categories = "Interaction.Cancel", ToolTip = "Why an unsuccessful commit ended; empty on success."))
+	FGameplayTag EndReason;
 };
 
 USTRUCT(BlueprintType)

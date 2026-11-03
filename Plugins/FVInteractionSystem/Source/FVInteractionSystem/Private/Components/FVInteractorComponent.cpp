@@ -103,6 +103,12 @@ void UFVInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	TickModeBlend(DeltaTime);
 
+	// The focused actor went away without telling us (streamed out, destroyed without End Play).
+	if (TargetInteractable.IsStale())
+	{
+		HandleInteractableRemoved(nullptr);
+	}
+
 	if (State == EFVInteractorState::Interacting)
 	{
 		TickInteraction(DeltaTime);
@@ -400,16 +406,33 @@ bool UFVInteractorComponent::BeginInteraction(const FGameplayTag InputTag)
 void UFVInteractorComponent::TickInteraction(const float DeltaTime)
 {
 	UFVGestureComponent* Gesture = GestureComponent.Get();
-	if (!Gesture || !ValidateActiveInteraction())
+	const FGameplayTag CancelReason = GetCancelReason();
+	if (!Gesture || CancelReason.IsValid())
 	{
-		FinishInteraction(false);
+		FinishInteraction(false, CancelReason);
 		return;
 	}
 
 	const EFVGestureStatus Status = Gesture->UpdateGesture(DeltaTime);
+	if (Status == EFVGestureStatus::Completed)
+	{
+		FinishInteraction(true);
+		return;
+	}
 	if (Status != EFVGestureStatus::Running)
 	{
-		FinishInteraction(Status == EFVGestureStatus::Completed);
+		const FFVInteractionOfferData* Offer = FindOffer(ActiveCommit.InputTag);
+		const EFVGestureMode Mode = Offer ? Offer->Gesture.Mode : EFVGestureMode::Press;
+		FGameplayTag FailReason = FVInteractionGameplayTags::Interaction_Cancel_Player;
+		if (Mode == EFVGestureMode::Hold)
+		{
+			FailReason = FVInteractionGameplayTags::Interaction_Cancel_Released;
+		}
+		else if (Mode == EFVGestureMode::Mash)
+		{
+			FailReason = FVInteractionGameplayTags::Interaction_Cancel_Timeout;
+		}
+		FinishInteraction(false, FailReason);
 		return;
 	}
 
@@ -418,32 +441,52 @@ void UFVInteractorComponent::TickInteraction(const float DeltaTime)
 	InteractionCommitProgressed.Broadcast(ActiveCommit, Progress);
 }
 
-bool UFVInteractorComponent::ValidateActiveInteraction() const
+FGameplayTag UFVInteractorComponent::GetCancelReason() const
 {
 	const UFVInteractableComponent* Target = TargetInteractable.Get();
-	if (!Target || Target != ActiveCommit.Interactable || !InteractableIsInReach(Target))
+	if (!Target || Target != ActiveCommit.Interactable)
 	{
-		return false;
+		return FVInteractionGameplayTags::Interaction_Cancel_FocusLost;
 	}
 
-	if (Target->GetState() != EFVInteractableState::Interacting)
+	if (!InteractableIsInReach(Target))
 	{
-		return false;
+		return FVInteractionGameplayTags::Interaction_Cancel_WalkedAway;
 	}
 
 	const FFVInteractionOfferData* Offer = FindOffer(ActiveCommit.InputTag);
-	return Offer && Offer->CanExecute();
+	if (Target->GetState() != EFVInteractableState::Interacting || !Offer || !Offer->CanExecute())
+	{
+		return FVInteractionGameplayTags::Interaction_Cancel_RequirementFailed;
+	}
+
+	return FGameplayTag();
 }
 
 void UFVInteractorComponent::CancelInteraction(const FGameplayTag Reason)
 {
 	if (State == EFVInteractorState::Interacting)
 	{
-		FinishInteraction(false);
+		FinishInteraction(false, Reason);
 	}
 }
 
-void UFVInteractorComponent::FinishInteraction(const bool bSuccess)
+void UFVInteractorComponent::HandleInteractableRemoved(UFVInteractableComponent* Removed)
+{
+	const bool bWasActive = ActiveCommit.Interactable == Removed || !IsValid(ActiveCommit.Interactable);
+	if (State == EFVInteractorState::Interacting && bWasActive)
+	{
+		FinishInteraction(false, FVInteractionGameplayTags::Interaction_Cancel_OfferExpired);
+	}
+
+	if (TargetInteractable.Get() == Removed)
+	{
+		ReleaseTargetInteractable();
+	}
+	RefreshOffers();
+}
+
+void UFVInteractorComponent::FinishInteraction(const bool bSuccess, const FGameplayTag Reason)
 {
 	if (UFVGestureComponent* Gesture = GestureComponent.Get())
 	{
@@ -460,20 +503,26 @@ void UFVInteractorComponent::FinishInteraction(const bool bSuccess)
 	}
 #endif
 
-	const FFVInteractionCommit Commit = ActiveCommit;
+	FFVInteractionCommit Commit = ActiveCommit;
+	Commit.EndReason = bSuccess ? FGameplayTag() : Reason;
 	ActiveCommit = FFVInteractionCommit();
 
 	SetState(EFVInteractorState::Awake);
 	SetComponentTickInterval(ActiveDetection.TickInterval);
 	
-	if (UFVInteractableComponent* Target = Commit.Interactable)
+	UFVInteractableComponent* Target = Commit.Interactable;
+	if (IsValid(Target) && bSuccess)
+	{
+		Target->ExecuteAction(Commit.ActionTag, this);
+	}
+
+	// The action may have destroyed the target (a pickup).
+	if (IsValid(Target))
 	{
 		if (bSuccess)
 		{
-			Target->ExecuteAction(Commit.ActionTag, this);
 			Target->ConsumeOffer(Commit.InputTag);
 		}
-
 		Target->EndInteraction(Commit.ActionTag, this, bSuccess);
 	}
 	

@@ -81,8 +81,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FV|Item|Give", meta = (ToolTip = "The giver's inventory holds the item and money, and the receiver's inventory (if any) can take the item. False when there is nothing to give."))
 	static bool CanGiveItem(const AActor* Giver, const AActor* Receiver, const UFVItemDefinition* Item, int32 Quantity, int32 Money);
 
-	UFUNCTION(BlueprintCallable, Category = "FV|Item|Give", meta = (ToolTip = "Moves the item and money from the giver's inventory to the receiver's (a receiver without one just takes them away). As a gift, the receiver's relationship changes by their gift preferences. No animation, no message."))
-	static bool GiveItem(AActor* Giver, AActor* Receiver, UFVItemDefinition* Item, int32 Quantity, int32 Money, bool bAsGift);
+	UFUNCTION(BlueprintCallable, Category = "FV|Item|Give", meta = (ToolTip = "Moves the item and money from the giver's inventory to the receiver's (a receiver without one just takes them away). No animation, no message: send Message.Item.GiveFinished (with As Gift for gifts) after it."))
+	static bool GiveItem(AActor* Giver, AActor* Receiver, UFVItemDefinition* Item, int32 Quantity, int32 Money);
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Item", meta = (WorldContext = "WorldContext", ToolTip = "Spawns the World fragment's Actor Class, else the Items settings World Item Class, with the stack on its pickup component (instance id cleared)."))
 	static AActor* SpawnWorldItem(UObject* WorldContext, const FFVItemStack& Stack, const FTransform& Transform);

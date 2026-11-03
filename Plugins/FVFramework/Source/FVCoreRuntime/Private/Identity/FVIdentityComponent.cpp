@@ -28,7 +28,17 @@ void UFVIdentityComponent::SetDefinition(UFVCharacterDefinition* NewDefinition)
 		return;
 	}
 
+	UFVIdentitySubsystem* Subsystem = HasBegunPlay() ? UFVIdentitySubsystem::Get(this) : nullptr;
+	if (Subsystem)
+	{
+		Subsystem->Unregister(this);
+	}
+
 	Definition = NewDefinition;
+	if (Subsystem)
+	{
+		Subsystem->Register(this);
+	}
 	OnDefinitionChanged.Broadcast(Definition);
 }
 

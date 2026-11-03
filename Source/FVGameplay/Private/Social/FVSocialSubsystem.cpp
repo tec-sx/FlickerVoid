@@ -1,14 +1,18 @@
-#include "FVSocialSubsystem.h"
+#include "Social/FVSocialSubsystem.h"
 
 #include "Conditions/FVConditionLibrary.h"
 #include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
-#include "FVSocialLibrary.h"
-#include "FVSocialSystem.h"
-#include "FVSocialTypes.h"
-#include "FVTitleDefinition.h"
+#include "FVGameplayModule.h"
+#include "FVGameplayTags.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/Pawn.h"
+#include "Items/FVItemDefinition.h"
+#include "Items/FVItemMessages.h"
+#include "Social/FVSocialLibrary.h"
+#include "Social/FVSocialTypes.h"
+#include "Social/FVTitleDefinition.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVSocialSubsystem)
 
@@ -45,6 +49,9 @@ void UFVSocialSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 		GameInstance->GetOnPawnControllerChanged().AddDynamic(this, &UFVSocialSubsystem::HandlePawnControllerChanged);
 	}
 
+	UGameplayMessageSubsystem& MessageSystem = UGameplayMessageSubsystem::Get(&InWorld);
+	GiveListener = MessageSystem.RegisterListener(FVGameplayTags::Message_Item_GiveFinished, this, &UFVSocialSubsystem::HandleGiveFinished);
+
 	EvaluateTitles();
 }
 
@@ -61,6 +68,8 @@ void UFVSocialSubsystem::Deinitialize()
 		GameInstance->GetOnPawnControllerChanged().RemoveDynamic(this, &UFVSocialSubsystem::HandlePawnControllerChanged);
 	}
 
+	GiveListener.Unregister();
+
 	Super::Deinitialize();
 }
 
@@ -75,6 +84,23 @@ void UFVSocialSubsystem::HandlePawnControllerChanged(APawn* Pawn, AController* C
 	{
 		EvaluateTitles();
 	}
+}
+
+void UFVSocialSubsystem::HandleGiveFinished(FGameplayTag Channel, const FFVItemGiveMessage& Message)
+{
+	if (!Message.bSucceeded || !Message.bAsGift)
+	{
+		return;
+	}
+
+	FGameplayTagContainer GiftTags;
+	if (Message.Item && Message.Quantity > 0)
+	{
+		GiftTags.AppendTags(Message.Item->Tags);
+		GiftTags.AddTag(Message.Item->Category);
+	}
+
+	UFVSocialLibrary::ReceiveGift(this, Message.Receiver, GiftTags);
 }
 
 void UFVSocialSubsystem::EvaluateTitles()
@@ -97,37 +123,40 @@ void UFVSocialSubsystem::EvaluateTitles()
 	}
 	while (bDirty && ++Pass < MaxPasses);
 
-	UE_CLOG(bDirty, LogFVSocialSystem, Warning, TEXT("Titles still changing after %d passes; check titles whose effects earn each other."), MaxPasses);
+	UE_CLOG(bDirty, LogFVGameplay, Warning, TEXT("Titles still changing after %d passes; check titles whose effects earn each other."), MaxPasses);
 }
 
 void UFVSocialSubsystem::EvaluateTitlesOnce()
 {
 	const FFVConditionContext Context = MakeTitleContext();
 
-	const UFVTitleDefinition* Best = nullptr;
-	FFVConditionScore BestScore;
-	TArray<const UFVTitleDefinition*> NewTitles;
-
+	// Ranking keeps the given order on ties, so the more recently current title wins a tie.
+	TArray<const UFVTitleDefinition*> Candidates;
 	for (const TObjectPtr<const UFVTitleDefinition>& Title : Titles)
 	{
-		if (Title == nullptr || !Title->Id.IsValid() || !Title->Conditions.Evaluate(Context))
+		if (Title != nullptr && Title->Id.IsValid())
 		{
-			continue;
+			Candidates.Add(Title);
 		}
+	}
+	Candidates.StableSort([this](const UFVTitleDefinition& A, const UFVTitleDefinition& B) { return GetTitleRank(&A) > GetTitleRank(&B); });
 
-		if (!UFVSocialLibrary::HasTitle(this, Title))
-		{
-			NewTitles.Add(Title);
-		}
+	TArray<FFVConditionSet> Sets;
+	Sets.Reserve(Candidates.Num());
+	for (const UFVTitleDefinition* Title : Candidates)
+	{
+		Sets.Add(Title->Conditions);
+	}
 
-		// Titles without an at-least condition (quest or item titles) score zero; equal scores go to the more recent title.
-		FFVConditionScore Score;
-		Title->Conditions.GetScore(Context, Score);
-		const bool bTie = !(Score < BestScore) && !(BestScore < Score);
-		if (Best == nullptr || BestScore < Score || (bTie && GetTitleRank(Title) > GetTitleRank(Best)))
+	const TArray<int32> Ranked = UFVConditionLibrary::RankConditionSets(Sets, Context);
+	const UFVTitleDefinition* Best = Ranked.IsEmpty() ? nullptr : Candidates[Ranked[0]];
+
+	TArray<const UFVTitleDefinition*> NewTitles;
+	for (const int32 Index : Ranked)
+	{
+		if (!UFVSocialLibrary::HasTitle(this, Candidates[Index]))
 		{
-			Best = Title;
-			BestScore = Score;
+			NewTitles.Add(Candidates[Index]);
 		}
 	}
 

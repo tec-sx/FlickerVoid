@@ -14,7 +14,6 @@
 #include "Engine/World.h"
 #include "FVGameplayModule.h"
 #include "FVGameplayTags.h"
-#include "FVSocialLibrary.h"
 #include "GameFramework/Character.h"
 #include "GameplayPrediction.h"
 #include "Identity/FVIdentityComponent.h"
@@ -271,7 +270,7 @@ bool UFVItemLibrary::CanGiveItem(const AActor* Giver, const AActor* Receiver, co
 	return !bGivesItem || !To || To->CanAddItem(Item, Quantity);
 }
 
-bool UFVItemLibrary::GiveItem(AActor* Giver, AActor* Receiver, UFVItemDefinition* Item, const int32 Quantity, const int32 Money, const bool bAsGift)
+bool UFVItemLibrary::GiveItem(AActor* Giver, AActor* Receiver, UFVItemDefinition* Item, const int32 Quantity, const int32 Money)
 {
 	if (!CanGiveItem(Giver, Receiver, Item, Quantity, Money))
 	{
@@ -280,7 +279,6 @@ bool UFVItemLibrary::GiveItem(AActor* Giver, AActor* Receiver, UFVItemDefinition
 
 	UFVInventoryComponent* From = UFVInventoryComponent::Find(Giver);
 	UFVInventoryComponent* To = UFVInventoryComponent::Find(Receiver);
-	FGameplayTagContainer GiftTags;
 
 	if (Item && Quantity > 0)
 	{
@@ -292,8 +290,6 @@ bool UFVItemLibrary::GiveItem(AActor* Giver, AActor* Receiver, UFVItemDefinition
 		{
 			To->AddItem(Item, Quantity);
 		}
-		GiftTags.AppendTags(Item->Tags);
-		GiftTags.AddTag(Item->Category);
 	}
 
 	if (Money > 0)
@@ -306,11 +302,6 @@ bool UFVItemLibrary::GiveItem(AActor* Giver, AActor* Receiver, UFVItemDefinition
 		{
 			From->RemoveMoney(Money);
 		}
-	}
-
-	if (bAsGift)
-	{
-		UFVSocialLibrary::ReceiveGift(Giver, Receiver, GiftTags);
 	}
 	return true;
 }
