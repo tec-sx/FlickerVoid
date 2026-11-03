@@ -7,7 +7,7 @@
 class UFVCharacterDefinition;
 class UFVIdentityComponent;
 
-/** Registry of actors with an identity. */
+/** Registry of actors with an identity, keyed by definition. */
 UCLASS()
 class FVCORERUNTIME_API UFVIdentitySubsystem : public UWorldSubsystem
 {
@@ -23,9 +23,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FV|Identity")
 	TArray<AActor*> FindActors(const UFVCharacterDefinition* Definition) const;
 
+	/** Files the component under its current definition; call Unregister before the definition changes and Register after. */
 	void Register(UFVIdentityComponent* Component);
 	void Unregister(UFVIdentityComponent* Component);
 
 private:
-	TArray<TWeakObjectPtr<UFVIdentityComponent>> Components;
+	TMultiMap<TObjectKey<UFVCharacterDefinition>, TWeakObjectPtr<UFVIdentityComponent>> ComponentsByDefinition;
 };
