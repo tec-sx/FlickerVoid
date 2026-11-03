@@ -15,7 +15,7 @@ Functional layers stack vertically and dependencies only point down: Content -> 
 3. **AngelScript** (`Script/`): most of the game: actors, characters, game modes, abilities, rules, widget logic.
 4. **Content**: data assets, meshes, textures, materials, FX, Blueprint world actors, Widget Blueprints. Blueprints add only looks and layout on top of C++ or AngelScript classes; no settings beyond occasional overrides. Character looks (skeletal mesh, animation, physics asset) are set on the character Blueprint so they can be tweaked in its viewport; data assets hold gameplay data. Looks that must come from data (outfits, variants) are applied in the construction script or a component's `OnRegister`, which also run in the Blueprint editor viewport, and the data asset is set on the Blueprint's defaults.
 
-Refactor in progress: the old `Source/FV*` modules still exist and fold into `FlickerVoid` as described in the design doc's Module structure; until then the scanner lives in `Source/FVGameplay/.../Scanner`. Much older code in `Source/` is experimental or obsolete; don't assume it should be kept.
+Refactor in progress: the old `Source/FV*` modules still exist and fold into `FlickerVoid` as described in the design doc's Module structure; until then the scanner lives in `Source/FVGameplay/.../Scanner`. FlickerVoidGameplay holds the abstract game rules (abilities, status, social): social is game-specific, not a plugin, with C++ shapes in `Source/FVGameplay/.../Social` and its conditions and effects in `Script/Gameplay/Protagonist/Identity/Social`, built on FVFramework scales. Much older code in `Source/` is experimental or obsolete; don't assume it should be kept.
 
 ## AngelScript and C++
 
@@ -42,7 +42,6 @@ Refactor in progress: the old `Source/FV*` modules still exist and fold into `Fl
 | FVInventorySystem | Items, weight + grid limits, granular outfit slots, pickup |
 | FVDialogueSystem | Dialogue on FlowGraph |
 | FVStorySystem | Quests, knowledge |
-| FVSocialSystem | Factions, standing, fame, notoriety, titles, disguise, affinity |
 | FVInteractionSystem | Interaction offers, registry subsystem, focus |
 | FVNavigationSystem | Maps and layers, map markers, discovery, waypoint and tracking, minimap/world map/compass view logic, map capture tool |
 | Flow | FlowGraph (MothCocoon), external git submodule; don't edit |

@@ -11,6 +11,9 @@
 
 namespace FVNavigator
 {
+	/** How far past a view's range a marker still counts as nearby, so the minimap and compass stay right while the navigator moves between updates. */
+	static constexpr float NearbyMargin = 2000.f;
+
 	static EFVMarkerElevation GetElevation(float DeltaZ)
 	{
 		const float Threshold = UFVNavigationSettings::Get().ElevationThreshold;
@@ -146,7 +149,7 @@ void UFVNavigatorComponent::SetCategoryHidden(FGameplayTag Category, bool bHidde
 void UFVNavigatorComponent::UpdateNavigation()
 {
 	UpdateActiveMap();
-	DiscoverNearbyMarkers();
+	GatherNearbyMarkers();
 }
 
 void UFVNavigatorComponent::UpdateActiveMap()
@@ -169,8 +172,9 @@ void UFVNavigatorComponent::UpdateActiveMap()
 	OnActiveMapChanged.Broadcast(ActiveMap, ActiveLayer);
 }
 
-void UFVNavigatorComponent::DiscoverNearbyMarkers()
+void UFVNavigatorComponent::GatherNearbyMarkers()
 {
+	NearbyMarkers.Reset();
 	UFVNavigationSubsystem* Navigation = UFVNavigationSubsystem::Get(this);
 	if (Navigation == nullptr)
 	{
@@ -183,15 +187,22 @@ void UFVNavigatorComponent::DiscoverNearbyMarkers()
 	for (const TPair<int32, FFVMarker>& Pair : Navigation->GetMarkers())
 	{
 		const FFVMarker& Marker = Pair.Value;
-		if (Marker.bDiscovered || !Marker.bVisible)
+		if (!Marker.bVisible || Marker.Definition == nullptr)
 		{
 			continue;
 		}
 
+		const FVector MarkerLocation = Marker.GetLocation();
 		const FFVMarkerFragment_Discovery* Discovery = Marker.Definition->FindFragment<FFVMarkerFragment_Discovery>();
-		if (Discovery && FVector::DistSquared(Location, Marker.GetLocation()) <= FMath::Square(Discovery->Radius))
+		if (!Marker.bDiscovered && Discovery && FVector::DistSquared(Location, MarkerLocation) <= FMath::Square(Discovery->Radius))
 		{
 			Found.Add(Marker.Handle);
+		}
+
+		const float Distance2D = FVector::Dist2D(Location, MarkerLocation);
+		if (IsNearbyCandidate(Marker, Distance2D))
+		{
+			NearbyMarkers.Add(Marker.Handle);
 		}
 	}
 
@@ -199,6 +210,45 @@ void UFVNavigatorComponent::DiscoverNearbyMarkers()
 	{
 		Navigation->DiscoverMarker(Handle, GetViewActor());
 	}
+}
+
+bool UFVNavigatorComponent::IsNearbyCandidate(const FFVMarker& Marker, const float Distance2D) const
+{
+	if (const FFVMarkerFragment_Minimap* MinimapFragment = Marker.Definition->FindFragment<FFVMarkerFragment_Minimap>())
+	{
+		// Clamped markers sit on the edge however far away they are; the others need to be inside the largest minimap.
+		float Range = FMath::Max(Minimap.MaxRadius, Minimap.Radius);
+		if (MinimapFragment->bClampToEdge)
+		{
+			Range = MinimapFragment->MaxDistance;
+		}
+		else if (MinimapFragment->MaxDistance > 0.f)
+		{
+			Range = FMath::Min(Range, MinimapFragment->MaxDistance);
+		}
+
+		if (Range <= 0.f || Distance2D <= Range + FVNavigator::NearbyMargin)
+		{
+			return true;
+		}
+	}
+
+	if (const FFVMarkerFragment_Compass* CompassFragment = Marker.Definition->FindFragment<FFVMarkerFragment_Compass>())
+	{
+		return CompassFragment->MaxDistance <= 0.f || Distance2D <= CompassFragment->MaxDistance + FVNavigator::NearbyMargin;
+	}
+	return false;
+}
+
+TArray<FFVMarkerHandle> UFVNavigatorComponent::GetViewCandidates(const UFVNavigationSubsystem& Navigation) const
+{
+	TArray<FFVMarkerHandle> Candidates = NearbyMarkers;
+	const FFVMarkerHandle Tracked = Navigation.GetTrackedMarker();
+	if (Navigation.FindMarker(Tracked) != nullptr)
+	{
+		Candidates.AddUnique(Tracked);
+	}
+	return Candidates;
 }
 
 bool UFVNavigatorComponent::PassesFilters(const FFVMarker& Marker, bool bTracked) const
@@ -282,9 +332,16 @@ FFVMinimapView UFVNavigatorComponent::BuildMinimapView(float Radius) const
 	float Cos = 1.f;
 	FMath::SinCos(&Sin, &Cos, FMath::DegreesToRadians(MapYaw));
 
-	for (const TPair<int32, FFVMarker>& Pair : Navigation->GetMarkers())
+	const TArray<FFVMarkerHandle> Candidates = GetViewCandidates(*Navigation);
+	for (const FFVMarkerHandle& Handle : Candidates)
 	{
-		const FFVMarker& Marker = Pair.Value;
+		const FFVMarker* Found = Navigation->FindMarker(Handle);
+		if (Found == nullptr)
+		{
+			continue;
+		}
+
+		const FFVMarker& Marker = *Found;
 		const bool bTracked = Marker.Handle == Navigation->GetTrackedMarker();
 		const FFVMarkerFragment_Minimap* Fragment = Marker.Definition ? Marker.Definition->FindFragment<FFVMarkerFragment_Minimap>() : nullptr;
 		if (Fragment == nullptr || !PassesFilters(Marker, bTracked))
@@ -339,9 +396,16 @@ FFVCompassView UFVNavigatorComponent::BuildCompassView() const
 		return View;
 	}
 
-	for (const TPair<int32, FFVMarker>& Pair : Navigation->GetMarkers())
+	const TArray<FFVMarkerHandle> Candidates = GetViewCandidates(*Navigation);
+	for (const FFVMarkerHandle& Handle : Candidates)
 	{
-		const FFVMarker& Marker = Pair.Value;
+		const FFVMarker* Found = Navigation->FindMarker(Handle);
+		if (Found == nullptr)
+		{
+			continue;
+		}
+
+		const FFVMarker& Marker = *Found;
 		const bool bTracked = Marker.Handle == Navigation->GetTrackedMarker();
 		const FFVMarkerFragment_Compass* Fragment = Marker.Definition ? Marker.Definition->FindFragment<FFVMarkerFragment_Compass>() : nullptr;
 		if (Fragment == nullptr || !PassesFilters(Marker, bTracked))

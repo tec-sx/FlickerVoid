@@ -11,12 +11,12 @@
  * Earned titles are kept for good; Id is the fact that records the title's place in that history (0 = not earned).
  */
 UCLASS(BlueprintType)
-class FVSOCIALSYSTEM_API UFVTitleDefinition : public UFVDefinition
+class FLICKERVOIDGAMEPLAY_API UFVTitleDefinition : public UFVDefinition
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title", meta = (ToolTip = "Evaluated whenever a fact changes; usually fame, notoriety or a faction standing. Their at-least thresholds rank the title: the hardest held title is current."))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title", meta = (ToolTip = "Evaluated whenever a fact changes; usually fame, notoriety or a faction standing scale. Their at-least thresholds rank the title: the hardest held title is current."))
 	FFVConditionSet Conditions;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Title", meta = (ToolTip = "Applied once, the first time the title is earned."))

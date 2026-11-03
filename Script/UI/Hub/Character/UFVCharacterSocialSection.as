@@ -1,5 +1,5 @@
-// Character section listing where the player stands: factions (standing, tier, attitude, disguise) on one tab and
-// relationships with characters met on the other. All values are facts read through FVSocialSystem.
+// Character section listing where the player stands: factions (standing, band, attitude, disguise) on one tab and
+// relationships with characters met on the other. Standing and relationships are scales.
 UCLASS(Abstract)
 class UFVCharacterSocialSection : UFVHubListSectionWidget
 {
@@ -56,11 +56,12 @@ class UFVCharacterSocialSection : UFVHubListSectionWidget
 
         for (UFVFactionDefinition Faction : FVSocial::GetFactions())
         {
-            int Standing = FVSocial::GetStanding(Faction);
+            int Standing = FVScale::GetValue(Faction.Standing);
             bool bDisguised = FVSocial::IsDisguisedAs(Player, Faction);
+            EFVAttitude FactionAttitude = FVSocial::GetAttitude(Faction, Player);
 
-            FString Subtitle = GetTierLabel(Faction, Standing).ToString();
-            FString Attitude = GetAttitudeLabel(FVSocial::GetAttitude(Faction, Player)).ToString();
+            FString Subtitle = GetBandLabel(Faction.Standing).ToString();
+            FString Attitude = GetAttitudeLabel(FactionAttitude).ToString();
             if (!Attitude.IsEmpty())
             {
                 Subtitle = Subtitle.IsEmpty() ? Attitude : f"{Subtitle} - {Attitude}";
@@ -76,7 +77,7 @@ class UFVCharacterSocialSection : UFVHubListSectionWidget
             Entry.Value = FText::FromString(f"{Standing}");
             Entry.Description = Faction.Display.LongDescription;
             Entry.Icon = Faction.Display.Icon;
-            Entry.Progress = FVUIText::Fraction(float(Standing - Faction.MinStanding), float(Faction.MaxStanding - Faction.MinStanding));
+            Entry.Progress = FVUIText::ScaleFraction(Faction.Standing);
             Entry.bHighlighted = bDisguised;
             Entry.Source = Faction;
             Result.Add(Entry);
@@ -89,10 +90,14 @@ class UFVCharacterSocialSection : UFVHubListSectionWidget
         TArray<FFVListEntry> Result;
         for (UFVCharacterDefinition Character : FVSocial::GetKnownCharacters())
         {
+            UFVScaleDefinition Relationship = FVSocial::GetRelationshipScale(Character);
+            int Value = FVScale::GetValue(Relationship);
+
             FFVListEntry Entry;
             Entry.Title = Character.Display.Name;
             Entry.Subtitle = Character.Display.ShortDescription;
-            Entry.Value = FText::FromString(f"{FVSocial::GetRelationship(Character)}");
+            Entry.Value = FText::FromString(f"{Value}");
+            Entry.Progress = FVUIText::ScaleFraction(Relationship);
             Entry.Description = Character.Display.LongDescription;
             Entry.Icon = Character.Display.Icon;
             Entry.Source = Character;
@@ -101,18 +106,10 @@ class UFVCharacterSocialSection : UFVHubListSectionWidget
         return Result;
     }
 
-    // Tiers are sorted ascending; the last one whose minimum is reached applies.
-    private FText GetTierLabel(UFVFactionDefinition Faction, int Standing) const
+    private FText GetBandLabel(UFVScaleDefinition Scale) const
     {
-        FText Label;
-        for (FFVReputationTier Tier : Faction.Tiers)
-        {
-            if (Standing >= Tier.MinStanding)
-            {
-                Label = Tier.Label;
-            }
-        }
-        return Label;
+        FFVScaleBand Band;
+        return FVScale::GetBand(Scale, Band) ? Band.Label : FText();
     }
 
     private FText GetAttitudeLabel(EFVAttitude Attitude) const
