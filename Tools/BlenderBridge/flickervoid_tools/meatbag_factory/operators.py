@@ -418,8 +418,12 @@ class MEATBAG_OT_pose_rest(_LibraryOperator, bpy.types.Operator):
         return {"FINISHED"}
 
 
-def _helpers(s):
-    helpers = capture.helper_bone_names(s.armature, s.helper_collection)
+def _helpers(s, pose):
+    """The pose's deform affected bones, else the helper collection (or selection); limited to the selection with Selected Helpers Only."""
+    bones = s.armature.data.bones
+    helpers = [bone.name for bone in pose.affected_bones if bone.name in bones and bones[bone.name].use_deform]
+    if not pose.affected_bones:
+        helpers = capture.helper_bone_names(s.armature, s.helper_collection)
     if s.selected_helpers:
         selected = set(capture.helper_bone_names(s.armature, ""))
         helpers = [name for name in helpers if name in selected]
@@ -434,52 +438,70 @@ def _pose_indices(s, scope):
     return [i for i, pose in enumerate(poses) if not pose.locked]
 
 
+def _groups(s, indices):
+    """Poses that solve the same helpers, as {helper names: [pose indices]}, in library order."""
+    poses = library.library_of(s.armature).meatbag_poses
+    groups = {}
+    for index in indices:
+        groups.setdefault(tuple(_helpers(s, poses[index])), []).append(index)
+    return groups
+
+
 def solve(operator, context, scope):
-    """Captures, solves and writes back the scoped poses; reports to the operator."""
+    """Captures, solves and writes back the scoped poses, each pose on its own affected bones; reports to the operator."""
     s = settings(context)
     target = sculpt.effective_target(s)
     if target is None or target == s.mesh:
         operator.report({"ERROR"}, "No target: sculpt a pose, or pick a Target mesh")
         return {"CANCELLED"}
-    helpers = _helpers(s)
     indices = _pose_indices(s, scope)
+    groups = _groups(s, indices)
     if context.mode != "OBJECT":
         bpy.ops.object.mode_set(mode="OBJECT")
-    try:
-        captured = capture.capture(context, s.armature, s.mesh, target, helpers, indices)
-    except capture.CaptureError as error:
-        operator.report({"ERROR"}, str(error))
-        return {"CANCELLED"}
 
     all_poses = len(library.pose_names(library.library_of(s.armature)))
-    solve_weights = s.solve_weights and len(indices) == all_poses
-    problem = captured.problem
-    unweighted = [name for name in helpers if not (problem.weights[:, captured.bones.index(name)] > 0).any()]
+    solve_weights = s.solve_weights and len(indices) == all_poses and len(groups) == 1
     options = solver.Options(iterations=s.iterations, allow_scale=s.allow_scale, solve_weights=solve_weights,
                              weight_rounds=s.weight_rounds, max_influences=preferences.get(context).max_influences)
-    result = solver.solve(problem, options)
-
-    apply.write_helper_poses(context, s.armature, captured, result)
-    changed = apply.write_weights(s.mesh, captured, result.weights) if solve_weights else 0
-    apply.write_residual(s.mesh, result)
-    keys = apply.write_residual_shape_keys(s.mesh, captured, result, s.residual_threshold) if s.residual_keys else []
-
     s.results.clear()
-    for row_index, (name, index) in enumerate(zip(captured.poses, captured.indices)):
-        row = s.results.add()
-        row.name, row.index = name, index
-        row.before = _rms(result.initial_error[row_index])
-        row.after = _rms(result.error[row_index])
+    solved, unweighted, keys = set(), set(), []
+    initial_errors, final_errors, changed = [], [], 0
+    for helpers, group in groups.items():
+        try:
+            captured = capture.capture(context, s.armature, s.mesh, target, list(helpers), group)
+        except capture.CaptureError as error:
+            operator.report({"ERROR"}, str(error))
+            return {"CANCELLED"}
+        problem = captured.problem
+        unweighted.update(name for name in helpers if not (problem.weights[:, captured.bones.index(name)] > 0).any())
+        result = solver.solve(problem, options)
 
-    message = f"Solved {len(helpers)} helpers over {len(captured.poses)} poses: RMS {result.rms(result.initial_error):.4g} to {result.rms():.4g}"
+        apply.write_helper_poses(context, s.armature, captured, result)
+        if solve_weights:
+            changed = apply.write_weights(s.mesh, captured, result.weights)
+        if s.residual_keys:
+            keys += apply.write_residual_shape_keys(s.mesh, captured, result, s.residual_threshold)
+        initial_errors.append(result.initial_error)
+        final_errors.append(result.error)
+        solved.update(helpers)
+        for row_index, (name, index) in enumerate(zip(captured.poses, captured.indices)):
+            row = s.results.add()
+            row.name, row.index = name, index
+            row.before = _rms(result.initial_error[row_index])
+            row.after = _rms(result.error[row_index])
+    apply.write_residual(s.mesh, np.concatenate(final_errors))
+
+    before = _rms(np.concatenate(initial_errors))
+    after = _rms(np.concatenate(final_errors))
+    message = f"Solved {len(solved)} helpers over {len(indices)} poses: RMS {before:.4g} to {after:.4g}"
     if changed:
         message += f", {changed} vertices reweighted"
     if keys:
         message += f", {len(keys)} residual shape keys"
     if s.solve_weights and not solve_weights:
-        message += ". Weights not solved: they need every pose, unlocked"
+        message += ". Weights not solved: they need every pose, unlocked, sharing the same helpers"
     if unweighted:
-        operator.report({"WARNING"}, message + f". No weights, so not solved: {', '.join(unweighted)}")
+        operator.report({"WARNING"}, message + f". No weights, so not solved: {', '.join(sorted(unweighted))}")
     else:
         operator.report({"INFO"}, message)
     return {"FINISHED"}
@@ -488,8 +510,9 @@ def solve(operator, context, scope):
 class MEATBAG_OT_solve_correctives(bpy.types.Operator):
     bl_idname = "meatbag.solve_correctives"
     bl_label = "Solve Helper Bones"
-    bl_description = ("Fit the helper bones so the skinned mesh matches the target in the poses chosen by Solve. "
-                      "Stores the helpers in the poses and the remaining error in the mf_residual attribute")
+    bl_description = ("Fit the helper bones so the skinned mesh matches the target in the poses chosen by Solve: each pose "
+                      "its affected bones, or the helper collection when it has none. Stores the helpers in the poses and the "
+                      "remaining error in the mf_residual attribute")
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod

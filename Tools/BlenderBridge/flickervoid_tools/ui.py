@@ -2,6 +2,7 @@ import bpy
 
 from . import preferences
 from .push.operators import FV_OT_push, FV_OT_test_connection, FV_OT_use_selected_asset
+from .meatbag_factory import sculpt
 from .meatbag_factory.contract.operators import MEATBAG_OT_check_contract, MEATBAG_UL_issues
 from .meatbag_factory.operators import (MEATBAG_OT_pose_add, MEATBAG_OT_pose_affected_add,
                                         MEATBAG_OT_pose_affected_remove, MEATBAG_OT_pose_bones_from_selection,
@@ -99,12 +100,17 @@ class MEATBAG_PT_poses(_MeatbagSubpanel, bpy.types.Panel):
         row.prop(s, "blend_mode", expand=True)
         row.operator(MEATBAG_OT_pose_rest.bl_idname, text="", icon="LOOP_BACK")
         if action and action.meatbag_poses:
-            self.draw_active_pose(layout, s.armature, action.meatbag_poses[action.meatbag_pose_index])
+            self.draw_active_pose(layout, s.armature, s.mesh, action.meatbag_poses[action.meatbag_pose_index])
 
     @staticmethod
-    def draw_active_pose(layout, armature, pose):
+    def draw_active_pose(layout, armature, mesh, pose):
         box = layout.box()
-        box.label(text=pose.name, icon="POSE_HLT")
+        row = box.row()
+        row.label(text=pose.name, icon="POSE_HLT")
+        keys = mesh.data.shape_keys if mesh else None
+        key = keys.key_blocks.get(sculpt.shape_name(pose.name)) if keys else None
+        if key:
+            row.prop(key, "mute", text="Blend Shape", invert_checkbox=True)
         row = box.row(align=True)
         row.prop_search(pose, "control_bone", armature.data, "bones", text="Control")
         row.operator(MEATBAG_OT_pose_update_control.bl_idname, text="", icon="FILE_REFRESH")

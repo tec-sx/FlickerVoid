@@ -60,9 +60,9 @@ def write_weights(mesh, capture, weights):
     return len(changed)
 
 
-def write_residual(mesh, result):
-    """Stores each vertex's largest distance to the target over all poses as a point attribute."""
-    values = result.error.max(axis=0).astype(np.float32)
+def write_residual(mesh, error):
+    """Stores each vertex's largest distance to the target over all poses ((F, n) errors) as a point attribute."""
+    values = error.max(axis=0).astype(np.float32)
     attribute = mesh.data.attributes.get(RESIDUAL_ATTRIBUTE)
     if attribute and (attribute.domain != "POINT" or attribute.data_type != "FLOAT"):
         mesh.data.attributes.remove(attribute)

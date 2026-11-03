@@ -141,6 +141,7 @@ You pose only one armature. The sculpt target is a hidden copy of the body (`<Bo
 ### Solve scope
 
 - **Solve**: **All Poses** (every pose that isn't locked) or **Active Pose**.
+- **Helpers per pose**: a pose with affected bones solves those (its deform ones); a pose without solves the helper collection. Poses sharing a helper set are solved together.
 - **Selected Helpers Only**: only the selected helper bones are solved; the others keep what the pose gives them.
 - **Lock** a pose in the list after tuning its helpers by hand, so later solves leave it alone. Without a lock, a solve overwrites the helpers of every pose it covers.
 - **Solve Weights** needs every pose, so it is skipped (and reported) when the scope leaves poses out.
