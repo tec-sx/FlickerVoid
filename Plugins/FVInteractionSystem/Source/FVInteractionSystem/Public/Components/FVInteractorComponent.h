@@ -116,6 +116,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	UE_API void RequestOfferRefresh() { RefreshOffers(); }
 
+	/** Called by an interactable leaving play, so its focus, offers and running interaction don't outlive it. */
+	UE_API void HandleInteractableRemoved(UFVInteractableComponent* Removed);
+
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Identity")
 	UE_API void GrantTag(const FGameplayTag NewTag);
 
@@ -193,8 +196,10 @@ private:
 	
 	bool BeginInteraction(const FGameplayTag InputTag);
 	void TickInteraction(const float DeltaTime);
-	bool ValidateActiveInteraction() const;
-	void FinishInteraction(const bool bSuccess);
+	/** Why the active interaction can't go on (an Interaction.Cancel tag); empty while it can. */
+	FGameplayTag GetCancelReason() const;
+	void FinishInteraction(const bool bSuccess, const FGameplayTag Reason = FGameplayTag());
+
 	const FFVInteractionOfferData* FindOffer(const FGameplayTag& InputTag) const;
 	UFVGestureComponent* ResolveGestureComponent();
 

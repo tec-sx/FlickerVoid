@@ -52,7 +52,7 @@ Add, rename or remove categories and slots in *Project Settings > GameplayTags* 
 - **Mansion key**: Category `Item.Key`, Tags `Key.Door.Mansion`, Weight 0.
 
 ### Example: police uniform
-`DA_Item_PoliceJacket`: Category `Item.Outfit`, Weight 1.5, Grid 2x2, Max Quantity 1, Equippable fragment with Slots `Equipment.Slot.Coat` and Granted Tags `Disguise.Faction.Police`. FVSocialSystem then treats the wearer as a police member (see that guide).
+`DA_Item_PoliceJacket`: Category `Item.Outfit`, Weight 1.5, Grid 2x2, Max Quantity 1, Equippable fragment with Slots `Equipment.Slot.Coat` and Granted Tags `Disguise.Faction.Police`. The game's social rules then treat the wearer as a police member (see [Social](Social.md)).
 
 ## 3. Components
 

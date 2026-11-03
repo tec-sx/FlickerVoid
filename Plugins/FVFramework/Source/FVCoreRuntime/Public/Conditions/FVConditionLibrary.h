@@ -32,6 +32,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FV|Condition")
 	static bool CompareValues(float Current, EFVCompare Compare, float Value);
 
+	UFUNCTION(BlueprintPure, Category = "FV|Condition", meta = (ToolTip = "For a condition's Score: fills the score of a > or >= comparison and returns true; false for the others."))
+	static bool ScoreValue(float Current, EFVCompare Compare, float Value, FFVConditionScore& OutScore);
+
+	UFUNCTION(BlueprintPure, Category = "FV|Condition", meta = (ToolTip = "The comparison as text, such as >= 50, for a condition's description."))
+	static FText DescribeCompare(EFVCompare Compare, float Value);
+
 	UFUNCTION(BlueprintCallable, Category = "FV|Effect", meta = (DefaultToSelf = "Instigator"))
 	static void ApplyEffects(const FFVEffectList& Effects, AActor* Instigator, AActor* Target);
 

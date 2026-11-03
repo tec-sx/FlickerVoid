@@ -584,10 +584,6 @@
 			"Enabled": true
 		},
 		{
-			"Name": "FVSocialSystem",
-			"Enabled": true
-		},
-		{
 			"Name": "FVAttributeSystem",
 			"Enabled": true
 		},

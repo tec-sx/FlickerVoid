@@ -8,6 +8,7 @@
 
 class APlayerController;
 class UFVMapDefinition;
+class UFVNavigationSubsystem;
 struct FFVMarker;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFVOnActiveMapChanged, UFVMapDefinition*, Map, int32, LayerIndex);
@@ -72,7 +73,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FV|Navigation")
 	FFVWorldMapView BuildWorldMapView(UFVMapDefinition* Map, int32 LayerIndex, float Zoom = 1.f) const;
 
-	/** Checks the map underfoot and nearby undiscovered places now rather than on the next update. */
+	/** Checks the map underfoot, nearby undiscovered places and the markers near enough for the minimap and compass now rather than on the next update. */
 	UFUNCTION(BlueprintCallable, Category = "FV|Navigation")
 	void UpdateNavigation();
 
@@ -96,7 +97,11 @@ protected:
 
 private:
 	void UpdateActiveMap();
-	void DiscoverNearbyMarkers();
+	/** One pass over every marker: discovers the ones in reach and keeps those the minimap or compass could show. */
+	void GatherNearbyMarkers();
+	bool IsNearbyCandidate(const FFVMarker& Marker, float Distance2D) const;
+	/** The nearby markers plus the tracked one, which every view shows wherever it is. */
+	TArray<FFVMarkerHandle> GetViewCandidates(const UFVNavigationSubsystem& Navigation) const;
 	bool PassesFilters(const FFVMarker& Marker, bool bTracked) const;
 	void FillView(FFVMarkerView& View, const FFVMarker& Marker, const FVector& ViewLocation, bool bTracked) const;
 	float GetOwnerYaw() const;
@@ -105,4 +110,6 @@ private:
 	TObjectPtr<UFVMapDefinition> ActiveMap;
 
 	int32 ActiveLayer = INDEX_NONE;
+
+	TArray<FFVMarkerHandle> NearbyMarkers;
 };

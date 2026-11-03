@@ -15,7 +15,7 @@ Status: implemented in `feature/framework-dev`, revised after the owner's answer
 | --- | --- | --- |
 | CDPR (Witcher 3, Cyberpunk) | One **facts DB** is the single source of truth for story state. Quest graphs are signal graphs with phases, conditions and *pause until condition* nodes. | `UFVFactDatabase` (exists). Flow graphs for quests/dialogue, `FV Wait For Conditions` node = Witcher's Pause node. Quests, knowledge, reputation, relationships, notoriety all live in facts, so saving and conditions come for free. |
 | CDPR scanner / Witcher senses / Tomb Raider instinct | A mode that highlights categories of objects through post-process stencils, shows data on focus and turns findings into clues. Time slows while scanning. | Scanner in `FVGameplay`: candidates from the interaction registry, category stencils, focus by view alignment, timed scan, effects on scan (learn knowledge, set facts). Optional time dilation. |
-| Hitman | Disguises are tags; some NPCs (enforcers) see through them; suspicion builds rather than flipping. | Outfits grant gameplay tags (`Disguise.Faction.*`). `FVSocialSystem` resolves attitude from standing tier, notoriety and disguise, and a disguise lowers the fame onlookers read. Suspicion meter is phase 2 (stealth). |
+| Hitman | Disguises are tags; some NPCs (enforcers) see through them; suspicion builds rather than flipping. | Outfits grant gameplay tags (`Disguise.Faction.*`). The game's social rules (FVGameplay) resolve attitude from the standing band, notoriety and disguise, and a disguise lowers the fame onlookers read. Suspicion meter is phase 2 (stealth). |
 | Lyra / modern UE5 | Item fragments, instanced structs, data assets, GAS, StateTree, modular components. | Fragments on definitions (`TInstancedStruct`), components found on actors instead of interfaces. |
 | Tarkov / Resident Evil | Carrying is a decision: weight and container space, no free stacking. | Items carry weight and a grid footprint; bags and backpacks grant both. |
 | Witcher 3 / Cyberpunk / Horizon maps | One registry of map markers feeds every view (minimap, world map, compass). Places are discovered by proximity, interiors and floors swap the map, the tracked objective is pinned to the minimap and compass edges, the legend filters categories, the player places one waypoint. | `FVNavigationSystem`: marker definitions with per-view fragments, marker components on actors, `UFVNavigationSubsystem` as the registry, `UFVNavigatorComponent` builds the views. Discovery is a fact, so it saves. Map images come from an orthographic capture tool, the same way marketplace minimap kits and Lyra-style indicator managers split data from presentation. |
@@ -46,7 +46,6 @@ Content (data assets, meshes, textures, materials, FX, Blueprint world actors, W
 | **FVInventorySystem** | new (replaces the Mountea fork) | Item definition + fragments (equippable, usable, container, charges, value), inventory with weight and grid space, a Keys and Quest list without weight or space, money, stack instance data (charges left, stolen), layered equipment slots, pickup and item receiver, loot tables, item conditions/effects. |
 | **FVDialogueSystem** | new (replaces the Yap fork) | Flow-based conversations: Line, Choice, End Conversation, Bark nodes; dialogue subsystem for UI; participant component for animation/voice. |
 | **FVStorySystem** | reworked | Quests (+ optional quest Flow graph), knowledge, save. Yap bridge removed; reputation moved to Social. |
-| **FVSocialSystem** | new | Factions and standing tiers, one global fame and one global notoriety, titles, relationships, disguise-aware recognition. |
 | **FVNavigationSystem** | new | Map definitions with layers (floors, interiors), marker definitions with view fragments, marker component, discovery, tracked marker, waypoint, driving logic for minimap, world map and compass. Editor: Map Capture panel and capture actor that render layer images. |
 | FVStealthSystem | phase 2 (proposed) | Visibility (light, stance, disguise), hiding spots, suspicion meters for NPCs (StateTree + AI perception). |
 
@@ -69,7 +68,7 @@ Target: one runtime module `FlickerVoid` plus `FlickerVoidDebug` and `FlickerVoi
 | FlickerVoid (`Source/FlickerVoidGame`) | stays as the game module. `AFVGameModeBase` keeps the data loading; Explore and Story game modes and the player character move to AngelScript. |
 | FlickerVoidCore | Flow trigger nodes and the trigger component are generic and move to FVFramework's FVCoreFlow; trigger box and sphere actors and Blueprint-base StateTree tasks/conditions move to AngelScript; the struct StateTree task and tagged physical material stay in the game module. |
 | FlickerVoidCharacter | **dropped** (owner, 2026-10-16). The Mover pieces (locomotion component, movement set component, movement sets, ground mode, locomotion inputs; PR #63) and the traversal component go to `Gameplay/`; the anim instance (until UAF replaces it), rig units and animation data go to `Presentation/`; `AFVTraversable` becomes an AngelScript actor with a C++ component the traversal component finds; `UFVCharacterDataAsset` is deleted (obsolete, it extended the retired pawn data) and the player is set up through its `UFVCharacterDefinition` like every character; characters move to AngelScript (below). |
-| FlickerVoidGameplay | ability fragment, ability set, tag relationship map, scanner, the ActivateAbility effect and the item layer (fragments, settings, library, components, Give Item Flow node; PR #59) stay in the game module; the debug StateTree task moves to AngelScript; scanner debug goes to FlickerVoidDebug. |
+| FlickerVoidGameplay | ability fragment, ability set, tag relationship map, scanner, the ActivateAbility effect and the item layer (fragments, settings, library, components, Give Item Flow node; PR #59) and the social rules (factions, titles, gifts on FVFramework scales; issue #76, moved out of the retired FVSocialSystem plugin) stay in the game module, which keeps the abstract game rules (owner, 2026-10-29); the debug StateTree task moves to AngelScript; scanner debug goes to FlickerVoidDebug. |
 | FlickerVoidAI | NPC fact conditions/effects, StateTree schema, StateTree AI component, AI controller and the random location task stay; the perception evaluator moves to AngelScript; `AFVAICharacter` becomes an AngelScript character, on Mover once Mover's NavWalking is set up for AI paths (until then it stays on the Character Movement Component, PR #63). |
 | FlickerVoidWorld | world object actors move to AngelScript. |
 | FlickerVoidNarrative, FlickerVoidUI | deleted (the journal is AngelScript UI, PR #55). |
@@ -82,7 +81,7 @@ Moving a class to another module changes its `/Script/<Module>` path: add one `+
 1. Movement state moves off `AFVCharacter` into `UFVLocomotionComponent`, and movement modes into movement sets on `UFVMovementSetComponent`. The anim instance, traversal component and player controller read the locomotion component instead of casting to `AFVCharacter` (PR #63, player only so far).
 2. Ability granting on first possession (`AFVPlayerCharacter::PossessedBy`, PR #58) moves into the ability system component, which listens for its pawn's controller change.
 3. What `AFVCharacter` still does in C++ moves into its components: installing the starting movement sets, pointing Mover at the mesh and reporting Mover's velocity as the pawn's (`GetVelocity`). The AngelScript base then declares the capsule, mesh, Character Mover, locomotion and movement set components itself, and `AFVCharacter` goes. If one of these can't move into a component, a thin C++ pawn base stays.
-4. AngelScript classes can't implement `IGameplayTagAssetInterface` or `IAbilitySystemInterface`. FVDialogueSystem (`FVDialogueFlowNodes.cpp`) and FVSocialSystem (`FVSocialLibrary.cpp`) cast actors to the tag interface and must read owned tags from a component instead. GAS's `GetAbilitySystemComponentFromActor` already falls back to a component lookup.
+4. AngelScript classes can't implement `IGameplayTagAssetInterface` or `IAbilitySystemInterface`. FVDialogueSystem (`FVDialogueFlowNodes.cpp`) casts actors to the tag interface and must read owned tags from a component instead. GAS's `GetAbilitySystemComponentFromActor` already falls back to a component lookup.
 5. `AFVPlayerController` stops caching `AFVPlayerCharacter` and uses components only.
 
 **Character looks.** Meshes assigned from a data asset at runtime (`BeginPlay`) don't show in the Blueprint editor, which makes character setups hard to tweak visually. So:
@@ -209,7 +208,7 @@ flowchart LR
 ```
 UFVDefinition (Id tag, Display, Tags)                        FVFramework
  ├─ UFVCharacterDefinition  + Fragments<FFVCharacterFragment> FVFramework
- │     FFVCharacterFragment_Social { Faction, RelationshipFact }      (Social)
+ │     FFVCharacterFragment_Social { Faction, Relationship scale }    (FVGameplay)
  ├─ UFVAttributeDefinition  { Attribute (GAS), Category, Min, Max }  FVAttributeSystem
  ├─ UFVCheckDefinition      { Attribute, Roll, Modifiers<Conditions> }  FVAttributeSystem
  ├─ UFVItemDefinition       { Weight, GridSize, MaxQuantity } + Fragments<FFVItemFragment>  FVInventorySystem
@@ -221,8 +220,9 @@ UFVDefinition (Id tag, Display, Tags)                        FVFramework
  │     FFVItemFragment_World / _Animation / _Throwable                          (FVGameplay)
  │     (inventory stacks: InstanceId + InstanceData<FFVItemInstanceFragment>: Charges Left, Stolen)
  ├─ UFVLootTableDefinition  { Entries{Item or Table, Min/Max, Chance, Conditions}, Min/MaxMoney }  FVInventorySystem
- ├─ UFVFactionDefinition    { standing range, tiers->attitude, relations, NotorietyFact, DisguiseTag }  FVSocialSystem
- ├─ UFVTitleDefinition      { Conditions, OnEarned, Replaces }   FVSocialSystem
+ ├─ UFVScaleDefinition      { Id fact, Bands, Links }             FVFramework
+ ├─ UFVFactionDefinition    { Standing scale, band->attitude, Notoriety scale, DisguiseTag }  FVGameplay
+ ├─ UFVTitleDefinition      { Conditions, OnEarned }             FVGameplay
  ├─ UFVScanDefinition       { Category, Duration, Entries, OnScanned effects }  FVGameplay
  ├─ UFVQuestDefinition      { objectives, auto start/fail, effects, Flow }      FVStorySystem
  ├─ UFVKnowledgeDefinition  { kind, prerequisites, OnLearned }                  FVStorySystem
@@ -275,8 +275,8 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 4. Quests and interaction offers require outfits with `Is Wearing` / `Has Gameplay Tag` conditions.
 
 **Fame, notoriety and titles**
-1. Standing with a faction changes through `Modify Standing`.
-2. The change feeds the one global fame (through the faction's `FameContribution`) and the one global notoriety (through its `NotorietyContribution`), so helping criminals makes the player both talked about and wanted.
+1. Standing with a faction changes through `Modify Scale` on its standing scale.
+2. The change feeds the one global fame and the one global notoriety through the standing scale's links, so helping criminals makes the player both talked about and wanted.
 3. `UFVSocialSubsystem` re-checks every `UFVTitleDefinition` whenever a fact changes and writes the title's fact, which dialogue, quests and barks read like any other fact.
 4. Nothing decays on a timer: the player sets the pace.
 
