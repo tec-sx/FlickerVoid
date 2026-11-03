@@ -174,6 +174,12 @@ Data validation also warns when an array tagged `meta = (MaxEntries = N)` (C++ o
 
 Every plugin's debug readout stacks on the same on-screen panel (`UFVDebugHUDSubsystem`).
 
+## 12. Automation tests
+
+Tests live in each plugin's Editor module under `Private/Tests`, one spec per plugin named `FlickerVoid.<Plugin>` (`FlickerVoid.Framework`, `FlickerVoid.AttributeSystem`, `FlickerVoid.InventorySystem`). Run them from *Tools > Session Frontend > Automation* filtered by `FlickerVoid`, or with `Automation RunTests FlickerVoid` as `Build/CI/RunCI.ps1` does.
+
+`FFVTestWorld` (FVCoreEditor, `Tests/FVTestWorld.h`) gives a test a standalone game instance and world, so game instance subsystems such as the fact database run and components can be added to a spawned actor. Tests build their definitions with `NewObject` and their tags with `UE_DEFINE_GAMEPLAY_TAG_STATIC` under `Test.`, so they never depend on Content. A test that changes settings (fact ranges, inventory limits) restores them afterwards.
+
 ## Troubleshooting
 
 | Symptom | Fix |
