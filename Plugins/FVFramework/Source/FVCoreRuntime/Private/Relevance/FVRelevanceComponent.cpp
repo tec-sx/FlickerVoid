@@ -41,7 +41,8 @@ UFVRelevanceComponent* UFVRelevanceComponent::FindOrAdd(AActor* Actor, const FGa
 		return Existing;
 	}
 
-	UFVRelevanceComponent* Component = NewObject<UFVRelevanceComponent>(Actor, MakeUniqueObjectName(Actor, StaticClass(), TEXT("Relevance")));
+	const FName ComponentName = MakeUniqueObjectName(Actor, StaticClass(), TEXT("Relevance"));
+	UFVRelevanceComponent* Component = NewObject<UFVRelevanceComponent>(Actor, ComponentName);
 	Component->Group = InGroup;
 	Actor->AddInstanceComponent(Component);
 	Component->RegisterComponent();
@@ -57,9 +58,10 @@ void UFVRelevanceComponent::BeginPlay()
 		return;
 	}
 
-	if (const FFVRelevanceGroup* Settings = UFVRelevanceSettings::Get().FindGroup(Group))
+	const UFVRelevanceSettings& Settings = UFVRelevanceSettings::Get();
+	if (const FFVRelevanceGroup* Found = Settings.FindGroup(Group))
 	{
-		GroupSettings = *Settings;
+		GroupSettings = *Found;
 	}
 	else
 	{
@@ -88,20 +90,27 @@ void UFVRelevanceComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 float UFVRelevanceComponent::ScoreViewpoint(const FTransform& Viewpoint) const
 {
+	// Runs on worker threads during the Significance Manager update, so it only reads locations.
 	const AActor* Owner = GetOwner();
-	return Owner != nullptr ? -FVector::Dist(Owner->GetActorLocation(), Viewpoint.GetLocation()) : -TNumericLimits<float>::Max();
+	if (Owner == nullptr)
+	{
+		return -TNumericLimits<float>::Max();
+	}
+
+	const FVector OwnerLocation = Owner->GetActorLocation();
+	const FVector ViewpointLocation = Viewpoint.GetLocation();
+	return -FVector::Dist(OwnerLocation, ViewpointLocation);
 }
 
-bool UFVRelevanceComponent::UpdateBand(const float NewDistance)
+void UFVRelevanceComponent::UpdateBand(const float NewDistance)
 {
 	Distance = NewDistance;
 	Band = GroupSettings.ComputeBand(Distance, Band);
-	return Band != BroadcastBand;
 }
 
 void UFVRelevanceComponent::BroadcastBandChange()
 {
-	if (Band != BroadcastBand)
+	if (HasPendingBandChange())
 	{
 		const EFVRelevanceBand OldBand = BroadcastBand;
 		BroadcastBand = Band;

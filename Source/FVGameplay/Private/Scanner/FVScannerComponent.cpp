@@ -127,7 +127,8 @@ void UFVScannerComponent::UpdateTargets()
 
 	for (const UFVRelevanceComponent* Near : InRange)
 	{
-		UFVScannableComponent* Scannable = Near->GetOwner() != nullptr ? Near->GetOwner()->FindComponentByClass<UFVScannableComponent>() : nullptr;
+		const AActor* NearActor = Near->GetOwner();
+		UFVScannableComponent* Scannable = NearActor != nullptr ? NearActor->FindComponentByClass<UFVScannableComponent>() : nullptr;
 		if (Scannable == nullptr || Scannable->GetOwner() == GetOwner() || !Scannable->CanBeScannedBy(GetOwner()))
 		{
 			continue;

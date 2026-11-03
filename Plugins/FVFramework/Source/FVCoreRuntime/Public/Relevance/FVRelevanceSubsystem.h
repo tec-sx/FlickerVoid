@@ -27,15 +27,15 @@ public:
 	bool Register(UFVRelevanceComponent* Component);
 	void Unregister(UFVRelevanceComponent* Component);
 
-	/** Registered components of Group, closest first. */
+	UFUNCTION(BlueprintPure, Category = "FV|Relevance", meta = (GameplayTagFilter = "Relevance", ToolTip = "Registered components of the group, closest first."))
 	void GetComponents(const FGameplayTag& Group, TArray<UFVRelevanceComponent*>& OutComponents) const;
 
-	/** Components of Group in its Near band, closest first. Stops at the first one too far to be Near. */
+	UFUNCTION(BlueprintPure, Category = "FV|Relevance", meta = (GameplayTagFilter = "Relevance", ToolTip = "Components of the group in its Near band, closest first."))
 	void GetNearComponents(const FGameplayTag& Group, TArray<UFVRelevanceComponent*>& OutComponents) const;
 
+	UFUNCTION(BlueprintPure, Category = "FV|Relevance", meta = (GameplayTagFilter = "Relevance", ToolTip = "True when any component of the group is in its Near band."))
 	bool HasNearComponents(const FGameplayTag& Group) const;
 
-	/** Viewpoints used by the last update. */
 	const TArray<FTransform>& GetViewpoints() const { return Viewpoints; }
 
 protected:
@@ -43,7 +43,6 @@ protected:
 
 private:
 	USignificanceManager* GetSignificanceManager() const;
-	/** Visits Near components of Group closest first until Visit returns false. */
 	void ForEachNearComponent(const FGameplayTag& Group, TFunctionRef<bool(UFVRelevanceComponent*)> Visit) const;
 	void GatherViewpoints();
 

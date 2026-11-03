@@ -21,18 +21,19 @@ class FVCORERUNTIME_API UFVRelevanceComponent : public UActorComponent
 public:
 	UFVRelevanceComponent();
 
+	UFUNCTION(BlueprintPure, Category = "FV|Relevance", meta = (DefaultToSelf = "Actor", GameplayTagFilter = "Relevance", ToolTip = "The actor's relevance component for the group, if it has one."))
 	static UFVRelevanceComponent* Find(const AActor* Actor, const FGameplayTag& InGroup);
 
-	/** Finds the actor's component for InGroup, or adds one. Systems call this so their actors need no extra setup. */
+	UFUNCTION(BlueprintCallable, Category = "FV|Relevance", meta = (DefaultToSelf = "Actor", GameplayTagFilter = "Relevance", ToolTip = "The actor's relevance component for the group, added at runtime when missing, so systems need no extra setup on their actors."))
 	static UFVRelevanceComponent* FindOrAdd(AActor* Actor, const FGameplayTag& InGroup);
 
 	UFUNCTION(BlueprintPure, Category = "FV|Relevance", meta = (ToolTip = "Group whose thresholds this component uses."))
 	FGameplayTag GetGroup() const { return Group; }
 
-	UFUNCTION(BlueprintPure, Category = "FV|Relevance")
+	UFUNCTION(BlueprintPure, Category = "FV|Relevance", meta = (ToolTip = "Band at the last update; Far until the first update."))
 	EFVRelevanceBand GetBand() const { return Band; }
 
-	UFUNCTION(BlueprintPure, Category = "FV|Relevance")
+	UFUNCTION(BlueprintPure, Category = "FV|Relevance", meta = (ToolTip = "True while the owner is in the group's Near band."))
 	bool IsNear() const { return Band == EFVRelevanceBand::Near; }
 
 	UFUNCTION(BlueprintPure, Category = "FV|Relevance", meta = (ToolTip = "Distance to the closest local player at the last update."))
@@ -51,10 +52,9 @@ protected:
 private:
 	friend class UFVRelevanceSubsystem;
 
-	/** Runs on worker threads during the Significance Manager update; reads only the owner's location. */
 	float ScoreViewpoint(const FTransform& Viewpoint) const;
-	/** Stores the new distance and band; true when the band changed and needs broadcasting. */
-	bool UpdateBand(float NewDistance);
+	void UpdateBand(float NewDistance);
+	bool HasPendingBandChange() const { return Band != BroadcastBand; }
 	void BroadcastBandChange();
 
 	FFVRelevanceGroup GroupSettings;

@@ -50,7 +50,8 @@ void UFVRelevanceDebugSubsystem::CollectLines(TArray<FString>& OutLines) const
 	const bool bDraw = CVarRelevanceDebugHUD.GetValueOnGameThread() > 1;
 	const FString Filter = CVarRelevanceDebugGroup.GetValueOnGameThread();
 
-	OutLines.Add(FString::Printf(TEXT("%d viewpoint(s)"), Relevance->GetViewpoints().Num()));
+	const TArray<FTransform>& Viewpoints = Relevance->GetViewpoints();
+	OutLines.Add(FString::Printf(TEXT("%d viewpoint(s)"), Viewpoints.Num()));
 
 	for (const FFVRelevanceGroup& Group : UFVRelevanceSettings::Get().Groups)
 	{
@@ -66,11 +67,15 @@ void UFVRelevanceDebugSubsystem::CollectLines(TArray<FString>& OutLines) const
 		int32 Counts[3] = {};
 		for (const UFVRelevanceComponent* Component : Components)
 		{
-			++Counts[static_cast<uint8>(Component->GetBand())];
+			const EFVRelevanceBand Band = Component->GetBand();
+			++Counts[static_cast<uint8>(Band)];
 
-			if (bDraw && Component->GetOwner() != nullptr)
+			const AActor* Owner = Component->GetOwner();
+			if (bDraw && Owner != nullptr)
 			{
-				DrawDebugPoint(GetWorld(), Component->GetOwner()->GetActorLocation(), 12.f, GetBandColor(Component->GetBand()));
+				const FVector Location = Owner->GetActorLocation();
+				const FColor Color = GetBandColor(Band);
+				DrawDebugPoint(GetWorld(), Location, 12.f, Color);
 			}
 		}
 
@@ -78,10 +83,11 @@ void UFVRelevanceDebugSubsystem::CollectLines(TArray<FString>& OutLines) const
 
 		if (bDraw)
 		{
-			for (const FTransform& Viewpoint : Relevance->GetViewpoints())
+			for (const FTransform& Viewpoint : Viewpoints)
 			{
-				DrawDebugCircle(GetWorld(), Viewpoint.GetLocation(), Group.NearDistance, 64, FColor::Green, false, -1.f, 0, 1.f, FVector::ForwardVector, FVector::RightVector, false);
-				DrawDebugCircle(GetWorld(), Viewpoint.GetLocation(), Group.MidDistance, 64, FColor::Yellow, false, -1.f, 0, 1.f, FVector::ForwardVector, FVector::RightVector, false);
+				const FVector Center = Viewpoint.GetLocation();
+				DrawDebugCircle(GetWorld(), Center, Group.NearDistance, 64, FColor::Green, false, -1.f, 0, 1.f, FVector::ForwardVector, FVector::RightVector, false);
+				DrawDebugCircle(GetWorld(), Center, Group.MidDistance, 64, FColor::Yellow, false, -1.f, 0, 1.f, FVector::ForwardVector, FVector::RightVector, false);
 			}
 		}
 	}
@@ -100,7 +106,8 @@ static FAutoConsoleCommandWithWorldAndArgs CmdRelevanceList(
 
 		for (const FFVRelevanceGroup& Group : UFVRelevanceSettings::Get().Groups)
 		{
-			if (!Args.IsEmpty() && !Group.Group.ToString().Contains(Args[0]))
+			const FString GroupName = Group.Group.ToString();
+			if (!Args.IsEmpty() && !GroupName.Contains(Args[0]))
 			{
 				continue;
 			}
@@ -110,8 +117,10 @@ static FAutoConsoleCommandWithWorldAndArgs CmdRelevanceList(
 
 			for (const UFVRelevanceComponent* Component : Components)
 			{
-				UE_LOG(LogFVDebug, Display, TEXT("%s %s: %s, %.0f cm"), *Group.Group.ToString(), *GetNameSafe(Component->GetOwner()),
-					*UEnum::GetDisplayValueAsText(Component->GetBand()).ToString(), Component->GetDistance());
+				const FString OwnerName = GetNameSafe(Component->GetOwner());
+				const EFVRelevanceBand Band = Component->GetBand();
+				const FString BandName = UEnum::GetDisplayValueAsText(Band).ToString();
+				UE_LOG(LogFVDebug, Display, TEXT("%s %s: %s, %.0f cm"), *GroupName, *OwnerName, *BandName, Component->GetDistance());
 			}
 		}
 	}));

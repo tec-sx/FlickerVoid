@@ -137,7 +137,8 @@ void UFVInteractableComponent::BeginPlay()
 	if (IsValid(Relevance))
 	{
 		Relevance->OnBandChanged.AddDynamic(this, &UFVInteractableComponent::HandleRelevanceBandChanged);
-		HandleRelevanceBandChanged(Relevance->GetBand(), EFVRelevanceBand::Far);
+		const EFVRelevanceBand CurrentBand = Relevance->GetBand();
+		HandleRelevanceBandChanged(CurrentBand, EFVRelevanceBand::Far);
 	}
 }
 

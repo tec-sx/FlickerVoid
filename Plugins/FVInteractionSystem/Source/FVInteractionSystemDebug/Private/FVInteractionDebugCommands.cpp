@@ -28,9 +28,16 @@ static FAutoConsoleCommandWithWorldAndArgs CmdListInteractables(
 			const AActor* Owner = Component->GetOwner();
 			const UFVInteractableComponent* Interactable = Owner != nullptr ? Owner->FindComponentByClass<UFVInteractableComponent>() : nullptr;
 
-			UE_LOG(LogFVDebug, Display, TEXT("%s: %s, %.0f cm, %s"), *GetNameSafe(Owner),
-				*UEnum::GetDisplayValueAsText(Component->GetBand()).ToString(), Component->GetDistance(),
-				Interactable != nullptr ? *UEnum::GetDisplayValueAsText(Interactable->GetState()).ToString() : TEXT("no interactable"));
+			const EFVRelevanceBand Band = Component->GetBand();
+			const FString BandName = UEnum::GetDisplayValueAsText(Band).ToString();
+			FString StateName = TEXT("no interactable");
+			if (Interactable != nullptr)
+			{
+				const EFVInteractableState State = Interactable->GetState();
+				StateName = UEnum::GetDisplayValueAsText(State).ToString();
+			}
+
+			UE_LOG(LogFVDebug, Display, TEXT("%s: %s, %.0f cm, %s"), *GetNameSafe(Owner), *BandName, Component->GetDistance(), *StateName);
 		}
 	}));
 

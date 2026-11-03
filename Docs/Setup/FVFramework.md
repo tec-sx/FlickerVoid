@@ -164,7 +164,8 @@ Place an `AFVSpawner` (or a Blueprint of it) in the level and set its **Definiti
 Tells systems how far things are from the player, without each system looping over its objects. `UFVRelevanceSubsystem` feeds the engine's Significance Manager the local players' viewpoints; the manager scores every registered object in parallel, then each object's band is updated on the game thread.
 
 - **FV Relevance Component**: put on an actor (or let a system add it) and set its **Group**, a tag under `Relevance.` such as `Relevance.Interactable` or `Relevance.ScanTarget`. It reports a band, **Near**, **Mid** or **Far**, and broadcasts **On Band Changed** (new band, old band). Bind it in AngelScript to switch things on and off by distance (`IsNear`, `GetBand`, `GetDistance`).
-- One component per group. An actor in several groups (an interactable that can also be scanned) carries one for each; `UFVRelevanceComponent::FindOrAdd(Actor, Group)` finds or adds it from C++, so systems need no extra setup on their actors.
+- One component per group. An actor in several groups (an interactable that can also be scanned) carries one for each; **Find Or Add** (`UFVRelevanceComponent::FindOrAdd(Actor, Group)`, also callable from AngelScript) finds or adds it, so systems need no extra setup on their actors.
+- To ask for everything of a group near the player, call **Get Near Components**, **Has Near Components** or **Get Components** (all, closest first) on the relevance subsystem.
 - Bands have hysteresis: an object enters a band at its threshold and leaves only once it is **Hysteresis** further out, so nothing flickers at the edge.
 - Updates run on real time, so slow motion doesn't slow them down. Objects outside every band cost one distance check per update and nothing else.
 

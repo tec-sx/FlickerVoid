@@ -119,9 +119,11 @@ void UFVInteractionDebugSubsystem::VisualizeRange(
 		return;
 	}
 
-	if (const FFVRelevanceGroup* Group = UFVRelevanceSettings::Get().FindGroup(FVInteractionGameplayTags::Relevance_Interactable))
+	const UFVRelevanceSettings& Settings = UFVRelevanceSettings::Get();
+	if (const FFVRelevanceGroup* Group = Settings.FindGroup(FVInteractionGameplayTags::Relevance_Interactable))
 	{
-		DrawDebugCircle(World, Interactor->GetOwner()->GetActorLocation(), Group->NearDistance, 64, FColor(0, 128, 255), false, Interval, 0, 0.5f, FVector::ForwardVector, FVector::RightVector, false);
+		const FVector Center = Interactor->GetOwner()->GetActorLocation();
+		DrawDebugCircle(World, Center, Group->NearDistance, 64, FColor(0, 128, 255), false, Interval, 0, 0.5f, FVector::ForwardVector, FVector::RightVector, false);
 	}
 	
 	const UFVRelevanceSubsystem* Relevance = UFVRelevanceSubsystem::Get(World);
@@ -133,6 +135,9 @@ void UFVInteractionDebugSubsystem::VisualizeRange(
 	TArray<UFVRelevanceComponent*> NearComponents;
 	Relevance->GetNearComponents(FVInteractionGameplayTags::Relevance_Interactable, NearComponents);
 
+	const UFVInteractableComponent* Target = Interactor->GetTargetInteractable();
+	const AActor* TargetActor = Target != nullptr ? Target->GetOwner() : nullptr;
+
 	for (const UFVRelevanceComponent* Near : NearComponents)
 	{
 		const AActor* NearActor = Near->GetOwner();
@@ -141,8 +146,8 @@ void UFVInteractionDebugSubsystem::VisualizeRange(
 			continue;
 		}
 
-		const bool bIsTarget = Interactor->GetTargetInteractable() && Interactor->GetTargetInteractable()->GetOwner() == NearActor;
-		DrawBoundingBox(World, NearActor, bIsTarget ? FColor::Green : FColor::Yellow, Interval);
+		const FColor Color = NearActor == TargetActor ? FColor::Green : FColor::Yellow;
+		DrawBoundingBox(World, NearActor, Color, Interval);
 	}
 }
 
