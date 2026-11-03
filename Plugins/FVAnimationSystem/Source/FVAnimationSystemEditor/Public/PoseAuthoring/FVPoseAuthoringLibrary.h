@@ -69,10 +69,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FV|Animation|Meatbag Factory", meta = (ToolTip = "Adds Count (1 to 9) poses between the base pose and Pose, named <Pose>_ib<percent>."))
 	static bool CreateInbetweens(UPoseAsset* PoseAsset, FName Pose, int32 Count, TArray<FName>& OutPoses, FText& OutError);
 
-	UFUNCTION(BlueprintPure, Category = "FV|Animation|Meatbag Factory", meta = (ToolTip = "Skeleton curves (Skeleton > Anim Curves) the Pose Asset doesn't have yet."))
+	UFUNCTION(BlueprintPure, Category = "FV|Animation|Meatbag Factory", meta = (ToolTip = "Skeleton curves (Skeleton > Anim Curves) and preview mesh morph targets the Pose Asset doesn't have yet."))
 	static TArray<FName> GetAddableCurves(UPoseAsset* PoseAsset);
 
-	UFUNCTION(BlueprintCallable, Category = "FV|Animation|Meatbag Factory", meta = (ToolTip = "Adds a skeleton curve at 0 on every pose, keeping the poses, their names and the additive setup."))
+	UFUNCTION(BlueprintCallable, Category = "FV|Animation|Meatbag Factory", meta = (ToolTip = "Adds a skeleton curve or morph target curve at 0 on every pose, keeping the poses, their names and the additive setup."))
 	static bool AddCurve(UPoseAsset* PoseAsset, FName Curve, FText& OutError);
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Animation|Meatbag Factory")

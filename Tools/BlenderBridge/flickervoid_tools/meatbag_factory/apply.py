@@ -3,10 +3,9 @@
 import numpy as np
 from mathutils import Matrix
 
-from . import library, solver
+from . import library, sculpt, solver
 
 RESIDUAL_ATTRIBUTE = "mf_residual"
-RESIDUAL_PREFIX = "CR_"
 WEIGHT_CHANGE = 1e-6
 
 
@@ -90,7 +89,7 @@ def write_residual_shape_keys(mesh, capture, result, threshold):
             continue
         blended = np.einsum("nb,bij->nij", result.weights, result.skin[pose_index][:, :, :3])
         delta = np.linalg.solve(blended, residual[pose_index][:, :, None])[:, :, 0]
-        name = RESIDUAL_PREFIX + pose
+        name = sculpt.shape_name(pose)
         key = mesh.data.shape_keys.key_blocks.get(name) or mesh.shape_key_add(name=name, from_mix=False)
         key.data.foreach_set("co", (basis + delta @ to_mesh.T).reshape(-1))
         key.value = 0.0

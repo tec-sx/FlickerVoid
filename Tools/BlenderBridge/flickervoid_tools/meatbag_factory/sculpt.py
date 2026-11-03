@@ -1,9 +1,11 @@
-"""The managed sculpt target: a hidden copy of the body on the same armature, with one shape key per library pose.
+"""Per-pose sculpts: the body's pose blend shapes and the managed sculpt target.
 
-The body stays as it is pushed to Unreal. Sculpting happens on the copy, on the shape key named after the pose shown,
-and the solve reads the copy as its target.
+A pose's blend shape is the body's shape key CR_<pose>, sculpted in the pose and sent to Unreal as a morph target the
+pose drives. The sculpt target is a hidden copy of the body on the same armature, with one shape key per library pose
+holding the full shape wanted in that pose; the solve reads it as its target.
 """
 
+SHAPE_PREFIX = "CR_"
 TARGET_SUFFIX = "_MF_Target"
 TARGET_TAG = "mf_sculpt_target"
 BASIS = "Basis"
@@ -47,10 +49,16 @@ def ensure_target(mesh):
     return target
 
 
+def shape_name(pose):
+    return SHAPE_PREFIX + pose
+
+
 def pose_key(target, name, create=False):
     keys = target.data.shape_keys
     key = keys.key_blocks.get(name) if keys else None
     if key is None and create:
+        if not keys:
+            target.shape_key_add(name=BASIS, from_mix=False)
         key = target.shape_key_add(name=name, from_mix=False)
         key.value = 0.0
     return key

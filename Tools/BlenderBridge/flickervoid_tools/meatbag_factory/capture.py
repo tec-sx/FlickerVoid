@@ -36,11 +36,11 @@ def helper_bone_names(armature, collection_name):
     if collection:
         bones = list(collection.bones)
     else:
-        bones = [bone for bone in data.bones if _selected(armature, bone)]
+        bones = [bone for bone in data.bones if is_selected(armature, bone)]
     return [bone.name for bone in bones if bone.use_deform]
 
 
-def _selected(armature, bone):
+def is_selected(armature, bone):
     # Blender 5 keeps pose selection on the pose bone, 4.x on the bone.
     pose_bone = armature.pose.bones[bone.name]
     return pose_bone.select if hasattr(pose_bone, "select") else bone.select

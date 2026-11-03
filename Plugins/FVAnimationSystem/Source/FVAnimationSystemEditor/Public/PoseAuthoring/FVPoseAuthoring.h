@@ -54,10 +54,10 @@ struct FVANIMATIONSYSTEMEDITOR_API FFVPoseAuthoring
 
 	static bool SetCurveValue(UPoseAsset& Asset, FName Pose, FName Curve, float Value, FText& OutError);
 
-	/** The skeleton's curves (authored in content) that the asset doesn't have yet. */
+	/** The skeleton's curves and the preview mesh's morph targets that the asset doesn't have yet. */
 	static TArray<FName> GetAddableCurves(const UPoseAsset& Asset);
 
-	/** Adds a skeleton curve to the asset, at 0 on every pose, keeping every pose, its name and the additive setup. */
+	/** Adds a skeleton curve or morph target curve to the asset, at 0 on every pose, keeping every pose, its name and the additive setup. */
 	static bool AddCurve(UPoseAsset& Asset, FName Curve, FText& OutError);
 
 	/** An empty, unsaved Pose Asset at AssetPath (/Game/Folder/PA_Name) for the mesh's skeleton, previewed on the mesh. */

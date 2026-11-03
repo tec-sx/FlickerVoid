@@ -1,7 +1,8 @@
 """The pose library: an armature's example poses kept in one action that is never assigned, so the timeline stays free.
 
 Pose i is keyed at frame i on every bone, as location, quaternion rotation and scale relative to the rest pose
-(the bone's matrix_basis). Pose names and preview weights live on the action, so the action is the whole library.
+(the bone's matrix_basis). Pose names, preview weights, control bones and affected bones live on the action, so the
+action is the whole library.
 Commands read the library into an array, change it and write it back whole, which keeps frames in list order.
 """
 
@@ -92,8 +93,8 @@ def _channel(fcurve):
 
 
 def write(action, names, bones, values):
-    """Replaces the whole library: pose i keyed at frame i, names kept in order, weights and locks kept by name."""
-    kept = {pose.name: (pose.weight, pose.locked) for pose in action.meatbag_poses}
+    """Replaces the whole library: pose i keyed at frame i, names kept in order, everything else kept by name."""
+    kept = {pose.name: _pose_settings(pose) for pose in action.meatbag_poses}
     channelbag = _channelbag(action, True)
     for fcurve in list(channelbag.fcurves):
         channelbag.fcurves.remove(fcurve)
@@ -120,10 +121,17 @@ def write(action, names, bones, values):
         # Item access skips the update callbacks (rename sync, preview).
         pose = action.meatbag_poses.add()
         pose["name"] = pose["synced_name"] = name
-        pose["weight"], pose["locked"] = kept.get(name, (0.0, False))
+        weight, locked, control, affected = kept.get(name, (0.0, False, "", []))
+        pose["weight"], pose["locked"], pose["control_bone"] = weight, locked, control
+        for bone in affected:
+            pose.affected_bones.add().name = bone
     # A fresh token rather than a counter, so undo and redo never meet a cached read of another state.
     action["mf_revision"] = random.getrandbits(31)
     _cache.clear()
+
+
+def _pose_settings(pose):
+    return pose.weight, pose.locked, pose.control_bone, [bone.name for bone in pose.affected_bones]
 
 
 _LINEAR = bpy.types.Keyframe.bl_rna.properties["interpolation"].enum_items["LINEAR"].value
@@ -157,6 +165,36 @@ def set_pose(armature, bones, values):
         rotation = Quaternion(row[3:7])
         rotation.normalize()
         armature.pose.bones[name].matrix_basis = Matrix.LocRotScale(Vector(row[0:3]), rotation, Vector(row[7:10]))
+
+
+def add_change(stored, shown, current, rows):
+    """Adds the change from shown to current onto stored, for the given bone rows of (B, 10) arrays.
+
+    Location adds, rotation multiplies on the bone's side (stored * shown^-1 * current) and scale multiplies, so a pose
+    shown on its own takes the viewport values exactly, and a pose seen in a blend gets just the edit on top.
+    """
+    result = stored.copy()
+    rows = np.asarray(rows, dtype=int)
+    if not len(rows):
+        return result
+    result[rows, 0:3] += current[rows, 0:3] - shown[rows, 0:3]
+    inverse = shown[rows, 3:7] * np.array([1.0, -1.0, -1.0, -1.0])
+    change = _multiply(inverse, current[rows, 3:7])
+    rotation = _multiply(stored[rows, 3:7], change)
+    rotation /= np.linalg.norm(rotation, axis=1, keepdims=True)
+    result[rows, 3:7] = rotation * np.sign(rotation[:, 0:1] + 1e-12)
+    safe = np.where(np.abs(shown[rows, 7:10]) < 1e-8, 1.0, shown[rows, 7:10])
+    result[rows, 7:10] = stored[rows, 7:10] * current[rows, 7:10] / safe
+    return result
+
+
+def changed_rows(shown, current, tolerance=1e-4):
+    """Rows of (B, 10) arrays where current differs from shown."""
+    rotation_dot = np.abs(np.einsum("bi,bi->b", shown[:, 3:7], current[:, 3:7]))
+    moved = np.abs(current[:, 0:3] - shown[:, 0:3]).max(axis=1) > tolerance
+    turned = rotation_dot < 1.0 - tolerance * tolerance
+    scaled = np.abs(current[:, 7:10] - shown[:, 7:10]).max(axis=1) > tolerance
+    return np.flatnonzero(moved | turned | scaled)
 
 
 def unique_name(action, base):

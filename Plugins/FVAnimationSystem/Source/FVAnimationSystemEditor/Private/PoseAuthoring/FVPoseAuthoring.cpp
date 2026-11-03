@@ -4,6 +4,7 @@
 #include "Animation/AnimData/IAnimationDataController.h"
 #include "Animation/AnimData/IAnimationDataModel.h"
 #include "Animation/AnimSequence.h"
+#include "Animation/MorphTarget.h"
 #include "Animation/PoseAsset.h"
 #include "Animation/Skeleton.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -573,6 +574,16 @@ TArray<FName> FFVPoseAuthoring::GetAddableCurves(const UPoseAsset& Asset)
 	{
 		Skeleton->GetCurveMetaDataNames(Curves);
 	}
+	if (const USkeletalMesh* Mesh = FindMesh(Asset))
+	{
+		for (const UMorphTarget* Morph : Mesh->GetMorphTargets())
+		{
+			if (Morph)
+			{
+				Curves.AddUnique(Morph->GetFName());
+			}
+		}
+	}
 	const TArray<FName> Existing = Asset.GetCurveFNames();
 	Curves.RemoveAll([&Existing](FName Curve) { return Existing.Contains(Curve); });
 	Curves.Sort(FNameLexicalLess());
@@ -584,7 +595,7 @@ bool FFVPoseAuthoring::AddCurve(UPoseAsset& Asset, FName Curve, FText& OutError)
 	USkeleton* Skeleton = Asset.GetSkeleton();
 	if (!Skeleton || !GetAddableCurves(Asset).Contains(Curve))
 	{
-		OutError = FText::Format(LOCTEXT("ErrCurveNotAddable", "{0} isn't a skeleton curve the Pose Asset can add."), FText::FromName(Curve));
+		OutError = FText::Format(LOCTEXT("ErrCurveNotAddable", "{0} isn't a skeleton curve or preview mesh morph target the Pose Asset can add."), FText::FromName(Curve));
 		return false;
 	}
 

@@ -180,7 +180,7 @@ TSharedRef<SWidget> SFVMeatbagFactory::BuildPoses()
 			[
 				SNew(SComboButton)
 				.IsEnabled(this, &SFVMeatbagFactory::HasAsset)
-				.ToolTipText(LOCTEXT("AddCurveTip", "Add a skeleton curve (authored in content, Skeleton > Anim Curves) to the Pose Asset."))
+				.ToolTipText(LOCTEXT("AddCurveTip", "Add a skeleton curve (Skeleton > Anim Curves) or a preview mesh morph target to the Pose Asset."))
 				.OnGetMenuContent(this, &SFVMeatbagFactory::MakeAddCurveMenu)
 				.ButtonContent()[SNew(STextBlock).Text(LOCTEXT("AddCurve", "Add Curve"))]
 			]
@@ -436,7 +436,7 @@ TSharedRef<SWidget> SFVMeatbagFactory::MakeAddCurveMenu()
 	const TArray<FName> Curves = Asset ? FFVPoseAuthoring::GetAddableCurves(*Asset) : TArray<FName>();
 	if (Curves.IsEmpty())
 	{
-		Builder.AddWidget(SNew(STextBlock).Text(LOCTEXT("NoCurves", "No skeleton curves to add. Author them on the Skeleton (Anim Curves).")), FText::GetEmpty());
+		Builder.AddWidget(SNew(STextBlock).Text(LOCTEXT("NoCurves", "No skeleton curves or morph targets to add. Author curves on the Skeleton (Anim Curves).")), FText::GetEmpty());
 	}
 	for (const FName Curve : Curves)
 	{

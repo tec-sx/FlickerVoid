@@ -3,6 +3,7 @@
 from contextlib import contextmanager
 
 import bpy
+from mathutils import Matrix
 
 from . import library
 from ..push import export
@@ -34,8 +35,11 @@ def _basis(bone, samples):
 
 
 @contextmanager
-def baked_copy(context, armature, samples):
-    """A temporary copy of the armature without constraints or drivers, keyed with sample i at frame i."""
+def baked_copy(context, armature, samples, keep=None):
+    """A temporary copy of the armature without constraints or drivers, keyed with sample i at frame i.
+
+    keep[i], when given and not None, names the bones sample i keeps; the others are keyed at rest.
+    """
     copy = armature.copy()
     copy.animation_data_clear()
     for pose_bone in copy.pose.bones:
@@ -46,9 +50,13 @@ def baked_copy(context, armature, samples):
     try:
         copy.animation_data_create().action = action
         for frame, sample in enumerate(samples):
+            kept = keep[frame] if keep else None
             for bone in copy.data.bones:
                 pose_bone = copy.pose.bones[bone.name]
-                pose_bone.matrix_basis = _basis(bone, sample)
+                if kept is None or bone.name in kept:
+                    pose_bone.matrix_basis = _basis(bone, sample)
+                else:
+                    pose_bone.matrix_basis = Matrix.Identity(4)
                 _key(pose_bone, frame)
         yield copy
     finally:
@@ -63,11 +71,17 @@ def _key(pose_bone, frame):
     pose_bone.keyframe_insert("scale", frame=frame)
 
 
-def export_poses(context, armature, filepath):
-    """Writes the library poses as frames 0 to N-1; a single pose is written twice, since Unreal needs two frames."""
+def export_poses(context, armature, filepath, keep=None):
+    """Writes the library poses as frames 0 to N-1; a single pose is written twice, since Unreal needs two frames.
+
+    keep, when given, holds per pose the bones it sends (None for every bone); the others are written at rest.
+    """
     samples = sample_poses(context, armature)
+    keep = list(keep) if keep else None
     if len(samples) == 1:
         samples.append(samples[0])
-    with baked_copy(context, armature, samples) as copy:
+        if keep:
+            keep.append(keep[0])
+    with baked_copy(context, armature, samples, keep) as copy:
         export.export_animation_fbx(context, copy, filepath, 0, len(samples) - 1)
     return len(samples)

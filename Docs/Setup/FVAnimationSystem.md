@@ -24,7 +24,7 @@ How capture works: **Create** and **Update** save the pose last opened with **Go
 - **Mirror All** mirrors every authoring-side pose in one undo step. When other-side poses have lost their authoring-side pose (renamed or deleted), it lists them and asks whether to delete them in the same step. A notification then reports how many poses were created, updated and skipped, with each skipped pose and why (also in the Output Log).
 - **Inbetweens**: 1 to 9 poses between the base pose and the selected pose, named `<pose>_ib<percent>` (`thigh_l_raise_ib50`).
 - **Copy/Paste**: copy a pose, or only the bones selected in the skeleton tree, and paste onto the selected poses with a **Multiplier** (1 as copied, 0.5 half the change from the base pose, 1.5 exaggerated). A bone-only copy pastes no curves.
-- **Add Curve**: lists the skeleton's curves (authored in content, *Skeleton > Anim Curves*) that the asset lacks. Adding one rebuilds the asset through a temporary animation and keeps every pose, its name and the additive setup; the asset's own Source Animation is left as it was.
+- **Add Curve**: lists the skeleton's curves (authored in content, *Skeleton > Anim Curves*) and the preview mesh's morph targets that the asset lacks. A curve named after a morph target drives it, so a pose can carry its own blend shape. Adding one rebuilds the asset through a temporary animation and keeps every pose, its name and the additive setup; the asset's own Source Animation is left as it was.
 - Disabled buttons say why in their tooltip.
 
 ## 3. Settings
@@ -62,9 +62,9 @@ How capture works: **Create** and **Update** save the pose last opened with **Go
 | `GetChangedBones` | Bones the pose moves away from the base pose |
 | `CanMirrorPose`, `GetMirrorPoseName`, `MirrorPoses`, `MirrorAll` | The mirroring rules above; `MirrorAll` also returns the skipped poses and the orphans, and deletes the orphans on request |
 | `CreateInbetweens` | Poses between the base pose and a pose |
-| `GetAddableCurves`, `AddCurve`, `SetCurveValue` | Skeleton curves on the asset and their per-pose values |
+| `GetAddableCurves`, `AddCurve`, `SetCurveValue` | Skeleton curves and morph target curves on the asset, and their per-pose values |
 | `CreatePoseAsset` | An empty, unsaved Pose Asset for a mesh's skeleton, previewed on the mesh |
-| `SetPosesFromAnimation` | Frame i of an animation becomes pose i by name: updated (curve values kept) or created, all or nothing. Returns a result struct (created, updated, error) instead of a bool, so Python callers get the error. The Blender tools' **Send Poses to Unreal** uses it |
+| `SetPosesFromAnimation` | Frame i of an animation becomes pose i by name: updated (curve values kept) or created, all or nothing. Returns a result struct (created, updated, error) instead of a bool, so Python callers get the error. The Blender tools' **Send Poses to Unreal** uses it, then sets each pose's blend shape curve (`CR_<pose>`) to 1 and stores the pose's control and affected bones as editor metadata tags `MeatbagFactory.<pose>.Control` and `.Affected` |
 
 `UFVAnimationLibrary` (runtime): `GetBoneSide`, `GetMirrorBoneName`, `GetNameSide`, `GetMirrorName`, using the same side pairs.
 

@@ -43,6 +43,30 @@ def _import_animation(params, skeleton):
     raise RuntimeError("Unreal imported no animation; see the editor's Output Log")
 
 
+def _set_curves(pose_asset, curves):
+    """Sets each pose's blend shape curve to 1, adding the curve to the asset first; returns (set, missing)."""
+    library = unreal.FVPoseAuthoringLibrary
+    done, missing = [], []
+    for pose, curve in curves.items():
+        addable = [str(name) for name in library.get_addable_curves(pose_asset)]
+        # Bool functions with out parameters return None on failure in Python.
+        if curve in addable and library.add_curve(pose_asset, curve) is None:
+            missing.append(curve)
+            continue
+        if library.set_curve_value(pose_asset, pose, curve, 1.0) is None:
+            missing.append(curve)
+        else:
+            done.append(curve)
+    return done, missing
+
+
+def _set_bone_tags(pose_asset, bones):
+    """Stores each pose's control and affected bones as editor metadata (MeatbagFactory.<pose>.Control / .Affected)."""
+    for pose, entry in bones.items():
+        unreal.EditorAssetLibrary.set_metadata_tag(pose_asset, f"MeatbagFactory.{pose}.Control", entry["control"])
+        unreal.EditorAssetLibrary.set_metadata_tag(pose_asset, f"MeatbagFactory.{pose}.Affected", ",".join(entry["affected"]))
+
+
 def main(params):
     skeleton = unreal.load_asset(params["skeleton"])
     if not isinstance(skeleton, unreal.Skeleton):
@@ -73,9 +97,13 @@ def main(params):
         if created_asset:
             unreal.EditorAssetLibrary.delete_asset(path)
         raise RuntimeError(str(result.get_editor_property("error")))
+    curves, missing = _set_curves(pose_asset, params.get("curves", {}))
+    _set_bone_tags(pose_asset, params.get("bones", {}))
     return {
         "pose_asset": path,
         "created_asset": created_asset,
         "created": [str(name) for name in result.get_editor_property("created")],
         "updated": [str(name) for name in result.get_editor_property("updated")],
+        "curves": curves,
+        "missing_curves": missing,
     }

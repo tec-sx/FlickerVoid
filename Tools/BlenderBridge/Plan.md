@@ -105,15 +105,17 @@ Later slices add rest-pose symmetry, bone roll and axis checks, and the leaf rul
 
 ## Slice 2: Meatbag Factory correctives
 
-Turns a target shape (a muscle simulation, a sculpt) into helper bone motion, so correctives are bone driven where bones can do it and morphs only carry the rest.
+Each library pose is one corrective: bone corrections plus a blend shape, sent to Unreal as one Pose Asset pose that also drives its morph target. The bones can be posed by hand, solved from a target shape (a muscle simulation, a sculpt), or both; the blend shape can be sculpted in the pose or filled by the solve with what the bones can't reach.
 
 ### Pose library
 
 The example poses live in a **pose library**, not on the timeline. The library is one action per armature that is never assigned to it, so the timeline, the Dope Sheet and the armature's own animation stay untouched. Pose i is keyed at frame i on every bone (location, quaternion rotation, scale, relative to rest), and the pose names and preview weights are stored on the action, so the action is the whole library and saves with the `.blend`. The Pose Asset gets the poses in library order.
 
 - **Add Pose** (+) adds the viewport pose after the active one; **Add Rest Pose** adds one with every bone transform cleared, to pose from scratch.
-- **Update Pose** replaces the active pose with the viewport pose. **Remove**, **Move Up/Down** and renaming in the list rewrite the action's keys to match. Names stay unique.
-- The bone icon on a row shows that pose. **Rest Pose** clears the bones and the weights.
+- **Remove**, **Move Up/Down** and renaming in the list rewrite the action's keys to match. Names stay unique.
+- The bone icon on a row shows that pose alone (its weight 1, the others 0). **Rest Pose** clears the bones and the weights.
+- **Control and affected bones**, per pose, as a pose reader rig sees them: the control bone's rotation drives the pose, the affected bones are what it moves. Set them from the selection (active bone = control) or edit the list.
+- **Update Pose** and **Update Control** add the viewport change to the active pose's affected bones (all bones when it has none) or its control bone. The change is measured from what the library last showed, which is always the mix of the preview weights: location adds, rotation multiplies on the bone's side, scale multiplies. A pose shown alone takes the viewport values exactly; a pose seen in a blend gets just the edit, whatever the other poses do. Moved bones outside the list are reported, not saved.
 - **Preview weights**: each pose has a weight slider and the viewport shows the mix. **Blend** is a weighted average where the rest pose takes what is left below 1, so A at `1 - t` and B at `t` interpolates between two poses, and a single pose at `t` goes from rest to the pose. **Additive** adds each pose's change from rest on top of the others, the way stacked correctives combine.
 
 Considered and not taken: Blender's own Pose Library (one action asset per pose in the Asset Browser, with interactive blending) has no order and scatters the poses over many assets; timeline markers tie the poses to the scene's frames. Muscle simulations that need frames to settle are the one case the library can't drive yet; a **Lay Out on Timeline** command (poses on temporary frames, simulated, target read per frame, removed afterwards) would cover it when needed.
@@ -128,9 +130,11 @@ Considered and not taken: Blender's own Pose Library (one action asset per pose 
 
 ### Sculpt target
 
+**Pose blend shapes.** A pose's blend shape is the body's `CR_<pose>` shape key. **Sculpt Shape** shows the pose alone and enters Sculpt mode on that key; Blender maps strokes on the posed mesh back to rest space through the Armature modifier. Preview weights set each blend shape to its pose's weight, so mixes show bones and shapes together. Renaming or removing a pose renames or removes its key. The push sends the keys as morph targets.
+
 You pose only one armature. The sculpt target is a hidden copy of the body (`<Body>_MF_Target`) on the same armature, made on first use, with its own Basis and one shape key per library pose. The body stays clean: it is never sculpted, and the target is left out of Push and the Contract checks.
 
-- **Sculpt Pose** shows the active library pose, hides the body, shows the target with that pose's key active (made when missing, shown alone) and enters Sculpt mode. Blender maps the strokes on the posed mesh back into the key.
+- **Sculpt Target** shows the active library pose, hides the body, shows the target with that pose's key active (made when missing, shown alone) and enters Sculpt mode. Blender maps the strokes on the posed mesh back into the key.
 - **Back** returns to the body and, with **Solve on Back**, solves that pose right away.
 - Renaming or removing a pose renames or removes its key. When the body's vertex count changes, delete the target and a new one is made (sculpts on the old one are lost).
 
@@ -154,11 +158,20 @@ The panel lists each pose's RMS error before and after. Helpers are never driven
 
 ### Send Poses to Unreal
 
-1. Each library pose (every bone, after constraints and drivers) is baked into frame i of a temporary armature copy without constraints, exported as an armature-only FBX animation with the push preset.
+1. Each library pose (after constraints and drivers; with **Affected Bones Only**, only its control and affected bones, the others at rest) is baked into frame i of a temporary armature copy without constraints, exported as an armature-only FBX animation with the push preset.
 2. In Unreal, the snippet imports it as `<Pose Asset>_Source` on the mesh's Skeleton, creates the Pose Asset if it is missing (`CreatePoseAsset`, previewed on the linked mesh), and calls `SetPosesFromAnimation`: poses with a library pose's name are updated (keeping their curve values), the others created, as one undo step.
-3. The source animation is deleted unless **Keep Source Animation** is on. Nothing is saved.
+3. Each pose with a blend shape gets its `CR_<pose>` curve at 1 (`AddCurve` first when the asset lacks it; the preview mesh's morph targets are addable), so the pose drives its morph target. Each pose's control and affected bones go into editor metadata tags on the asset (`MeatbagFactory.<pose>.Control`, `.Affected`), for the rig generator.
+4. The source animation is deleted unless **Keep Source Animation** is on. Nothing is saved.
 
 Push the mesh first, so the Skeleton has the helper bones and the `CR_` morph targets. Right-side poses come from **Mirror All** in the Meatbag Factory window.
+
+### Detail tiers in Unreal (engine features, nothing custom)
+
+- **Bone LODs**: each LOD's *Bones to Remove* drops the leaf correctives first, then their parents; removed bones' weights fold into the nearest kept ancestor. The pose's leaf bones then simply have nothing to drive.
+- **Blend shapes**: the morph curves' *Max LOD* (skeleton curve metadata) stops them past a LOD. A LOD that keeps LOD0's geometry and bones but no morphs is a 100% copy of LOD0 with the curve's Max LOD below it.
+- LODs switch on screen size, so distances are approximate and tuned per LOD screen size.
+
+Next: a **layered solve** (parents first with the leaves held, then the leaves on what is left) so each bone LOD looks right on its own, and a **rig generator** in Unreal that builds the pose reader rig from the metadata tags (one reader per control bone, writing the pose curves the Pose Asset blends by).
 
 ## Get from Unreal (slices 2b and 4)
 

@@ -3,11 +3,14 @@ import bpy
 from . import preferences
 from .push.operators import FV_OT_push, FV_OT_test_connection, FV_OT_use_selected_asset
 from .meatbag_factory.contract.operators import MEATBAG_OT_check_contract, MEATBAG_UL_issues
-from .meatbag_factory.operators import (MEATBAG_OT_pose_add, MEATBAG_OT_pose_move, MEATBAG_OT_pose_remove,
-                                        MEATBAG_OT_pose_rest, MEATBAG_OT_pose_update, MEATBAG_OT_sculpt_back,
-                                        MEATBAG_OT_sculpt_pose, MEATBAG_OT_send_poses,
-                                        MEATBAG_OT_solve_correctives, MEATBAG_OT_use_selected_pose_asset,
-                                        MEATBAG_UL_pose_results, MEATBAG_UL_poses)
+from .meatbag_factory.operators import (MEATBAG_OT_pose_add, MEATBAG_OT_pose_affected_add,
+                                        MEATBAG_OT_pose_affected_remove, MEATBAG_OT_pose_bones_from_selection,
+                                        MEATBAG_OT_pose_move, MEATBAG_OT_pose_remove, MEATBAG_OT_pose_rest,
+                                        MEATBAG_OT_pose_update, MEATBAG_OT_pose_update_control,
+                                        MEATBAG_OT_sculpt_back, MEATBAG_OT_sculpt_pose, MEATBAG_OT_sculpt_shape,
+                                        MEATBAG_OT_send_poses, MEATBAG_OT_solve_correctives,
+                                        MEATBAG_OT_use_selected_pose_asset, MEATBAG_UL_affected_bones,
+                                        MEATBAG_UL_pose_results, MEATBAG_UL_poses, sculpting)
 
 
 class FV_PT_unreal(bpy.types.Panel):
@@ -92,10 +95,28 @@ class MEATBAG_PT_poses(_MeatbagSubpanel, bpy.types.Panel):
 
         row = layout.row(align=True)
         row.operator(MEATBAG_OT_pose_add.bl_idname, text="Add Rest Pose", icon="ARMATURE_DATA").rest = True
-        row.operator(MEATBAG_OT_pose_update.bl_idname, icon="FILE_REFRESH")
         row = layout.row(align=True)
         row.prop(s, "blend_mode", expand=True)
         row.operator(MEATBAG_OT_pose_rest.bl_idname, text="", icon="LOOP_BACK")
+        if action and action.meatbag_poses:
+            self.draw_active_pose(layout, s.armature, action.meatbag_poses[action.meatbag_pose_index])
+
+    @staticmethod
+    def draw_active_pose(layout, armature, pose):
+        box = layout.box()
+        box.label(text=pose.name, icon="POSE_HLT")
+        row = box.row(align=True)
+        row.prop_search(pose, "control_bone", armature.data, "bones", text="Control")
+        row.operator(MEATBAG_OT_pose_update_control.bl_idname, text="", icon="FILE_REFRESH")
+        box.label(text="Affected Bones")
+        row = box.row()
+        row.template_list(MEATBAG_UL_affected_bones.__name__, "", pose, "affected_bones", pose, "affected_index", rows=4)
+        column = row.column(align=True)
+        column.operator(MEATBAG_OT_pose_affected_add.bl_idname, text="", icon="ADD")
+        column.operator(MEATBAG_OT_pose_affected_remove.bl_idname, text="", icon="REMOVE")
+        row = box.row(align=True)
+        row.operator(MEATBAG_OT_pose_bones_from_selection.bl_idname, icon="RESTRICT_SELECT_OFF")
+        row.operator(MEATBAG_OT_pose_update.bl_idname, icon="FILE_REFRESH")
 
 
 class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
@@ -111,9 +132,11 @@ class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
             layout.prop_search(s, "helper_collection", s.armature.data, "collections_all")
         layout.prop(s, "mesh")
         row = layout.row(align=True)
-        sculpting = s.mesh and s.mesh.meatbag_target and context.active_object == s.mesh.meatbag_target
-        row.operator(MEATBAG_OT_sculpt_back.bl_idname if sculpting else MEATBAG_OT_sculpt_pose.bl_idname,
-                     icon="LOOP_BACK" if sculpting else "SCULPTMODE_HLT")
+        if sculpting(context):
+            row.operator(MEATBAG_OT_sculpt_back.bl_idname, icon="LOOP_BACK")
+        else:
+            row.operator(MEATBAG_OT_sculpt_shape.bl_idname, icon="SHAPEKEY_DATA")
+            row.operator(MEATBAG_OT_sculpt_pose.bl_idname, icon="SCULPTMODE_HLT")
         layout.prop(s, "solve_on_back")
         layout.prop(s, "target", text="Other Target")
 
@@ -139,6 +162,7 @@ class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.prop(s, "pose_asset")
         row.operator(MEATBAG_OT_use_selected_pose_asset.bl_idname, text="", icon="EYEDROPPER")
+        layout.prop(s, "affected_only")
         layout.prop(s, "keep_source")
         layout.operator(MEATBAG_OT_send_poses.bl_idname, icon="EXPORT")
 
