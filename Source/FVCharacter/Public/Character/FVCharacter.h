@@ -2,7 +2,6 @@
 
 #include "GameFramework/Character.h"
 #include "FVCharacterTypes.h"
-#include "GameplayTagAssetInterface.h"
 #include "GameplayTagContainer.h"
 #include "FVCharacter.generated.h"
 
@@ -11,7 +10,7 @@ class UFVCharacterMovementComponent;
 struct FInputActionValue;
 
 UCLASS(Config = Game)
-class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter, public IGameplayTagAssetInterface
+class FLICKERVOIDCHARACTER_API AFVCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -77,22 +76,10 @@ public:
 	
 	UFlowComponent* GetFlowComponent() const { return FlowComponent; }
 	
-	UFUNCTION(BlueprintCallable, Category = "Tags")
-	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
-	
-	UFUNCTION(BlueprintCallable, Category = "Tags")
-	void AddGameplayTag(FGameplayTag Tag);
-
-	UFUNCTION(BlueprintCallable, Category = "Tags")
-	void RemoveGameplayTag(FGameplayTag Tag);
-	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UFlowComponent> FlowComponent;	
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
-	FGameplayTagContainer OwnedTags;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Movement")
 	FGameplayTagContainer MovementBlockingTags;
 private:

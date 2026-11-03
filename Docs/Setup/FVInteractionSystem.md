@@ -18,7 +18,7 @@ Modules: `FVInteractionSystem`, `FVInteractionSystemDebug`, `FVInteractionSystem
 |---|---|---|
 | `DA_InteractorMode_Default` | `FVInteractorModeDefinition` | **Mode Tag** `Interactor.Mode.Default`; **Detection**: trace origin (Character or Camera), offset, radius, range, tick interval, collision and occlusion channels, scoring weights (alignment and distance); optional UI overlay; **Blend Time** |
 | `DA_InteractorMode_Aim` | `FVInteractorModeDefinition` | Same, tuned for aiming (camera origin, longer range); set **Optional Interaction Mode UI Overlay** to a crosshair widget |
-| `DA_Interactor_Player` | `FVInteractorDefinition` | **Interactor Tag** `Interactor.Tag.Player`, **Granted Tags**, **Blocked Action Tags**, **Default Mode**, other **Modes** pushed at runtime by tag |
+| `DA_Interactor_Player` | `FVInteractorDefinition` | **Interactor Tag** `Interactor.Tag.Player`, **Blocked Action Tags**, **Default Mode**, other **Modes** pushed at runtime by tag |
 | `DA_Interactable_<Name>` | `FVInteractableDefinition` | **Interactable Type** (`Interactable.Door`, `.Item.Pickup`, `.Character`...), **Show Offers**, focus indicator anchor and offset, **Offers**, cooldown, detection channel, compatible interactor tags, detection weight |
 
 ### Offers
@@ -82,7 +82,7 @@ Defined natively, nothing to create: `Interactable.*`, `Interaction.Action.*`, `
 
 ## 7. Conditions
 
-**Interactor Tags**: the interactor carries (or lacks) given tags. Combine it with any other plugin's conditions on offers, e.g. *Has Item* (key), *Faction Standing*, *Is Wearing*, *Knows*.
+Offers use FVFramework's **Actor Tags** condition to require (or block) tags on the interactor, the instigator; tags come from the player's ability system component, wherever they were granted. Combine it with any other plugin's conditions on offers, e.g. *Has Item* (key), *Faction Standing*, *Is Wearing*, *Knows*.
 
 ## 8. Debug
 

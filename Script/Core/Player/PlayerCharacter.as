@@ -54,8 +54,6 @@ class APlayerCharacter : AFVPlayerCharacter
 
             GameplayCamera.ActivateCameraForPlayerController(PlayerController, true);
         }
-
-        FVAbilitySystemComponent.AddLooseGameplayTag(GameplayTags::Ability_Technical_LockPick);
     }
 
     APlayerCharacter()
@@ -70,6 +68,8 @@ class APlayerCharacter : AFVPlayerCharacter
     {
         HeldItems.OnHeldItemsChanged.AddUFunction(this, n"UpdateHoldPoses");
         UpdateHoldPoses();
+
+        FVAbilitySystemComponent.AddLooseGameplayTag(GameplayTags::Ability_Technical_LockPick);
 
         Traversal = UFVTraversalComponent::Get(this);
 

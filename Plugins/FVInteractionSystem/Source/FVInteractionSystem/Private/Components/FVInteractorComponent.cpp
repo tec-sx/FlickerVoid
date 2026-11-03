@@ -55,7 +55,6 @@ void UFVInteractorComponent::BeginPlay()
 		return;
 	}
 
-	GrantedTags = Definition->GrantedTags;
 	BlockedActionTags = Definition->BlockedActionTags;
 
 	ModeStack.Reset();
@@ -584,28 +583,6 @@ void UFVInteractorComponent::HandleFactChanged(FGameplayTag Tag, int32 OldValue,
 	{
 		return;
 	}
-	RefreshOffers();
-}
-
-void UFVInteractorComponent::GrantTag(const FGameplayTag NewTag)
-{
-	if (!NewTag.IsValid() || GrantedTags.HasTagExact(NewTag))
-	{
-		return;
-	}
-
-	GrantedTags.AddTag(NewTag);
-	RefreshOffers();
-}
-
-void UFVInteractorComponent::RemoveTag(const FGameplayTag OldTag)
-{
-	if (!GrantedTags.HasTagExact(OldTag))
-	{
-		return;
-	}
-
-	GrantedTags.RemoveTag(OldTag);
 	RefreshOffers();
 }
 
