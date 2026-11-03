@@ -2,7 +2,7 @@
 
 Look-at interaction: interactables wake up when the player comes near (FVFramework relevance, group `Relevance.Interactable`), the player's interactor picks the best one in view, shows its offers (Talk, Open, Pick up...) and runs an offer's effects when its gesture completes (press, hold, mash, hover).
 
-Modules: `FVInteractionSystem`, `FVInteractionSystemDebug`, `FVInteractionSystemEditor` (Blueprint compile checks for interactable setups).
+Modules: `FVInteractionSystem`, `FVInteractionSystemDebug`, `FVInteractionSystemEditor` (setup checks: an interactable needs a valid **Definition**, and components marked `RequiresInteractor` need an interactor on the same actor). The checks run when a Blueprint compiles and in Data Validation, which also covers inherited components, child Blueprint overrides and placed actors, AngelScript ones included.
 
 ## 1. Quick start
 

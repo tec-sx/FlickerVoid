@@ -1,21 +1,28 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Logging/TokenizedMessage.h"
 
-class UBlueprint;
-class FCompilerResultsLog;
+class UActorComponent;
 
+/** The components of one actor (a class's templates or a placed instance's components) and where rule messages go. */
 struct FInteractionCompileContext
 {
-	FInteractionCompileContext(const UBlueprint& InBlueprint, FCompilerResultsLog& InMessageLog)
-		: Blueprint(InBlueprint)
-		, MessageLog(InMessageLog)
+	using FReport = TFunction<void(EMessageSeverity::Type, const FString&)>;
+
+	FInteractionCompileContext(const TArray<const UActorComponent*>& InComponents, FReport InReport)
+		: Components(InComponents)
+		, Report(MoveTemp(InReport))
 	{}
 
-	const UBlueprint& Blueprint;
-	FCompilerResultsLog& MessageLog;
-};
+	void Error(const FString& Message) const { Report(EMessageSeverity::Error, Message); }
+	void Warning(const FString& Message) const { Report(EMessageSeverity::Warning, Message); }
 
+	const TArray<const UActorComponent*>& Components;
+
+private:
+	FReport Report;
+};
 
 class IInteractionCompileRule
 {
