@@ -11,6 +11,9 @@ from ..push import export
 from ..unreal_link import link
 
 
+HIDDEN_MIRRORS = "mf_hidden_mirrors"
+
+
 def _is_armature(_, obj):
     return obj.type == "ARMATURE"
 
@@ -553,6 +556,11 @@ class MEATBAG_OT_sculpt_shape(_PoseOperator, bpy.types.Operator):
         show_only(context, action, index)
         s.mesh.show_only_shape_key = False
         s.mesh.active_shape_key_index = list(s.mesh.data.shape_keys.key_blocks).index(key)
+        # A blend shape on the modelled half would show on both sides; the push puts it on its own side.
+        hidden = [m.name for m in s.mesh.modifiers if m.type == "MIRROR" and m.show_viewport]
+        for name in hidden:
+            s.mesh.modifiers[name].show_viewport = False
+        s.mesh[HIDDEN_MIRRORS] = hidden
         _sculpt(context, s.mesh)
         self.report({"INFO"}, f"Sculpting {key.name} in {name}. Press Back when done")
         return {"FINISHED"}
@@ -645,6 +653,12 @@ class MEATBAG_OT_sculpt_back(bpy.types.Operator):
         if context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")
         if what == "SHAPE":
+            for name in s.mesh.get(HIDDEN_MIRRORS, []):
+                modifier = s.mesh.modifiers.get(name)
+                if modifier:
+                    modifier.show_viewport = True
+            if HIDDEN_MIRRORS in s.mesh:
+                del s.mesh[HIDDEN_MIRRORS]
             if s.armature and s.armature.meatbag_library:
                 show_preview(context, s.armature.meatbag_library)
             return {"FINISHED"}
@@ -694,6 +708,9 @@ class MEATBAG_OT_send_poses(bpy.types.Operator):
         filepath = export.temp_fbx_path(s.pose_asset + "_Source")
         pose_asset.export_poses(context, s.armature, filepath, keep)
         curves = {pose: sculpt.shape_name(pose) for pose in poses if sculpt.pose_key(s.mesh, sculpt.shape_name(pose))}
+        # Counterpart curves (CR_..._r), so Mirror All in Unreal copies each side curve onto them.
+        sides = preferences.contract(context).sides
+        counterparts = [name for name in (sides.mirror_name(curve) for curve in curves.values()) if name and name not in curves.values()]
         bones = {pose.name: {"control": pose.control_bone, "affected": [bone.name for bone in pose.affected_bones]}
                  for pose in action.meatbag_poses if pose.control_bone or pose.affected_bones}
         scene = context.scene
@@ -706,6 +723,7 @@ class MEATBAG_OT_send_poses(bpy.types.Operator):
             "frame_rate": scene.render.fps / scene.render.fps_base,
             "keep_source": s.keep_source,
             "curves": curves,
+            "counterpart_curves": counterparts,
             "bones": bones,
         }
         try:

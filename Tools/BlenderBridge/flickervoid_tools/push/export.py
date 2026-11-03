@@ -6,7 +6,8 @@ from contextlib import contextmanager
 
 import bpy
 
-from .. import scene_data
+from . import mirror
+from .. import preferences, scene_data
 
 UNREAL_ROOT_NODE = "Armature"
 
@@ -82,11 +83,13 @@ def _export_selection(context, armature, meshes):
 
 
 def export_fbx(context, armature, meshes, filepath):
+    """Raises mirror.MirrorError when a mirrored mesh's shape keys can't be carried over."""
     pose_position = armature.data.pose_position if armature else None
     try:
         if armature:
             armature.data.pose_position = "REST"
-        with _export_selection(context, armature, meshes):
+        with mirror.full_meshes(context, meshes, preferences.contract(context).sides) as meshes, \
+                _export_selection(context, armature, meshes):
             bpy.ops.export_scene.fbx(
                 filepath=filepath,
                 object_types={"ARMATURE", "MESH"} if armature else {"MESH"},

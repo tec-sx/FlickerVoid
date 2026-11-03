@@ -60,6 +60,13 @@ def _set_curves(pose_asset, curves):
     return done, missing
 
 
+def _add_counterpart_curves(pose_asset, curves):
+    """Adds the counterpart side curves that exist as morph targets, at 0, for Mirror All to fill."""
+    library = unreal.FVPoseAuthoringLibrary
+    addable = {str(name) for name in library.get_addable_curves(pose_asset)}
+    return [curve for curve in curves if curve in addable and library.add_curve(pose_asset, curve) is not None]
+
+
 def _set_bone_tags(pose_asset, bones):
     """Stores each pose's control and affected bones as editor metadata (MeatbagFactory.<pose>.Control / .Affected)."""
     for pose, entry in bones.items():
@@ -98,6 +105,7 @@ def main(params):
             unreal.EditorAssetLibrary.delete_asset(path)
         raise RuntimeError(str(result.get_editor_property("error")))
     curves, missing = _set_curves(pose_asset, params.get("curves", {}))
+    counterparts = _add_counterpart_curves(pose_asset, params.get("counterpart_curves", []))
     _set_bone_tags(pose_asset, params.get("bones", {}))
     return {
         "pose_asset": path,
@@ -106,4 +114,5 @@ def main(params):
         "updated": [str(name) for name in result.get_editor_property("updated")],
         "curves": curves,
         "missing_curves": missing,
+        "counterpart_curves": counterparts,
     }

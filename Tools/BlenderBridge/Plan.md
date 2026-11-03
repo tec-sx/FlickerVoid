@@ -130,7 +130,7 @@ Considered and not taken: Blender's own Pose Library (one action asset per pose 
 
 ### Sculpt target
 
-**Pose blend shapes.** A pose's blend shape is the body's `CR_<pose>` shape key. **Sculpt Shape** shows the pose alone and enters Sculpt mode on that key; Blender maps strokes on the posed mesh back to rest space through the Armature modifier. Preview weights set each blend shape to its pose's weight, so mixes show bones and shapes together. Renaming or removing a pose renames or removes its key. The push sends the keys as morph targets.
+**Pose blend shapes.** A pose's blend shape is the body's `CR_<pose>` shape key. **Sculpt Shape** shows the pose alone and enters Sculpt mode on that key; Blender maps strokes on the posed mesh back to rest space through the Armature modifier. Preview weights set each blend shape to its pose's weight, so mixes show bones and shapes together. Renaming or removing a pose renames or removes its key. The push sends the keys as morph targets. With a Mirror modifier on the body, the push exports a full copy where each sided key moves only its side and the counterpart key is reflected (see the README), and Sculpt Shape hides the Mirror while sculpting.
 
 You pose only one armature. The sculpt target is a hidden copy of the body (`<Body>_MF_Target`) on the same armature, made on first use, with its own Basis and one shape key per library pose. The body stays clean: it is never sculpted, and the target is left out of Push and the Contract checks.
 

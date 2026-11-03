@@ -1,6 +1,6 @@
 import bpy
 
-from . import export
+from . import export, mirror
 from .. import preferences, scene_data
 from ..unreal_link import link
 from ..meatbag_factory.contract import checks
@@ -120,7 +120,11 @@ class FV_OT_push(bpy.types.Operator):
         pushed = []
         for asset, (armature, meshes, skeleton) in groups.items():
             filepath = export.temp_fbx_path(asset)
-            export.export_fbx(context, armature, meshes, filepath)
+            try:
+                export.export_fbx(context, armature, meshes, filepath)
+            except mirror.MirrorError as error:
+                self.report({"ERROR"}, str(error))
+                return {"CANCELLED"}
             try:
                 _call(context, "import_fbx", {"fbx": filepath, "asset": asset, "skeletal": armature is not None, "skeleton": skeleton})
             except link.LinkError as error:
