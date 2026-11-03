@@ -36,8 +36,7 @@ public class FlickerVoidGameplay : ModuleRules
 			"Flow",
 			"DeveloperSettings",
 			"FVCoreFlow",
-			"FVStorySystem",
-			"FVSocialSystem"
+			"FVStorySystem"
 		});
 
 		if (Target.bBuildEditor)
