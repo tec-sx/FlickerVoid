@@ -111,18 +111,16 @@ class MEATBAG_PT_poses(_MeatbagSubpanel, bpy.types.Panel):
         key = keys.key_blocks.get(sculpt.shape_name(pose.name)) if keys else None
         if key:
             row.prop(key, "mute", text="Blend Shape", invert_checkbox=True)
-        row = box.row(align=True)
-        row.prop_search(pose, "control_bone", armature.data, "bones", text="Control")
-        row.operator(MEATBAG_OT_pose_update_control.bl_idname, text="", icon="FILE_REFRESH")
+        box.prop_search(pose, "control_bone", armature.data, "bones", text="Control")
+        box.operator(MEATBAG_OT_pose_update_control.bl_idname, icon="FILE_REFRESH")
         box.label(text="Affected Bones")
         row = box.row()
         row.template_list(MEATBAG_UL_affected_bones.__name__, "", pose, "affected_bones", pose, "affected_index", rows=4)
         column = row.column(align=True)
         column.operator(MEATBAG_OT_pose_affected_add.bl_idname, text="", icon="ADD")
         column.operator(MEATBAG_OT_pose_affected_remove.bl_idname, text="", icon="REMOVE")
-        row = box.row(align=True)
-        row.operator(MEATBAG_OT_pose_bones_from_selection.bl_idname, icon="RESTRICT_SELECT_OFF")
-        row.operator(MEATBAG_OT_pose_update.bl_idname, icon="FILE_REFRESH")
+        box.operator(MEATBAG_OT_pose_bones_from_selection.bl_idname, icon="RESTRICT_SELECT_OFF")
+        box.operator(MEATBAG_OT_pose_update.bl_idname, text="Update Affected Bones", icon="FILE_REFRESH")
 
 
 class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):

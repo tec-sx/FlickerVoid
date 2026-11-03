@@ -281,7 +281,7 @@ def update_pose(operator, context, control):
     hints = []
     if not control and pose.control_bone in skipped:
         skipped.remove(pose.control_bone)
-        hints.append(f"{pose.control_bone} is the control bone: press Update Control to save it")
+        hints.append(f"{pose.control_bone} is the control bone: press Update Control Pose to save it")
     if skipped:
         listed = ", ".join(skipped[:5]) + (f" and {len(skipped) - 5} more" if len(skipped) > 5 else "")
         hints.append(f"not saved, since they aren't its {'control' if control else 'affected'} bones: {listed}")
@@ -304,7 +304,7 @@ class MEATBAG_OT_pose_update(_PoseOperator, bpy.types.Operator):
 
 class MEATBAG_OT_pose_update_control(_PoseOperator, bpy.types.Operator):
     bl_idname = "meatbag.pose_update_control"
-    bl_label = "Update Control"
+    bl_label = "Update Control Pose"
     bl_description = "Add your viewport change of the control bone to the active pose, the same way as Update Pose"
 
     def execute(self, context):
