@@ -71,23 +71,6 @@ struct FVINTERACTIONSYSTEM_API FFVInteractableSettings
 	{ }
 };
 
-USTRUCT(BlueprintType)
-struct FVINTERACTIONSYSTEM_API FFVInteractionRegistrySettings
-{
-	GENERATED_BODY()
-		
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractionRegistrySettings", meta=(ClampMin="0", Units="cm"))
-	float DefaultActivationRadius;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="InteractionRegistrySettings", meta=(UIMin=0.05, Units="s"))
-	float RefreshInterval;
-
-	FFVInteractionRegistrySettings()
-		: DefaultActivationRadius(600.f)
-		, RefreshInterval(0.6f)
-	{ }
-};
-
 UCLASS(Config = Game, DefaultConfig, NotBlueprintable, meta = (DisplayName = "Interaction System"))
 class FVINTERACTIONSYSTEM_API UFVInteractionSystemSettings final : public UDeveloperSettings
 {
@@ -103,9 +86,6 @@ public:
 
 	UPROPERTY(Config, BlueprintReadOnly, EditAnywhere, Category = "Interaction")
 	FFVInteractableSettings InteractableBaseSettings;
-	
-	UPROPERTY(Config, BlueprintReadOnly, EditAnywhere, Category = "Registry")
-	FFVInteractionRegistrySettings RegistrySettings;
 	
 	UPROPERTY(Config, BlueprintReadOnly, EditAnywhere, Category = "UI")
 	TSoftObjectPtr<UFVInteractionUISettings> InteractionUISettings;

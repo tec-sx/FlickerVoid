@@ -4,11 +4,9 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "FVScannerSubsystem.generated.h"
 
-class UFVScannableComponent;
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFVOnScanModeChanged, bool, bActive);
 
-/** Global scan mode state, for post process, audio and UI. Scannables come from the interaction registry. */
+/** Global scan mode state, for post process, audio and UI. Scannables in range come from the relevance system. */
 UCLASS()
 class FLICKERVOIDGAMEPLAY_API UFVScannerSubsystem : public UWorldSubsystem
 {
@@ -24,9 +22,6 @@ public:
 	FFVOnScanModeChanged OnScanModeChanged;
 
 	void SetScanModeActive(bool bActive);
-
-	/** Scannable components on registered interactables within Range of Origin. */
-	void CollectScannables(const FVector& Origin, float Range, TArray<UFVScannableComponent*>& OutScannables) const;
 
 private:
 	bool bScanModeActive = false;
