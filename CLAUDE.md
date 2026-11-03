@@ -44,6 +44,7 @@ Refactor in progress: the old `Source/FV*` modules still exist and fold into `Fl
 | FVStorySystem | Quests, knowledge |
 | FVInteractionSystem | Interaction offers, registry subsystem, focus |
 | FVNavigationSystem | Maps and layers, map markers, discovery, waypoint and tracking, minimap/world map/compass view logic, map capture tool |
+| FVAnimationSystem | Side naming (`_l`/`_r`), Meatbag Factory: Pose Asset authoring and mirroring (editor) |
 | Flow | FlowGraph (MothCocoon), external git submodule; don't edit |
 
 Every plugin has three modules: runtime, `<Plugin>Debug` and `<Plugin>Editor`. FVInteractionSystemEditor is the reference pattern.

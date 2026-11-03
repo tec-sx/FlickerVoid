@@ -36,4 +36,6 @@ Config/User*.ini
 !Plugins/FVAttributeSystem/Content
 !Plugins/FVNavigationSystem
 !Plugins/FVNavigationSystem/Content
+!Plugins/FVAnimationSystem
+!Plugins/FVAnimationSystem/Content
 !Plugins/Flow
