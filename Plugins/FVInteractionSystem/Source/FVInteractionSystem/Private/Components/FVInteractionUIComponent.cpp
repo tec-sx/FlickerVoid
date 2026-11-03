@@ -39,7 +39,7 @@ void UFVInteractionUIComponent::BeginPlay()
 	Interactor = GetOwner()->FindComponentByClass<UFVInteractorComponent>();
 	if (!ensureMsgf(Interactor, TEXT("%s on %s requires a UFVInteractorComponent on the same actor."), *GetName(), *GetNameSafe(GetOwner())))
 	{
-		UE_LOG(LogFVInteraction, Error, TEXT("%s on %s has no UFVInteractorComponent."), *GetName(), *GetNameSafe(GetOwner()));
+		UE_LOG(LogFVInteractionSystem, Error, TEXT("%s on %s has no UFVInteractorComponent."), *GetName(), *GetNameSafe(GetOwner()));
 		return;
 	}
 
@@ -97,7 +97,7 @@ void UFVInteractionUIComponent::ShowWidget()
 	const UFVInteractionUISettings* Settings = GetUISettings();
 	if (!Settings)
 	{
-		UE_LOG(LogFVInteraction, Warning, TEXT("No Interaction UI Settings assigned; prompt widget will not be shown."));
+		UE_LOG(LogFVInteractionSystem, Warning, TEXT("No Interaction UI Settings assigned; prompt widget will not be shown."));
 		return;
 	}
 

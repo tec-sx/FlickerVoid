@@ -76,7 +76,7 @@ void UFVInteractorComponent::BeginPlay()
 	
 	if (!Cast<APawn>(GetOwner()))
 	{
-		UE_LOG(LogFVInteraction, Warning, TEXT("Interaction Component has invalid pawn owner."));
+		UE_LOG(LogFVInteractionSystem, Warning, TEXT("Interaction Component has invalid pawn owner."));
 		return;
 	}
 
@@ -219,7 +219,7 @@ bool UFVInteractorComponent::PushMode(const FGameplayTag ModeTag, const int32 Pr
 	const UFVInteractorModeDefinition* Mode = Definition ? Definition->FindMode(ModeTag) : nullptr;
 	if (!Mode)
 	{
-		UE_LOG(LogFVInteraction, Warning, TEXT("%s: interactor mode '%s' is not declared in the definition."), *GetNameSafe(GetOwner()), *ModeTag.ToString());
+		UE_LOG(LogFVInteractionSystem, Warning, TEXT("%s: interactor mode '%s' is not declared in the definition."), *GetNameSafe(GetOwner()), *ModeTag.ToString());
 		return false;
 	}
 

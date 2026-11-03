@@ -6,8 +6,6 @@
 #include "GameplayTagsManager.h"
 #include "Kismet/GameplayStatics.h"
 
-DEFINE_LOG_CATEGORY(LogFVDebug);
-
 APawn* FVDebug::GetPlayerPawn(const UWorld* World)
 {
 	return World != nullptr ? UGameplayStatics::GetPlayerPawn(World, 0) : nullptr;

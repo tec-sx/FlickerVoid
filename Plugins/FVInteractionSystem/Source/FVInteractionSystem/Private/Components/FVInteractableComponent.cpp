@@ -166,7 +166,7 @@ bool UFVInteractableComponent::IsTransitionAllowed(EFVInteractableState From, EF
 {
 	auto LogRejection = [&From, &To](const TCHAR* Reason)
 	{
-		UE_LOG(LogFVInteraction, Verbose, TEXT("Rejected %s -> %s: %s"),
+		UE_LOG(LogFVInteractionSystem, Verbose, TEXT("Rejected %s -> %s: %s"),
 			*UEnum::GetValueAsString(From),
 			*UEnum::GetValueAsString(To),
 			Reason);
@@ -482,7 +482,7 @@ void UFVInteractableComponent::BindResponse(FGameplayTag ActionTag, UFVInteracta
 
 	if (!ActionTag.IsValid())
 	{
-		UE_LOG(LogFVInteraction, Error,
+		UE_LOG(LogFVInteractionSystem, Error,
 			TEXT("'%s' cannot bind response '%s': the supplied ActionTag is invalid."),
 			*GetNameSafe(GetOwner()), *Response->GetName());
 		return;

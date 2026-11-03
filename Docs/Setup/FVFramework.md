@@ -161,6 +161,8 @@ Place an `AFVSpawner` (or a Blueprint of it) in the level and set its **Definiti
 
 ## 11. Debug
 
+Debug HUDs, CVars and cheat commands live in each plugin's `<Plugin>Debug` module and the game's `FlickerVoidDebug`. Those modules are left out of Shipping builds (`TargetConfigurationDenyList` in the `.uplugin` / `.uproject`), so runtime modules must never depend on them. A CVar that overrides a rule writes a static override on the runtime side (see `UFVInventorySettings::EnforceWeightOverride`), which stays at -1, "use config", in Shipping.
+
 | CVar / command | Effect |
 |---|---|
 | `FVCvar.Facts.Debug.HUD 1` | On-screen fact readout |
@@ -168,7 +170,7 @@ Place an `AFVSpawner` (or a Blueprint of it) in the level and set its **Definiti
 | `FV.Facts.Set <Tag> <Value>` | Write a fact |
 | `FV.Facts.Dump [Filter]` | Log all facts |
 | `FV.Facts.Reset` | Reset facts to their declared defaults |
-| `FV.ValidateAll` (editor) | Run data validation on every definition |
+| `FV.Core.ValidateAll` (editor) | Run data validation on every definition |
 
 Data validation also warns when an array tagged `meta = (MaxEntries = N)` (C++ or AngelScript, in a data asset or a Blueprint's class defaults) holds more than N entries; the game uses it for the rule of three.
 

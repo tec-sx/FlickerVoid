@@ -43,8 +43,8 @@ void UFVStoryDebugSubsystem::CollectLines(TArray<FString>& OutLines) const
 }
 
 static FAutoConsoleCommandWithWorldAndArgs CmdQuestStart(
-	TEXT("FV.Quest.Start"),
-	TEXT("FV.Quest.Start <QuestIdOrAsset> - start a quest."),
+	TEXT("FV.Story.StartQuest"),
+	TEXT("FV.Story.StartQuest <QuestIdOrAsset> - start a quest."),
 	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
 	{
 		UFVQuestSubsystem* Quests = UFVQuestSubsystem::Get(World);
@@ -57,8 +57,8 @@ static FAutoConsoleCommandWithWorldAndArgs CmdQuestStart(
 	}));
 
 static FAutoConsoleCommandWithWorldAndArgs CmdQuestComplete(
-	TEXT("FV.Quest.Complete"),
-	TEXT("FV.Quest.Complete <QuestIdOrAsset> - complete a quest."),
+	TEXT("FV.Story.CompleteQuest"),
+	TEXT("FV.Story.CompleteQuest <QuestIdOrAsset> - complete a quest."),
 	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
 	{
 		UFVQuestSubsystem* Quests = UFVQuestSubsystem::Get(World);

@@ -171,7 +171,7 @@ Use *Is Wearing* with a granted tag for dress codes ("wear anything granting `Di
 | CVar / command | Effect |
 |---|---|
 | `FVCvar.Inventory.Debug.HUD 1` | Carried items, weight, space and money on screen; stacks are marked `(custom)`, `(key)`, `(stolen)` and `(worn)` |
-| `FVCvar.Inventory.EnforceWeight` / `EnforceSpace` | -1 use settings, 0 off, 1 on |
+| `FVCvar.Inventory.Debug.EnforceWeight` / `EnforceSpace` | -1 use settings, 0 off, 1 on |
 | `FV.Inventory.Give <ItemIdOrAsset> [Quantity]` | Give the player an item |
 | `FV.Inventory.Equip <ItemIdOrAsset>` | Equip a carried item |
 | `FV.Inventory.Use <ItemIdOrAsset>` | Use a carried item |
