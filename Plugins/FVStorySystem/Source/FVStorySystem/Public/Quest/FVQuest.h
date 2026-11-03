@@ -4,8 +4,6 @@
 #include "Conditions/FVCondition.h"
 #include "Conditions/FVEffect.h"
 #include "Data/FVDefinition.h"
-#include "Engine/DeveloperSettings.h"
-#include "FVCoreNames.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "FVQuest.generated.h"
 
@@ -86,19 +84,6 @@ protected:
 	virtual bool RequiresId() const override { return true; }
 };
 
-UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Quests"))
-class FVSTORYSYSTEM_API UFVQuestSettings : public UDeveloperSettings
-{
-	GENERATED_BODY()
-
-public:
-	virtual FName GetCategoryName() const override { return FV::Names::SettingsCategory; }
-
-	/** Quests tracked by the quest subsystem (auto-start, objective evaluation). */
-	UPROPERTY(Config, EditAnywhere, Category = "Quests")
-	TArray<TSoftObjectPtr<UFVQuestDefinition>> Quests;
-};
-
 UCLASS()
 class FVSTORYSYSTEM_API UFVQuestSubsystem : public UWorldSubsystem
 {
@@ -149,6 +134,7 @@ public:
 	void RestoreTrackedQuests(const TArray<FSoftObjectPath>& Paths);
 
 private:
+	void HandleQuestsLoaded();
 	void HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue);
 	bool SetState(UFVQuestDefinition* Quest, EFVQuestState NewState, EFVQuestState RequiredState);
 	void EvaluateQuest(UFVQuestDefinition* Quest);

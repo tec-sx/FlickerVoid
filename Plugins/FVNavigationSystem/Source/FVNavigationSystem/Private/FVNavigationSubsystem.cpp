@@ -1,6 +1,7 @@
 #include "FVNavigationSubsystem.h"
 
 #include "Conditions/FVCondition.h"
+#include "Data/FVDefinitionLibrary.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
 #include "FVMapDefinition.h"
@@ -54,17 +55,22 @@ void UFVNavigationSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
-	for (const TSoftObjectPtr<UFVMapDefinition>& Soft : UFVNavigationSettings::Get().Maps)
-	{
-		if (UFVMapDefinition* Map = Soft.LoadSynchronous())
-		{
-			Maps.Add(Map);
-		}
-	}
+	const FSimpleDelegate OnLoaded = FSimpleDelegate::CreateUObject(this, &UFVNavigationSubsystem::HandleMapsLoaded);
+	UFVDefinitionLibrary::LoadDefinitions(UFVMapDefinition::StaticClass(), OnLoaded);
 
 	if (UFVFactDatabase* Facts = UFVFactDatabase::Get(this))
 	{
 		FactChangedHandle = Facts->OnFactChangedNative().AddUObject(this, &UFVNavigationSubsystem::HandleFactChanged);
+	}
+}
+
+void UFVNavigationSubsystem::HandleMapsLoaded()
+{
+	const TArray<UFVMapDefinition*> Loaded = UFVDefinitionLibrary::GetLoadedDefinitions<UFVMapDefinition>();
+	Maps.Reset();
+	for (UFVMapDefinition* Map : Loaded)
+	{
+		Maps.Add(Map);
 	}
 }
 

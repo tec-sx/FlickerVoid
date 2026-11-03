@@ -2,6 +2,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "Data/FVDefinitionLibrary.h"
 #include "Facts/FVFactDatabase.h"
 #include "Identity/FVIdentityComponent.h"
 #include "Scales/FVScaleDefinition.h"
@@ -133,15 +134,7 @@ EFVAttitude UFVSocialLibrary::GetAttitude(const UFVFactionDefinition* Faction, c
 
 TArray<UFVFactionDefinition*> UFVSocialLibrary::GetFactions()
 {
-	TArray<UFVFactionDefinition*> Result;
-	for (const TSoftObjectPtr<UFVFactionDefinition>& Soft : UFVSocialSettings::Get().Factions)
-	{
-		if (UFVFactionDefinition* Faction = Soft.LoadSynchronous())
-		{
-			Result.Add(Faction);
-		}
-	}
-	return Result;
+	return UFVDefinitionLibrary::GetLoadedDefinitions<UFVFactionDefinition>();
 }
 
 TArray<UFVCharacterDefinition*> UFVSocialLibrary::GetKnownCharacters(const UObject* WorldContext)

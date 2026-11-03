@@ -6,7 +6,7 @@ Modules: `FVNavigationSystem`, `FVNavigationSystemDebug`, `FVNavigationSystemEdi
 
 ## 1. Quick start
 
-1. Make a map definition with one layer (section 2) and add it to *FlickerVoid > Navigation > Maps*.
+1. Make a map definition with one layer (section 2) under `/Game`. The Asset Manager finds it (`FVMapDefinition` in *Project Settings > Asset Manager*, which also scans this plugin's content).
 2. Make a capture camera Blueprint, place it over the area and capture the layer image (section 4).
 3. Add **FV Navigator Component** to the player pawn or player controller (on a controller it follows the possessed pawn).
 4. Make a marker definition with Minimap, Compass and World Map fragments, and add **FV Map Marker Component** to an actor with that definition.
@@ -287,7 +287,6 @@ For a widget the classes above don't cover, the navigator still builds the raw v
 
 | Setting | Meaning |
 |---|---|
-| Maps | Every map the player can be on |
 | Waypoint Marker | Marker definition for the player's waypoint |
 | Elevation Threshold | Height difference that counts as above or below |
 | Update Interval | Seconds between the navigator's map and discovery checks |
