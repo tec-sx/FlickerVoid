@@ -278,9 +278,15 @@ def update_pose(operator, context, control):
 
     updated = set(rows)
     skipped = [bones[row] for row in library.changed_rows(shown, viewport) if row not in updated]
+    hints = []
+    if not control and pose.control_bone in skipped:
+        skipped.remove(pose.control_bone)
+        hints.append(f"{pose.control_bone} is the control bone: press Update Control to save it")
     if skipped:
         listed = ", ".join(skipped[:5]) + (f" and {len(skipped) - 5} more" if len(skipped) > 5 else "")
-        operator.report({"WARNING"}, f"Updated {pose.name}. Moved but not saved, since they aren't its {'control' if control else 'affected'} bones: {listed}")
+        hints.append(f"not saved, since they aren't its {'control' if control else 'affected'} bones: {listed}")
+    if hints:
+        operator.report({"WARNING"}, f"Updated {pose.name}: {len(names)} bones. " + "; ".join(hints))
     else:
         operator.report({"INFO"}, f"Updated {pose.name}: {len(names)} bones")
     return {"FINISHED"}
