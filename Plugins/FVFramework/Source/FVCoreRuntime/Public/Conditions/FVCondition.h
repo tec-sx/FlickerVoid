@@ -33,13 +33,19 @@ struct FVCORERUNTIME_API FFVConditionBase
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	bool bInvert = false;
 
-	bool Evaluate(const FFVConditionContext& Context) const { return EvaluateImpl(Context) != bInvert; }
+	/** A condition that can't be evaluated (see CanEvaluate) fails, whatever Invert says. */
+	bool Evaluate(const FFVConditionContext& Context) const { return CanEvaluate(Context) && EvaluateImpl(Context) != bInvert; }
 	virtual FText GetDescription() const { return FText::GetEmpty(); }
 
+	/** Why the condition can't work as set up (a missing reference or tag); empty when it's fine. Data validation reports it. */
+	virtual FText GetSetupError() const { return FText::GetEmpty(); }
+
 	/** Scores an at-least condition (fame >= 80) to rank what it unlocks; false for other conditions and inverted ones. */
-	bool GetScore(const FFVConditionContext& Context, FFVConditionScore& OutScore) const { return !bInvert && GetScoreImpl(Context, OutScore); }
+	bool GetScore(const FFVConditionContext& Context, FFVConditionScore& OutScore) const { return !bInvert && CanEvaluate(Context) && GetScoreImpl(Context, OutScore); }
 
 protected:
+	/** False when the condition can't be evaluated here: a setup error, or a context actor it needs is missing. */
+	virtual bool CanEvaluate(const FFVConditionContext& Context) const { return GetSetupError().IsEmpty(); }
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const { return true; }
 	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const { return false; }
 };
@@ -70,14 +76,20 @@ class FVCORERUNTIME_API UFVCondition : public UObject
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "FV|Condition", meta = (ToolTip = "Evaluate's result, flipped when Invert is set."))
+	UFUNCTION(BlueprintCallable, Category = "FV|Condition", meta = (ToolTip = "Evaluate's result, flipped when Invert is set. False whatever Invert says when Can Evaluate is false."))
 	bool Check(const FFVConditionContext& Context) const;
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Condition", meta = (ToolTip = "Ranks what an at-least condition unlocks; false when the condition isn't scored or is inverted."))
 	bool GetScore(const FFVConditionContext& Context, FFVConditionScore& OutScore) const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "FV|Condition", meta = (ToolTip = "Whether the condition holds, before Invert. Override it."))
+	UFUNCTION(BlueprintNativeEvent, Category = "FV|Condition", meta = (ToolTip = "Whether the condition holds, before Invert. Override it; the default fails and warns. Read the world through Context.WorldContext: the condition lives in an asset, which has no world."))
 	bool Evaluate(const FFVConditionContext& Context) const;
+
+	UFUNCTION(BlueprintNativeEvent, Category = "FV|Condition", meta = (ToolTip = "Override to return false when the condition can't be evaluated here (a context actor it needs is missing); it then fails whatever Invert says. Default: true when there is no setup error."))
+	bool CanEvaluate(const FFVConditionContext& Context) const;
+
+	UFUNCTION(BlueprintNativeEvent, Category = "FV|Condition", meta = (ToolTip = "Override to say why the condition can't work as set up (a missing reference or tag); empty when it's fine. Data validation reports it, and the condition fails while it's set."))
+	FText GetSetupError() const;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "FV|Condition", meta = (ToolTip = "Override for at-least conditions (fame >= 80): fill the score and return true. Default: not scored."))
 	bool Score(const FFVConditionContext& Context, FFVConditionScore& OutScore) const;
@@ -109,8 +121,12 @@ struct FVCORERUNTIME_API FFVConditionSet
 	FText FailureReason;
 
 	bool IsEmpty() const { return Conditions.IsEmpty(); }
+	/** An entry with no type picked counts as failed. */
 	bool Evaluate(const FFVConditionContext& Context) const;
 	FText GetDescription() const;
+
+	/** Every entry's setup error, numbered; empty when the set is fine. */
+	FText GetSetupError() const;
 
 	/** Sum of the scored conditions (All, so more requirements rank higher) or the best one (Any); false when none is scored. */
 	bool GetScore(const FFVConditionContext& Context, FFVConditionScore& OutScore) const;
@@ -125,8 +141,10 @@ struct FVCORERUNTIME_API FFVCondition_Group : public FFVConditionBase
 	FFVConditionSet Set;
 
 	virtual FText GetDescription() const override { return Set.GetDescription(); }
+	virtual FText GetSetupError() const override { return Set.GetSetupError(); }
 
 protected:
+	virtual bool CanEvaluate(const FFVConditionContext& Context) const override { return true; }
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override { return Set.Evaluate(Context); }
 	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override { return Set.GetScore(Context, OutScore); }
 };
@@ -141,8 +159,10 @@ struct FVCORERUNTIME_API FFVCondition_Object : public FFVConditionBase
 	TObjectPtr<UFVCondition> Condition;
 
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 protected:
+	virtual bool CanEvaluate(const FFVConditionContext& Context) const override;
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
 	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };

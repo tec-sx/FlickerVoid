@@ -184,6 +184,7 @@ struct FVSTORYSYSTEM_API FFVCondition_QuestState : public FFVConditionBase
 	EFVQuestState State = EFVQuestState::Active;
 
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
@@ -202,4 +203,5 @@ struct FVSTORYSYSTEM_API FFVEffect_SetQuestState : public FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 };

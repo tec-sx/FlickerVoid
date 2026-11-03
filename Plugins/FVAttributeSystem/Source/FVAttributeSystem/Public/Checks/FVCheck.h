@@ -111,6 +111,7 @@ struct FVATTRIBUTESYSTEM_API FFVCondition_PassiveCheck : public FFVConditionBase
 	int32 Difficulty = 10;
 
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;

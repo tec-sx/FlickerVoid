@@ -33,6 +33,7 @@ struct FLICKERVOIDAI_API FFVCondition_NpcFact : public FFVConditionBase
 	int32 Value = 1;
 
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
@@ -58,4 +59,5 @@ struct FLICKERVOIDAI_API FFVEffect_NpcFact : public FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 };

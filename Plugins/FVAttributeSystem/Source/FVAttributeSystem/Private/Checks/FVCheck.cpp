@@ -120,4 +120,9 @@ bool FFVCondition_PassiveCheck::EvaluateImpl(const FFVConditionContext& Context)
 	return UFVCheckLibrary::Build(Check, Context, Difficulty, false).bSuccess;
 }
 
+FText FFVCondition_PassiveCheck::GetSetupError() const
+{
+	return Check ? FText::GetEmpty() : LOCTEXT("NoCheck", "no check");
+}
+
 #undef LOCTEXT_NAMESPACE

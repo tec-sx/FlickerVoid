@@ -93,4 +93,5 @@ struct FVCORERUNTIME_API FFVEffect_PlayCinematic : public FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 };
