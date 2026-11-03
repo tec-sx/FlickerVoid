@@ -451,6 +451,9 @@ def solve(operator, context, scope):
     if target is None:
         operator.report({"ERROR"}, "No sculpt target yet: press Sculpt Target first")
         return {"CANCELLED"}
+    if sculpt.is_stale(s.mesh, target):
+        operator.report({"ERROR"}, sculpt.stale_message(s.mesh, target))
+        return {"CANCELLED"}
     indices = _pose_indices(s, scope)
     groups = _groups(s, indices)
     if context.mode != "OBJECT":
@@ -587,6 +590,28 @@ class MEATBAG_OT_sculpt_pose(_PoseOperator, bpy.types.Operator):
         s.mesh.hide_set(True)
         _sculpt(context, target)
         self.report({"INFO"}, f"Sculpting {name}. Press Back when done")
+        return {"FINISHED"}
+
+
+class MEATBAG_OT_rebuild_target(bpy.types.Operator):
+    bl_idname = "meatbag.rebuild_target"
+    bl_label = "Rebuild Target"
+    bl_description = "Delete the sculpt target and make a new one from the body as it is now, with an empty shape key per pose. Its sculpts are lost"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        s = settings(context)
+        return bool(s.mesh and s.mesh.meatbag_target and sculpting(context) is None)
+
+    def execute(self, context):
+        s = settings(context)
+        sculpt.remove_target(s.mesh)
+        target = sculpt.ensure_target(s.mesh)
+        action = s.armature.meatbag_library if s.armature else None
+        for name in library.pose_names(action):
+            sculpt.pose_key(target, name, create=True)
+        self.report({"INFO"}, f"Rebuilt {target.name} with {len(target.data.vertices)} vertices")
         return {"FINISHED"}
 
 
@@ -770,6 +795,7 @@ classes = (
     MEATBAG_OT_sculpt_shape,
     MEATBAG_OT_sculpt_pose,
     MEATBAG_OT_sculpt_back,
+    MEATBAG_OT_rebuild_target,
     MEATBAG_OT_send_poses,
     MEATBAG_OT_use_selected_pose_asset,
     MEATBAG_UL_poses,

@@ -5,6 +5,8 @@ pose drives. The sculpt target is a hidden copy of the body on the same armature
 holding the full shape wanted in that pose; the solve reads it as its target.
 """
 
+import bpy
+
 SHAPE_PREFIX = "CR_"
 TARGET_SUFFIX = "_MF_Target"
 TARGET_TAG = "mf_sculpt_target"
@@ -15,11 +17,31 @@ class SculptError(RuntimeError):
     pass
 
 
+def is_stale(mesh, target):
+    return len(target.data.vertices) != len(mesh.data.vertices)
+
+
+def stale_message(mesh, target):
+    return (f"{target.name} has {len(target.data.vertices)} vertices, {mesh.name} now {len(mesh.data.vertices)}: the body "
+            f"changed after the target was made. Press Rebuild Target (its sculpts are lost)")
+
+
+def remove_target(mesh):
+    target = mesh.meatbag_target
+    if target is None:
+        return
+    data = target.data
+    mesh.meatbag_target = None
+    bpy.data.objects.remove(target)
+    if data.users == 0:
+        bpy.data.meshes.remove(data)
+
+
 def ensure_target(mesh):
     target = mesh.meatbag_target
     if target is not None:
         if len(target.data.vertices) != len(mesh.data.vertices):
-            raise SculptError(f"{target.name} no longer matches {mesh.name}'s vertices; delete it to make a new one")
+            raise SculptError(stale_message(mesh, target))
         return target
 
     target = mesh.copy()

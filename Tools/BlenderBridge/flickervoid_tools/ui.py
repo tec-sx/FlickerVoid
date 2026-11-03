@@ -143,6 +143,8 @@ class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
         else:
             row.operator(MEATBAG_OT_sculpt_shape.bl_idname, icon="SHAPEKEY_DATA")
             row.operator(MEATBAG_OT_sculpt_pose.bl_idname, icon="SCULPTMODE_HLT")
+            if s.mesh and s.mesh.meatbag_target:
+                row.operator("meatbag.rebuild_target", text="", icon="FILE_REFRESH")
         layout.prop(s, "solve_on_back")
 
         layout.prop(s, "solve_scope")

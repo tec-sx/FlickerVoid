@@ -88,6 +88,9 @@ def write_residual_shape_keys(mesh, capture, result, threshold):
         if result.error[pose_index].max() <= threshold:
             continue
         blended = np.einsum("nb,bij->nij", result.weights, result.skin[pose_index][:, :, :3])
+        # Unweighted vertices don't move with the bones, so their residual is already in rest space.
+        singular = np.abs(np.linalg.det(blended)) < 1e-8
+        blended[singular] = np.eye(3)
         delta = np.linalg.solve(blended, residual[pose_index][:, :, None])[:, :, 0]
         name = sculpt.shape_name(pose)
         key = mesh.data.shape_keys.key_blocks.get(name) or mesh.shape_key_add(name=name, from_mix=False)
