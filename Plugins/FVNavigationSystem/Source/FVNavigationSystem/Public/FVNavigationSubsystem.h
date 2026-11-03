@@ -152,6 +152,7 @@ private:
 	bool UpdateMarker(FFVMarker& Marker);
 	bool ReadDiscovered(const FFVMarker& Marker) const;
 	FFVConditionContext MakeContext(const FFVMarker& Marker, AActor* Instigator) const;
+	void HandleMapsLoaded();
 	void HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue);
 
 	UPROPERTY(Transient)

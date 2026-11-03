@@ -9,7 +9,7 @@ Every value is a **scale** (`FVScaleDefinition`, FVFramework): a fact with optio
 1. Create fact tags: `Fact.Social.Fame`, `Fact.Social.Notoriety`, and per faction `Fact.Faction.<Name>.Standing` and `Fact.Faction.<Name>.Notoriety`.
 2. Declare them in *FlickerVoid > Facts* with a clamp (standing -100..100, notoriety and fame 0..100). The clamp is the scale's range and fills the menus' bars.
 3. Make a scale for each (section 2): `DA_Scale_Fame`, `DA_Scale_Notoriety`, `DA_Scale_<Faction>Standing`, `DA_Scale_<Faction>Notoriety`.
-4. Make a faction definition and add it to *FlickerVoid > Social > Factions*.
+4. Make a faction definition under `/Game`. The Asset Manager finds factions and titles (`FVFactionDefinition`, `FVTitleDefinition` in *Project Settings > Asset Manager*); there are no lists to add them to.
 5. Set *Fame* and *Notoriety* in *FlickerVoid > Social*.
 6. Add the **Social** fragment to NPC character definitions to make them faction members.
 7. Change standing with the **Modify Scale** effect (quest rewards, dialogue choices) and watch `FVCvar.Social.Debug.HUD 1`.
@@ -73,8 +73,6 @@ The player needs an Ability System Component for disguises to be read.
 |---|---|
 | Fame | Scale holding fame |
 | Notoriety | Scale holding global notoriety |
-| Titles | Every title evaluated on fact changes |
-| Factions | Factions listed by the debug HUD and commands, the menus (`Get Factions`) and disguise lookups (`Get Disguise Faction`) |
 | Relationships | Character definitions the menus list once their relationship scale has been set (`Get Known Characters`) |
 | Disguise Root | Tags under this root count as disguises |
 | Disguise Recognition | Fraction of fame and notoriety onlookers read while the player is disguised |

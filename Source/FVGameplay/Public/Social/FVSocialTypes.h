@@ -9,7 +9,6 @@
 
 class UFVFactionDefinition;
 class UFVScaleDefinition;
-class UFVTitleDefinition;
 
 UENUM(BlueprintType, meta = (ScriptName = "Attitude"))
 enum class EFVAttitude : uint8
@@ -83,12 +82,6 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category = "Fame", meta = (ToolTip = "How wanted the player is overall. Faction standing scales feed it through their links."))
 	TSoftObjectPtr<UFVScaleDefinition> Notoriety;
-
-	UPROPERTY(Config, EditAnywhere, Category = "Fame", meta = (ToolTip = "Titles the player can earn; they are checked whenever a fact changes."))
-	TArray<TSoftObjectPtr<UFVTitleDefinition>> Titles;
-
-	UPROPERTY(Config, EditAnywhere, Category = "Factions", meta = (ToolTip = "Factions the menus, disguises and debug commands know about."))
-	TArray<TSoftObjectPtr<UFVFactionDefinition>> Factions;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Relationships", meta = (ToolTip = "Characters the menus list once their relationship scale has been set."))
 	TArray<TSoftObjectPtr<UFVCharacterDefinition>> Relationships;

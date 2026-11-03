@@ -50,7 +50,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "How members of the faction treat the subject: members and accepted disguises are Allied, high notoriety is Hostile, otherwise the standing band decides."))
 	static EFVAttitude GetAttitude(const UFVFactionDefinition* Faction, const AActor* Subject);
 
-	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "Factions registered in the Social settings."))
+	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (ToolTip = "Every faction definition registered with the Asset Manager (loaded when the world begins play)."))
 	static TArray<UFVFactionDefinition*> GetFactions();
 
 	UFUNCTION(BlueprintPure, Category = "FV|Social", meta = (WorldContext = "WorldContext", ToolTip = "Characters from the Social settings' Relationships list whose relationship has been set."))

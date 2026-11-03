@@ -1,4 +1,5 @@
 #include "Data/FVDefinition.h"
+#include "Data/FVDefinitionLibrary.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -8,12 +9,8 @@
 
 FPrimaryAssetId UFVDefinition::GetPrimaryAssetId() const
 {
-	const UClass* NativeClass = GetClass();
-	while (NativeClass && !NativeClass->HasAnyClassFlags(CLASS_Native))
-	{
-		NativeClass = NativeClass->GetSuperClass();
-	}
-	return FPrimaryAssetId(NativeClass ? NativeClass->GetFName() : GetClass()->GetFName(), GetFName());
+	const FPrimaryAssetType Type = UFVDefinitionLibrary::GetPrimaryAssetType(GetClass());
+	return FPrimaryAssetId(Type, GetFName());
 }
 
 #if WITH_EDITOR
