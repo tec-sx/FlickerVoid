@@ -105,7 +105,7 @@ Later slices add rest-pose symmetry, bone roll and axis checks, and the leaf rul
 
 ## Slice 2: Meatbag Factory correctives
 
-Each library pose is one corrective: bone corrections plus a blend shape, sent to Unreal as one Pose Asset pose that also drives its morph target. The bones can be posed by hand, solved from a target shape (a muscle simulation, a sculpt), or both; the blend shape can be sculpted in the pose or filled by the solve with what the bones can't reach.
+Each library pose is one corrective: bone corrections plus a blend shape, sent to Unreal as one Pose Asset pose that also drives its morph target. The bones can be posed by hand, solved from a sculpted target shape, or both; the blend shape can be sculpted in the pose or filled by the solve with what the bones can't reach.
 
 ### Pose library
 
@@ -118,13 +118,13 @@ The example poses live in a **pose library**, not on the timeline. The library i
 - **Update Pose** and **Update Control** add the viewport change to the active pose's affected bones (all bones when it has none) or its control bone. The change is measured from what the library last showed, which is always the mix of the preview weights: location adds, rotation multiplies on the bone's side, scale multiplies. A pose shown alone takes the viewport values exactly; a pose seen in a blend gets just the edit, whatever the other poses do. Moved bones outside the list are reported, not saved.
 - **Preview weights**: each pose has a weight slider and the viewport shows the mix. **Blend** is a weighted average where the rest pose takes what is left below 1, so A at `1 - t` and B at `t` interpolates between two poses, and a single pose at `t` goes from rest to the pose. **Additive** adds each pose's change from rest on top of the others, the way stacked correctives combine.
 
-Considered and not taken: Blender's own Pose Library (one action asset per pose in the Asset Browser, with interactive blending) has no order and scatters the poses over many assets; timeline markers tie the poses to the scene's frames. Muscle simulations that need frames to settle are the one case the library can't drive yet; a **Lay Out on Timeline** command (poses on temporary frames, simulated, target read per frame, removed afterwards) would cover it when needed.
+Considered and not taken: Blender's own Pose Library (one action asset per pose in the Asset Browser, with interactive blending) has no order and scatters the poses over many assets; timeline markers tie the poses to the scene's frames.
 
 ### Setup in Blender
 
 - **Armature** with its example poses in the pose library, and helper bones (deform bones, usually parented to a main bone) in a bone collection, `Correctives` by default.
 - **Mesh**: the skinned body. Helpers need painted weights on the vertices they should move; a helper without weights can't be solved and is reported.
-- **Target**: the shape to match in each pose. By default the **sculpt target**, which the tool makes and manages (below). **Other Target** picks any mesh with the same vertices instead, such as a muscle skin driven by the same bones. In either, shape keys named after a pose are set to 1 for that pose and 0 for the others while capturing. Its modifiers may move vertices but not change their count.
+- **Target**: the shape to match in each pose is the **sculpt target**, which the tool makes and manages (below). Its shape keys named after a pose are set to 1 for that pose and 0 for the others while capturing.
 - Pose names become the Pose Asset's pose names and the `CR_` shape key names, so they use the side tokens the Meatbag Factory mirrors (`thigh_l_raise_90`).
 - The Armature modifier has Preserve Volume off, since Unreal skins linearly.
 

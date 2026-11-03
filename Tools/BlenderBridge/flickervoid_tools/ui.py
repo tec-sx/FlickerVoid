@@ -144,7 +144,6 @@ class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
             row.operator(MEATBAG_OT_sculpt_shape.bl_idname, icon="SHAPEKEY_DATA")
             row.operator(MEATBAG_OT_sculpt_pose.bl_idname, icon="SCULPTMODE_HLT")
         layout.prop(s, "solve_on_back")
-        layout.prop(s, "target", text="Other Target")
 
         layout.prop(s, "solve_scope")
         layout.prop(s, "selected_helpers")

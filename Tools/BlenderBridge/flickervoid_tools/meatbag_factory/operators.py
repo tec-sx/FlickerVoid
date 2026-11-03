@@ -121,9 +121,6 @@ class MeatbagSettings(bpy.types.PropertyGroup):
                                         description="Armature whose pose library is edited and solved")
     mesh: bpy.props.PointerProperty(type=bpy.types.Object, poll=_is_mesh, name="Mesh",
                                     description="The skinned mesh whose helper bones are solved")
-    target: bpy.props.PointerProperty(type=bpy.types.Object, poll=_is_mesh, name="Target",
-                                      description="Mesh to match in each pose, with the same vertices as Mesh, such as a muscle skin. "
-                                                  "Its shape keys named after a pose are on only for that pose. Empty uses the sculpt target")
     solve_scope: bpy.props.EnumProperty(name="Solve", items=(
         ("ALL", "All Poses", "Solve every pose that isn't locked"),
         ("ACTIVE", "Active Pose", "Solve only the active pose"),
@@ -450,9 +447,9 @@ def _groups(s, indices):
 def solve(operator, context, scope):
     """Captures, solves and writes back the scoped poses, each pose on its own affected bones; reports to the operator."""
     s = settings(context)
-    target = sculpt.effective_target(s)
-    if target is None or target == s.mesh:
-        operator.report({"ERROR"}, "No target: sculpt a pose, or pick a Target mesh")
+    target = s.mesh.meatbag_target
+    if target is None:
+        operator.report({"ERROR"}, "No sculpt target yet: press Sculpt Target first")
         return {"CANCELLED"}
     indices = _pose_indices(s, scope)
     groups = _groups(s, indices)
@@ -634,7 +631,7 @@ class MEATBAG_OT_sculpt_back(bpy.types.Operator):
             obj.select_set(False)
         s.mesh.select_set(True)
         context.view_layer.objects.active = s.mesh
-        if s.solve_on_back and s.armature and not s.target:
+        if s.solve_on_back and s.armature:
             return solve(self, context, "ACTIVE")
         return {"FINISHED"}
 

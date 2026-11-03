@@ -15,13 +15,6 @@ class SculptError(RuntimeError):
     pass
 
 
-def effective_target(settings):
-    """The picked Target, else the body's managed sculpt target."""
-    if settings.target:
-        return settings.target
-    return settings.mesh.meatbag_target if settings.mesh else None
-
-
 def ensure_target(mesh):
     target = mesh.meatbag_target
     if target is not None:
