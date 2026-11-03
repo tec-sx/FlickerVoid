@@ -1,5 +1,7 @@
 # Copilot Instructions
 
+The project rules (layers, AngelScript and C++, naming, never touching Content, conventions) are in [CLAUDE.md](../CLAUDE.md); follow them. The lines below add editor and build specifics.
+
 ## Project Guidelines
 - Keep code clean and simple; do not add explanatory comments in code changes unless absolutely necessary; at most two comments total.
 - When requesting a "simple" implementation, provide the most minimal direct code (a few lines, no extra helper functions, properties, or abstractions).
