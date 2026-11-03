@@ -12,7 +12,6 @@ Read [FVFramework](FVFramework.md) first; every other plugin builds on its defin
 | [FVInventorySystem](FVInventorySystem.md) | Items, carrying (weight and space), Keys and Quest list, money, outfits and equipment slots, pickups, loot tables |
 | [FVDialogueSystem](FVDialogueSystem.md) | Conversations and barks on FlowGraph |
 | [FVStorySystem](FVStorySystem.md) | Quests, knowledge (clues, topics, thoughts, documents), save and load |
-| [FVSocialSystem](FVSocialSystem.md) | Factions, standing, fame, notoriety, titles, relationships, gifts, disguise |
 | [FVNavigationSystem](FVNavigationSystem.md) | Maps, map markers, discovery, waypoint, minimap/compass/world map logic, map capture |
 | [Game UI](GameUI.md) | The game's HUD, hub menu (inventory, character, journal), map screen, main, pause and options menus: widgets, input and settings to create |
 
@@ -20,6 +19,7 @@ Game layer guides (the game modules and AngelScript built on the plugins):
 
 | Guide | You get |
 |---|---|
+| [Social](Social.md) | Factions, standing, fame, notoriety, titles, relationships, gifts, disguise, all on scales |
 | [Items](Items.md) | Item types, world items, notes and investigation, money, loot containers, keys, item abilities and animations, held and thrown items, intoxication, trading, pickpocketing, giving from dialogue |
 
 ## Shared conventions
@@ -39,7 +39,7 @@ Game layer guides (the game modules and AngelScript built on the plugins):
 2. FVInteractionSystem: interactor on the player, a first interactable.
 3. FVInventorySystem + FVAttributeSystem: items and the player's attributes.
 4. FVDialogueSystem + FVStorySystem: a talkable NPC, a quest, some knowledge.
-5. FVSocialSystem: factions and the player's reputation.
+5. Social: scales, factions and the player's reputation.
 6. FVNavigationSystem: map images, markers, minimap and compass.
 7. Items: item settings, interactables and the player's item abilities.
 8. Game UI: HUD, hub menu and menus on top of all of the above.

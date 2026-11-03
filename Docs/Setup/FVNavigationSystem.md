@@ -290,7 +290,7 @@ For a widget the classes above don't cover, the navigator still builds the raw v
 | Maps | Every map the player can be on |
 | Waypoint Marker | Marker definition for the player's waypoint |
 | Elevation Threshold | Height difference that counts as above or below |
-| Update Interval | Seconds between the navigator's map and discovery checks |
+| Update Interval | Seconds between the navigator's checks: the map underfoot, discovery, and which markers are near enough for the minimap and compass (new markers show up on the next check) |
 | Capture Folder | Where new map textures are saved |
 | Capture Ignored Classes / Actor Tags | Left out of every capture (defaults: `APawn`, `MapCaptureIgnore`) |
 

@@ -79,7 +79,8 @@ void UFVFlowNode_GiveItem::ExecuteInput(const FName& PinName)
 	Message.Item = Item;
 	Message.Quantity = GivenQuantity;
 	Message.Money = Money;
-	Message.bSucceeded = UFVItemLibrary::GiveItem(GiverActor, ReceiverActor, Item, GivenQuantity, Money, Payload->bAsGift);
+	Message.bAsGift = Payload->bAsGift;
+	Message.bSucceeded = UFVItemLibrary::GiveItem(GiverActor, ReceiverActor, Item, GivenQuantity, Money);
 	MessageSystem.BroadcastMessage(FVGameplayTags::Message_Item_GiveFinished, Message);
 }
 
