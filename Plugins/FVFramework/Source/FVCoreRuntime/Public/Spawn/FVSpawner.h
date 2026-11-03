@@ -79,5 +79,6 @@ private:
 	TObjectPtr<AActor> SpawnedActor;
 
 	FDelegateHandle FactHandle;
+	TSharedPtr<struct FStreamableHandle> ClassHandle;
 	bool bHasSpawned = false;
 };

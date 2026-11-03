@@ -1,6 +1,7 @@
 #include "Cinematic/FVCinematic.h"
 
 #include "Conditions/FVConditionLibrary.h"
+#include "Engine/AssetManager.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
 #include "GameFramework/PlayerController.h"
@@ -20,12 +21,39 @@ UFVCinematicSubsystem* UFVCinematicSubsystem::Get(const UObject* WorldContext)
 
 bool UFVCinematicSubsystem::Play(UFVCinematicDefinition* Cinematic)
 {
-	if (!Cinematic)
+	if (!Cinematic || Cinematic->Sequence.IsNull())
 	{
 		return false;
 	}
 
-	ULevelSequence* Sequence = Cinematic->Sequence.LoadSynchronous();
+	if (ULevelSequence* Loaded = Cinematic->Sequence.Get())
+	{
+		Pending = nullptr;
+		return PlayLoaded(Cinematic, Loaded);
+	}
+
+	// The last requested cinematic plays once its sequence has loaded.
+	Pending = Cinematic;
+	TWeakObjectPtr<UFVCinematicSubsystem> WeakThis = this;
+	TWeakObjectPtr<UFVCinematicDefinition> WeakCinematic = Cinematic;
+	const FStreamableDelegate OnLoaded = FStreamableDelegate::CreateLambda([WeakThis, WeakCinematic]()
+		{
+			UFVCinematicSubsystem* Subsystem = WeakThis.Get();
+			UFVCinematicDefinition* LoadedCinematic = WeakCinematic.Get();
+			if (!Subsystem || !LoadedCinematic || Subsystem->Pending != LoadedCinematic)
+			{
+				return;
+			}
+			Subsystem->Pending = nullptr;
+			Subsystem->PlayLoaded(LoadedCinematic, LoadedCinematic->Sequence.Get());
+		});
+	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+	Streamable.RequestAsyncLoad(Cinematic->Sequence.ToSoftObjectPath(), OnLoaded);
+	return true;
+}
+
+bool UFVCinematicSubsystem::PlayLoaded(UFVCinematicDefinition* Cinematic, ULevelSequence* Sequence)
+{
 	if (!Sequence)
 	{
 		return false;

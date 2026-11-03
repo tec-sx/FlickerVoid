@@ -1,6 +1,7 @@
 #include "Quest/FVQuest.h"
 
 #include "Conditions/FVConditionLibrary.h"
+#include "Engine/AssetManager.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
@@ -285,9 +286,38 @@ void UFVQuestSubsystem::Notify(UFVQuestDefinition* Quest)
 
 void UFVQuestSubsystem::StartQuestFlow(UFVQuestDefinition* Quest)
 {
+	if (!Quest || Quest->Flow.IsNull())
+	{
+		return;
+	}
+
+	if (UFlowAsset* Loaded = Quest->Flow.Get())
+	{
+		RunQuestFlow(Quest, Loaded);
+		return;
+	}
+
+	// The flow starts once it has loaded, if the quest is still active by then.
+	TWeakObjectPtr<UFVQuestSubsystem> WeakThis = this;
+	TWeakObjectPtr<UFVQuestDefinition> WeakQuest = Quest;
+	const FStreamableDelegate OnLoaded = FStreamableDelegate::CreateLambda([WeakThis, WeakQuest]()
+		{
+			UFVQuestSubsystem* Subsystem = WeakThis.Get();
+			UFVQuestDefinition* LoadedQuest = WeakQuest.Get();
+			if (!Subsystem || !LoadedQuest || Subsystem->GetState(LoadedQuest) != EFVQuestState::Active)
+			{
+				return;
+			}
+			Subsystem->RunQuestFlow(LoadedQuest, LoadedQuest->Flow.Get());
+		});
+	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+	Streamable.RequestAsyncLoad(Quest->Flow.ToSoftObjectPath(), OnLoaded);
+}
+
+void UFVQuestSubsystem::RunQuestFlow(UFVQuestDefinition* Quest, UFlowAsset* Flow)
+{
 	UGameInstance* GameInstance = GetWorld()->GetGameInstance();
 	UFlowSubsystem* FlowSubsystem = GameInstance ? GameInstance->GetSubsystem<UFlowSubsystem>() : nullptr;
-	UFlowAsset* Flow = Quest ? Quest->Flow.LoadSynchronous() : nullptr;
 	if (!FlowSubsystem || !Flow)
 	{
 		return;

@@ -2,6 +2,7 @@
 
 #include "Components/BillboardComponent.h"
 #include "Conditions/FVConditionLibrary.h"
+#include "Engine/AssetManager.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
 #include "Misc/DataValidation.h"
@@ -37,6 +38,14 @@ void AFVSpawner::BeginPlay()
 	{
 		FactHandle = Facts->OnFactChangedNative().AddUObject(this, &AFVSpawner::HandleFactChanged);
 	}
+
+	// The class loads in the background; Spawn waits for it, and the load re-evaluates when done.
+	if (Definition && !Definition->ActorClass.IsNull())
+	{
+		FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+		const FStreamableDelegate OnLoaded = FStreamableDelegate::CreateUObject(this, &AFVSpawner::Evaluate);
+		ClassHandle = Streamable.RequestAsyncLoad(Definition->ActorClass.ToSoftObjectPath(), OnLoaded);
+	}
 	Evaluate();
 }
 
@@ -45,6 +54,11 @@ void AFVSpawner::EndPlay(const EEndPlayReason::Type Reason)
 	if (UFVFactDatabase* Facts = UFVFactDatabase::Get(this))
 	{
 		Facts->OnFactChangedNative().Remove(FactHandle);
+	}
+	if (ClassHandle.IsValid())
+	{
+		ClassHandle->CancelHandle();
+		ClassHandle.Reset();
 	}
 	Super::EndPlay(Reason);
 }
@@ -86,7 +100,7 @@ void AFVSpawner::Evaluate()
 
 void AFVSpawner::Spawn()
 {
-	UClass* Class = Definition->ActorClass.LoadSynchronous();
+	UClass* Class = Definition->ActorClass.Get();
 	if (!Class)
 	{
 		return;

@@ -165,4 +165,5 @@ private:
 	FFVMarkerHandle Waypoint;
 	int32 NextMarkerId = 0;
 	FDelegateHandle FactChangedHandle;
+	TSharedPtr<struct FStreamableHandle> WaypointHandle;
 };

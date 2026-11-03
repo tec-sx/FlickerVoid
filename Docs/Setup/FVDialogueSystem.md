@@ -37,6 +37,8 @@ Use *Set Dialogue* on the participant component (or an effect calling it from sc
 
 Put a Bark node in a Flow graph owned by the NPC (e.g. an ambient graph on a Flow component or StateTree-driven flow). It picks a valid row, avoids repeating the last one for that speaker, broadcasts it and optionally waits for it to finish.
 
+Line and Bark voices load in the background when their graph starts (Flow's preload policy, *Project Settings > Flow*), so playing a line doesn't hitch. A voice that hasn't finished loading loads on the spot, with a warning in the log.
+
 ## 4. Dialogue UI
 
 `WBP_Dialogue` (User Widget, pushed into a UI layer such as `UI.Layer.Game`):

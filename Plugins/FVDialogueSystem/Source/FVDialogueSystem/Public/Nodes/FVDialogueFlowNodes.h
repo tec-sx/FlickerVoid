@@ -5,12 +5,14 @@
 #include "Conditions/FVEffect.h"
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
+#include "Interfaces/FlowPreloadableInterface.h"
 #include "Nodes/FlowNode.h"
 #include "FVDialogueFlowNodes.generated.h"
 
 class UFVCharacterDefinition;
 class UFVDialogueSubsystem;
 class USoundBase;
+struct FStreamableHandle;
 
 /** Base for nodes that need the active conversation; opens one implicitly when the graph wasn't started by the subsystem. */
 UCLASS(Abstract, NotBlueprintable)
@@ -29,9 +31,9 @@ protected:
 	bool bPending = false;
 };
 
-/** A spoken line. Finishes after its duration, voice, or player input. */
+/** A spoken line. Finishes after its duration, voice, or player input. Its voice loads in the background when the graph starts. */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Line"))
-class FVDIALOGUESYSTEM_API UFVFlowNode_DialogueLine : public UFVFlowNode_DialogueBase
+class FVDIALOGUESYSTEM_API UFVFlowNode_DialogueLine : public UFVFlowNode_DialogueBase, public IFlowPreloadableInterface
 {
 	GENERATED_BODY()
 
@@ -62,6 +64,8 @@ public:
 	bool bWaitForInput = false;
 
 	virtual void ExecuteInput(const FName& PinName) override;
+	virtual EFlowPreloadResult PreloadContent() override;
+	virtual void FlushContent() override;
 
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
@@ -69,6 +73,8 @@ public:
 
 private:
 	void HandleFinished();
+
+	TSharedPtr<FStreamableHandle> VoiceHandle;
 };
 
 USTRUCT(BlueprintType)
@@ -157,9 +163,9 @@ struct FVDIALOGUESYSTEM_API FFVBarkTableRow : public FTableRowBase
 	FFVConditionSet Conditions;
 };
 
-/** Picks a valid, non-repeating bark for the flow owner, broadcasts it and optionally waits for it. */
+/** Picks a valid, non-repeating bark for the flow owner, broadcasts it and optionally waits for it. The table's voices load in the background when the graph starts. */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Bark"))
-class FVDIALOGUESYSTEM_API UFVFlowNode_Bark : public UFlowNode
+class FVDIALOGUESYSTEM_API UFVFlowNode_Bark : public UFlowNode, public IFlowPreloadableInterface
 {
 	GENERATED_BODY()
 
@@ -174,6 +180,8 @@ public:
 
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void Cleanup() override;
+	virtual EFlowPreloadResult PreloadContent() override;
+	virtual void FlushContent() override;
 
 #if WITH_EDITOR
 	virtual FString GetNodeDescription() const override;
@@ -186,4 +194,5 @@ private:
 
 	FTimerHandle Timer;
 	TWeakObjectPtr<class UAudioComponent> PlayingVoice;
+	TSharedPtr<FStreamableHandle> VoicesHandle;
 };

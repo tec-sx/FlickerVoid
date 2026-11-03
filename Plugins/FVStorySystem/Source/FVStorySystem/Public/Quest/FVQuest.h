@@ -155,7 +155,9 @@ private:
 	bool UpdateObjectives(const UFVQuestDefinition* Quest);
 	bool AreRequiredObjectivesDone(const UFVQuestDefinition* Quest) const;
 	void Notify(UFVQuestDefinition* Quest);
+	/** Loads the quest's flow in the background when needed, then runs it. */
 	void StartQuestFlow(UFVQuestDefinition* Quest);
+	void RunQuestFlow(UFVQuestDefinition* Quest, UFlowAsset* Flow);
 	void StopQuestFlow(UFVQuestDefinition* Quest, bool bAbort);
 	void StartActiveQuestFlows();
 	FFVConditionContext MakeContext() const;
