@@ -3,8 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagAssetInterface.h"
-#include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "FVAICharacter.generated.h"
 
@@ -14,7 +12,7 @@ class UBoxComponent;
 class UStateTree;
 
 UCLASS()
-class FLICKERVOIDAI_API AFVAICharacter : public ACharacter, public IGameplayTagAssetInterface
+class FLICKERVOIDAI_API AFVAICharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -26,22 +24,9 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void UnPossessed() override;
 	
-	UFUNCTION(BlueprintCallable, Category = "Tags")
-	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
-	
-	UFUNCTION(BlueprintCallable, Category = "Tags")
-	void AddGameplayTag(FGameplayTag Tag);
-
-	UFUNCTION(BlueprintCallable, Category = "Tags")
-	void RemoveGameplayTag(FGameplayTag Tag);
-	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character)
 	TObjectPtr<UStateTree> StateTree;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Character)
 	TObjectPtr<UFVAIConfigData> AIConfig;
-	
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
-	FGameplayTagContainer OwnedTags;
 };

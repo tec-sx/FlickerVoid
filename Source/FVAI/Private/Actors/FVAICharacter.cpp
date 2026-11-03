@@ -5,11 +5,13 @@
 
 #include "FVAICharacterController.h"
 #include "FVAIConfigData.h"
+#include "FVAIModule.h"
 #include "FVCoreTags.h"
 #include "FVStateTreeAIComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Flow/Components/FVFlowTriggerComponent.h"
+#include "Tags/FVTagComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVAICharacter)
 
@@ -27,10 +29,18 @@ void AFVAICharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (AIConfig)
+	if (!AIConfig || AIConfig->StartingTags.IsEmpty())
 	{
-		OwnedTags.AppendTags(AIConfig->StartingTags);
+		return;
 	}
+
+	UFVTagComponent* TagComponent = FindComponentByClass<UFVTagComponent>();
+	if (!TagComponent)
+	{
+		UE_LOG(LogFVAI, Warning, TEXT("%s has Starting Tags but no FV Tag Component to hold them."), *GetName());
+		return;
+	}
+	TagComponent->AddTags(AIConfig->StartingTags);
 }
 
 void AFVAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -64,22 +74,6 @@ void AFVAICharacter::PossessedBy(AController* NewController)
 void AFVAICharacter::UnPossessed()
 {
 	Super::UnPossessed();
-}
-
-void AFVAICharacter::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
-{
-	TagContainer.Reset();
-	TagContainer.AppendTags(OwnedTags);
-}
-
-void AFVAICharacter::AddGameplayTag(FGameplayTag Tag)
-{
-	OwnedTags.AddTag(Tag);
-}
-
-void AFVAICharacter::RemoveGameplayTag(FGameplayTag Tag)
-{
-	OwnedTags.RemoveTag(Tag);
 }
 
 

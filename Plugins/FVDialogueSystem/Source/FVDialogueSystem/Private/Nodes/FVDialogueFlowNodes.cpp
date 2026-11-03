@@ -7,9 +7,10 @@
 #include "FVDialogueSubsystem.h"
 #include "FVDialogueSystem.h"
 #include "FVFlowContext.h"
-#include "GameplayTagAssetInterface.h"
+#include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+#include "Tags/FVTagLibrary.h"
 #include "TimerManager.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVDialogueFlowNodes)
@@ -249,19 +250,12 @@ void UFVFlowNode_Bark::ExecuteInput(const FName& PinName)
 
 const FFVBarkTableRow* UFVFlowNode_Bark::PickRow(AActor* Speaker, FName& OutRowName) const
 {
-	FGameplayTagContainer SpeakerTags;
-	if (const IGameplayTagAssetInterface* TagOwner = Cast<IGameplayTagAssetInterface>(Speaker))
-	{
-		TagOwner->GetOwnedGameplayTags(SpeakerTags);
-	}
+	const FGameplayTagContainer SpeakerTags = UFVTagLibrary::GetActorTags(Speaker);
+	const APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
+	const FGameplayTagContainer PlayerTags = UFVTagLibrary::GetActorTags(Player);
 
 	FGameplayTagContainer Combined = SpeakerTags;
-	if (const IGameplayTagAssetInterface* PlayerTagOwner = Cast<IGameplayTagAssetInterface>(UGameplayStatics::GetPlayerPawn(this, 0)))
-	{
-		FGameplayTagContainer PlayerTags;
-		PlayerTagOwner->GetOwnedGameplayTags(PlayerTags);
-		Combined.AppendTags(PlayerTags);
-	}
+	Combined.AppendTags(PlayerTags);
 
 	const FFVConditionContext Context = FVFlow::MakeContext(*this);
 	TArray<TPair<FName, const FFVBarkTableRow*>> Valid;

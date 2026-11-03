@@ -10,6 +10,9 @@ class AInteractableAICharacter : AFVAICharacter
     UPROPERTY(DefaultComponent, Category = "Identity")
     UFVIdentityComponent IdentityComponent;
 
+    UPROPERTY(DefaultComponent, Category = "Identity")
+    UFVTagComponent TagComponent;
+
     UPROPERTY(DefaultComponent, Category = "Dialogue")
     UFVDialogueParticipantComponent DialogueParticipant;
 
@@ -45,7 +48,7 @@ class AInteractableAICharacter : AFVAICharacter
             StateTree = CharacterData.StateTree;
             FlowComponent.RootFlow = CharacterData.FlowAsset;
             FlowComponent.IdentityTags = CharacterData.IdentityTags;
-            OwnedTags.AppendTags(CharacterData.IdentityTags);
+            TagComponent.AddTags(CharacterData.IdentityTags);
             DialogueParticipant.SetDialogue(CharacterData.Dialogue);
             IdentityComponent.SetDefinition(CharacterData.Definition);
         }
