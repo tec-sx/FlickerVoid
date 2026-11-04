@@ -91,4 +91,14 @@ FText FFVEffect_Fact::GetDescription() const
 	}
 }
 
+FText FFVCondition_Fact::GetSetupError() const
+{
+	return Fact.IsValid() ? FText::GetEmpty() : LOCTEXT("NoFact", "no fact tag");
+}
+
+FText FFVEffect_Fact::GetSetupError() const
+{
+	return Fact.IsValid() ? FText::GetEmpty() : LOCTEXT("NoFact", "no fact tag");
+}
+
 #undef LOCTEXT_NAMESPACE

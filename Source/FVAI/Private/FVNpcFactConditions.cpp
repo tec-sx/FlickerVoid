@@ -61,4 +61,14 @@ FText FFVEffect_NpcFact::GetDescription() const
 	return FText::Format(LOCTEXT("Eff", "{1} {0}.{2} {3}"), Name, Op, FText::FromName(Aspect), Value);
 }
 
+FText FFVCondition_NpcFact::GetSetupError() const
+{
+	return Npc ? FText::GetEmpty() : LOCTEXT("NoNpc", "no NPC");
+}
+
+FText FFVEffect_NpcFact::GetSetupError() const
+{
+	return Npc ? FText::GetEmpty() : LOCTEXT("NoNpc", "no NPC");
+}
+
 #undef LOCTEXT_NAMESPACE

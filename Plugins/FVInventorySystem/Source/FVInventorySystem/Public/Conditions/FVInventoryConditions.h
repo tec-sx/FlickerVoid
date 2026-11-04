@@ -16,8 +16,10 @@ struct FVINVENTORYSYSTEM_API FFVCondition_HasItem : public FFVConditionBase
 	GENERATED_BODY()
 
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 protected:
+	virtual bool CanEvaluate(const FFVConditionContext& Context) const override;
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
 
 public:
@@ -38,8 +40,10 @@ struct FVINVENTORYSYSTEM_API FFVCondition_HasItemWithTag : public FFVConditionBa
 	GENERATED_BODY()
 
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 protected:
+	virtual bool CanEvaluate(const FFVConditionContext& Context) const override;
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
 
 public:
@@ -62,6 +66,7 @@ struct FVINVENTORYSYSTEM_API FFVCondition_HasMoney : public FFVConditionBase
 	virtual FText GetDescription() const override;
 
 protected:
+	virtual bool CanEvaluate(const FFVConditionContext& Context) const override;
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
 
 public:
@@ -79,8 +84,10 @@ struct FVINVENTORYSYSTEM_API FFVCondition_IsWearing : public FFVConditionBase
 	GENERATED_BODY()
 
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 protected:
+	virtual bool CanEvaluate(const FFVConditionContext& Context) const override;
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
 
 public:
@@ -102,6 +109,7 @@ struct FVINVENTORYSYSTEM_API FFVEffect_GiveItem : public FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<UFVItemDefinition> Item;
@@ -124,6 +132,7 @@ struct FVINVENTORYSYSTEM_API FFVEffect_TakeItem : public FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<UFVItemDefinition> Item;
@@ -175,6 +184,7 @@ struct FVINVENTORYSYSTEM_API FFVEffect_GiveLoot : public FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<UFVLootTableDefinition> Table;

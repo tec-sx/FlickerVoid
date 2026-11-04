@@ -14,6 +14,7 @@ struct FVATTRIBUTESYSTEM_API FFVCondition_Attribute : public FFVConditionBase
 	GENERATED_BODY()
 
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 	UPROPERTY(EditAnywhere, Category = "Condition")
 	TObjectPtr<const UFVAttributeDefinition> Attribute;
@@ -28,6 +29,7 @@ struct FVATTRIBUTESYSTEM_API FFVCondition_Attribute : public FFVConditionBase
 	bool bCheckTarget = false;
 
 protected:
+	virtual bool CanEvaluate(const FFVConditionContext& Context) const override;
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
 	virtual bool GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const override;
 };
@@ -39,6 +41,7 @@ struct FVATTRIBUTESYSTEM_API FFVEffect_ModifyAttribute : public FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 	UPROPERTY(EditAnywhere, Category = "Effect", meta = (ToolTip = "Added to the base value permanently."))
 	TObjectPtr<const UFVAttributeDefinition> Attribute;
@@ -57,6 +60,7 @@ struct FVATTRIBUTESYSTEM_API FFVEffect_SetAttribute : public FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TObjectPtr<const UFVAttributeDefinition> Attribute;
@@ -76,6 +80,7 @@ struct FVATTRIBUTESYSTEM_API FFVEffect_ApplyGameplayEffect : public FFVEffectBas
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TSubclassOf<UGameplayEffect> Effect;
@@ -95,6 +100,7 @@ struct FVATTRIBUTESYSTEM_API FFVEffect_RemoveGameplayEffect : public FFVEffectBa
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 	UPROPERTY(EditAnywhere, Category = "Effect")
 	TSubclassOf<UGameplayEffect> Effect;

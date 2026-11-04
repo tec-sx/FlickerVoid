@@ -41,6 +41,7 @@ struct FVSTORYSYSTEM_API FFVCondition_Knows : public FFVConditionBase
 	TObjectPtr<UFVKnowledgeDefinition> Knowledge;
 
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
@@ -56,4 +57,5 @@ struct FVSTORYSYSTEM_API FFVEffect_Learn : public FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 };

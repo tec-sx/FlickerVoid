@@ -149,4 +149,54 @@ FText FFVEffect_GiveLoot::GetDescription() const
 	return FText::Format(LOCTEXT("GiveLoot", "Give loot from {0}"), Table ? FText::FromName(Table->GetFName()) : LOCTEXT("NoTable", "<none>"));
 }
 
+FText FFVCondition_HasItem::GetSetupError() const
+{
+	return Item ? FText::GetEmpty() : LOCTEXT("NoItem", "no item");
+}
+
+bool FFVCondition_HasItem::CanEvaluate(const FFVConditionContext& Context) const
+{
+	return Item && Context.GetActor(bCheckTarget, StaticStruct());
+}
+
+FText FFVCondition_HasItemWithTag::GetSetupError() const
+{
+	return Tag.IsValid() ? FText::GetEmpty() : LOCTEXT("NoTag", "no tag");
+}
+
+bool FFVCondition_HasItemWithTag::CanEvaluate(const FFVConditionContext& Context) const
+{
+	return Tag.IsValid() && Context.GetActor(bCheckTarget, StaticStruct());
+}
+
+bool FFVCondition_HasMoney::CanEvaluate(const FFVConditionContext& Context) const
+{
+	return Context.GetActor(bCheckTarget, StaticStruct()) != nullptr;
+}
+
+FText FFVCondition_IsWearing::GetSetupError() const
+{
+	return Item || GrantedTag.IsValid() ? FText::GetEmpty() : LOCTEXT("NoWorn", "no item or granted tag");
+}
+
+bool FFVCondition_IsWearing::CanEvaluate(const FFVConditionContext& Context) const
+{
+	return (Item || GrantedTag.IsValid()) && Context.GetActor(bCheckTarget, StaticStruct());
+}
+
+FText FFVEffect_GiveItem::GetSetupError() const
+{
+	return Item ? FText::GetEmpty() : LOCTEXT("NoItem", "no item");
+}
+
+FText FFVEffect_TakeItem::GetSetupError() const
+{
+	return Item ? FText::GetEmpty() : LOCTEXT("NoItem", "no item");
+}
+
+FText FFVEffect_GiveLoot::GetSetupError() const
+{
+	return Table ? FText::GetEmpty() : LOCTEXT("NoTable", "no loot table");
+}
+
 #undef LOCTEXT_NAMESPACE

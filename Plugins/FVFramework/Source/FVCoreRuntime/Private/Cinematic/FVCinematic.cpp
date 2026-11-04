@@ -130,4 +130,9 @@ FText FFVEffect_PlayCinematic::GetDescription() const
 	return FText::Format(LOCTEXT("Play", "Play cinematic {0}"), Name);
 }
 
+FText FFVEffect_PlayCinematic::GetSetupError() const
+{
+	return Cinematic ? FText::GetEmpty() : LOCTEXT("NoCinematic", "no cinematic");
+}
+
 #undef LOCTEXT_NAMESPACE

@@ -45,6 +45,7 @@ struct FVCORERUNTIME_API FFVCondition_Fact : public FFVConditionBase
 	int32 Value = 1;
 
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 
 protected:
 	virtual bool EvaluateImpl(const FFVConditionContext& Context) const override;
@@ -67,6 +68,7 @@ struct FVCORERUNTIME_API FFVEffect_Fact : public FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 };
 
 namespace FVFacts

@@ -101,4 +101,14 @@ FText FFVEffect_Learn::GetDescription() const
 	return FText::Format(LOCTEXT("Learn", "Learn {0}"), Name);
 }
 
+FText FFVCondition_Knows::GetSetupError() const
+{
+	return Knowledge ? FText::GetEmpty() : LOCTEXT("NoKnowledge", "no knowledge");
+}
+
+FText FFVEffect_Learn::GetSetupError() const
+{
+	return Knowledge ? FText::GetEmpty() : LOCTEXT("NoKnowledge", "no knowledge");
+}
+
 #undef LOCTEXT_NAMESPACE

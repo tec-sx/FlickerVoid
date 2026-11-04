@@ -14,6 +14,9 @@ struct FVCORERUNTIME_API FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const {}
 	virtual FText GetDescription() const { return FText::GetEmpty(); }
+
+	/** Why the effect can't work as set up (a missing reference or tag); empty when it's fine. Data validation reports it. */
+	virtual FText GetSetupError() const { return FText::GetEmpty(); }
 };
 
 /**
@@ -27,11 +30,14 @@ class FVCORERUNTIME_API UFVEffect : public UObject
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintNativeEvent, Category = "FV|Effect")
+	UFUNCTION(BlueprintNativeEvent, Category = "FV|Effect", meta = (ToolTip = "Override it. Read the world through Context.WorldContext: the effect lives in an asset, which has no world."))
 	void Apply(const FFVConditionContext& Context) const;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "FV|Effect")
 	FText GetDescription() const;
+
+	UFUNCTION(BlueprintNativeEvent, Category = "FV|Effect", meta = (ToolTip = "Override to say why the effect can't work as set up (a missing reference or tag); empty when it's fine. Data validation reports it."))
+	FText GetSetupError() const;
 
 	virtual UWorld* GetWorld() const override;
 };
@@ -47,6 +53,9 @@ struct FVCORERUNTIME_API FFVEffectList
 	bool IsEmpty() const { return Effects.IsEmpty(); }
 	void Apply(const FFVConditionContext& Context) const;
 	FText GetDescription() const;
+
+	/** Every entry's setup error, numbered; empty when the list is fine. */
+	FText GetSetupError() const;
 };
 
 /** Holds a UFVEffect (C++ or AngelScript) in an effect list until lists hold them directly. */
@@ -60,4 +69,5 @@ struct FVCORERUNTIME_API FFVEffect_Object : public FFVEffectBase
 
 	virtual void Apply(const FFVConditionContext& Context) const override;
 	virtual FText GetDescription() const override;
+	virtual FText GetSetupError() const override;
 };

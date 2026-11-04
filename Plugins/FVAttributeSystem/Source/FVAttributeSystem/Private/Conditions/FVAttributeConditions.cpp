@@ -110,4 +110,34 @@ FText FFVEffect_RemoveGameplayEffect::GetDescription() const
 	return FText::Format(LOCTEXT("RemoveEffectDesc", "Remove {0}"), EffectName(Effect));
 }
 
+FText FFVCondition_Attribute::GetSetupError() const
+{
+	return Attribute ? FText::GetEmpty() : LOCTEXT("NoAttribute", "no attribute");
+}
+
+bool FFVCondition_Attribute::CanEvaluate(const FFVConditionContext& Context) const
+{
+	return Attribute && Context.GetActor(bCheckTarget, StaticStruct());
+}
+
+FText FFVEffect_ModifyAttribute::GetSetupError() const
+{
+	return Attribute ? FText::GetEmpty() : LOCTEXT("NoAttribute", "no attribute");
+}
+
+FText FFVEffect_SetAttribute::GetSetupError() const
+{
+	return Attribute ? FText::GetEmpty() : LOCTEXT("NoAttribute", "no attribute");
+}
+
+FText FFVEffect_ApplyGameplayEffect::GetSetupError() const
+{
+	return Effect ? FText::GetEmpty() : LOCTEXT("NoEffect", "no gameplay effect");
+}
+
+FText FFVEffect_RemoveGameplayEffect::GetSetupError() const
+{
+	return Effect ? FText::GetEmpty() : LOCTEXT("NoEffect", "no gameplay effect");
+}
+
 #undef LOCTEXT_NAMESPACE

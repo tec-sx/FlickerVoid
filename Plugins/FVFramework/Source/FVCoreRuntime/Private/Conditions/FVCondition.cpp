@@ -23,12 +23,7 @@ bool FFVConditionSet::Evaluate(const FFVConditionContext& Context) const
 	for (const TInstancedStruct<FFVConditionBase>& Condition : Conditions)
 	{
 		const FFVConditionBase* Ptr = Condition.GetPtr();
-		if (Ptr == nullptr)
-		{
-			continue;
-		}
-
-		const bool bPassed = Ptr->Evaluate(Context);
+		const bool bPassed = Ptr != nullptr && Ptr->Evaluate(Context);
 		if (bAll && !bPassed)
 		{
 			return false;
@@ -92,19 +87,53 @@ FText FFVConditionSet::GetDescription() const
 	return FText::Join(Separator, Parts);
 }
 
+FText FFVConditionSet::GetSetupError() const
+{
+	TArray<FText> Errors;
+	for (int32 Index = 0; Index < Conditions.Num(); ++Index)
+	{
+		const FFVConditionBase* Ptr = Conditions[Index].GetPtr();
+		if (Ptr == nullptr)
+		{
+			Errors.Add(FText::Format(LOCTEXT("NoType", "condition {0} has no type"), Index));
+			continue;
+		}
+
+		const FText Error = Ptr->GetSetupError();
+		if (!Error.IsEmpty())
+		{
+			const FText Type = FText::FromName(Conditions[Index].GetScriptStruct()->GetFName());
+			Errors.Add(FText::Format(LOCTEXT("EntryError", "condition {0} ({1}): {2}"), Index, Type, Error));
+		}
+	}
+	return FText::Join(LOCTEXT("ErrorSeparator", "; "), Errors);
+}
+
 bool UFVCondition::Check(const FFVConditionContext& Context) const
 {
-	return Evaluate(Context) != bInvert;
+	return CanEvaluate(Context) && Evaluate(Context) != bInvert;
 }
 
 bool UFVCondition::GetScore(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
 {
-	return !bInvert && Score(Context, OutScore);
+	return !bInvert && CanEvaluate(Context) && Score(Context, OutScore);
 }
 
 bool UFVCondition::Evaluate_Implementation(const FFVConditionContext& Context) const
 {
-	return true;
+	UE_LOG(LogFVCore, Warning, TEXT("%s doesn't override Evaluate; it fails."), *GetClass()->GetName());
+	return false;
+}
+
+bool UFVCondition::CanEvaluate_Implementation(const FFVConditionContext& Context) const
+{
+	const FText Error = GetSetupError();
+	return Error.IsEmpty();
+}
+
+FText UFVCondition::GetSetupError_Implementation() const
+{
+	return FText::GetEmpty();
 }
 
 bool UFVCondition::Score_Implementation(const FFVConditionContext& Context, FFVConditionScore& OutScore) const
@@ -133,9 +162,23 @@ FText FFVCondition_Object::GetDescription() const
 	return Condition->bInvert ? FText::Format(LOCTEXT("Not", "NOT {0}"), Description) : Description;
 }
 
+FText FFVCondition_Object::GetSetupError() const
+{
+	if (Condition == nullptr)
+	{
+		return LOCTEXT("NoObject", "no condition picked");
+	}
+	return Condition->GetSetupError();
+}
+
+bool FFVCondition_Object::CanEvaluate(const FFVConditionContext& Context) const
+{
+	return Condition != nullptr && Condition->CanEvaluate(Context);
+}
+
 bool FFVCondition_Object::EvaluateImpl(const FFVConditionContext& Context) const
 {
-	return Condition == nullptr || Condition->Check(Context);
+	return Condition->Check(Context);
 }
 
 bool FFVCondition_Object::GetScoreImpl(const FFVConditionContext& Context, FFVConditionScore& OutScore) const

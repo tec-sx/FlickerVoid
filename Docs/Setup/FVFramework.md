@@ -92,6 +92,8 @@ Built-in types you can pick anywhere a rule appears:
 
 - A condition set has **Mode** (All or Any) and **Failure Presentation** (Hidden, Show Locked, Show Locked With Reason), which UIs use for offers and dialogue choices.
 - **Rule classes**: new conditions and effects are instanced objects, `UFVCondition` and `UFVEffect`, subclassed the same way from C++ and AngelScript. Override `Evaluate` (and `Score` for at-least conditions, see below) and `GetDescription`, or `Apply` and `GetDescription`. Every condition object has **Invert**. Pick them in data through the **Object** condition or effect, then choose the class; once condition sets hold objects directly, the Object step goes away.
+- **Setup errors**: a rule that misses required data (no fact tag, no item, no quest) reports it through `GetSetupError` (overridable in rule classes too). A broken condition fails whatever **Invert** says, an empty row (no type picked) fails, and a broken effect does nothing. Rule classes can also override `CanEvaluate`, for example to require an actor; script conditions reach the world through `Context.WorldContext`. A rule class that doesn't override `Evaluate` fails with a warning.
+- **Validation**: saving or validating an asset (Tools > Validate Data) lists every broken rule in it with its property path, for data assets, Blueprints and Flow assets alike.
 - Comparisons use one enum, `EFVCompare` (`Compare` in AngelScript: ==, !=, >, >=, <, <=). The Fact condition adds **defined** and **undefined**.
 - From Blueprint/AngelScript: `UFVConditionLibrary` > `Evaluate Condition Set`, `Apply Effects`, `Describe Condition Set`, `Compare Values`.
 

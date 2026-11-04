@@ -378,4 +378,14 @@ FText FFVEffect_SetQuestState::GetDescription() const
 	return FText::Format(LOCTEXT("Set", "Set {0} to {1}"), Name, StaticEnum<EFVQuestState>()->GetDisplayNameTextByValue(static_cast<int64>(State)));
 }
 
+FText FFVCondition_QuestState::GetSetupError() const
+{
+	return Quest ? FText::GetEmpty() : LOCTEXT("NoQuest", "no quest");
+}
+
+FText FFVEffect_SetQuestState::GetSetupError() const
+{
+	return Quest ? FText::GetEmpty() : LOCTEXT("NoQuest", "no quest");
+}
+
 #undef LOCTEXT_NAMESPACE
