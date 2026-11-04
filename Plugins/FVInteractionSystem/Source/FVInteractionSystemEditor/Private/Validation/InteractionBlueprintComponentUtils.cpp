@@ -1,58 +1,86 @@
 #include "Validation/InteractionBlueprintComponentUtils.h"
 
 #include "Components/ActorComponent.h"
-#include "Engine/Blueprint.h"
+#include "Engine/BlueprintGeneratedClass.h"
+#include "Engine/InheritableComponentHandler.h"
 #include "Engine/SCS_Node.h"
 #include "Engine/SimpleConstructionScript.h"
 #include "GameFramework/Actor.h"
+#include "Validation/InteractionCompileRule.h"
+#include "Validation/InteractionCompileRuleRegistry.h"
 
-namespace InteractionBlueprintComponentUtils
+namespace
 {
-	bool HasComponentOfClass(const UBlueprint& Blueprint, const TSubclassOf<UActorComponent>& ComponentClass)
+	/** The template a node spawns in ActorClass: the most derived child Blueprint's override, or the node's own template. */
+	const UActorComponent* GetEffectiveTemplate(const UClass* ActorClass, const UBlueprintGeneratedClass* Owner, const USCS_Node* Node)
 	{
-		if (ComponentClass)
+		const FComponentKey Key(Node);
+		const UBlueprintGeneratedClass* Current = Cast<UBlueprintGeneratedClass>(ActorClass);
+		while (Current && Current != Owner)
 		{
-			if (const USimpleConstructionScript* ConstructionScript = Blueprint.SimpleConstructionScript)
+			UBlueprintGeneratedClass* Mutable = const_cast<UBlueprintGeneratedClass*>(Current);
+			const UInheritableComponentHandler* Handler = Mutable->GetInheritableComponentHandler(false);
+			const UActorComponent* Override = Handler ? Handler->GetOverridenComponentTemplate(Key) : nullptr;
+			if (Override)
 			{
-				for (const USCS_Node* Node : ConstructionScript->GetAllNodes())
-				{
-					if (Node && Node->ComponentClass && Node->ComponentClass->IsChildOf(ComponentClass))
-					{
-						return true;
-					}
-				}
+				return Override;
 			}
-
-			if (const UClass* ParentClass = Blueprint.ParentClass)
-			{
-				if (const AActor* ParentDefaultActor = Cast<AActor>(ParentClass->GetDefaultObject()))
-				{
-					return ParentDefaultActor->FindComponentByClass(ComponentClass) != nullptr;
-				}
-			}
+			Current = Cast<UBlueprintGeneratedClass>(Current->GetSuperClass());
 		}
+		return Node->ComponentTemplate;
+	}
+}
 
-		return false;
+void InteractionBlueprintComponentUtils::CollectComponentTemplates(const UClass* ActorClass, TArray<const UActorComponent*>& OutTemplates)
+{
+	OutTemplates.Reset();
+	if (!ActorClass)
+	{
+		return;
 	}
 
-	void GetComponentTemplatesOfClass(const UBlueprint& Blueprint, const TSubclassOf<UActorComponent>& ComponentClass, TArray<const UActorComponent*>& OutTemplates)
+	if (const AActor* DefaultActor = Cast<AActor>(ActorClass->GetDefaultObject()))
 	{
-		OutTemplates.Reset();
-
-		if (!ComponentClass)
+		for (const UActorComponent* Component : DefaultActor->GetComponents())
 		{
-			return;
+			if (Component)
+			{
+				OutTemplates.Add(Component);
+			}
 		}
+	}
 
-		if (const USimpleConstructionScript* ConstructionScript = Blueprint.SimpleConstructionScript)
+	const UBlueprintGeneratedClass* BlueprintClass = Cast<UBlueprintGeneratedClass>(ActorClass);
+	while (BlueprintClass)
+	{
+		const USimpleConstructionScript* ConstructionScript = BlueprintClass->SimpleConstructionScript;
+		if (ConstructionScript)
 		{
 			for (const USCS_Node* Node : ConstructionScript->GetAllNodes())
 			{
-				if (Node && Node->ComponentClass && Node->ComponentClass->IsChildOf(ComponentClass) && Node->ComponentTemplate)
+				if (!Node)
 				{
-					OutTemplates.Add(Node->ComponentTemplate);
+					continue;
+				}
+
+				const UActorComponent* Template = GetEffectiveTemplate(ActorClass, BlueprintClass, Node);
+				if (Template)
+				{
+					OutTemplates.Add(Template);
 				}
 			}
+		}
+		BlueprintClass = Cast<UBlueprintGeneratedClass>(BlueprintClass->GetSuperClass());
+	}
+}
+
+void InteractionBlueprintComponentUtils::RunRules(const FInteractionCompileContext& Context)
+{
+	for (const TSharedRef<IInteractionCompileRule>& Rule : FInteractionCompileRuleRegistry::Get().GetRules())
+	{
+		if (Rule->ShouldRun(Context))
+		{
+			Rule->Validate(Context);
 		}
 	}
 }

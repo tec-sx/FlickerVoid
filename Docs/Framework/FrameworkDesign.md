@@ -14,7 +14,7 @@ Status: implemented in `feature/framework-dev`, revised after the owner's answer
 | Reference | Practice | Here |
 | --- | --- | --- |
 | CDPR (Witcher 3, Cyberpunk) | One **facts DB** is the single source of truth for story state. Quest graphs are signal graphs with phases, conditions and *pause until condition* nodes. | `UFVFactDatabase` (exists). Flow graphs for quests/dialogue, `FV Wait For Conditions` node = Witcher's Pause node. Quests, knowledge, reputation, relationships, notoriety all live in facts, so saving and conditions come for free. |
-| CDPR scanner / Witcher senses / Tomb Raider instinct | A mode that highlights categories of objects through post-process stencils, shows data on focus and turns findings into clues. Time slows while scanning. | Scanner in `FVGameplay`: candidates from the interaction registry, category stencils, focus by view alignment, timed scan, effects on scan (learn knowledge, set facts). Optional time dilation. |
+| CDPR scanner / Witcher senses / Tomb Raider instinct | A mode that highlights categories of objects through post-process stencils, shows data on focus and turns findings into clues. Time slows while scanning. | Scanner in `FVGameplay`: candidates from the Near band of the `Relevance.ScanTarget` relevance group, category stencils, focus by view alignment, timed scan, effects on scan (learn knowledge, set facts). Optional time dilation. |
 | Hitman | Disguises are tags; some NPCs (enforcers) see through them; suspicion builds rather than flipping. | Outfits grant gameplay tags (`Disguise.Faction.*`). The game's social rules (FVGameplay) resolve attitude from the standing band, notoriety and disguise, and a disguise lowers the fame onlookers read. Suspicion meter is phase 2 (stealth). |
 | Lyra / modern UE5 | Item fragments, instanced structs, data assets, GAS, StateTree, modular components. | Fragments on definitions (`TInstancedStruct`), components found on actors instead of interfaces. |
 | Tarkov / Resident Evil | Carrying is a decision: weight and container space, no free stacking. | Items carry weight and a grid footprint; bags and backpacks grant both. |
@@ -68,7 +68,7 @@ Target: one runtime module `FlickerVoid` plus `FlickerVoidDebug` and `FlickerVoi
 | FlickerVoid (`Source/FlickerVoidGame`) | stays as the game module. `AFVGameModeBase` keeps the data loading; Explore and Story game modes and the player character move to AngelScript. |
 | FlickerVoidCore | Flow trigger nodes and the trigger component are generic and move to FVFramework's FVCoreFlow; trigger box and sphere actors and Blueprint-base StateTree tasks/conditions move to AngelScript; the struct StateTree task and tagged physical material stay in the game module. |
 | FlickerVoidCharacter | **dropped** (owner, 2026-10-16). The Mover pieces (locomotion component, movement set component, movement sets, ground mode, locomotion inputs; PR #63) and the traversal component go to `Gameplay/`; the anim instance (until UAF replaces it), rig units and animation data go to `Presentation/`; `AFVTraversable` becomes an AngelScript actor with a C++ component the traversal component finds; `UFVCharacterDataAsset` is deleted (obsolete, it extended the retired pawn data) and the player is set up through its `UFVCharacterDefinition` like every character; characters move to AngelScript (below). |
-| FlickerVoidGameplay | ability fragment, ability set, tag relationship map, scanner, the ActivateAbility effect and the item layer (fragments, settings, library, components, Give Item Flow node; PR #59) and the social rules (factions, titles, gifts on FVFramework scales; issue #76, moved out of the retired FVSocialSystem plugin) stay in the game module, which keeps the abstract game rules (owner, 2026-10-29); the debug StateTree task moves to AngelScript; scanner debug goes to FlickerVoidDebug. |
+| FlickerVoidGameplay | ability fragment, ability set, tag relationship map, scanner (built on FVFramework relevance), the ActivateAbility effect and the item layer (fragments, settings, library, components, Give Item Flow node; PR #59) and the social rules (factions, titles, gifts on FVFramework scales; issue #76, moved out of the retired FVSocialSystem plugin) stay in the game module, which keeps the abstract game rules (owner, 2026-10-29); the debug StateTree task moves to AngelScript; scanner debug goes to FlickerVoidDebug. |
 | FlickerVoidAI | NPC fact conditions/effects, StateTree schema, StateTree AI component, AI controller and the random location task stay; the perception evaluator moves to AngelScript; `AFVAICharacter` becomes an AngelScript character, on Mover once Mover's NavWalking is set up for AI paths (until then it stays on the Character Movement Component, PR #63). |
 | FlickerVoidWorld | world object actors move to AngelScript. |
 | FlickerVoidNarrative, FlickerVoidUI | deleted (the journal is AngelScript UI, PR #55). |
@@ -245,7 +245,8 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | `UFVDialogueParticipantComponent` | Dialogue | speakers: events for lines (anim, lip sync, barks) |
 | `UFVAttributeComponent` | Attributes | characters whose attribute changes are listened to or saved (values live on the ability system) |
 | `UFVScannerComponent` | FVGameplay | player |
-| `UFVScannableComponent` | FVGameplay | anything scannable (needs an interactable component too) |
+| `UFVScannableComponent` | FVGameplay | anything scannable; in range while in the Near band of `Relevance.ScanTarget` |
+| `UFVRelevanceComponent` | FVFramework | anything a system switches on and off by distance; added by systems with `FindOrAdd`, one per relevance group |
 | `UFVMapMarkerComponent` | Navigation | anything shown on the map, minimap or compass (shops, quest givers, points of interest) |
 | `UFVNavigatorComponent` | Navigation | player pawn: active map, discovery, minimap/compass/world map views |
 | `AFVMapCaptureActor` | Navigation | editor-only camera placed over an area to capture a map layer image |
@@ -321,8 +322,8 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | **Gameplay tags** | identity and classification that data assets and conditions match on | `Equipment.Slot.Coat`, `Item.Outfit`, `Disguise.Faction.Police`, `Scan.Category.*`, fact tags |
 | **Facts** | world and player state that must save and be testable | faction standing, fame, notoriety, titles, quest state, knowledge |
 | **Config (`UDeveloperSettings`)** | per-project defaults a designer tunes once, under the FlickerVoid settings category | weight and space limits, scan categories and dilation, dialogue timing |
-| **Console variables (`FVCvar.*`)** | switches for debugging and playtesting, never for shipping balance | `FVCvar.Inventory.EnforceWeight`, `FVCvar.*.Debug.HUD`, `FVCvar.Interaction.Debug.Draw` |
-| **Console commands (`FV.*`)** | one-off actions while testing | `FV.Inventory.Give`, `FV.Quest.Start`, `FV.Social.Notoriety`, `FV.Facts.Set` |
+| **Console variables (`FVCvar.*`)** | switches for debugging and playtesting, never for shipping balance | `FVCvar.Inventory.Debug.EnforceWeight`, `FVCvar.*.Debug.HUD`, `FVCvar.Interaction.Debug.Draw` |
+| **Console commands (`FV.*`)** | one-off actions while testing | `FV.Inventory.Give`, `FV.Story.StartQuest`, `FV.Social.Notoriety`, `FV.Facts.Set` |
 
 A CVar that changes a rule (such as the two inventory limits) reads `-1` by default and then follows the config value, so the project setting stays the source of truth.
 
