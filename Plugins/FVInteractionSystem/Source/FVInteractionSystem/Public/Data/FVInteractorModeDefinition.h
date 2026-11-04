@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DataAsset.h"
+#include "Data/FVDefinition.h"
 #include "Engine/EngineTypes.h"
 #include "GameplayTagContainer.h"
 #include "FVInteractorModeDefinition.generated.h"
@@ -67,7 +67,7 @@ struct FVINTERACTIONSYSTEM_API FFVInteractorDetectionSettings
 };
 
 UCLASS(BlueprintType, Const)
-class FVINTERACTIONSYSTEM_API UFVInteractorModeDefinition : public UPrimaryDataAsset
+class FVINTERACTIONSYSTEM_API UFVInteractorModeDefinition : public UFVDefinition
 {
 	GENERATED_BODY()
 

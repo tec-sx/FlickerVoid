@@ -28,6 +28,7 @@ public class FVInteractionSystemEditor : ModuleRules
                 "SlateCore",
                 "ToolMenus",
                 "FVCoreEditor",
+                "DataValidation",
             }
             );
     }

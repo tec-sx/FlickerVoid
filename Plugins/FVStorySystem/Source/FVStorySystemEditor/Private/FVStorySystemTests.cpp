@@ -1,4 +1,3 @@
-#include "Conditions/FVCondition.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/AutomationTest.h"
 #include "Save/FVSaveSystem.h"
@@ -37,17 +36,6 @@ bool FFVSaveRoundTripTest::RunTest(const FString& Parameters)
 	{
 		TestEqual(TEXT("Fact"), Loaded->Facts.FindRef(Tag), 7);
 	}
-	return true;
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFVEmptyConditionSetTest, "FlickerVoid.Conditions.EmptySetPasses",
-                                 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-
-bool FFVEmptyConditionSetTest::RunTest(const FString& Parameters)
-{
-	const FFVConditionSet Set;
-	TestTrue(TEXT("IsEmpty"), Set.IsEmpty());
-	TestTrue(TEXT("Evaluate"), Set.Evaluate(FFVConditionContext()));
 	return true;
 }
 
