@@ -54,6 +54,7 @@ namespace FVGameplayTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_Investigate);
 
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Scan_Category);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Relevance_ScanTarget);
 
 	// ============================================================================
 	// FACT TAGS (GAMEPLAY)

@@ -39,8 +39,18 @@ namespace FVInteractionGameplayTags
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Secondary);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Ternary);
 
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Idle);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Awake);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Suppressed);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Interacting);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Paused);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Cooldown);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Completed);
+
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Suppression_Cutscene);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Suppression_Dependency);
+
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Relevance_Interactable);
 
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Tag_Player);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Mode);
@@ -55,6 +65,8 @@ namespace FVInteractionGameplayTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Character);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Device);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Document);
+
+	UE_API FGameplayTag StateToTag(EFVInteractableState State);
 }
 
 #undef UE_API

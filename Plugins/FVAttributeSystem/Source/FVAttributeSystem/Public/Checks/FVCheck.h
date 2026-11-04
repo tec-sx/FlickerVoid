@@ -94,6 +94,9 @@ public:
 
 	static FFVCheckResult Build(const UFVCheckDefinition* Check, const FFVConditionContext& Context, int32 Difficulty, bool bRoll);
 
+	/** Chance that the roll comes up Needed or higher; 2d6 counts its 36 outcomes. */
+	static float ChanceAtLeast(EFVCheckRoll Roll, int32 Needed);
+
 private:
 	static int32 Roll(EFVCheckRoll InRoll);
 };
