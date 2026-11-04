@@ -2,14 +2,17 @@
 
 #include "Animation/AnimData/CurveIdentifier.h"
 #include "Animation/AnimData/IAnimationDataController.h"
+#include "Animation/AnimData/IAnimationDataModel.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/PoseAsset.h"
 #include "Animation/Skeleton.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "FVAnimationSettings.h"
 #include "PoseAuthoring/FVPoseWriterComponent.h"
 #include "ScopedTransaction.h"
+#include "Misc/PackageName.h"
 #include "UObject/Package.h"
 
 #define LOCTEXT_NAMESPACE "FVPoseAuthoring"
@@ -268,6 +271,121 @@ bool FFVPoseAuthoring::DuplicatePose(UPoseAsset& Asset, FName Pose, FName NewNam
 	{
 		Transaction.Cancel();
 		return false;
+	}
+	return true;
+}
+
+UPoseAsset* FFVPoseAuthoring::CreatePoseAsset(const FString& AssetPath, USkeletalMesh& Mesh, FText& OutError)
+{
+	USkeleton* Skeleton = Mesh.GetSkeleton();
+	if (!Skeleton)
+	{
+		OutError = LOCTEXT("ErrMeshSkeleton", "The mesh has no skeleton.");
+		return nullptr;
+	}
+	FText Reason;
+	if (!FPackageName::IsValidLongPackageName(AssetPath, false, &Reason))
+	{
+		OutError = FText::Format(LOCTEXT("ErrAssetPath", "{0} isn't a valid asset path: {1}"), FText::FromString(AssetPath), Reason);
+		return nullptr;
+	}
+	if (FindPackage(nullptr, *AssetPath) || FPackageName::DoesPackageExist(AssetPath))
+	{
+		OutError = FText::Format(LOCTEXT("ErrAssetExists", "{0} already exists."), FText::FromString(AssetPath));
+		return nullptr;
+	}
+
+	UPackage* Package = CreatePackage(*AssetPath);
+	UPoseAsset* Asset = NewObject<UPoseAsset>(Package, FName(FPackageName::GetLongPackageAssetName(AssetPath)), RF_Public | RF_Standalone | RF_Transactional);
+	Asset->SetSkeleton(Skeleton);
+	Asset->SetPreviewMesh(&Mesh);
+	FAssetRegistryModule::AssetCreated(Asset);
+	Package->MarkPackageDirty();
+	return Asset;
+}
+
+FFVPoseSnapshot FFVPoseAuthoring::ReadAnimationFrame(const UAnimSequence& Animation, int32 Frame)
+{
+	FFVPoseSnapshot Snapshot;
+	const IAnimationDataModel* Model = Animation.GetDataModel();
+	if (!Model)
+	{
+		return Snapshot;
+	}
+
+	TArray<FName> Tracks;
+	Model->GetBoneTrackNames(Tracks);
+	for (const FName Track : Tracks)
+	{
+		Snapshot.Bones.Add(Track, Model->GetBoneTrackTransform(Track, FFrameNumber(Frame)));
+	}
+	return Snapshot;
+}
+
+bool FFVPoseAuthoring::SetPosesFromAnimation(UPoseAsset& Asset, const UAnimSequence& Animation, const TArray<FName>& Poses, TArray<FName>& OutCreated, TArray<FName>& OutUpdated, FText& OutError)
+{
+	OutCreated.Reset();
+	OutUpdated.Reset();
+	if (Poses.IsEmpty())
+	{
+		OutError = LOCTEXT("ErrNoPoseNames", "No pose names given.");
+		return false;
+	}
+	if (Animation.GetSkeleton() != Asset.GetSkeleton())
+	{
+		OutError = LOCTEXT("ErrAnimationSkeleton", "The animation must use the Pose Asset's skeleton.");
+		return false;
+	}
+	const IAnimationDataModel* Model = Animation.GetDataModel();
+	const int32 NumFrames = Model ? Model->GetNumberOfKeys() : 0;
+	if (NumFrames < Poses.Num())
+	{
+		OutError = FText::Format(LOCTEXT("ErrFrameCount", "The animation has {0} frames for {1} poses."), NumFrames, Poses.Num());
+		return false;
+	}
+	TSet<FName> Names;
+	for (const FName Pose : Poses)
+	{
+		bool bDuplicate = false;
+		Names.Add(Pose, &bDuplicate);
+		if (Pose.IsNone() || bDuplicate)
+		{
+			OutError = FText::Format(LOCTEXT("ErrPoseNames", "Pose names must be unique and not empty ({0})."), FText::FromName(Pose));
+			return false;
+		}
+	}
+	const USkeletalMesh* Mesh = FindMesh(Asset);
+	if (!Mesh || Mesh->GetSkeleton() != Asset.GetSkeleton())
+	{
+		OutError = LOCTEXT("ErrNoMesh", "Set a preview mesh on the Pose Asset or its skeleton.");
+		return false;
+	}
+
+	TArray<FFVPoseSnapshot> Snapshots;
+	for (int32 Index = 0; Index < Poses.Num(); ++Index)
+	{
+		FFVPoseSnapshot& Snapshot = Snapshots.AddDefaulted_GetRef();
+		if (Asset.ContainsPose(Poses[Index]) && !ReadPose(Asset, Poses[Index], Snapshot))
+		{
+			OutError = LOCTEXT("ErrRead", "The pose data could not be read.");
+			return false;
+		}
+		Snapshot.Bones.Append(ReadAnimationFrame(Animation, Index).Bones);
+	}
+
+	FScopedTransaction Transaction(LOCTEXT("SetPosesFromAnimation", "Set Poses From Animation"));
+	Asset.Modify();
+	for (int32 Index = 0; Index < Poses.Num(); ++Index)
+	{
+		const bool bExists = Asset.ContainsPose(Poses[Index]);
+		if (!WritePose(Asset, Poses[Index], Snapshots[Index], OutError))
+		{
+			Transaction.Cancel();
+			OutCreated.Reset();
+			OutUpdated.Reset();
+			return false;
+		}
+		(bExists ? OutUpdated : OutCreated).Add(Poses[Index]);
 	}
 	return true;
 }

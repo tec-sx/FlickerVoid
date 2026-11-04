@@ -17,6 +17,7 @@ public class FVAnimationSystemEditor : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
 			"AnimGraph",
+			"AssetRegistry",
 			"DataValidation",
 			"DeveloperSettings",
 			"InputCore",

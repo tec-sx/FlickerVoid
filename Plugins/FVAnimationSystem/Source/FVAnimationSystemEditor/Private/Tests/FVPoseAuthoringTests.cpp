@@ -1,4 +1,6 @@
 #include "AnimationRuntime.h"
+#include "Animation/AnimData/IAnimationDataController.h"
+#include "Animation/AnimSequence.h"
 #include "Animation/PoseAsset.h"
 #include "Engine/SkeletalMesh.h"
 #include "FVMirrorNameRule.h"
@@ -50,6 +52,36 @@ namespace FVPoseAuthoringTests
 	{
 		FTransform& Local = Snapshot.Bones.FindChecked(Bone);
 		Local.SetRotation(Local.GetRotation() * Delta);
+	}
+
+	/** A transient animation with one frame per snapshot. */
+	UAnimSequence* MakeAnimation(USkeletalMesh& Mesh, const TArray<FFVPoseSnapshot>& Frames)
+	{
+		UAnimSequence* Sequence = NewObject<UAnimSequence>(GetTransientPackage(), NAME_None, RF_Transient);
+		Sequence->SetSkeleton(Mesh.GetSkeleton());
+		IAnimationDataController& Controller = Sequence->GetController();
+		Controller.InitializeModel();
+		Controller.OpenBracket(FText::FromString(TEXT("Test animation")), false);
+		Controller.SetFrameRate(FFrameRate(30, 1), false);
+		Controller.SetNumberOfFrames(FFrameNumber(Frames.Num() - 1), false);
+		for (const TPair<FName, FTransform>& Bone : Frames[0].Bones)
+		{
+			TArray<FVector> Positions;
+			TArray<FQuat> Rotations;
+			TArray<FVector> Scales;
+			for (const FFVPoseSnapshot& Frame : Frames)
+			{
+				const FTransform& Transform = Frame.Bones.FindChecked(Bone.Key);
+				Positions.Add(Transform.GetTranslation());
+				Rotations.Add(Transform.GetRotation());
+				Scales.Add(Transform.GetScale3D());
+			}
+			Controller.AddBoneCurve(Bone.Key, false);
+			Controller.SetBoneTrackKeys(Bone.Key, Positions, Rotations, Scales, false);
+		}
+		Controller.NotifyPopulated();
+		Controller.CloseBracket(false);
+		return Sequence;
 	}
 
 	FVector ComponentLocation(const USkeletalMesh& Mesh, const FFVPoseSnapshot& Snapshot, FName Bone)
@@ -334,6 +366,48 @@ bool FFVPoseCurvesTest::RunTest(const FString& Parameters)
 	FFVPoseAuthoring::ReadPose(*Asset, "hand_l_twist", Read);
 	TestTrue(TEXT("Curve value stored"), FMath::IsNearlyEqual(Read.Curves.FindRef(Curves[0]), 0.5f));
 	TestTrue(TEXT("Bones kept"), Read.Bones.FindChecked("hand_l").GetRotation().Equals(Pose.Bones.FindChecked("hand_l").GetRotation(), 1.e-4));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFVPosesFromAnimationTest, "FlickerVoid.Animation.MeatbagFactory.PosesFromAnimation",
+                                 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FFVPosesFromAnimationTest::RunTest(const FString& Parameters)
+{
+	using namespace FVPoseAuthoringTests;
+
+	USkeletalMesh* Mesh = LoadMannequin();
+	if (!TestNotNull(TEXT("Mannequin mesh"), Mesh))
+	{
+		return false;
+	}
+	UPoseAsset* Asset = MakePoseAsset(*Mesh);
+	FText Error;
+	const FQuat RefRotation = Mesh->GetRefSkeleton().GetRefBonePose()[Mesh->GetRefSkeleton().FindBoneIndex("thigh_l")].GetRotation();
+	FFVPoseAuthoring::WritePose(*Asset, "thigh_l_b", RefPose(*Mesh), Error);
+
+	FFVPoseSnapshot A = RefPose(*Mesh);
+	Rotate(A, "thigh_l", FQuat(FVector::YAxisVector, FMath::DegreesToRadians(30.0)));
+	FFVPoseSnapshot B = RefPose(*Mesh);
+	Rotate(B, "thigh_l", FQuat(FVector::YAxisVector, FMath::DegreesToRadians(60.0)));
+	UAnimSequence* Animation = MakeAnimation(*Mesh, { A, B });
+
+	TArray<FName> Created;
+	TArray<FName> Updated;
+	TestFalse(TEXT("Duplicate names refused"), FFVPoseAuthoring::SetPosesFromAnimation(*Asset, *Animation, { "thigh_l_a", "thigh_l_a" }, Created, Updated, Error));
+	TestFalse(TEXT("More poses than frames refused"), FFVPoseAuthoring::SetPosesFromAnimation(*Asset, *Animation, { "p0", "p1", "p2" }, Created, Updated, Error));
+	TestEqual(TEXT("Nothing written on refusal"), Asset->GetNumPoses(), 1);
+
+	TestTrue(TEXT("Set poses"), FFVPoseAuthoring::SetPosesFromAnimation(*Asset, *Animation, { "thigh_l_a", "thigh_l_b" }, Created, Updated, Error));
+	TestTrue(TEXT("Created the new pose"), Created == TArray<FName>({ "thigh_l_a" }));
+	TestTrue(TEXT("Updated the existing pose"), Updated == TArray<FName>({ "thigh_l_b" }));
+	for (const TPair<FName, double>& Expected : TArray<TPair<FName, double>>({ { "thigh_l_a", 30.0 }, { "thigh_l_b", 60.0 } }))
+	{
+		FFVPoseSnapshot Read;
+		FFVPoseAuthoring::ReadPose(*Asset, Expected.Key, Read);
+		const double Angle = FMath::RadiansToDegrees(RefRotation.AngularDistance(Read.Bones.FindChecked("thigh_l").GetRotation()));
+		TestTrue(*FString::Printf(TEXT("%s is %.0f degrees (%.2f)"), *Expected.Key.ToString(), Expected.Value, Angle), FMath::IsNearlyEqual(Angle, Expected.Value, 0.1));
+	}
 	return true;
 }
 
