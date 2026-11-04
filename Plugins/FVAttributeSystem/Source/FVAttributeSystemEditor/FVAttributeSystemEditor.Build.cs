@@ -11,6 +11,7 @@ public class FVAttributeSystemEditor : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
+            "FVCoreRuntime",
             "FVAttributeSystem"
         });
     }

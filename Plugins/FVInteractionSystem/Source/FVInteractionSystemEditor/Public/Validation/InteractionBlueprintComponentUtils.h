@@ -3,12 +3,17 @@
 #include "CoreMinimal.h"
 
 class UActorComponent;
-class UBlueprint;
+class UClass;
+struct FInteractionCompileContext;
 
 namespace InteractionBlueprintComponentUtils
 {
-	bool HasComponentOfClass(const UBlueprint& Blueprint, const TSubclassOf<UActorComponent>& ComponentClass);
+	/**
+	 * Collects the component templates an actor class spawns with: native and AngelScript default components (from the class defaults),
+	 * and the construction script components of every Blueprint in its chain, with child Blueprint overrides applied.
+	 */
+	void CollectComponentTemplates(const UClass* ActorClass, TArray<const UActorComponent*>& OutTemplates);
 
-	/** Collects the component templates authored on the blueprint's construction script. */
-	void GetComponentTemplatesOfClass(const UBlueprint& Blueprint, const TSubclassOf<UActorComponent>& ComponentClass, TArray<const UActorComponent*>& OutTemplates);
+	/** Runs every registered interaction rule on the components. */
+	void RunRules(const FInteractionCompileContext& Context);
 }
