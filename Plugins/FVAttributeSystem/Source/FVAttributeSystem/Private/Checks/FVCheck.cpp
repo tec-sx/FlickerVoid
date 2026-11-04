@@ -7,35 +7,6 @@
 
 #define LOCTEXT_NAMESPACE "FVCheck"
 
-namespace
-{
-	// Chance that the roll comes up Needed or higher; 2d6 counts its 36 outcomes.
-	float ChanceAtLeast(EFVCheckRoll Roll, int32 Needed)
-	{
-		int32 Faces = 0;
-		switch (Roll)
-		{
-		case EFVCheckRoll::D6x2:
-			{
-				int32 Hits = 0;
-				for (int32 First = 1; First <= 6; ++First)
-				{
-					for (int32 Second = 1; Second <= 6; ++Second)
-					{
-						Hits += First + Second >= Needed ? 1 : 0;
-					}
-				}
-				return static_cast<float>(Hits) / 36.f;
-			}
-		case EFVCheckRoll::D10: Faces = 10; break;
-		case EFVCheckRoll::D20: Faces = 20; break;
-		default: return Needed <= 0 ? 1.f : 0.f;
-		}
-
-		return static_cast<float>(FMath::Clamp(Faces - Needed + 1, 0, Faces)) / static_cast<float>(Faces);
-	}
-}
-
 FFVCheckResult UFVCheckLibrary::RollCheck(const UFVCheckDefinition* Check, AActor* Instigator, AActor* Target, int32 Difficulty)
 {
 	return Build(Check, UFVConditionLibrary::MakeContext(Instigator, Target), Difficulty, true);
@@ -55,6 +26,31 @@ float UFVCheckLibrary::SuccessChance(const UFVCheckDefinition* Check, AActor* In
 
 	const FFVCheckResult Passive = PreviewCheck(Check, Instigator, Target, Difficulty);
 	return ChanceAtLeast(Check->Roll, Difficulty - Passive.Total);
+}
+
+float UFVCheckLibrary::ChanceAtLeast(const EFVCheckRoll Roll, const int32 Needed)
+{
+	int32 Faces = 0;
+	switch (Roll)
+	{
+	case EFVCheckRoll::D6x2:
+		{
+			int32 Hits = 0;
+			for (int32 First = 1; First <= 6; ++First)
+			{
+				for (int32 Second = 1; Second <= 6; ++Second)
+				{
+					Hits += First + Second >= Needed ? 1 : 0;
+				}
+			}
+			return static_cast<float>(Hits) / 36.f;
+		}
+	case EFVCheckRoll::D10: Faces = 10; break;
+	case EFVCheckRoll::D20: Faces = 20; break;
+	default: return Needed <= 0 ? 1.f : 0.f;
+	}
+
+	return static_cast<float>(FMath::Clamp(Faces - Needed + 1, 0, Faces)) / static_cast<float>(Faces);
 }
 
 FFVCheckResult UFVCheckLibrary::Build(const UFVCheckDefinition* Check, const FFVConditionContext& Context, int32 Difficulty, bool bRoll)

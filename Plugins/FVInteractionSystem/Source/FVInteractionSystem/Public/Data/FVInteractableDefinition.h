@@ -2,13 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "Core/FVInteractionTypes.h"
-#include "Engine/DataAsset.h"
+#include "Data/FVDefinition.h"
 #include "GameplayTagContainer.h"
 
 #include "FVInteractableDefinition.generated.h"
 
 UCLASS(BlueprintType, Const)
-class FVINTERACTIONSYSTEM_API UFVInteractableDefinition : public UPrimaryDataAsset
+class FVINTERACTIONSYSTEM_API UFVInteractableDefinition : public UFVDefinition
 {
 	GENERATED_BODY()
 
