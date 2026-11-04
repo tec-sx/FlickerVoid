@@ -5,6 +5,8 @@ from .. import preferences, scene_data
 from ..unreal_link import link
 from ..meatbag_factory.contract import checks
 from ..meatbag_factory.contract.operators import store_issues, summary
+from ..meatbag_factory.template import process
+from ..meatbag_factory.template.operators import forget_states
 
 
 def _call(context, snippet, params=None):
@@ -20,7 +22,19 @@ def _push_meshes(context):
     meshes = _linkable(context)
     assets = {mesh.fv_ue_asset for mesh in meshes if mesh.fv_ue_asset}
     meshes += [obj for obj in context.scene.objects if obj.type == "MESH" and obj.fv_ue_asset in assets and obj not in meshes]
-    return meshes
+    return [mesh for mesh in meshes if not scene_data.is_helper(mesh)]
+
+
+def _process_templates(context, meshes):
+    """Brings every body up to date with its template; returns the names processed. Raises process.TemplateError."""
+    processed = []
+    try:
+        for mesh in meshes:
+            if process.template_of(mesh) is not None and process.ensure_current(context, mesh, preferences.contract(context).sides):
+                processed.append(mesh.name)
+    finally:
+        forget_states()
+    return processed
 
 
 def asset_groups(meshes):
@@ -94,7 +108,9 @@ class FV_OT_use_selected_asset(bpy.types.Operator):
 class FV_OT_push(bpy.types.Operator):
     bl_idname = "fv.push"
     bl_label = "Push to Unreal"
-    bl_description = "Check the contract, export the selected meshes with the locked FBX preset and import them onto their linked Unreal assets"
+    bl_description = ("Check the contract, export the selected meshes with the locked FBX preset and import them onto their "
+                      "linked Unreal assets. Bodies whose template changed are processed first")
+    bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
     def poll(cls, context):
@@ -102,6 +118,13 @@ class FV_OT_push(bpy.types.Operator):
 
     def execute(self, context):
         meshes = _push_meshes(context)
+        if context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
+        try:
+            processed = _process_templates(context, meshes)
+        except process.TemplateError as error:
+            self.report({"ERROR"}, f"Not pushed: {error}")
+            return {"CANCELLED"}
         issues = checks.run(context, meshes)
         store_issues(context, issues)
         if checks.has_errors(issues):
@@ -133,7 +156,8 @@ class FV_OT_push(bpy.types.Operator):
             pushed.append(asset)
 
         warnings = f" ({summary(issues)})" if issues else ""
-        self.report({"INFO"}, f"Pushed {', '.join(pushed)}{warnings}. Save in Unreal to keep it.")
+        refreshed = f" Processed from their templates first: {', '.join(processed)}." if processed else ""
+        self.report({"INFO"}, f"Pushed {', '.join(pushed)}{warnings}.{refreshed} Save in Unreal to keep it.")
         return {"FINISHED"}
 
 

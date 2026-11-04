@@ -1,6 +1,6 @@
 # FlickerVoid Tools for Blender: plan
 
-Status: slice 1 and the Meatbag Factory correctives are implemented and waiting for the owner's test in Blender and UE; later slices are plans.
+Status: slice 1, the Meatbag Factory correctives and the body template are implemented and waiting for the owner's test in Blender and UE; later slices are plans.
 
 ## Goal
 
@@ -19,6 +19,7 @@ It grows in small slices that follow the character work. Each slice is usable on
 | 1 | Core, UE link, **Push to Unreal**, first **Contract** checks | Implemented, to test |
 | 2 | **Correctives**: helper bone solver (port of Dem Bones), residual `CR_` shape keys, **Send Poses to Unreal** into a Pose Asset | Implemented, to test (needs PR #66) |
 | 2b | **Get morphs** from UE | Plan |
+| 2c | **Body template**: Make Template, Edit Template, Process, topology changes; then the **Meat Locker** character library, Detail object and skeleton sync | Template implemented, to test; the rest is plan |
 | 3 | **One body type**: Body Type Baker for a single extra type, pushed onto the same Skeleton | Plan |
 | 4 | **Garments**: Garment Fitter (weights from the reference body incl. shape bones, fitting proxy), **Get weights** from UE | Plan |
 | 5 | **LODs and collision**: characters send hand-made LOD0-1 and set UE reduction for LOD2+; static meshes get LODs and impostors from the Static Mesh LOD tool and colliders from the Collision tool (see below) | Plan |
@@ -130,13 +131,13 @@ Considered and not taken: Blender's own Pose Library (one action asset per pose 
 
 ### Sculpt target
 
-**Pose blend shapes.** A pose's blend shape is the body's `CR_<pose>` shape key. **Sculpt Shape** shows the pose alone and enters Sculpt mode on that key; Blender maps strokes on the posed mesh back to rest space through the Armature modifier. Preview weights set each blend shape to its pose's weight, so mixes show bones and shapes together. Renaming or removing a pose renames or removes its key. The push sends the keys as morph targets. With a Mirror modifier on the body, the push exports a full copy where each sided key moves only its side and the counterpart key is reflected (see the README), and Sculpt Shape hides the Mirror while sculpting.
+**Pose blend shapes.** A pose's blend shape is the body's `CR_<pose>` shape key. **Sculpt Shape** shows the pose alone and enters Sculpt mode on that key; Blender maps strokes on the posed mesh back to rest space through the Armature modifier. Preview weights set each blend shape to its pose's weight, so mixes show bones and shapes together. Renaming or removing a pose renames or removes its key. The push sends the keys as morph targets. A body built from a template is full already (see slice 2c). On a half mesh with a Mirror modifier, the push exports a full copy where each sided key moves only its side and the counterpart key is reflected (see the README), and Sculpt Shape hides the Mirror while sculpting. Sculpt Shape and Sculpt Target turn X symmetry on only for centre poses.
 
 You pose only one armature. The sculpt target is a hidden copy of the body (`<Body>_MF_Target`) on the same armature, made on first use, with its own Basis and one shape key per library pose. The body stays clean: it is never sculpted, and the target is left out of Push and the Contract checks.
 
 - **Sculpt Target** shows the active library pose, hides the body, shows the target with that pose's key active (made when missing, shown alone) and enters Sculpt mode. Blender maps the strokes on the posed mesh back into the key.
 - **Back** returns to the body and, with **Solve on Back**, solves that pose right away.
-- Renaming or removing a pose renames or removes its key. When the body's vertex count changes, delete the target and a new one is made (sculpts on the old one are lost).
+- Renaming or removing a pose renames or removes its key. On a body built from a template, Process carries the target's poses over, through topology changes too. On another body, when the vertex count changes, **Rebuild Target** makes a new one (sculpts on the old one are lost).
 
 ### Solve scope
 
@@ -173,6 +174,30 @@ Push the mesh first, so the Skeleton has the helper bones and the `CR_` morph ta
 - LODs switch on screen size, so distances are approximate and tuned per LOD screen size.
 
 Next: a **layered solve** (parents first with the leaves held, then the leaves on what is left) so each bone LOD looks right on its own, and a **rig generator** in Unreal that builds the pose reader rig from the metadata tags (one reader per control bone, writing the pose curves the Pose Asset blends by).
+
+## Slice 2c: Body template and the Meat Locker
+
+Decided with the owner on 2026-11-04 after the character management spike: one `.blend` per character in a library folder; weights authored only on the template; a separate Detail object for multires (future proofing for texturing, so its transfer after a topology change is optional); a hero is a copy of a base that then diverges; UVs are half tile on two UDIM tiles (head and body); the character panel is called **Meat Locker**.
+
+**Template and body.** The template is a half mesh with a Mirror modifier (X, Merge) and the only source of topology, shape, half UVs and weights. The body is the template with the Mirror applied and holds what needs both sides: the `CR_` blend shapes and the sculpt target. **Make Template** turns an existing half mesh into the pair: the body object keeps its name, links and modifiers (minus the Mirror) and gets the full mesh, and a hidden copy becomes the template.
+
+**Process** evaluates the template with only the Mirror shown (Mirror U per UDIM tile, vertex group flip, basis shape) and writes the result into the body:
+
+- Each body vertex stores its template vertex (`mf_template_index`) and its mirror partner (`mf_mirror`), so the solve and the push never search for them.
+- The body stores the template's fingerprint: topology, and content (positions, attributes, weights, materials). The panel compares it to show *Up to date*, *Template changed* or *Topology changed*.
+- Same topology: shape keys and target poses keep their deltas by index, and the body's own point attributes and `MF_Changed` carry over. Nothing is lost, so it runs on its own before Sculpt Shape, Sculpt Target, Solve and Push.
+- New topology: a vertex at the place of an old one copies its deltas; the others take the nearest point on the old surface and blend that face's corner deltas by barycentric weights, and are marked in `MF_Changed`. The old body is kept as `<Body>_MF_Previous` until removed. This waits for Process (Done in Edit Template processes too).
+- Checks: the Mirror works on X only, without a mirror object, with Merge (errors); UVs past the middle of their tile or on its left edge (warnings).
+
+**Weights** live only on the template. Solve Weights writes the solved weights back to the template's vertices through `mf_template_index`, with side bone names flipped for the mirrored side, then processes.
+
+**Push** sends the body. Each sided key's missing counterpart is `delta[partner]` reflected on X. Templates, sculpt targets and kept previous bodies are never pushed or checked.
+
+Next:
+
+1. **Meat Locker**: the library folder (an add-on preference), a list with thumbnails and metadata (an `MF_Character` text block, read without opening the file), Add, Copy, Delete (to `_Trash`) and Edit, Base and Hero, asset catalogs.
+2. **Detail**: a Detail object with multires that follows shape changes, Export Bake Meshes for Substance, and Blender's multires bake.
+3. **Skeleton**: a Reference character, Check Skeleton and Sync Skeleton.
 
 ## Get from Unreal (slices 2b and 4)
 

@@ -4,6 +4,10 @@ from . import preferences
 from .push.operators import FV_OT_push, FV_OT_test_connection, FV_OT_use_selected_asset
 from .meatbag_factory import sculpt
 from .meatbag_factory.contract.operators import MEATBAG_OT_check_contract, MEATBAG_UL_issues
+from .meatbag_factory.template import process
+from .meatbag_factory.template.operators import (MEATBAG_OT_edit_template, MEATBAG_OT_make_template,
+                                                 MEATBAG_OT_process_template, MEATBAG_OT_remove_previous,
+                                                 MEATBAG_OT_template_done, cached_state)
 from .meatbag_factory.operators import (MEATBAG_OT_pose_add, MEATBAG_OT_pose_affected_add,
                                         MEATBAG_OT_pose_affected_remove, MEATBAG_OT_pose_bones_from_selection,
                                         MEATBAG_OT_pose_move, MEATBAG_OT_pose_remove, MEATBAG_OT_pose_rest,
@@ -71,6 +75,46 @@ class _MeatbagSubpanel:
     bl_category = "FlickerVoid"
 
 
+_TEMPLATE_STATES = {
+    process.UP_TO_DATE: ("Up to date", "CHECKMARK"),
+    process.CHANGED: ("Template changed: processed when used", "INFO"),
+    process.TOPOLOGY: ("Topology changed: press Process", "ERROR"),
+    process.EDITING: ("Editing the template", "EDITMODE_HLT"),
+}
+
+
+class MEATBAG_PT_body(_MeatbagSubpanel, bpy.types.Panel):
+    bl_label = "Body"
+    bl_idname = "MEATBAG_PT_body"
+
+    def draw(self, context):
+        layout = self.layout
+        s = context.scene.meatbag
+        layout.prop(s, "mesh")
+        body = s.mesh
+        if body is None:
+            return
+        template = process.template_of(body)
+        if template is None:
+            if process.mirror_modifier(body):
+                layout.label(text="A half mesh: make it the template", icon="MOD_MIRROR")
+                layout.operator(MEATBAG_OT_make_template.bl_idname, icon="DUPLICATE")
+            return
+        text, icon = _TEMPLATE_STATES[cached_state(body)]
+        layout.label(text=f"{template.name}: {text}", icon=icon)
+        if process.editing(template):
+            layout.operator(MEATBAG_OT_template_done.bl_idname, icon="CHECKMARK", depress=True)
+        else:
+            row = layout.row(align=True)
+            row.operator(MEATBAG_OT_edit_template.bl_idname, icon="EDITMODE_HLT")
+            row.operator(MEATBAG_OT_process_template.bl_idname, icon="FILE_REFRESH")
+        previous = process.previous_of(body)
+        if previous is not None:
+            row = layout.row(align=True)
+            row.label(text=f"Kept: {previous.name}", icon="GHOST_ENABLED")
+            row.operator(MEATBAG_OT_remove_previous.bl_idname, text="", icon="TRASH")
+
+
 class MEATBAG_PT_poses(_MeatbagSubpanel, bpy.types.Panel):
     bl_label = "Poses"
     bl_idname = "MEATBAG_PT_poses"
@@ -134,7 +178,6 @@ class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
         layout.use_property_decorate = False
         if s.armature:
             layout.prop_search(s, "helper_collection", s.armature.data, "collections_all")
-        layout.prop(s, "mesh")
         row = layout.row(align=True)
         if sculpting(context):
             row.operator(MEATBAG_OT_sculpt_back.bl_idname, icon="LOOP_BACK")
@@ -172,4 +215,4 @@ class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
         layout.operator(MEATBAG_OT_send_poses.bl_idname, icon="EXPORT")
 
 
-classes = (FV_PT_unreal, MEATBAG_PT_factory, MEATBAG_PT_contract, MEATBAG_PT_poses, MEATBAG_PT_correctives)
+classes = (FV_PT_unreal, MEATBAG_PT_factory, MEATBAG_PT_body, MEATBAG_PT_contract, MEATBAG_PT_poses, MEATBAG_PT_correctives)

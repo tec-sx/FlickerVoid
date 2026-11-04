@@ -7,6 +7,8 @@ holding the full shape wanted in that pose; the solve reads it as its target.
 
 import bpy
 
+from .. import scene_data
+
 SHAPE_PREFIX = "CR_"
 TARGET_SUFFIX = "_MF_Target"
 TARGET_TAG = "mf_sculpt_target"
@@ -52,9 +54,7 @@ def ensure_target(mesh):
     for modifier in list(target.modifiers):
         if modifier.type != "ARMATURE":
             target.modifiers.remove(modifier)
-    target.meatbag_target = None
-    target.fv_ue_asset = ""
-    target.fv_ue_skeleton = ""
+    scene_data.clear_properties(target)
     for collection in mesh.users_collection:
         collection.objects.link(target)
     target[TARGET_TAG] = True

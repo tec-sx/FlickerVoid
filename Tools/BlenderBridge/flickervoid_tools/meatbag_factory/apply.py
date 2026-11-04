@@ -43,7 +43,7 @@ def write_helper_poses(context, armature, capture, result):
 
 
 def write_weights(mesh, capture, weights):
-    """Writes the vertex weights that changed; returns how many vertices changed."""
+    """Writes the vertex weights that changed; returns the indices of the vertices that changed."""
     changed = np.flatnonzero(np.abs(weights - capture.problem.weights).max(axis=1) > WEIGHT_CHANGE)
     groups = {}
     for bone in capture.bones:
@@ -57,7 +57,7 @@ def write_weights(mesh, capture, weights):
                 group.add([int(vertex)], float(weights[vertex, b]), "REPLACE")
             else:
                 group.remove([int(vertex)])
-    return len(changed)
+    return changed
 
 
 def write_residual(mesh, error):

@@ -6,20 +6,53 @@ import bpy
 from mathutils import Matrix
 
 from . import apply, capture, library, pose_asset, sculpt, solver
-from .. import preferences
+from .template import process
+from .template.operators import forget_states
+from .. import preferences, scene_data
+from ..core.sides import CENTRE
 from ..push import export
 from ..unreal_link import link
 
 
 HIDDEN_MIRRORS = "mf_hidden_mirrors"
+MIRROR_X = "mf_mirror_x"
 
 
 def _is_armature(_, obj):
     return obj.type == "ARMATURE"
 
 
-def _is_mesh(_, obj):
-    return obj.type == "MESH"
+def _is_body(_, obj):
+    return obj.type == "MESH" and not scene_data.is_helper(obj)
+
+
+def _ensure_current(operator, context, body):
+    """Processes a changed template before the body is used; reports and returns False when it can't."""
+    if process.template_of(body) is None:
+        return True
+    try:
+        report = process.ensure_current(context, body, preferences.contract(context).sides)
+    except process.TemplateError as error:
+        operator.report({"ERROR"}, str(error))
+        return False
+    finally:
+        forget_states()
+    if report is not None:
+        operator.report({"INFO"}, report.message(body))
+    return True
+
+
+def _symmetry_for(obj, pose_name, sides):
+    """Sculpt symmetry on X only for centre poses, so a side pose is sculpted on its own side; Back restores it."""
+    if MIRROR_X not in obj:
+        obj[MIRROR_X] = obj.data.use_mirror_x
+    obj.data.use_mirror_x = sides.name_side(pose_name) == CENTRE
+
+
+def _restore_symmetry(obj):
+    if MIRROR_X in obj:
+        obj.data.use_mirror_x = bool(obj[MIRROR_X])
+        del obj[MIRROR_X]
 
 
 def settings(context):
@@ -122,8 +155,8 @@ def _blend_mode_changed(self, context):
 class MeatbagSettings(bpy.types.PropertyGroup):
     armature: bpy.props.PointerProperty(type=bpy.types.Object, poll=_is_armature, name="Armature",
                                         description="Armature whose pose library is edited and solved")
-    mesh: bpy.props.PointerProperty(type=bpy.types.Object, poll=_is_mesh, name="Mesh",
-                                    description="The skinned mesh whose helper bones are solved")
+    mesh: bpy.props.PointerProperty(type=bpy.types.Object, poll=_is_body, name="Body",
+                                    description="The skinned body whose helper bones are solved and whose blend shapes are sculpted")
     solve_scope: bpy.props.EnumProperty(name="Solve", items=(
         ("ALL", "All Poses", "Solve every pose that isn't locked"),
         ("ACTIVE", "Active Pose", "Solve only the active pose"),
@@ -456,6 +489,10 @@ def _groups(s, indices):
 def solve(operator, context, scope):
     """Captures, solves and writes back the scoped poses, each pose on its own affected bones; reports to the operator."""
     s = settings(context)
+    if context.mode != "OBJECT":
+        bpy.ops.object.mode_set(mode="OBJECT")
+    if not _ensure_current(operator, context, s.mesh):
+        return {"CANCELLED"}
     target = s.mesh.meatbag_target
     if target is None:
         operator.report({"ERROR"}, "No sculpt target yet: press Sculpt Target first")
@@ -474,7 +511,7 @@ def solve(operator, context, scope):
                              weight_rounds=s.weight_rounds, max_influences=preferences.get(context).max_influences)
     s.results.clear()
     solved, unweighted, keys = set(), set(), []
-    initial_errors, final_errors, changed = [], [], 0
+    initial_errors, final_errors, changed, reweighted = [], [], 0, []
     for helpers, group in groups.items():
         try:
             captured = capture.capture(context, s.armature, s.mesh, target, list(helpers), group)
@@ -487,7 +524,9 @@ def solve(operator, context, scope):
 
         apply.write_helper_poses(context, s.armature, captured, result)
         if solve_weights:
-            changed = apply.write_weights(s.mesh, captured, result.weights)
+            vertices = apply.write_weights(s.mesh, captured, result.weights)
+            changed = len(vertices)
+            reweighted.append((captured.bones, result.weights, captured.problem.weights, vertices))
         if s.residual_keys:
             keys += apply.write_residual_shape_keys(s.mesh, captured, result, s.residual_threshold)
         initial_errors.append(result.initial_error)
@@ -499,6 +538,7 @@ def solve(operator, context, scope):
             row.before = _rms(result.initial_error[row_index])
             row.after = _rms(result.error[row_index])
     apply.write_residual(s.mesh, np.concatenate(final_errors))
+    template_note = _weights_to_template(operator, context, s.mesh, reweighted)
 
     before = _rms(np.concatenate(initial_errors))
     after = _rms(np.concatenate(final_errors))
@@ -509,11 +549,27 @@ def solve(operator, context, scope):
         message += f", {len(keys)} residual shape keys"
     if s.solve_weights and not solve_weights:
         message += ". Weights not solved: they need every pose, unlocked, sharing the same helpers"
+    message += template_note
     if unweighted:
         operator.report({"WARNING"}, message + f". No weights, so not solved: {', '.join(sorted(unweighted))}")
     else:
         operator.report({"INFO"}, message)
     return {"FINISHED"}
+
+
+def _weights_to_template(operator, context, body, reweighted):
+    """Writes solved weights back into the body's template and processes it, so the mirrored side gets them too."""
+    if not reweighted or process.template_of(body) is None:
+        return ""
+    sides = preferences.contract(context).sides
+    written = sum(process.write_back_weights(body, *item, sides) for item in reweighted)
+    try:
+        process.process(context, body, sides)
+    except process.TemplateError as error:
+        operator.report({"WARNING"}, f"Weights written to the template, but processing failed: {error}")
+    finally:
+        forget_states()
+    return f", {written} template vertices reweighted and mirrored"
 
 
 class MEATBAG_OT_solve_correctives(bpy.types.Operator):
@@ -558,15 +614,18 @@ class MEATBAG_OT_sculpt_shape(_PoseOperator, bpy.types.Operator):
         name = action.meatbag_poses[index].name
         if context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")
+        if not _ensure_current(self, context, s.mesh):
+            return {"CANCELLED"}
         key = sculpt.pose_key(s.mesh, sculpt.shape_name(name), create=True)
         show_only(context, action, index)
         s.mesh.show_only_shape_key = False
         s.mesh.active_shape_key_index = list(s.mesh.data.shape_keys.key_blocks).index(key)
         # A blend shape on the modelled half would show on both sides; the push puts it on its own side.
         hidden = [m.name for m in s.mesh.modifiers if m.type == "MIRROR" and m.show_viewport]
-        for name in hidden:
-            s.mesh.modifiers[name].show_viewport = False
+        for modifier_name in hidden:
+            s.mesh.modifiers[modifier_name].show_viewport = False
         s.mesh[HIDDEN_MIRRORS] = hidden
+        _symmetry_for(s.mesh, name, preferences.contract(context).sides)
         _sculpt(context, s.mesh)
         self.report({"INFO"}, f"Sculpting {key.name} in {name}. Press Back when done")
         return {"FINISHED"}
@@ -585,6 +644,10 @@ class MEATBAG_OT_sculpt_pose(_PoseOperator, bpy.types.Operator):
     def execute(self, context):
         s = settings(context)
         _, action = self.library(context)
+        if context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
+        if not _ensure_current(self, context, s.mesh):
+            return {"CANCELLED"}
         try:
             target = sculpt.ensure_target(s.mesh)
         except sculpt.SculptError as error:
@@ -602,6 +665,7 @@ class MEATBAG_OT_sculpt_pose(_PoseOperator, bpy.types.Operator):
         target.show_only_shape_key = True
         target.hide_set(False)
         s.mesh.hide_set(True)
+        _symmetry_for(target, name, preferences.contract(context).sides)
         _sculpt(context, target)
         self.report({"INFO"}, f"Sculpting {name}. Press Back when done")
         return {"FINISHED"}
@@ -665,11 +729,13 @@ class MEATBAG_OT_sculpt_back(bpy.types.Operator):
                     modifier.show_viewport = True
             if HIDDEN_MIRRORS in s.mesh:
                 del s.mesh[HIDDEN_MIRRORS]
+            _restore_symmetry(s.mesh)
             if s.armature and s.armature.meatbag_library:
                 show_preview(context, s.armature.meatbag_library)
             return {"FINISHED"}
         target = s.mesh.meatbag_target
         target.show_only_shape_key = False
+        _restore_symmetry(target)
         target.hide_set(True)
         s.mesh.hide_set(False)
         for obj in context.selected_objects:

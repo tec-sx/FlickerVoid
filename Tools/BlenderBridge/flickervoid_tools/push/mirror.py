@@ -1,9 +1,11 @@
-"""Mirror on push: a mesh with a Mirror modifier is exported as a temporary full copy that keeps its shape keys.
+"""Mirror on push: shape keys with a side token reach Unreal on their own side, with their counterpart made by reflection.
 
-Blender's FBX export drops every shape key once a modifier changes the vertex count, and a shape key on the modelled
-half would show on both sides anyway. The copy has the Mirror applied, and each shape key whose name has a side token
-(CR_upperarm_l_up) moves only that side; its counterpart (CR_upperarm_r_up) is made by reflecting it, unless the
-mesh has one already. Keys without a side token stay symmetric. Left is +X, as on the UE Mannequin.
+A mesh with a Mirror modifier is exported as a temporary full copy: Blender's FBX export drops every shape key once a
+modifier changes the vertex count, and a shape key on the modelled half would show on both sides anyway. The copy has
+the Mirror applied, and each shape key whose name has a side token (CR_upperarm_l_up) moves only that side; its
+counterpart (CR_upperarm_r_up) is made by reflecting it, unless the mesh has one already. Keys without a side token
+stay symmetric. A body processed from a template is already full and stores each vertex's mirror partner, so its copy
+only adds the missing counterparts. Left is +X, as on the UE Mannequin.
 """
 
 from contextlib import contextmanager
@@ -16,6 +18,8 @@ from mathutils import kdtree
 from ..core.sides import CENTRE, LEFT, RIGHT
 
 CENTRE_TOLERANCE = 1e-4
+FLIP = np.array([-1.0, 1.0, 1.0])
+PARTNER_ATTRIBUTE = "mf_mirror"
 
 
 class MirrorError(RuntimeError):
@@ -27,8 +31,28 @@ def mirror_modifier(mesh):
     return next((m for m in mesh.modifiers if m.type == "MIRROR" and m.show_viewport), None)
 
 
-def needs_full_copy(mesh):
-    return mirror_modifier(mesh) is not None and mesh.data.shape_keys is not None
+def partners(mesh):
+    """Each vertex's mirror partner on a processed body (itself on the centre line), or None."""
+    attribute = mesh.data.attributes.get(PARTNER_ATTRIBUTE)
+    if attribute is None or attribute.domain != "POINT" or attribute.data_type != "INT":
+        return None
+    values = np.empty(len(attribute.data), dtype=np.int32)
+    attribute.data.foreach_get("value", values)
+    return values
+
+
+def _missing_counterparts(mesh, sides):
+    keys = mesh.data.shape_keys.key_blocks
+    names = [sides.mirror_name(key.name) for key in keys if sides.name_side(key.name) != CENTRE]
+    return [name for name in names if name and name not in keys]
+
+
+def needs_copy(mesh, sides):
+    if mesh.data.shape_keys is None:
+        return False
+    if mirror_modifier(mesh) is not None:
+        return True
+    return partners(mesh) is not None and bool(_missing_counterparts(mesh, sides))
 
 
 @contextmanager
@@ -38,8 +62,8 @@ def full_meshes(context, meshes, sides):
     try:
         result = []
         for mesh in meshes:
-            if needs_full_copy(mesh):
-                copy = _full_copy(context, mesh, sides)
+            if needs_copy(mesh, sides):
+                copy = _full_copy(context, mesh, sides) if mirror_modifier(mesh) else _counterpart_copy(context, mesh, sides)
                 swaps.append((mesh, copy, mesh.name))
                 mesh.name = mesh.name + "_mf_half"
                 copy.name = swaps[-1][2]
@@ -109,7 +133,7 @@ def _full_copy(context, mesh, sides):
         bpy.data.meshes.remove(data)
         raise MirrorError(f"{mesh.name}: modifiers before or after the Mirror change the vertices; only the Mirror may")
 
-    source = _mirror_sources(basis, half)
+    source = mirror_sources(basis, half)
     original_side = LEFT if basis[:half, 0].mean() >= 0.0 else RIGHT
     centre = np.abs(basis[:, 0]) < CENTRE_TOLERANCE
 
@@ -140,13 +164,61 @@ def _full_copy(context, mesh, sides):
     return copy
 
 
+def _counterpart_copy(context, mesh, sides):
+    """A copy of a processed body with each side key's missing counterpart, reflected through the stored partners."""
+    partner = partners(mesh)
+    if len(partner) != len(mesh.data.vertices):
+        raise MirrorError(f"{mesh.name}: its mirror partners are out of date; press Process in the Meatbag Factory")
+    keys = mesh.data.shape_keys
+    basis = key_points(keys.reference_key)
+    copy = mesh.copy()
+    copy.data = mesh.data.copy()
+    context.scene.collection.objects.link(copy)
+    for key in list(keys.key_blocks):
+        counterpart = sides.mirror_name(key.name)
+        if key == keys.reference_key or sides.name_side(key.name) == CENTRE or not counterpart or counterpart in copy.data.shape_keys.key_blocks:
+            continue
+        delta = key_points(key) - basis
+        added = copy.shape_key_add(name=counterpart, from_mix=False)
+        added.data.foreach_set("co", (basis + counterpart_delta(delta, partner)).ravel())
+        added.value = 0.0
+    return copy
+
+
+def key_points(key):
+    co = np.empty(len(key.data) * 3)
+    key.data.foreach_get("co", co)
+    return co.reshape(-1, 3)
+
+
+def counterpart_delta(delta, partner):
+    """The other side's version of a full mesh's shape key delta."""
+    return delta[partner] * FLIP
+
+
+def place_half(delta, side, sources, original_side, centre):
+    """A half mesh's shape key delta on its full mesh: centre keys on both sides, side keys on their own side only.
+
+    sources: for each vertex the Mirror added, the half vertex it reflects. centre: the half vertices the Mirror merged."""
+    half = len(delta)
+    full = np.zeros((half + len(sources), 3))
+    reflected = delta[sources] * FLIP
+    if side == CENTRE or side == original_side:
+        full[:half] = delta
+    if side == CENTRE or side != original_side:
+        full[half:] = reflected
+    if side != CENTRE and side != original_side:
+        full[:half][centre] = delta[centre] * FLIP
+    return full
+
+
 def _rest(mesh):
     co = np.empty(len(mesh.data.vertices) * 3)
     mesh.data.vertices.foreach_get("co", co)
     return co.reshape(-1, 3)
 
 
-def _mirror_sources(basis, half):
+def mirror_sources(basis, half):
     """For each vertex the Mirror added (index half and up), the modelled vertex it reflects."""
     tree = kdtree.KDTree(half)
     for index, co in enumerate(basis[:half]):
@@ -166,7 +238,7 @@ def _place(delta, sources, half, centre, on_modelled_side):
     if on_modelled_side:
         placed[:half] = modelled
     else:
-        reflected = modelled[sources] * np.array([-1.0, 1.0, 1.0])
+        reflected = modelled[sources] * FLIP
         placed[half:] = reflected
     placed[centre] = delta[centre]
     return placed

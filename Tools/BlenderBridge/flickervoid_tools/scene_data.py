@@ -14,9 +14,29 @@ def armature_of(obj):
     return None
 
 
+HELPER_TAGS = ("mf_sculpt_target", "mf_template", "mf_previous")
+
+
+# The add-on's own object properties; Blender 5 keeps them out of an object's custom properties.
+TOOL_PROPERTIES = {"fv_ue_asset": "", "fv_ue_skeleton": "", "meatbag_target": None, "meatbag_template": None}
+
+
+def is_helper(obj):
+    """Meatbag Factory sculpt targets, templates and kept previous bodies, which are never pushed or checked."""
+    return any(obj.get(tag) for tag in HELPER_TAGS)
+
+
+def clear_properties(obj):
+    """Drops a copy's custom properties and resets the add-on's own, so a helper copy doesn't act as the object it came from."""
+    for name in list(obj.keys()):
+        del obj[name]
+    for name, value in TOOL_PROPERTIES.items():
+        setattr(obj, name, value)
+
+
 def deformed_meshes(armature, scene):
-    """Meshes the armature deforms, leaving out Meatbag Factory sculpt targets, which are never pushed."""
-    return [obj for obj in scene.objects if obj.type == "MESH" and armature_of(obj) == armature and not obj.get("mf_sculpt_target")]
+    """Meshes the armature deforms, leaving out the Meatbag Factory's helper meshes."""
+    return [obj for obj in scene.objects if obj.type == "MESH" and armature_of(obj) == armature and not is_helper(obj)]
 
 
 def deform_bones(armature):
