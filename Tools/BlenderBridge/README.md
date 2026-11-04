@@ -1,6 +1,6 @@
 # FlickerVoid Tools for Blender
 
-One Blender extension for the FlickerVoid character pipeline: push meshes to Unreal, check them against the character contract, build full bodies from half templates and solve corrective helper bones (the Meatbag Factory). The roadmap is in [Plan.md](Plan.md).
+One Blender extension for the FlickerVoid character pipeline: keep characters in a library (the Meat Locker), build full bodies from half templates, sculpt and bake detail, solve corrective helper bones (the Meatbag Factory), check them against the character contract and push them to Unreal. The roadmap is in [Plan.md](Plan.md).
 
 Needs Blender 4.2 or later (tested headless on 5.2) and the Unreal Editor running on the same computer.
 
@@ -28,6 +28,7 @@ Or build a zip with `blender --command extension build --source-dir Tools/Blende
 | Setting | Default | Use |
 |---|---|---|
 | Unreal Project | empty | Folder with the `.uproject`. Side pairs are read from its `Config/DefaultGame.ini` (Animation System settings); the line under it shows which pairs and where from. Also picks the right editor when several are open. |
+| Character Library | empty | The Meat Locker's folder: one folder per character holding `<Name>.blend`. The button next to it adds the folder to Blender's asset libraries. |
 | Bone Budget | 300 | Most bones (deform bones, as exported) per skeleton |
 | Max Influences | 8 | Most bone influences per vertex |
 | Unit Scale | 0.01 | Expected scene unit scale (centimetres) |
@@ -38,6 +39,15 @@ Or build a zip with `blender --command extension build --source-dir Tools/Blende
 
 The **FlickerVoid** tab in the 3D view sidebar.
 
+**Meat Locker.** The character library, one `.blend` per character. Pick its folder at the top of the panel. The list shows each character's saved thumbnail, Base or Hero, the Reference (armature icon) and the open file (file icon).
+
+- **+** adds a character and opens it. It starts from **Empty** (a new file with the contract's units and the Reference character's armature), **This File** (the open file saved into the library, the way to bring in an existing character) or **Selected Character**. The copy button starts from the selected character as a Hero.
+- A copy records the character it came from and drops its Unreal asset links, so its push can't overwrite the original's asset.
+- **Open** opens the selected character, and **Edit Template** opens it on its half template. Unsaved changes in the open file are saved first unless you untick **Save Current File**.
+- The trash button moves the selected character's folder into `_Trash`.
+- **Base** and **Hero** set the open character's kind; save to keep it. **Reference** marks the character whose skeleton the others are checked against (stored in `MeatLocker.json` in the library folder).
+- Each character's collection is named after it and marked as an asset in the *Meat Locker/Base* or *Meat Locker/Hero* catalog, so once the folder is an asset library, garment files can drag a body in from the Asset Browser. A character's kind, base and armature are in its `MF_Character` text block.
+
 **Meatbag Factory > Body.** The **Body** is the skinned character mesh that the poses, sculpts, solve and push work on. A symmetric body is built from a **template**, a half mesh that is the only one you model.
 
 1. Model one half (left is +X) with a **Mirror** modifier: X only, **Merge** on, no mirror object. Lay its UVs in the left half of each UDIM tile (U 0 to 0.5 within the tile, such as the head in 1001 and the body in 1002) and keep them off the tile's left edge; the Mirror flips them into the right half of the same tile. Paint the weights on the half; the Mirror flips `_l` groups into `_r` groups.
@@ -47,7 +57,14 @@ The **FlickerVoid** tab in the 3D view sidebar.
 
 A template changed outside Edit Template is processed on its own before Sculpt Shape, Sculpt Target, Solve and Push when its topology is the same; after a topology change they wait for **Process**. Process sets the Mirror's UV and vertex group flips itself. Solved weights are written back into the template (see step 6 below). Each body vertex stores the template vertex it came from (`mf_template_index`) and its mirror partner (`mf_mirror`).
 
-**Meatbag Factory > Contract.** Select armatures or meshes and press **Check Contract**. Selecting an armature checks the meshes it deforms too. Each row has a select button (object, bones or vertices) and, where it's safe, a fix button (limit influences, normalize). Errors block a push; warnings don't.
+**Detail**, in the same panel, is for sculpted skin detail and texture bakes:
+
+- **Add Detail** makes `<Body>_MF_Detail`, a hidden copy of the full body with a Multires modifier. **Sculpt Detail** shows it in Sculpt mode, and **Back** returns to the body.
+- While the body keeps its topology, Process moves the Detail's base along and the sculpt follows. After a topology change the Detail stays on the old topology, which still bakes, until **Transfer Detail** projects its sculpt onto a new Detail along the normals.
+- **Export Bake Meshes** writes `<Body>_low.fbx` (the body) and `<Body>_high.fbx` (the Detail at its top level) into an `Export` folder next to the file, for Substance Painter.
+- **Bake Maps** bakes a normal, displacement or vector displacement map from the multires levels into `<Body>_<map>.<tile>.png` (or `.exr`), one file per UDIM tile, in the same folder.
+
+**Meatbag Factory > Contract.** Select armatures or meshes and press **Check Contract**. Selecting an armature checks the meshes it deforms too. Each row has a select button (object, bones or vertices) and, where it's safe, a fix button (limit influences, normalize). Errors block a push; warnings don't. When the library has a Reference character, **Check Skeleton** compares the armature picked in Poses (or the active one) with the Reference's deform bones and lists other parents (errors), missing bones, other rolls and extra bones. **Sync Skeleton** adds the missing bones, placed relative to their parent and scaled by its length, in the same bone collections; paint or solve their weights afterwards.
 
 **Unreal.**
 

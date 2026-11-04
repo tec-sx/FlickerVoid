@@ -6,6 +6,7 @@ from . import preferences, ui
 from .push import operators as push_operators
 from .meatbag_factory import operators as meatbag_operators
 from .meatbag_factory.contract import operators as contract_operators
+from .meatbag_factory.locker import operators as locker_operators
 from .meatbag_factory.template import operators as template_operators
 
 _classes = (
@@ -13,6 +14,7 @@ _classes = (
     *contract_operators.classes,
     *meatbag_operators.classes,
     *template_operators.classes,
+    *locker_operators.classes,
     *push_operators.classes,
     *ui.classes,
 )
@@ -24,11 +26,13 @@ def register():
     contract_operators.register_properties()
     meatbag_operators.register_properties()
     template_operators.register_properties()
+    locker_operators.register_properties()
     push_operators.register_properties()
 
 
 def unregister():
     push_operators.unregister_properties()
+    locker_operators.unregister_properties()
     template_operators.unregister_properties()
     meatbag_operators.unregister_properties()
     contract_operators.unregister_properties()

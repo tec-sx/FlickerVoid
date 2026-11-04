@@ -39,25 +39,25 @@ def check_armature(name, bones, contract):
 
     unpaired = sorted(bone for bone in names if (mirror := sides.mirror_bone(bone)) and mirror not in names)
     if unpaired:
-        issues.append(Issue(ERROR, f"{len(unpaired)} side bones have no counterpart: {_preview(unpaired)}", name, BONES, unpaired))
+        issues.append(Issue(ERROR, f"{len(unpaired)} side bones have no counterpart: {preview(unpaired)}", name, BONES, unpaired))
 
     missing = [bone for bone in contract.required_bones if bone not in names]
     if missing:
-        issues.append(Issue(ERROR, f"Missing required bones: {_preview(missing)}", name))
+        issues.append(Issue(ERROR, f"Missing required bones: {preview(missing)}", name))
 
     if len(bones) > contract.bone_budget:
         issues.append(Issue(ERROR, f"{len(bones)} bones, the budget is {contract.bone_budget}", name))
 
     tops = sorted(bone for bone, parent in bones if parent is None)
     if len(tops) != 1:
-        issues.append(Issue(ERROR, f"Needs exactly one top bone, found {len(tops)}: {_preview(tops)}", name, BONES, tops))
+        issues.append(Issue(ERROR, f"Needs exactly one top bone, found {len(tops)}: {preview(tops)}", name, BONES, tops))
     return issues
 
 
 def check_vertex_groups(name, group_names, bone_names):
     orphans = sorted(group for group in group_names if group not in bone_names)
     if orphans:
-        return [Issue(WARNING, f"{len(orphans)} vertex groups match no deform bone: {_preview(orphans)}", name)]
+        return [Issue(WARNING, f"{len(orphans)} vertex groups match no deform bone: {preview(orphans)}", name)]
     return []
 
 
@@ -93,7 +93,7 @@ def limit_and_normalize(weights, max_influences):
     return {bone: weight / total for bone, weight in kept}
 
 
-def _preview(items, count=5):
+def preview(items, count=5):
     items = list(items)
     shown = ", ".join(str(item) for item in items[:count])
     return shown + (f" and {len(items) - count} more" if len(items) > count else "")

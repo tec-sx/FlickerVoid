@@ -3,7 +3,7 @@ schema_version = "1.0.0"
 id = "flickervoid_tools"
 version = "0.1.0"
 name = "FlickerVoid Tools"
-tagline = "Push to Unreal and character contract checks"
+tagline = "Character library, correctives and push to Unreal"
 maintainer = "tecsx"
 type = "add-on"
 
@@ -13,4 +13,4 @@ license = ["SPDX:GPL-3.0-or-later"]
 
 [permissions]
 network = "Talk to the Unreal Editor running on this computer"
-files = "Read the Unreal project config and write temporary FBX files"
+files = "Read the Unreal project config, manage the character library folder, write FBX files and bakes"

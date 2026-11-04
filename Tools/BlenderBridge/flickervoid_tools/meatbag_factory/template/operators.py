@@ -1,9 +1,9 @@
-"""Body panel operators: Make Template, Edit Template and Done, Process, and Remove Previous Body."""
+"""Body panel operators: Make Template, Edit Template and Done, Process, Remove Previous Body, and the Detail."""
 
 import bpy
 from bpy.app.handlers import persistent
 
-from . import process
+from . import detail as detail_object, process
 from ... import preferences, scene_data
 
 _states = {}
@@ -16,8 +16,32 @@ def cached_state(body):
     return _states[body.name]
 
 
+def cached_follows(body):
+    """True while the body's Detail shares its topology; recomputed only after a change like the template state."""
+    key = ("detail", body.name)
+    if key not in _states:
+        _states[key] = detail_object.follows(body)
+    return _states[key]
+
+
 def forget_states():
     _states.clear()
+
+
+def ensure_current(operator, context, body):
+    """Processes a changed template before the body is used; reports and returns False when it can't."""
+    if process.template_of(body) is None:
+        return True
+    try:
+        report = process.ensure_current(context, body, preferences.contract(context).sides)
+    except process.TemplateError as error:
+        operator.report({"ERROR"}, str(error))
+        return False
+    finally:
+        forget_states()
+    if report is not None:
+        operator.report({"INFO"}, report.message(body))
+    return True
 
 
 @persistent
@@ -189,12 +213,168 @@ class MEATBAG_OT_remove_previous(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class _DetailOperator:
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return detail_object.detail_of(_body(context)) is not None
+
+    def failed(self, error):
+        self.report({"ERROR"}, str(error))
+        return {"CANCELLED"}
+
+
+class MEATBAG_OT_detail_add(bpy.types.Operator):
+    bl_idname = "meatbag.detail_add"
+    bl_label = "Add Detail"
+    bl_description = ("Add the body's Detail: a hidden copy of its base with a Multires modifier, to sculpt skin detail on "
+                      "and bake from. It follows the body's shape while the topology stays the same")
+    bl_options = {"REGISTER", "UNDO"}
+
+    levels: bpy.props.IntProperty(name="Levels", default=2, min=0, max=6, description="Multires levels to subdivide at once")
+
+    @classmethod
+    def poll(cls, context):
+        body = _body(context)
+        return bool(body and detail_object.detail_of(body) is None and process.mirror_modifier(body) is None
+                    and not scene_data.is_helper(body))
+
+    def execute(self, context):
+        body = _body(context)
+        _object_mode(context)
+        if not ensure_current(self, context, body):
+            return {"CANCELLED"}
+        try:
+            detail = detail_object.add(body, self.levels)
+        except detail_object.DetailError as error:
+            self.report({"ERROR"}, str(error))
+            return {"CANCELLED"}
+        finally:
+            forget_states()
+        self.report({"INFO"}, f"{detail.name} added at multires level {self.levels}. Sculpt Detail to work on it")
+        return {"FINISHED"}
+
+
+class MEATBAG_OT_detail_remove(_DetailOperator, bpy.types.Operator):
+    bl_idname = "meatbag.detail_remove"
+    bl_label = "Remove Detail"
+    bl_description = "Delete the body's Detail and its sculpt"
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event, title="Remove Detail",
+                                                     message="Delete the Detail and its sculpt?", confirm_text="Remove")
+
+    def execute(self, context):
+        _object_mode(context)
+        detail_object.remove(_body(context))
+        forget_states()
+        return {"FINISHED"}
+
+
+class MEATBAG_OT_detail_sculpt(_DetailOperator, bpy.types.Operator):
+    bl_idname = "meatbag.detail_sculpt"
+    bl_label = "Sculpt Detail"
+    bl_description = "Hide the body and sculpt its Detail. Back shows the body again"
+
+    def execute(self, context):
+        body = _body(context)
+        _object_mode(context)
+        if not ensure_current(self, context, body):
+            return {"CANCELLED"}
+        detail = detail_object.detail_of(body)
+        target = body.meatbag_target
+        if target is not None:
+            target.hide_set(True)
+        detail.hide_set(False)
+        body.hide_set(True)
+        _select_only(context, detail)
+        bpy.ops.object.mode_set(mode="SCULPT")
+        return {"FINISHED"}
+
+
+class MEATBAG_OT_detail_transfer(_DetailOperator, bpy.types.Operator):
+    bl_idname = "meatbag.detail_transfer"
+    bl_label = "Transfer Detail"
+    bl_description = ("Move a Detail left on an older topology onto the body: a new Detail at the same level is projected "
+                      "onto the old sculpt along its normals, then the old one is deleted. Optional: the old Detail still bakes")
+
+    @classmethod
+    def poll(cls, context):
+        return super().poll(context) and not cached_follows(_body(context))
+
+    def execute(self, context):
+        body = _body(context)
+        _object_mode(context)
+        try:
+            detail = detail_object.transfer(context, body)
+        except detail_object.DetailError as error:
+            return self.failed(error)
+        finally:
+            forget_states()
+        self.report({"INFO"}, f"{detail.name} moved onto {body.name}'s topology at level {detail_object.levels(detail)}")
+        return {"FINISHED"}
+
+
+class MEATBAG_OT_detail_export(_DetailOperator, bpy.types.Operator):
+    bl_idname = "meatbag.detail_export"
+    bl_label = "Export Bake Meshes"
+    bl_description = ("Write <Body>_low.fbx (the body's base) and <Body>_high.fbx (the Detail at its top level) into the "
+                      "Export folder next to the file, for baking in Substance Painter")
+    bl_options = {"REGISTER"}
+
+    def execute(self, context):
+        body = _body(context)
+        _object_mode(context)
+        if not ensure_current(self, context, body):
+            return {"CANCELLED"}
+        try:
+            paths = detail_object.export_meshes(context, body)
+        except (detail_object.DetailError, RuntimeError) as error:
+            return self.failed(error)
+        self.report({"INFO"}, "Wrote " + ", ".join(paths))
+        return {"FINISHED"}
+
+
+class MEATBAG_OT_detail_bake(_DetailOperator, bpy.types.Operator):
+    bl_idname = "meatbag.detail_bake"
+    bl_label = "Bake Maps"
+    bl_description = ("Bake the Detail's sculpt from its multires levels into UDIM images, one file per tile, in the "
+                      "Export folder next to the file")
+    bl_options = {"REGISTER"}
+
+    bake_type: bpy.props.EnumProperty(name="Map", items=detail_object.BAKE_TYPES)
+    size: bpy.props.EnumProperty(name="Size", default="2048", items=(
+        ("1024", "1024", ""), ("2048", "2048", ""), ("4096", "4096", ""), ("8192", "8192", "")))
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    def execute(self, context):
+        body = _body(context)
+        _object_mode(context)
+        if not ensure_current(self, context, body):
+            return {"CANCELLED"}
+        try:
+            paths = detail_object.bake(context, body, self.bake_type, int(self.size))
+        except (detail_object.DetailError, RuntimeError) as error:
+            return self.failed(error)
+        self.report({"INFO"}, "Wrote " + ", ".join(paths))
+        return {"FINISHED"}
+
+
 classes = (
     MEATBAG_OT_make_template,
     MEATBAG_OT_edit_template,
     MEATBAG_OT_template_done,
     MEATBAG_OT_process_template,
     MEATBAG_OT_remove_previous,
+    MEATBAG_OT_detail_add,
+    MEATBAG_OT_detail_remove,
+    MEATBAG_OT_detail_sculpt,
+    MEATBAG_OT_detail_transfer,
+    MEATBAG_OT_detail_export,
+    MEATBAG_OT_detail_bake,
 )
 
 
@@ -202,6 +382,9 @@ def register_properties():
     bpy.types.Object.meatbag_template = bpy.props.PointerProperty(
         type=bpy.types.Object, name="Template",
         description="The half mesh with a Mirror modifier that this body is processed from")
+    bpy.types.Object.meatbag_detail = bpy.props.PointerProperty(
+        type=bpy.types.Object, name="Detail",
+        description="Hidden multires copy of this body that holds the sculpted detail")
     for handlers, handler in _HANDLERS:
         handlers.append(handler)
 
@@ -210,4 +393,5 @@ def unregister_properties():
     for handlers, handler in _HANDLERS:
         if handler in handlers:
             handlers.remove(handler)
+    del bpy.types.Object.meatbag_detail
     del bpy.types.Object.meatbag_template

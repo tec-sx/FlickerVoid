@@ -12,6 +12,11 @@ def _endpoint(text, default):
         return default
 
 
+def _library_changed(self, context):
+    from .meatbag_factory.locker import operators
+    operators.refresh(context, select="")
+
+
 class FVToolsPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
@@ -19,6 +24,12 @@ class FVToolsPreferences(bpy.types.AddonPreferences):
         name="Unreal Project",
         subtype="DIR_PATH",
         description="Folder of the Unreal project (the one holding the .uproject). Contract values such as side pairs are read from its Config",
+    )
+    library_dir: bpy.props.StringProperty(
+        name="Character Library",
+        subtype="DIR_PATH",
+        update=_library_changed,
+        description="Folder of the Meat Locker: one folder per character, each holding <Name>/<Name>.blend",
     )
     bone_budget: bpy.props.IntProperty(name="Bone Budget", default=300, min=1, description="Most bones a skeleton may have")
     max_influences: bpy.props.IntProperty(name="Max Influences", default=8, min=1, max=12, description="Most bone influences per vertex")
@@ -39,6 +50,9 @@ class FVToolsPreferences(bpy.types.AddonPreferences):
         layout.prop(self, "project_dir")
         pairs, source = load_side_pairs(bpy.path.abspath(self.project_dir))
         layout.label(text="Side pairs: " + ", ".join(f"{left}/{right}" for left, right in pairs) + f"  ({source})")
+        row = layout.row(align=True)
+        row.prop(self, "library_dir")
+        row.operator("meatbag.locker_asset_library", text="", icon="ASSET_MANAGER")
 
         box = layout.box()
         box.label(text="Contract")

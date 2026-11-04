@@ -1,6 +1,6 @@
 # FlickerVoid Tools for Blender: plan
 
-Status: slice 1, the Meatbag Factory correctives and the body template are implemented and waiting for the owner's test in Blender and UE; later slices are plans.
+Status: slice 1, the Meatbag Factory correctives, the body template and the Meat Locker are implemented and waiting for the owner's test in Blender and UE; later slices are plans.
 
 ## Goal
 
@@ -19,7 +19,7 @@ It grows in small slices that follow the character work. Each slice is usable on
 | 1 | Core, UE link, **Push to Unreal**, first **Contract** checks | Implemented, to test |
 | 2 | **Correctives**: helper bone solver (port of Dem Bones), residual `CR_` shape keys, **Send Poses to Unreal** into a Pose Asset | Implemented, to test (needs PR #66) |
 | 2b | **Get morphs** from UE | Plan |
-| 2c | **Body template**: Make Template, Edit Template, Process, topology changes; then the **Meat Locker** character library, Detail object and skeleton sync | Template implemented, to test; the rest is plan |
+| 2c | **Meat Locker**: character library, body template (Make Template, Edit Template, Process, topology changes), Detail object with bakes, skeleton check and sync | Implemented, to test |
 | 3 | **One body type**: Body Type Baker for a single extra type, pushed onto the same Skeleton | Plan |
 | 4 | **Garments**: Garment Fitter (weights from the reference body incl. shape bones, fitting proxy), **Get weights** from UE | Plan |
 | 5 | **LODs and collision**: characters send hand-made LOD0-1 and set UE reduction for LOD2+; static meshes get LODs and impostors from the Static Mesh LOD tool and colliders from the Collision tool (see below) | Plan |
@@ -175,7 +175,7 @@ Push the mesh first, so the Skeleton has the helper bones and the `CR_` morph ta
 
 Next: a **layered solve** (parents first with the leaves held, then the leaves on what is left) so each bone LOD looks right on its own, and a **rig generator** in Unreal that builds the pose reader rig from the metadata tags (one reader per control bone, writing the pose curves the Pose Asset blends by).
 
-## Slice 2c: Body template and the Meat Locker
+## Slice 2c: the Meat Locker
 
 Decided with the owner on 2026-11-04 after the character management spike: one `.blend` per character in a library folder; weights authored only on the template; a separate Detail object for multires (future proofing for texturing, so its transfer after a topology change is optional); a hero is a copy of a base that then diverges; UVs are half tile on two UDIM tiles (head and body); the character panel is called **Meat Locker**.
 
@@ -193,11 +193,20 @@ Decided with the owner on 2026-11-04 after the character management spike: one `
 
 **Push** sends the body. Each sided key's missing counterpart is `delta[partner]` reflected on X. Templates, sculpt targets and kept previous bodies are never pushed or checked.
 
-Next:
+**Character library.** The library folder is an add-on preference; each character is `<Library>/<Name>/<Name>.blend`, and `_Trash` holds deleted ones.
 
-1. **Meat Locker**: the library folder (an add-on preference), a list with thumbnails and metadata (an `MF_Character` text block, read without opening the file), Add, Copy, Delete (to `_Trash`) and Edit, Base and Hero, asset catalogs.
-2. **Detail**: a Detail object with multires that follows shape changes, Export Bake Meshes for Substance, and Blender's multires bake.
-3. **Skeleton**: a Reference character, Check Skeleton and Sync Skeleton.
+- Metadata is the file's `MF_Character` text block (kind, the character it came from, its armature), read from other files through `bpy.data.temp_data()` without touching the open file. Saving refreshes the armature name. The Reference character's name is in `<Library>/MeatLocker.json`.
+- The list shows the thumbnail Blender saves with each file. Add, Copy and Open switch files themselves (Blender's own asset Open starts a second Blender): Add and Copy open the source, rename its character collection, write the metadata and Save As into the new folder, so the source file stays as it was.
+- Each character collection is an asset in the *Meat Locker/Base* or *Meat Locker/Hero* catalog; the library's `blender_assets.cats.txt` gets both catalogs with fixed ids. The Asset Browser may also list characters in `_Trash` until it is emptied.
+
+**Detail object.** `<Body>_MF_Detail`, a hidden multires copy of the full body with the body's topology digest stored on it.
+
+- Same topology: Process copies the body's base positions and UVs into the Detail by index; the multires sculpt follows its base.
+- New topology: the Detail is left as it was (bakes don't need matching topology). Transfer Detail makes a new Detail at the old level, evaluates its top level, shrinkwraps that onto the old sculpt along normals (both directions), reshapes the new multires from it and deletes the old Detail.
+- Bake meshes: the body's base (no shape keys or modifiers) and the Detail's top level, as FBX with the push's axes and scale.
+- Bake maps: the multires baker (`bake.use_multires`) into a tiled image with one tile per UDIM the UVs use (filled through `image.tile_fill`), through a temporary material on every slot; normals as PNG, displacements as EXR.
+
+**Skeleton.** Compares deform bones as Unreal gets them (parents resolved to the nearest deform ancestor), so control bones may differ. Parent differences are errors; missing bones, roll differences over 0.5° and extra bones are warnings. Sync adds missing bones parents first: each one's rest matrix relative to its parent in the reference, with the offset and length scaled by the ratio of the parent's lengths.
 
 ## Get from Unreal (slices 2b and 4)
 

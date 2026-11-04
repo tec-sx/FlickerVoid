@@ -2,8 +2,8 @@ import json
 
 import bpy
 
-from . import checks
-from ... import preferences
+from . import checks, skeleton
+from ... import preferences, scene_data
 from ...core import rules
 
 
@@ -136,6 +136,64 @@ class MEATBAG_OT_fix_issue(bpy.types.Operator):
         return {"FINISHED"}
 
 
+def skeleton_armature(context):
+    """The armature picked in Poses, else the active armature or the active mesh's armature."""
+    armature = context.scene.meatbag.armature
+    if armature is not None:
+        return armature
+    obj = context.active_object
+    if obj is not None and obj.type == "ARMATURE":
+        return obj
+    return scene_data.armature_of(obj) if obj is not None else None
+
+
+class _SkeletonOperator:
+    @classmethod
+    def poll(cls, context):
+        return bool(context.window_manager.meat_locker_reference) and skeleton_armature(context) is not None
+
+
+class MEATBAG_OT_check_skeleton(_SkeletonOperator, bpy.types.Operator):
+    bl_idname = "meatbag.check_skeleton"
+    bl_label = "Check Skeleton"
+    bl_description = ("Compare the armature's deform bones with the Meat Locker's Reference character: missing and extra "
+                      "bones, parents and rolls")
+
+    def execute(self, context):
+        armature = skeleton_armature(context)
+        try:
+            issues = skeleton.check(context, armature)
+        except skeleton.SkeletonError as error:
+            self.report({"ERROR"}, str(error))
+            return {"CANCELLED"}
+        store_issues(context, issues)
+        self.report({"WARNING"} if issues else {"INFO"}, summary(issues) if issues else f"{armature.name} matches the reference")
+        return {"FINISHED"}
+
+
+class MEATBAG_OT_sync_skeleton(_SkeletonOperator, bpy.types.Operator):
+    bl_idname = "meatbag.sync_skeleton"
+    bl_label = "Sync Skeleton"
+    bl_description = ("Add the Reference character's deform bones that this armature lacks, placed relative to their parent "
+                      "and scaled by its length, in the same bone collections. Other differences are only reported")
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        armature = skeleton_armature(context)
+        try:
+            added = skeleton.sync(context, armature)
+            issues = skeleton.check(context, armature)
+        except skeleton.SkeletonError as error:
+            self.report({"ERROR"}, str(error))
+            return {"CANCELLED"}
+        store_issues(context, issues)
+        text = f"Added {len(added)} bones: {rules.preview(added)}; paint or solve their weights" if added else "No bones missing"
+        if issues:
+            text += f". Still different: {summary(issues)}"
+        self.report({"WARNING"} if issues else {"INFO"}, text)
+        return {"FINISHED"}
+
+
 class MEATBAG_UL_issues(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_property, index=0, flt_flag=0):
         row = layout.row(align=True)
@@ -147,7 +205,8 @@ class MEATBAG_UL_issues(bpy.types.UIList):
             row.operator(MEATBAG_OT_fix_issue.bl_idname, text="", icon="TOOL_SETTINGS").index = index
 
 
-classes = (MeatbagIssue, MEATBAG_OT_check_contract, MEATBAG_OT_select_issue, MEATBAG_OT_fix_issue, MEATBAG_UL_issues)
+classes = (MeatbagIssue, MEATBAG_OT_check_contract, MEATBAG_OT_select_issue, MEATBAG_OT_fix_issue,
+           MEATBAG_OT_check_skeleton, MEATBAG_OT_sync_skeleton, MEATBAG_UL_issues)
 
 
 def register_properties():

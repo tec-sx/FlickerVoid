@@ -16,7 +16,7 @@ import numpy as np
 
 import bpy
 
-from . import projection
+from . import detail as detail_object, projection
 from .. import sculpt
 from ... import scene_data
 from ...core.sides import LEFT, RIGHT
@@ -61,6 +61,7 @@ class Report:
     groups_added: tuple = ()
     warnings: tuple = ()
     target: str = ""
+    detail: str = ""
 
     def message(self, body):
         if self.projected:
@@ -72,6 +73,8 @@ class Report:
             text += f". Added to the template so the Mirror can flip them: {', '.join(self.groups_added)}"
         if self.target:
             text += f". {self.target}"
+        if self.detail:
+            text += f". {self.detail}"
         if self.warnings:
             text += ". " + "; ".join(self.warnings)
         return text
@@ -466,6 +469,10 @@ def process(context, body, sides):
     if changed:
         _set_group(body, CHANGED_GROUP, changed)
     _rebuild_target(body, target_data, new_basis, old, body_mapping)
+    detail_note = ""
+    detail = detail_object.detail_of(body)
+    if detail is not None and not detail_object.follow(body, new):
+        detail_note = f"{detail.name} stays on the old topology: it still bakes, and Transfer Detail moves it over"
     if not same:
         _keep_previous(body, old)
     elif old.users == 0:
@@ -475,7 +482,7 @@ def process(context, body, sides):
     topology, content = fingerprint(template)
     body[FINGERPRINT] = f"{topology}:{content}"
     return Report(keys=len(keys), projected=0 if same else int((~body_mapping.exact).sum()), groups_added=added,
-                  warnings=tuple(warnings))
+                  warnings=tuple(warnings), detail=detail_note)
 
 
 def make_template(context, body, sides):

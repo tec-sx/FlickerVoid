@@ -14,15 +14,16 @@ def armature_of(obj):
     return None
 
 
-HELPER_TAGS = ("mf_sculpt_target", "mf_template", "mf_previous")
+HELPER_TAGS = ("mf_sculpt_target", "mf_template", "mf_previous", "mf_detail")
 
 
 # The add-on's own object properties; Blender 5 keeps them out of an object's custom properties.
-TOOL_PROPERTIES = {"fv_ue_asset": "", "fv_ue_skeleton": "", "meatbag_target": None, "meatbag_template": None}
+TOOL_PROPERTIES = {"fv_ue_asset": "", "fv_ue_skeleton": "", "meatbag_target": None, "meatbag_template": None,
+                   "meatbag_detail": None}
 
 
 def is_helper(obj):
-    """Meatbag Factory sculpt targets, templates and kept previous bodies, which are never pushed or checked."""
+    """Meatbag Factory sculpt targets, templates, kept previous bodies and Details, which are never pushed or checked."""
     return any(obj.get(tag) for tag in HELPER_TAGS)
 
 

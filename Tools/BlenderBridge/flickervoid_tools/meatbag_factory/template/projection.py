@@ -1,6 +1,7 @@
 """Moves per-vertex values from an old body onto new topology: copied where a vertex kept its place, otherwise
 blended from the corners of the nearest point on the old surface."""
 
+import hashlib
 from dataclasses import dataclass
 
 import numpy as np
@@ -65,3 +66,15 @@ def mapping(old_mesh, old_points, new_points):
         indices[index, :len(sources)] = sources
         weights[index, :len(factors)] = factors
     return Mapping(indices, weights, exact)
+
+
+def topology(mesh):
+    """A short digest of a mesh's vertex count and face corners: equal digests mean the same topology."""
+    totals = np.empty(len(mesh.polygons), dtype=np.int32)
+    mesh.polygons.foreach_get("loop_total", totals)
+    corners = np.empty(len(mesh.loops), dtype=np.int32)
+    mesh.loops.foreach_get("vertex_index", corners)
+    sha = hashlib.sha1(str(len(mesh.vertices)).encode())
+    sha.update(totals.tobytes())
+    sha.update(corners.tobytes())
+    return sha.hexdigest()[:16]

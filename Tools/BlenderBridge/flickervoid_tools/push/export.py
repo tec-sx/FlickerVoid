@@ -106,6 +106,21 @@ def export_fbx(context, armature, meshes, filepath):
             armature.data.pose_position = pose_position
 
 
+def export_meshes_fbx(context, meshes, filepath):
+    """Exports meshes alone, as they are, with the push's axes and scale; for bake meshes."""
+    with _export_selection(context, None, meshes):
+        bpy.ops.export_scene.fbx(
+            filepath=filepath,
+            object_types={"MESH"},
+            use_mesh_modifiers=False,
+            mesh_smooth_type="FACE",
+            use_tspace=True,
+            use_triangles=False,
+            bake_anim=False,
+            **_FBX_PRESET,
+        )
+
+
 def export_animation_fbx(context, armature, filepath, frame_start, frame_end):
     """Exports the armature alone with its animation baked from frame_start to frame_end, one key per frame."""
     scene = context.scene

@@ -7,7 +7,7 @@ from mathutils import Matrix
 
 from . import apply, capture, library, pose_asset, sculpt, solver
 from .template import process
-from .template.operators import forget_states
+from .template.operators import ensure_current, forget_states
 from .. import preferences, scene_data
 from ..core.sides import CENTRE
 from ..push import export
@@ -24,22 +24,6 @@ def _is_armature(_, obj):
 
 def _is_body(_, obj):
     return obj.type == "MESH" and not scene_data.is_helper(obj)
-
-
-def _ensure_current(operator, context, body):
-    """Processes a changed template before the body is used; reports and returns False when it can't."""
-    if process.template_of(body) is None:
-        return True
-    try:
-        report = process.ensure_current(context, body, preferences.contract(context).sides)
-    except process.TemplateError as error:
-        operator.report({"ERROR"}, str(error))
-        return False
-    finally:
-        forget_states()
-    if report is not None:
-        operator.report({"INFO"}, report.message(body))
-    return True
 
 
 def _symmetry_for(obj, pose_name, sides):
@@ -491,7 +475,7 @@ def solve(operator, context, scope):
     s = settings(context)
     if context.mode != "OBJECT":
         bpy.ops.object.mode_set(mode="OBJECT")
-    if not _ensure_current(operator, context, s.mesh):
+    if not ensure_current(operator, context, s.mesh):
         return {"CANCELLED"}
     target = s.mesh.meatbag_target
     if target is None:
@@ -614,7 +598,7 @@ class MEATBAG_OT_sculpt_shape(_PoseOperator, bpy.types.Operator):
         name = action.meatbag_poses[index].name
         if context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")
-        if not _ensure_current(self, context, s.mesh):
+        if not ensure_current(self, context, s.mesh):
             return {"CANCELLED"}
         key = sculpt.pose_key(s.mesh, sculpt.shape_name(name), create=True)
         show_only(context, action, index)
@@ -646,7 +630,7 @@ class MEATBAG_OT_sculpt_pose(_PoseOperator, bpy.types.Operator):
         _, action = self.library(context)
         if context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")
-        if not _ensure_current(self, context, s.mesh):
+        if not ensure_current(self, context, s.mesh):
             return {"CANCELLED"}
         try:
             target = sculpt.ensure_target(s.mesh)
@@ -694,13 +678,16 @@ class MEATBAG_OT_rebuild_target(bpy.types.Operator):
 
 
 def sculpting(context):
-    """What is being sculpted: "SHAPE" for a pose blend shape on the body, "TARGET" for the sculpt target, else None."""
+    """What is being sculpted: "SHAPE" for a pose blend shape on the body, "TARGET" for the sculpt target, "DETAIL" for
+    the Detail, else None."""
     s = settings(context)
     active = context.active_object
     if s.mesh is None or active is None:
         return None
     if active == s.mesh.meatbag_target:
         return "TARGET"
+    if active == s.mesh.meatbag_detail:
+        return "DETAIL"
     if active == s.mesh and context.mode == "SCULPT":
         return "SHAPE"
     return None
@@ -709,8 +696,8 @@ def sculpting(context):
 class MEATBAG_OT_sculpt_back(bpy.types.Operator):
     bl_idname = "meatbag.sculpt_back"
     bl_label = "Back"
-    bl_description = ("Leave sculpting. From the sculpt target: show the body again, and solve the sculpted pose when "
-                      "Solve on Back is on")
+    bl_description = ("Leave sculpting. From the sculpt target or the Detail: show the body again, and from the target "
+                      "solve the sculpted pose when Solve on Back is on")
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
@@ -732,6 +719,14 @@ class MEATBAG_OT_sculpt_back(bpy.types.Operator):
             _restore_symmetry(s.mesh)
             if s.armature and s.armature.meatbag_library:
                 show_preview(context, s.armature.meatbag_library)
+            return {"FINISHED"}
+        if what == "DETAIL":
+            s.mesh.meatbag_detail.hide_set(True)
+            s.mesh.hide_set(False)
+            for obj in context.selected_objects:
+                obj.select_set(False)
+            s.mesh.select_set(True)
+            context.view_layer.objects.active = s.mesh
             return {"FINISHED"}
         target = s.mesh.meatbag_target
         target.show_only_shape_key = False

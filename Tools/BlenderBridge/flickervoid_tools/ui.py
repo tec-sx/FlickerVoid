@@ -3,11 +3,21 @@ import bpy
 from . import preferences
 from .push.operators import FV_OT_push, FV_OT_test_connection, FV_OT_use_selected_asset
 from .meatbag_factory import sculpt
-from .meatbag_factory.contract.operators import MEATBAG_OT_check_contract, MEATBAG_UL_issues
-from .meatbag_factory.template import process
-from .meatbag_factory.template.operators import (MEATBAG_OT_edit_template, MEATBAG_OT_make_template,
+from .core import locker
+from .meatbag_factory.contract.operators import (MEATBAG_OT_check_contract, MEATBAG_OT_check_skeleton,
+                                                 MEATBAG_OT_sync_skeleton, MEATBAG_UL_issues)
+from .meatbag_factory.locker import characters
+from .meatbag_factory.locker.operators import (KIND_LABELS, MEATBAG_OT_locker_add, MEATBAG_OT_locker_delete,
+                                               MEATBAG_OT_locker_kind, MEATBAG_OT_locker_open,
+                                               MEATBAG_OT_locker_reference, MEATBAG_OT_locker_refresh,
+                                               MEATBAG_UL_characters, selected)
+from .meatbag_factory.template import detail, process
+from .meatbag_factory.template.operators import (MEATBAG_OT_detail_add, MEATBAG_OT_detail_bake,
+                                                 MEATBAG_OT_detail_export, MEATBAG_OT_detail_remove,
+                                                 MEATBAG_OT_detail_sculpt, MEATBAG_OT_detail_transfer,
+                                                 MEATBAG_OT_edit_template, MEATBAG_OT_make_template,
                                                  MEATBAG_OT_process_template, MEATBAG_OT_remove_previous,
-                                                 MEATBAG_OT_template_done, cached_state)
+                                                 MEATBAG_OT_template_done, cached_follows, cached_state)
 from .meatbag_factory.operators import (MEATBAG_OT_pose_add, MEATBAG_OT_pose_affected_add,
                                         MEATBAG_OT_pose_affected_remove, MEATBAG_OT_pose_bones_from_selection,
                                         MEATBAG_OT_pose_move, MEATBAG_OT_pose_remove, MEATBAG_OT_pose_rest,
@@ -41,6 +51,47 @@ class FV_PT_unreal(bpy.types.Panel):
         layout.operator(FV_OT_push.bl_idname, icon="EXPORT")
 
 
+class MEATBAG_PT_locker(bpy.types.Panel):
+    bl_label = "Meat Locker"
+    bl_idname = "MEATBAG_PT_locker"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "FlickerVoid"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(preferences.get(context), "library_dir", text="")
+        if not characters.library(context):
+            layout.label(text="Pick the folder that holds the characters", icon="INFO")
+            return
+        wm = context.window_manager
+        row = layout.row()
+        row.template_list(MEATBAG_UL_characters.__name__, "", wm, "meat_locker", wm, "meat_locker_index", rows=4)
+        column = row.column(align=True)
+        column.operator(MEATBAG_OT_locker_add.bl_idname, text="", icon="ADD").source = "EMPTY"
+        column.operator(MEATBAG_OT_locker_add.bl_idname, text="", icon="DUPLICATE").source = "SELECTED"
+        column.operator(MEATBAG_OT_locker_delete.bl_idname, text="", icon="TRASH")
+        column.separator()
+        column.operator(MEATBAG_OT_locker_refresh.bl_idname, text="", icon="FILE_REFRESH")
+        item = selected(context)
+        if item is None:
+            return
+        box = layout.box()
+        row = box.row(align=True)
+        if item.name == characters.open_character(context):
+            for kind in locker.KINDS:
+                row.operator(MEATBAG_OT_locker_kind.bl_idname, text=KIND_LABELS[kind], depress=item.kind == kind).kind = kind
+        else:
+            row.label(text=KIND_LABELS.get(item.kind, ""), icon="USER")
+        row.operator(MEATBAG_OT_locker_reference.bl_idname, icon="ARMATURE_DATA",
+                     depress=item.name == wm.meat_locker_reference)
+        if item.base:
+            box.label(text=f"From {item.base}", icon="DUPLICATE")
+        row = layout.row(align=True)
+        row.operator(MEATBAG_OT_locker_open.bl_idname, icon="FILE_FOLDER").edit_template = False
+        row.operator(MEATBAG_OT_locker_open.bl_idname, text="Edit Template", icon="EDITMODE_HLT").edit_template = True
+
+
 class MEATBAG_PT_factory(bpy.types.Panel):
     bl_label = "Meatbag Factory"
     bl_idname = "MEATBAG_PT_factory"
@@ -64,6 +115,10 @@ class MEATBAG_PT_contract(bpy.types.Panel):
         layout = self.layout
         layout.operator(MEATBAG_OT_check_contract.bl_idname, icon="CHECKMARK")
         wm = context.window_manager
+        if wm.meat_locker_reference:
+            row = layout.row(align=True)
+            row.operator(MEATBAG_OT_check_skeleton.bl_idname, icon="ARMATURE_DATA")
+            row.operator(MEATBAG_OT_sync_skeleton.bl_idname, icon="BONE_DATA")
         if wm.meatbag_issues:
             layout.template_list(MEATBAG_UL_issues.__name__, "", wm, "meatbag_issues", wm, "meatbag_issue_index", rows=6)
 
@@ -99,7 +154,13 @@ class MEATBAG_PT_body(_MeatbagSubpanel, bpy.types.Panel):
             if process.mirror_modifier(body):
                 layout.label(text="A half mesh: make it the template", icon="MOD_MIRROR")
                 layout.operator(MEATBAG_OT_make_template.bl_idname, icon="DUPLICATE")
-            return
+                return
+        else:
+            self.draw_template(layout, body, template)
+        self.draw_detail(context, layout, body)
+
+    @staticmethod
+    def draw_template(layout, body, template):
         text, icon = _TEMPLATE_STATES[cached_state(body)]
         layout.label(text=f"{template.name}: {text}", icon=icon)
         if process.editing(template):
@@ -113,6 +174,27 @@ class MEATBAG_PT_body(_MeatbagSubpanel, bpy.types.Panel):
             row = layout.row(align=True)
             row.label(text=f"Kept: {previous.name}", icon="GHOST_ENABLED")
             row.operator(MEATBAG_OT_remove_previous.bl_idname, text="", icon="TRASH")
+
+    @staticmethod
+    def draw_detail(context, layout, body):
+        box = layout.box()
+        found = detail.detail_of(body)
+        if found is None:
+            box.operator(MEATBAG_OT_detail_add.bl_idname, icon="MOD_MULTIRES")
+            return
+        row = box.row(align=True)
+        row.label(text=f"{found.name}: level {detail.levels(found)}", icon="MOD_MULTIRES")
+        row.operator(MEATBAG_OT_detail_remove.bl_idname, text="", icon="TRASH")
+        if not cached_follows(body):
+            box.label(text="On an older topology: it still bakes", icon="INFO")
+            box.operator(MEATBAG_OT_detail_transfer.bl_idname, icon="MOD_SHRINKWRAP")
+        if sculpting(context) == "DETAIL":
+            box.operator(MEATBAG_OT_sculpt_back.bl_idname, icon="LOOP_BACK")
+        else:
+            box.operator(MEATBAG_OT_detail_sculpt.bl_idname, icon="SCULPTMODE_HLT")
+        row = box.row(align=True)
+        row.operator(MEATBAG_OT_detail_export.bl_idname, icon="EXPORT")
+        row.operator(MEATBAG_OT_detail_bake.bl_idname, icon="RENDER_STILL")
 
 
 class MEATBAG_PT_poses(_MeatbagSubpanel, bpy.types.Panel):
@@ -215,4 +297,5 @@ class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
         layout.operator(MEATBAG_OT_send_poses.bl_idname, icon="EXPORT")
 
 
-classes = (FV_PT_unreal, MEATBAG_PT_factory, MEATBAG_PT_body, MEATBAG_PT_contract, MEATBAG_PT_poses, MEATBAG_PT_correctives)
+classes = (MEATBAG_PT_locker, FV_PT_unreal, MEATBAG_PT_factory, MEATBAG_PT_body, MEATBAG_PT_contract, MEATBAG_PT_poses,
+           MEATBAG_PT_correctives)
