@@ -98,6 +98,8 @@ namespace FVGameplayTags
 	// ============================================================================
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Scan_Category, "Scan.Category",
 								   "Root for scan categories; each one maps to a highlight style in Scanner settings.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Relevance_ScanTarget, "Relevance.ScanTarget",
+								   "Relevance group of scannables; its Near band is the scan range.");
 
 	// ============================================================================
 	// ITEM HAND SLOT TAGS

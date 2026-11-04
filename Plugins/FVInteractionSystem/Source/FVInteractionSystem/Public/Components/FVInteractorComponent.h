@@ -14,7 +14,7 @@
 
 class UFVInteractionDebugSubsystem;
 class UFVInteractableComponent;
-class UFVInteractionRegistrySubsystem;
+class UFVRelevanceSubsystem;
 class UFVGestureComponent;
 class UFVInteractorDefinition;
 
@@ -183,6 +183,7 @@ private:
 	/** Starts the first Hover or Automatic offer (both commit from focus, without a key) when the offers change. */
 	void BeginHoverInteraction();
 	bool InteractableIsInReach(const UFVInteractableComponent* Target) const;
+	bool HasInteractablesInRange() const;
 	bool IsOfferAvailable(const FFVInteractionOffer& Offer) const;
 	
 	bool BeginInteraction(const FGameplayTag InputTag);
@@ -208,7 +209,7 @@ private:
 	void HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue);
 
 	UPROPERTY(Transient)
-	TObjectPtr<UFVInteractionRegistrySubsystem> Registry;
+	TObjectPtr<UFVRelevanceSubsystem> Relevance;
 	
 	UPROPERTY(Transient)
 	TArray<FFVInteractionOfferData> CachedOffers;

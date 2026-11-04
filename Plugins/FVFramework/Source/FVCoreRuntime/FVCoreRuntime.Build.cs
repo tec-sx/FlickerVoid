@@ -22,7 +22,8 @@ public class FVCoreRuntime : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "Slate",
-            "SlateCore"
+            "SlateCore",
+            "SignificanceManager"
         });
     }
 }

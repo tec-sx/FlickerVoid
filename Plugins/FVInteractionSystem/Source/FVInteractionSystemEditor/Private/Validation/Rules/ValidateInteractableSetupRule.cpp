@@ -2,24 +2,21 @@
 
 #include "Components/FVInteractableComponent.h"
 #include "Data/FVInteractableDefinition.h"
-#include "Engine/Blueprint.h"
-#include "Kismet2/CompilerResultsLog.h"
 #include "Misc/DataValidation.h"
-#include "Validation/InteractionBlueprintComponentUtils.h"
 
 bool FValidateInteractableSetupRule::ShouldRun(const FInteractionCompileContext& Context) const
 {
-	return InteractionBlueprintComponentUtils::HasComponentOfClass(Context.Blueprint, UFVInteractableComponent::StaticClass());
+	return Context.Components.ContainsByPredicate([](const UActorComponent* Component)
+	{
+		return Component->IsA<UFVInteractableComponent>();
+	});
 }
 
 void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& Context) const
 {
-	TArray<const UActorComponent*> Templates;
-	InteractionBlueprintComponentUtils::GetComponentTemplatesOfClass(Context.Blueprint, UFVInteractableComponent::StaticClass(), Templates);
-
-	for (const UActorComponent* Template : Templates)
+	for (const UActorComponent* Component : Context.Components)
 	{
-		const UFVInteractableComponent* Interactable = Cast<UFVInteractableComponent>(Template);
+		const UFVInteractableComponent* Interactable = Cast<UFVInteractableComponent>(Component);
 		if (!Interactable)
 		{
 			continue;
@@ -28,9 +25,7 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 		const UFVInteractableDefinition* Definition = Interactable->Definition;
 		if (!Definition)
 		{
-			Context.MessageLog.Error(*FString::Printf(
-				TEXT("Interactable component '%s' has no Definition assigned."),
-				*Interactable->GetName()));
+			Context.Error(FString::Printf(TEXT("Interactable component '%s' has no Definition assigned."), *Interactable->GetName()));
 			continue;
 		}
 
@@ -44,12 +39,10 @@ void FValidateInteractableSetupRule::Validate(const FInteractionCompileContext& 
 
 			if (Issue.Severity == EMessageSeverity::Error)
 			{
-				Context.MessageLog.Error(*Message);
+				Context.Error(Message);
+				continue;
 			}
-			else
-			{
-				Context.MessageLog.Warning(*Message);
-			}
+			Context.Warning(Message);
 		}
 	}
 }

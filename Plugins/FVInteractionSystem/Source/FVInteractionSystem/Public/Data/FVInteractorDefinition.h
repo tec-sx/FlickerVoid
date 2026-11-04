@@ -1,14 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DataAsset.h"
+#include "Data/FVDefinition.h"
 #include "GameplayTagContainer.h"
 #include "FVInteractorDefinition.generated.h"
 
 class UFVInteractorModeDefinition;
 
 UCLASS(BlueprintType, Const)
-class FVINTERACTIONSYSTEM_API UFVInteractorDefinition : public UPrimaryDataAsset
+class FVINTERACTIONSYSTEM_API UFVInteractorDefinition : public UFVDefinition
 {
 	GENERATED_BODY()
 
