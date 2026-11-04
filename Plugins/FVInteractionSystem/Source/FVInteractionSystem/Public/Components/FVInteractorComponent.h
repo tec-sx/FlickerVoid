@@ -12,7 +12,6 @@
 
 #define UE_API FVINTERACTIONSYSTEM_API
 
-class UFVInteractionDebugSubsystem;
 class UFVInteractableComponent;
 class UFVRelevanceSubsystem;
 class UFVGestureComponent;
@@ -39,6 +38,26 @@ struct FTraceData
 	ECollisionChannel CollisionChannel = ECC_Visibility;
 	TArray<FHitResult> HitResults;
 };
+
+#if !UE_BUILD_SHIPPING
+enum class EFVDebugInteractionOutcome : uint8
+{
+	None,
+	Succeeded,
+	NoPrompt,
+	Disabled,
+};
+
+/** What the last detection pass and input saw, kept outside Shipping for the interaction debug module to read. */
+struct FFVInteractorDebugState
+{
+	FTraceData Trace;
+	FHitResult OcclusionHit;
+	FGameplayTag LastInputTag;
+	double LastInputTime = 0.0;
+	EFVDebugInteractionOutcome LastOutcome = EFVDebugInteractionOutcome::None;
+};
+#endif
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorStateChanged, EFVInteractorState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractorFoundInteractable, UFVInteractableComponent*, Target);
@@ -106,6 +125,13 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Interaction|State")
 	UE_API EFVInteractorState GetState() const { return State; }
+
+	/** The running interaction; empty while none runs. */
+	const FFVInteractionCommit& GetActiveCommit() const { return ActiveCommit; }
+
+#if !UE_BUILD_SHIPPING
+	const FFVInteractorDebugState& GetDebugState() const { return DebugState; }
+#endif
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction|State")
 	UE_API void AddSuppression(const FGameplayTag Reason);
@@ -227,7 +253,8 @@ private:
 	FGameplayTagContainer SuppressionReasons;
 	
 #if !UE_BUILD_SHIPPING
-	TWeakObjectPtr<UFVInteractionDebugSubsystem> DebugSubsystem;
+	/** Written from const detection helpers too, so mutable. */
+	mutable FFVInteractorDebugState DebugState;
 #endif
 };
 

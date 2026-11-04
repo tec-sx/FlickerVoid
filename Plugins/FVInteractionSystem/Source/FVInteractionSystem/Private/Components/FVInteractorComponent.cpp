@@ -14,12 +14,10 @@
 #include "FVInteractionSystemSettings.h"
 #include "Relevance/FVRelevanceSubsystem.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Kismet/GameplayStatics.h"
 #include "Input/Components/FVGestureComponent.h"
 #include "Facts/FVFactDatabase.h"
 
 #if !UE_BUILD_SHIPPING
-#include "Subsystems/FVInteractionDebugSubsystem.h"
 #endif
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVInteractorComponent)
@@ -84,17 +82,6 @@ void UFVInteractorComponent::BeginPlay()
 
 	SetComponentTickInterval(ActiveDetection.TickInterval);
 	EnableTracing();
-
-#if !UE_BUILD_SHIPPING
-	if (const UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(GetWorld()))
-	{
-		DebugSubsystem = GameInstance->GetSubsystem<UFVInteractionDebugSubsystem>();
-		if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
-		{
-			Debug->Register(this);
-		}
-	}
-#endif
 }
 
 void UFVInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -120,13 +107,6 @@ void UFVInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		SetState(HasInteractablesInRange() ? EFVInteractorState::Awake : EFVInteractorState::Idle);
 	}
 
-#if !UE_BUILD_SHIPPING
-	if (DebugSubsystem.IsValid())
-	{
-		UFVInteractionDebugSubsystem::VisualizeRange(GetWorld(), this, ActiveDetection.TickInterval);
-	}
-#endif
-	
 	if (State != EFVInteractorState::Awake)
 	{
 		if (TargetInteractable.IsValid())
@@ -148,13 +128,6 @@ void UFVInteractorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	DisableTracing();
-
-#if !UE_BUILD_SHIPPING
-	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
-	{
-		Debug->Unregister();
-	}
-#endif
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -358,11 +331,9 @@ void UFVInteractorComponent::TickModeBlend(const float DeltaTime)
 bool UFVInteractorComponent::BeginInteraction(const FGameplayTag InputTag)
 {
 #if !UE_BUILD_SHIPPING
-	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
-	{
-		Debug->DebugInput(InputTag, FPlatformTime::Seconds());
-		Debug->DebugInteractionOutcome(EFVDebugInteractionOutcome::NoPrompt);
-	}
+	DebugState.LastInputTag = InputTag;
+	DebugState.LastInputTime = FPlatformTime::Seconds();
+	DebugState.LastOutcome = EFVDebugInteractionOutcome::NoPrompt;
 #endif
 	
 	if (State != EFVInteractorState::Awake)
@@ -380,10 +351,7 @@ bool UFVInteractorComponent::BeginInteraction(const FGameplayTag InputTag)
 	if (!Offer || !Offer->CanExecute())
 	{
 #if !UE_BUILD_SHIPPING
-		if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
-		{
-			Debug->DebugInteractionOutcome(EFVDebugInteractionOutcome::Disabled);
-		}
+		DebugState.LastOutcome = EFVDebugInteractionOutcome::Disabled;
 #endif
 		return false;
 	}
@@ -504,10 +472,7 @@ void UFVInteractorComponent::FinishInteraction(const bool bSuccess, const FGamep
 #if !UE_BUILD_SHIPPING
 	if (bSuccess)
 	{
-		if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
-		{
-			Debug->DebugInteractionOutcome(EFVDebugInteractionOutcome::Succeeded);
-		}
+		DebugState.LastOutcome = EFVDebugInteractionOutcome::Succeeded;
 	}
 #endif
 
@@ -749,11 +714,7 @@ void UFVInteractorComponent::PerformTrace()
 	}
 
 #if !UE_BUILD_SHIPPING
-	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
-	{
-		Debug->VisualizeTrace(GetWorld(), TraceData, ActiveDetection.TraceRadius, ActiveDetection.TickInterval);
-		Debug->DebugTrace(TraceData.HitResults);
-	}
+	DebugState.Trace = TraceData;
 #endif
 }
 
@@ -788,10 +749,7 @@ bool UFVInteractorComponent::PerformOcclusionTest(const FVector& Start, const FV
 	GetWorld()->LineTraceSingleByChannel(OcclusionHit, Start, End, ActiveDetection.OcclusionChannel, QueryParams);
 	
 #if !UE_BUILD_SHIPPING
-	if (UFVInteractionDebugSubsystem* Debug = DebugSubsystem.Get())
-	{
-		Debug->DebugOcclusion(OcclusionHit);
-	}
+	DebugState.OcclusionHit = OcclusionHit;
 #endif
 	
 	return OcclusionHit.IsValidBlockingHit() && OcclusionHit.GetActor() != Target; 
