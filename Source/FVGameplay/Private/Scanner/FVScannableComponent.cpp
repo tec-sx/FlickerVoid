@@ -2,6 +2,8 @@
 
 #include "Components/PrimitiveComponent.h"
 #include "Conditions/FVConditionLibrary.h"
+#include "FVGameplayTags.h"
+#include "Relevance/FVRelevanceComponent.h"
 #include "Scanner/FVScannerSubsystem.h"
 #include "GameFramework/Actor.h"
 #include "Highlight/FVHighlightComponent.h"
@@ -16,6 +18,13 @@ namespace FVScannable
 UFVScannableComponent::UFVScannableComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+}
+
+void UFVScannableComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	UFVRelevanceComponent::FindOrAdd(GetOwner(), FVGameplayTags::Relevance_ScanTarget);
 }
 
 void UFVScannableComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
