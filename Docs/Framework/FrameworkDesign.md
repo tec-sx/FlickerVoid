@@ -322,8 +322,8 @@ Actor components (composition, found with `FindComponentByClass` / `::Get(Actor)
 | **Gameplay tags** | identity and classification that data assets and conditions match on | `Equipment.Slot.Coat`, `Item.Outfit`, `Disguise.Faction.Police`, `Scan.Category.*`, fact tags |
 | **Facts** | world and player state that must save and be testable | faction standing, fame, notoriety, titles, quest state, knowledge |
 | **Config (`UDeveloperSettings`)** | per-project defaults a designer tunes once, under the FlickerVoid settings category | weight and space limits, scan categories and dilation, dialogue timing |
-| **Console variables (`FVCvar.*`)** | switches for debugging and playtesting, never for shipping balance | `FVCvar.Inventory.EnforceWeight`, `FVCvar.*.Debug.HUD`, `FVCvar.Interaction.Debug.Draw` |
-| **Console commands (`FV.*`)** | one-off actions while testing | `FV.Inventory.Give`, `FV.Quest.Start`, `FV.Social.Notoriety`, `FV.Facts.Set` |
+| **Console variables (`FVCvar.*`)** | switches for debugging and playtesting, never for shipping balance | `FVCvar.Inventory.Debug.EnforceWeight`, `FVCvar.*.Debug.HUD`, `FVCvar.Interaction.Debug.Draw` |
+| **Console commands (`FV.*`)** | one-off actions while testing | `FV.Inventory.Give`, `FV.Story.StartQuest`, `FV.Social.Notoriety`, `FV.Facts.Set` |
 
 A CVar that changes a rule (such as the two inventory limits) reads `-1` by default and then follows the config value, so the project setting stays the source of truth.
 

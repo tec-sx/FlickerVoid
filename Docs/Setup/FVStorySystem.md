@@ -82,6 +82,6 @@ For anything else, subclass `UFVSaveParticipant` (AngelScript, Blueprint or C++)
 | CVar / command | Effect |
 |---|---|
 | `FVCvar.Story.Debug.HUD 1` | Active quests and their objectives on screen |
-| `FV.Quest.Start <QuestIdOrAsset>` | Start a quest |
-| `FV.Quest.Complete <QuestIdOrAsset>` | Complete a quest |
+| `FV.Story.StartQuest <QuestIdOrAsset>` | Start a quest |
+| `FV.Story.CompleteQuest <QuestIdOrAsset>` | Complete a quest |
 | `FV.Story.Learn <KnowledgeIdOrAsset>` | Learn knowledge |

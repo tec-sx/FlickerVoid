@@ -2,6 +2,7 @@
 
 #include "Equipment/FVEquipmentComponent.h"
 #include "FVDebugUtils.h"
+#include "FVInventorySettings.h"
 #include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
 #include "Inventory/FVInventoryComponent.h"
@@ -16,6 +17,16 @@ static TAutoConsoleVariable<bool> CVarInventoryDebugHUD(
 	TEXT("FVCvar.Inventory.Debug.HUD"),
 	false,
 	TEXT("Show the player's inventory, weight and grid space on screen."));
+
+static FAutoConsoleVariableRef CVarEnforceWeight(
+	TEXT("FVCvar.Inventory.Debug.EnforceWeight"),
+	UFVInventorySettings::EnforceWeightOverride,
+	TEXT("Override the weight limit setting. -1 use settings, 0 off, 1 on."));
+
+static FAutoConsoleVariableRef CVarEnforceSpace(
+	TEXT("FVCvar.Inventory.Debug.EnforceSpace"),
+	UFVInventorySettings::EnforceSpaceOverride,
+	TEXT("Override the grid space setting. -1 use settings, 0 off, 1 on."));
 
 bool UFVInventoryDebugSubsystem::IsEnabled() const
 {

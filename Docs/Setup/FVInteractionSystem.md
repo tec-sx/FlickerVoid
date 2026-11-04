@@ -85,10 +85,12 @@ Defined natively, nothing to create: `Relevance.Interactable`, `Interactable.*`,
 
 ## 8. Debug
 
+All of it lives in `FVInteractionSystemDebug`, which Shipping builds leave out. The interactor keeps what its last trace, occlusion test and input saw in a debug state outside Shipping, and the debug module reads it from the player pawn's interactor.
+
 | CVar / command | Effect |
 |---|---|
-| `FVCvar.Interaction.Debug.HUD 1` | Candidates and resolved prompts on screen |
-| `FVCvar.Interaction.Debug.Draw 1` or `2` | Draw detection volumes, probes, cones and highlights |
+| `FVCvar.Interaction.Debug.HUD 1` | The player's candidates, occlusion, offers and last input on the shared debug panel |
+| `FVCvar.Interaction.Debug.Draw 1` or `2` | Draw the player's interaction range and traces; 2 also boxes nearby interactables (green: focused) |
 | `FV.Interaction.List` | Log interactables closest first with their relevance band and state |
 | `FVCvar.Relevance.Debug.HUD 2` | Band counts and rings for every relevance group (FVFramework) |
 | `FV.Interaction.Focus` | Log what the player focuses |

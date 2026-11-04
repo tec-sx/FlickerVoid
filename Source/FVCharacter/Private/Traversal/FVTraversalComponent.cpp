@@ -12,6 +12,16 @@
 #include "Traversal/FVTraversable.h"
 #include "Traversal/FVTraversalConfig.h"
 
+static TAutoConsoleVariable<int32> CVarTraversalDrawLevel(
+	TEXT("FVCvar.Traversal.Debug.DrawLevel"),
+	0,
+	TEXT("Draw traversal checks: 0 off, 1 ledges, 2 adds the forward trace, 3 adds the clearance traces."));
+
+static TAutoConsoleVariable<float> CVarTraversalDrawDuration(
+	TEXT("FVCvar.Traversal.Debug.DrawDuration"),
+	1.f,
+	TEXT("How long traversal debug shapes stay on screen, in seconds."));
+
 void UFVTraversalComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -28,10 +38,8 @@ ACharacter* UFVTraversalComponent::GetCharacter() const
 
 void UFVTraversalComponent::ReadDebugSettings()
 {
-	const IConsoleVariable* Level = IConsoleManager::Get().FindConsoleVariable(TEXT("FVCvar.Traversal.DrawDebugLevel"));
-	const IConsoleVariable* Duration = IConsoleManager::Get().FindConsoleVariable(TEXT("FVCvar.Traversal.DrawDebugDuration"));
-	DebugLevel = Level ? Level->GetInt() : 0;
-	DebugDuration = Duration ? Duration->GetFloat() : 0.f;
+	DebugLevel = CVarTraversalDrawLevel.GetValueOnGameThread();
+	DebugDuration = CVarTraversalDrawDuration.GetValueOnGameThread();
 }
 
 bool UFVTraversalComponent::TryTraversalAction(EDrawDebugTrace::Type DrawDebugType)

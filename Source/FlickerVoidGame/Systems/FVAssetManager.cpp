@@ -14,7 +14,7 @@ const FName FFVBundles::Equipped("Equipped");
 //////////////////////////////////////////////////////////////////////
 
 static FAutoConsoleCommand CVarDumpLoadedAssets(
-	TEXT("FV.DumpLoadedAssets"),
+	TEXT("FV.Assets.DumpLoaded"),
 	TEXT("Shows all assets that were loaded via the asset manager and are currently in memory."),
 	FConsoleCommandDelegate::CreateStatic(UFVAssetManager::DumpLoadedAssets)
 );

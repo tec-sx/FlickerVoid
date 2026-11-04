@@ -31,7 +31,6 @@ public class FlickerVoidGameplay : ModuleRules
 			"UMG",
 			"AIModule",
 			"GameplayMessageRuntime",
-			"FVCoreDebug",
 			"FlickerVoidCharacter",
 			"Flow",
 			"DeveloperSettings",

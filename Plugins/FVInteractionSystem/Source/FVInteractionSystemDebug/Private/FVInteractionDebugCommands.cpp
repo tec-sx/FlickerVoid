@@ -7,8 +7,6 @@
 #include "Relevance/FVRelevanceComponent.h"
 #include "Relevance/FVRelevanceSubsystem.h"
 
-// The interaction HUD and draw helpers live in the runtime module's debug subsystem; these commands
-// are the ones that only make sense outside shipping.
 static FAutoConsoleCommandWithWorldAndArgs CmdListInteractables(
 	TEXT("FV.Interaction.List"),
 	TEXT("FV.Interaction.List - log interactables by distance with their relevance band and state."),

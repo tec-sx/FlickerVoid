@@ -4,7 +4,6 @@
 #include "Conditions/FVConditionLibrary.h"
 #include "Equipment/FVEquipmentComponent.h"
 #include "FVInventorySettings.h"
-#include "HAL/IConsoleManager.h"
 #include "GameFramework/Actor.h"
 #include "Inventory/FVItemInstanceData.h"
 #include "Inventory/FVItemStackLibrary.h"
@@ -17,22 +16,6 @@
 
 namespace
 {
-	TAutoConsoleVariable<int32> CVarEnforceWeight(
-		TEXT("FVCvar.Inventory.EnforceWeight"),
-		-1,
-		TEXT("Override the weight limit setting. -1 use settings, 0 off, 1 on."));
-
-	TAutoConsoleVariable<int32> CVarEnforceSpace(
-		TEXT("FVCvar.Inventory.EnforceSpace"),
-		-1,
-		TEXT("Override the grid space setting. -1 use settings, 0 off, 1 on."));
-
-	bool IsEnforced(const TAutoConsoleVariable<int32>& CVar, const bool bSetting)
-	{
-		const int32 Override = CVar.GetValueOnGameThread();
-		return Override < 0 ? bSetting : Override > 0;
-	}
-
 	bool CanMerge(const FFVItemStack& Stack, const UFVItemDefinition* Item)
 	{
 		return Stack.Item == Item && Stack.InstanceData.IsEmpty();
@@ -272,13 +255,13 @@ bool UFVInventoryComponent::FitsAfterChange(const float WeightLimitChange, const
 
 	const UFVInventorySettings& Settings = UFVInventorySettings::Get();
 
-	if (WeightLimitChange < 0.f && IsEnforced(CVarEnforceWeight, Settings.bEnforceWeight)
+	if (WeightLimitChange < 0.f && Settings.IsWeightEnforced()
 		&& GetTotalWeight() + WeightChange > GetWeightLimit() + WeightLimitChange + KINDA_SMALL_NUMBER)
 	{
 		return false;
 	}
 
-	if (CellCapacityChange < 0 && IsEnforced(CVarEnforceSpace, Settings.bEnforceSpace)
+	if (CellCapacityChange < 0 && Settings.IsSpaceEnforced()
 		&& GetUsedCells() + UsedCellChange > GetCellCapacity() + CellCapacityChange)
 	{
 		return false;
@@ -302,13 +285,13 @@ int32 UFVInventoryComponent::GetAcceptedQuantity(const UFVItemDefinition* Item, 
 	const UFVInventorySettings& Settings = UFVInventorySettings::Get();
 	int32 Accepted = Quantity;
 
-	if (IsEnforced(CVarEnforceWeight, Settings.bEnforceWeight) && Item->Weight > 0.f)
+	if (Settings.IsWeightEnforced() && Item->Weight > 0.f)
 	{
 		const float Room = GetWeightLimit() - GetTotalWeight();
 		Accepted = FMath::Clamp(FMath::FloorToInt32(Room / Item->Weight), 0, Accepted);
 	}
 
-	if (Accepted <= 0 || !IsEnforced(CVarEnforceSpace, Settings.bEnforceSpace))
+	if (Accepted <= 0 || !Settings.IsSpaceEnforced())
 	{
 		return Accepted;
 	}
@@ -406,13 +389,13 @@ bool UFVInventoryComponent::CanAcceptStack(const FFVItemStack& Stack) const
 	}
 
 	const UFVInventorySettings& Settings = UFVInventorySettings::Get();
-	if (IsEnforced(CVarEnforceWeight, Settings.bEnforceWeight)
+	if (Settings.IsWeightEnforced()
 		&& GetTotalWeight() + Item->Weight * Stack.Quantity > GetWeightLimit() + KINDA_SMALL_NUMBER)
 	{
 		return false;
 	}
 
-	return !IsEnforced(CVarEnforceSpace, Settings.bEnforceSpace) || GetUsedCells() + Item->GetCellCount() <= GetCellCapacity();
+	return !Settings.IsSpaceEnforced() || GetUsedCells() + Item->GetCellCount() <= GetCellCapacity();
 }
 
 FGuid UFVInventoryComponent::AddStack(FFVItemStack Stack)

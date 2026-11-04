@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Data/FVDefinition.h"
+#include "FVCoreDebug.h"
 
 class APawn;
 
@@ -22,9 +23,3 @@ namespace FVDebug
 		return Cast<T>(FindDefinition(T::StaticClass(), IdOrName));
 	}
 }
-
-extern FVCOREDEBUG_API class FLogCategoryLogFVDebug : public FLogCategory<ELogVerbosity::Log, ELogVerbosity::All>
-{
-public:
-	FORCEINLINE FLogCategoryLogFVDebug() : FLogCategory(TEXT("LogFVDebug")) { }
-} LogFVDebug;

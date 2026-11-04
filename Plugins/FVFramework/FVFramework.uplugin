@@ -53,7 +53,10 @@
   {
    "Name": "FVCoreDebug",
    "Type": "Runtime",
-   "LoadingPhase": "Default"
+   "LoadingPhase": "Default",
+   "TargetConfigurationDenyList": [
+    "Shipping"
+   ]
   },
   {
    "Name": "FVCoreUI",

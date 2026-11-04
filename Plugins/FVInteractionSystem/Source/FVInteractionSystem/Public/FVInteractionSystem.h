@@ -4,7 +4,7 @@
 
 #include "Modules/ModuleManager.h"
 
-FVINTERACTIONSYSTEM_API DECLARE_LOG_CATEGORY_EXTERN(LogFVInteraction, Log, All);
+FVINTERACTIONSYSTEM_API DECLARE_LOG_CATEGORY_EXTERN(LogFVInteractionSystem, Log, All);
 
 class FFVInteractionSystemModule : public IModuleInterface
 {

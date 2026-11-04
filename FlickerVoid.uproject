@@ -48,6 +48,14 @@
 			"LoadingPhase": "Default"
 		},
 		{
+			"Name": "FlickerVoidDebug",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"TargetConfigurationDenyList": [
+				"Shipping"
+			]
+		},
+		{
 			"Name": "FlickerVoidCoreEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default"

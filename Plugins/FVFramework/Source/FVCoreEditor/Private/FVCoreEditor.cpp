@@ -45,7 +45,7 @@ static void ValidateAllDefinitions()
 }
 
 static FAutoConsoleCommand GValidateAllDefinitions(
-	TEXT("FV.ValidateAll"),
+	TEXT("FV.Core.ValidateAll"),
 	TEXT("Validates every FlickerVoid definition asset."),
 	FConsoleCommandDelegate::CreateStatic(&ValidateAllDefinitions));
 

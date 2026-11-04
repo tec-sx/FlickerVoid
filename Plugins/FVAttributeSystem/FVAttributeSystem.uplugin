@@ -15,7 +15,7 @@
 	],
 	"Modules": [
 		{ "Name": "FVAttributeSystem", "Type": "Runtime", "LoadingPhase": "Default" },
-		{ "Name": "FVAttributeSystemDebug", "Type": "Runtime", "LoadingPhase": "Default" },
+		{ "Name": "FVAttributeSystemDebug", "Type": "Runtime", "LoadingPhase": "Default", "TargetConfigurationDenyList": [  "Shipping" ] },
 		{ "Name": "FVAttributeSystemEditor", "Type": "Editor", "LoadingPhase": "PostEngineInit" }
 	]
 }

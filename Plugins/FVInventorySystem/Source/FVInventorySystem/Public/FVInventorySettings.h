@@ -16,10 +16,17 @@ public:
 
 	virtual FName GetCategoryName() const override { return FV::Names::SettingsCategory; }
 
-	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ToolTip = "Carried weight is limited. Override at runtime with FVCvar.Inventory.EnforceWeight."))
+	bool IsWeightEnforced() const;
+	bool IsSpaceEnforced() const;
+
+	/** Debug overrides of the limits, set by the Debug module's FVCvar.Inventory.Debug.Enforce* CVars: -1 uses the settings, 0 off, 1 on. */
+	static int32 EnforceWeightOverride;
+	static int32 EnforceSpaceOverride;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ToolTip = "Carried weight is limited. Override while debugging with FVCvar.Inventory.Debug.EnforceWeight."))
 	bool bEnforceWeight = true;
 
-	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ToolTip = "Items take up space from equipped containers. Override at runtime with FVCvar.Inventory.EnforceSpace."))
+	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ToolTip = "Items take up space from equipped containers. Override while debugging with FVCvar.Inventory.Debug.EnforceSpace."))
 	bool bEnforceSpace = true;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Limits", meta = (ClampMin = 0, Units = "kg", ToolTip = "Weight the character can carry with nothing equipped."))

@@ -186,6 +186,8 @@ Add a group for a new system by declaring its tag (natively in the system's modu
 
 ## 12. Debug
 
+Debug HUDs, CVars and cheat commands live in each plugin's `<Plugin>Debug` module and the game's `FlickerVoidDebug`. Those modules are left out of Shipping builds (`TargetConfigurationDenyList` in the `.uplugin` / `.uproject`), so runtime modules must never depend on them. A CVar that overrides a rule writes a static override on the runtime side (see `UFVInventorySettings::EnforceWeightOverride`), which stays at -1, "use config", in Shipping.
+
 | CVar / command | Effect |
 |---|---|
 | `FVCvar.Facts.Debug.HUD 1` | On-screen fact readout |
@@ -196,13 +198,13 @@ Add a group for a new system by declaring its tag (natively in the system's modu
 | `FVCvar.Relevance.Debug.HUD 1` or `2` | Objects per band for each relevance group; 2 also draws the band rings and colors objects by band (green near, yellow mid, red far) |
 | `FVCvar.Relevance.Debug.Group Scan` | Limit the relevance readout to groups containing this text |
 | `FV.Relevance.List [Group]` | Log relevance components with band and distance |
-| `FV.ValidateAll` (editor) | Run data validation on every definition |
+| `FV.Core.ValidateAll` (editor) | Run data validation on every definition |
 
 Data validation also warns when an array tagged `meta = (MaxEntries = N)` (C++ or AngelScript, in a data asset or a Blueprint's class defaults) holds more than N entries; the game uses it for the rule of three.
 
 Every plugin's debug readout stacks on the same on-screen panel (`UFVDebugHUDSubsystem`).
 
-## 12. Automation tests
+## 13. Automation tests
 
 Tests live in each plugin's Editor module under `Private/Tests`, one spec per plugin named `FlickerVoid.<Plugin>` (`FlickerVoid.Framework`, `FlickerVoid.AttributeSystem`, `FlickerVoid.InventorySystem`). Run them from *Tools > Session Frontend > Automation* filtered by `FlickerVoid`, or with `Automation RunTests FlickerVoid` as `Build/CI/RunCI.ps1` does.
 
