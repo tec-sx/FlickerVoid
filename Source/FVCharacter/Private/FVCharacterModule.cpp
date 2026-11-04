@@ -2,7 +2,7 @@
 
 #include "FVCharacterModule.h"
 #include "Character/FVCharacter.h"
-#include "Movement/FVCharacterMovementComponent.h"
+#include "Movement/FVLocomotionComponent.h"
 #include "Modules/ModuleManager.h"
 #include "RigVMCore/RigVMRegistry.h"
 
@@ -25,7 +25,7 @@ public:
         static TPair<UClass*, FRigVMRegistry::ERegisterObjectOperation> const AllowedObjectTypes[] =
         {
             { AFVCharacter::StaticClass(), FRigVMRegistry::ERegisterObjectOperation::Class },
-            { UFVCharacterMovementComponent::StaticClass(), FRigVMRegistry::ERegisterObjectOperation::Class },
+            { UFVLocomotionComponent::StaticClass(), FRigVMRegistry::ERegisterObjectOperation::Class },
         };
 	 
         FRigVMRegistry& RigVMRegistry = FRigVMRegistry::Get();

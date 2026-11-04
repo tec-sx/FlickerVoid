@@ -2,13 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "Movement/FVMovementHandlerConfigBase.h"
+#include "UObject/Object.h"
 #include "FVTraversalConfig.generated.h"
 
 class UChooserTable;
 
-UCLASS(BlueprintType)
-class FLICKERVOIDCHARACTER_API UFVTraversalConfig : public UFVMovementHandlerConfigBase
+UCLASS(EditInlineNew, DefaultToInstanced, BlueprintType, Blueprintable)
+class FLICKERVOIDCHARACTER_API UFVTraversalConfig : public UObject
 {
 	GENERATED_BODY()
 
@@ -59,7 +59,7 @@ public:
 	TObjectPtr<UChooserTable> TraversalChooserTable;
 };
 
-UCLASS(BlueprintType)
+UCLASS(EditInlineNew, DefaultToInstanced, BlueprintType, Blueprintable)
 class FLICKERVOIDCHARACTER_API UFVTraversableConfig : public UDataAsset
 {
 	GENERATED_BODY()

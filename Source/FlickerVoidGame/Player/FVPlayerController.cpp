@@ -5,7 +5,7 @@
 #include "FlickerVoid.h"
 #include "FVPlayerCharacter.h"
 #include "InputMappingContext.h"
-#include "Movement/FVCharacterMovementComponent.h"
+#include "Movement/FVLocomotionComponent.h"
 #include "Logging/FVLogSystem.h"
 #include "Input/Components/FVInputComponent.h"
 #include "Input/Components/FVGestureComponent.h"
@@ -79,6 +79,7 @@ void AFVPlayerController::SetupInputComponent()
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Sprint, ETriggerEvent::Completed, this, &ThisClass::Input_SprintCompleted, false);
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Jump, ETriggerEvent::Started, this, &ThisClass::Input_JumpStarted, false);
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Jump, ETriggerEvent::Triggered, this, &ThisClass::Input_JumpTriggered, false);
+    FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Jump, ETriggerEvent::Completed, this, &ThisClass::Input_JumpCompleted, false);
 	FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Aim, ETriggerEvent::Started, this, &ThisClass::Input_AimStarted, false);
     FVIC->BindNativeAction(InputConfig, FVCoreTags::InputTag_Aim, ETriggerEvent::Completed, this, &ThisClass::Input_AimCompleted, false);
 
@@ -139,21 +140,18 @@ void AFVPlayerController::RemoveInputMappingContexts()
 // ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_MoveTriggered(const FInputActionValue& Value)
 {
-    AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
-    if (!FVPlayer)
+    if (UFVLocomotionComponent* Locomotion = UFVLocomotionComponent::Find(GetPawn()))
     {
-        return;
+        Locomotion->RequestMove(Value.Get<FVector>());
     }
-
-    FVPlayer->RequestMove(Value.Get<FVector>());
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_MoveCompleted(const FInputActionValue& Value)
 {
-    if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+    if (UFVLocomotionComponent* Locomotion = UFVLocomotionComponent::Find(GetPawn()))
     {
-        FVPlayer->RequestMove(FVector::ZeroVector);
+        Locomotion->RequestMove(FVector::ZeroVector);
     }
 }
 
@@ -167,36 +165,36 @@ void AFVPlayerController::Input_LookTriggered(const FInputActionValue& Value)
 // ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_CrouchTriggered(const FInputActionValue& Value)
 {
-	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	if (UFVLocomotionComponent* Locomotion = UFVLocomotionComponent::Find(GetPawn()))
 	{
-		FVPlayer->RequestCrouch();
+		Locomotion->ToggleCrouch();
 	}
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_WalkTriggered(const FInputActionValue& Value)
 {
-	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	if (UFVLocomotionComponent* Locomotion = UFVLocomotionComponent::Find(GetPawn()))
 	{
-		FVPlayer->RequestWalk();
+		Locomotion->ToggleWalk();
 	}
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_SprintTriggered(const FInputActionValue& Value)
 {
-	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	if (UFVLocomotionComponent* Locomotion = UFVLocomotionComponent::Find(GetPawn()))
 	{
-		FVPlayer->RequestSprint(true);
+		Locomotion->SetSprinting(true);
 	}
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_SprintCompleted(const FInputActionValue& Value)
 {
-	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	if (UFVLocomotionComponent* Locomotion = UFVLocomotionComponent::Find(GetPawn()))
 	{
-		FVPlayer->RequestSprint(false);
+		Locomotion->SetSprinting(false);
 	}
 }
 
@@ -204,13 +202,8 @@ void AFVPlayerController::Input_SprintCompleted(const FInputActionValue& Value)
 void AFVPlayerController::Input_JumpStarted(const FInputActionValue& Value)
 {
 	AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
-	if (!FVPlayer)
-	{
-		return;
-	}
-
-	const UFVCharacterMovementComponent* MovementComponent = FVPlayer->GetFVCharacterMovement();
-	if (!MovementComponent || !MovementComponent->IsMovingOnGround())
+	UFVLocomotionComponent* Locomotion = UFVLocomotionComponent::Find(FVPlayer);
+	if (!Locomotion || !Locomotion->IsOnGround())
 	{
 		return;
 	}
@@ -220,25 +213,24 @@ void AFVPlayerController::Input_JumpStarted(const FInputActionValue& Value)
 		return;
 	}
 
-	FVPlayer->RequestJump();
+	Locomotion->StartJump();
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
+void AFVPlayerController::Input_JumpCompleted(const FInputActionValue& Value)
+{
+	if (UFVLocomotionComponent* Locomotion = UFVLocomotionComponent::Find(GetPawn()))
+	{
+		Locomotion->StopJump();
+	}
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_JumpTriggered(const FInputActionValue& Value)
 {
 	AFVPlayerCharacter* FVPlayer = CachedCharacter.Get();
-	if (!FVPlayer)
-	{
-		return;
-	}
-
-	const UFVCharacterMovementComponent* MovementComponent = FVPlayer->GetFVCharacterMovement();
-	if (!MovementComponent || !MovementComponent->IsFalling())
-	{
-		return;
-	}
-
-	if (FVPlayer->IsTraversing())
+	const UFVLocomotionComponent* Locomotion = UFVLocomotionComponent::Find(FVPlayer);
+	if (!Locomotion || !Locomotion->IsFalling() || Locomotion->IsTraversing())
 	{
 		return;
 	}
@@ -249,18 +241,18 @@ void AFVPlayerController::Input_JumpTriggered(const FInputActionValue& Value)
 // ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_AimStarted(const FInputActionValue& Value)
 {
-	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	if (UFVLocomotionComponent* Locomotion = UFVLocomotionComponent::Find(GetPawn()))
 	{
-		FVPlayer->RequestAim(true);
+		Locomotion->SetAiming(true);
 	}
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void AFVPlayerController::Input_AimCompleted(const FInputActionValue& Value)
 {
-	if (AFVPlayerCharacter* FVPlayer = CachedCharacter.Get())
+	if (UFVLocomotionComponent* Locomotion = UFVLocomotionComponent::Find(GetPawn()))
 	{
-		FVPlayer->RequestAim(false);
+		Locomotion->SetAiming(false);
 	}
 }
 

@@ -182,43 +182,43 @@
 		},
 		{
 			"Name": "UAF",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "UAFWarping",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "UAFStateTree",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "UAFPoseSearch",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "UAFMirroring",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "UAFControlRig",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "UAFChooser",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "UAFAnimGraph",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "MoverAnimNext",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "Mover",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "MoverExamples",

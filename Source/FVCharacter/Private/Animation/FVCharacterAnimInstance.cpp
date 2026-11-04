@@ -2,7 +2,7 @@
 
 #include "Animation/FVCharacterAnimInstance.h"
 #include "Animation/FVAnimationConfigData.h"
-#include "Character/FVCharacter.h"
+#include "Movement/FVLocomotionComponent.h"
 #include "FVCharacterModule.h"
 #include "Logging/FVLogSystem.h"
 
@@ -56,10 +56,10 @@ void FFVCharacterAnimInstanceProxy::Initialize(UAnimInstance* InAnimInstance)
 	// 
 	// INITIALIZATION ORDER:
 	// 1. FAnimInstanceProxy::Initialize()        ← YOU ARE HERE (too early!)
-	// 2. UAnimInstance::NativeInitializeAnimation()  ← CachedCharacter/Config set here
+	// 2. UAnimInstance::NativeInitializeAnimation()  ← CachedLocomotion/Config set here
 	// 3. FAnimInstanceProxy::PreUpdate()         ← Safe to access (lazy init)
 	//
-	// Accessing AnimInstance->CachedCharacter or AnimInstance->AnimationConfig here
+	// Accessing AnimInstance->CachedLocomotion or AnimInstance->AnimationConfig here
 	// will result in NULL pointers because NativeInitializeAnimation() hasn't run yet!
 	//
 	// SOLUTION: Lazy initialization in PreUpdate() (Epic's recommended pattern)
@@ -76,12 +76,12 @@ void FFVCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* InAnimInstance, flo
 	// LAZY INITIALIZATION (first frame after NativeInitializeAnimation)
 	//~=============================================================================
 	
-	if (!CharacterPtr.IsValid() || !Config.IsValid())
+	if (!LocomotionPtr.IsValid() || !Config.IsValid())
 	{
 		// First time setup - AnimInstance is now initialized
 		if (UFVCharacterAnimInstance* AnimInstance = Cast<UFVCharacterAnimInstance>(InAnimInstance))
 		{
-			CharacterPtr = AnimInstance->CachedCharacter;
+			LocomotionPtr = AnimInstance->CachedLocomotion;
 			Config = AnimInstance->AnimationConfig;
 
 			if (!Config.IsValid())
@@ -89,10 +89,10 @@ void FFVCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* InAnimInstance, flo
 				FV_LOG_WARNING(LogFVAnimation, "AnimInstance has no AnimationConfig assigned! Using defaults.");
 			}
 
-			if (CharacterPtr.IsValid())
+			if (LocomotionPtr.IsValid())
 			{
 				UE_LOG(LogFVAnimation, Verbose, TEXT("AnimProxy initialized for character: %s"), 
-					*CharacterPtr->GetName());
+					*GetNameSafe(LocomotionPtr->GetOwner()));
 			}
 		}
 	}
@@ -101,14 +101,14 @@ void FFVCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* InAnimInstance, flo
 	// GET CHARACTER DATA (GAME THREAD ONLY)
 	//~=============================================================================
 	
-	AFVCharacter* Character = CharacterPtr.Get();
-	if (!Character)
+	const UFVLocomotionComponent* Locomotion = LocomotionPtr.Get();
+	if (!Locomotion)
 	{
 		return;
 	}
 
 	// Copy character snapshot for thread-safe access in Update()
-	CharacterRuntimeState = Character->GetRuntimeState();
+	CharacterRuntimeState = Locomotion->GetRuntimeState();
 
 	// Cache previous frame data for delta calculations
 	PreviousTransform = CharacterRuntimeState.ActorTransform;
@@ -216,7 +216,7 @@ void FFVCharacterAnimInstanceProxy::Update(float DeltaSeconds)
 UFVCharacterAnimInstance::UFVCharacterAnimInstance(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, AnimationConfig(nullptr)
-	, CachedCharacter(nullptr)
+	, CachedLocomotion(nullptr)
 {
 }
 
@@ -242,10 +242,10 @@ void UFVCharacterAnimInstance::NativeInitializeAnimation()
 		return;
 	}
 
-	CachedCharacter = Cast<AFVCharacter>(OwningActor);
-	if (!CachedCharacter)
+	CachedLocomotion = UFVLocomotionComponent::Find(OwningActor);
+	if (!CachedLocomotion)
 	{
-		FV_LOG_ERROR(LogFVAnimation, "Owning actor is not AFVCharacter! Animation system will not function.");
+		FV_LOG_ERROR(LogFVAnimation, "Owning actor has no locomotion component! Animation system will not function.");
 		return;
 	}
 
@@ -253,13 +253,13 @@ void UFVCharacterAnimInstance::NativeInitializeAnimation()
 	if (!AnimationConfig)
 	{
 		FV_LOG_WARNING(LogFVAnimation, "No AnimationConfig assigned to AnimInstance on %s. Using default values.",
-			*CachedCharacter->GetName());
+			*OwningActor->GetName());
 		
 		// Create default config on the fly (not ideal, but prevents crashes)
 		AnimationConfig = NewObject<UFVAnimationConfigData>(this);
 	}
 
-	UE_LOG(LogFVAnimation, Log, TEXT("AnimInstance initialized for character: %s"), *CachedCharacter->GetName());
+	UE_LOG(LogFVAnimation, Log, TEXT("AnimInstance initialized for character: %s"), *OwningActor->GetName());
 }
 
 void UFVCharacterAnimInstance::NativeBeginPlay()
@@ -271,7 +271,7 @@ void UFVCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	if (!CachedCharacter)
+	if (!CachedLocomotion)
 	{
 		return;
 	}

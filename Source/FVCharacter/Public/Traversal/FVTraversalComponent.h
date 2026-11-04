@@ -6,7 +6,7 @@
 #include "Traversal/FVTraversalTypes.h"
 #include "FVTraversalComponent.generated.h"
 
-class ACharacter;
+class UCapsuleComponent;
 class UAnimInstance;
 class UFVTraversalConfig;
 
@@ -55,16 +55,16 @@ private:
 		float HalfHeight = 0.f;
 	};
 
-	ACharacter* GetCharacter() const;
-	FTraceParams MakeTraceParams(const ACharacter& Character) const;
-	bool DoForwardTrace(const ACharacter& Character, const FTraceParams& Params, FFVTraversalCheckResult& Result) const;
-	bool DoClearanceTraces(const ACharacter& Character, const FFVTraversalCheckResult& Result,
+	UCapsuleComponent* GetCapsule() const;
+	UAnimInstance* GetAnimInstance() const;
+	FTraceParams MakeTraceParams(const AActor& Actor) const;
+	bool DoForwardTrace(const AActor& Actor, const FTraceParams& Params, FFVTraversalCheckResult& Result) const;
+	bool DoClearanceTraces(const AActor& Actor, const FFVTraversalCheckResult& Result,
 	                       FHitResult& OutBackHit) const;
-	void DoFloorTrace(const ACharacter& Character, FFVTraversalCheckResult& Result) const;
-	void CapsuleTrace(const ACharacter& Character, const FVector& Start, const FVector& End, FHitResult& OutHit) const;
-	FFVTraversalChooserInput MakeChooserInput(const ACharacter& Character) const;
+	void DoFloorTrace(const AActor& Actor, FFVTraversalCheckResult& Result) const;
+	void CapsuleTrace(const AActor& Actor, const FVector& Start, const FVector& End, FHitResult& OutHit) const;
+	FFVTraversalChooserInput MakeChooserInput(const AActor& Actor) const;
 	static EFVTraversalActionType ClassifyAction(const FFVTraversalCheckResult& Result);
-	static EFVMovementMode ToTraversalMode(EMovementMode Mode);
 	void ReadDebugSettings();
 	void DrawLedges(const FFVLedgeResult& Ledges) const;
 

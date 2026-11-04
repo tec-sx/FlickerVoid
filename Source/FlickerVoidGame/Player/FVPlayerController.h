@@ -65,6 +65,7 @@ protected:
     void Input_SprintCompleted(const FInputActionValue& Value);
     void Input_JumpStarted(const FInputActionValue& Value);
     void Input_JumpTriggered(const FInputActionValue& Value);
+    void Input_JumpCompleted(const FInputActionValue& Value);
 	void Input_AimStarted(const FInputActionValue& Value);
     void Input_AimCompleted(const FInputActionValue& Value);
 

@@ -15,6 +15,7 @@ public class FlickerVoidCharacter : ModuleRules
             "GameplayAbilities",
             "GameplayTags",
             "MotionTrajectory",
+            "Mover",
             "FlickerVoidCore",
             "FVCoreRuntime",
         });
