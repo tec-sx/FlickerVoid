@@ -21,10 +21,7 @@ namespace FVInteractionGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Action_LockPick, "Interaction.Action.LockPick", "Attempt to pick a lock.");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_WalkedAway, "Interaction.Cancel.WalkedAway", "Interaction aborted because the player left the target.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_HigherPriorityOffer, "Interaction.Cancel.HigherPriorityOffer", "Interaction aborted for a higher priority offer.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_OfferExpired, "Interaction.Cancel.OfferExpired", "Interaction aborted because the offer expired.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_CombatStarted, "Interaction.Cancel.CombatStarted", "Interaction aborted because combat started.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_Death, "Interaction.Cancel.Death", "Interaction aborted because the instigator died.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_Scripted, "Interaction.Cancel.Scripted", "Interaction aborted by script.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_FocusLost, "Interaction.Cancel.FocusLost", "Interaction aborted because the interactor looked away.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Cancel_Suppressed, "Interaction.Cancel.Suppressed", "Interaction aborted because the interactor became suppressed.");
@@ -35,7 +32,7 @@ namespace FVInteractionGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Primary, "InputTag.Interaction.Primary", "Primary interaction input slot.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Secondary, "InputTag.Interaction.Secondary", "Secondary interaction input slot.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Alternate, "InputTag.Interaction.Alternate", "Alternate interaction input slot.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Ternary, "InputTag.Interaction.Ternary", "Third interaction input slot.");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_State_Idle, "Interaction.State.Idle", "Interactable is outside the Near band of the interactable relevance group.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_State_Awake, "Interaction.State.Awake", "Interactable is in range and can react.");
@@ -46,8 +43,6 @@ namespace FVInteractionGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_State_Completed, "Interaction.State.Completed", "Interactable is spent and cannot be used again.");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Suppression_Cutscene, "Interaction.Suppression.Cutscene", "Suppressed for the duration of a cutscene.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Suppression_Menu, "Interaction.Suppression.Menu", "Suppressed while a menu is open.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Suppression_Vehicle, "Interaction.Suppression.Vehicle", "Suppressed while driving or riding.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interaction_Suppression_Dependency, "Interaction.Suppression.Dependency", "Suppressed by another interaction holding a dependency.");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Relevance_Interactable, "Relevance.Interactable", "Relevance group of interactables; its Near band is where they wake up.");
@@ -56,7 +51,6 @@ namespace FVInteractionGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Mode, "Interactor.Mode", "Root for interactor detection modes.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Mode_Default, "Interactor.Mode.Default", "Default interactor detection mode.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Mode_Aim, "Interactor.Mode.Aim", "Precise detection mode used while aiming.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactor_Tag_AI, "Interactor.Tag.AI", "Interactor driven by AI.");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable, "Interactable", "Base interactable tag.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Interactable_Item, "Interactable.Item", "An item that can be interacted with.");

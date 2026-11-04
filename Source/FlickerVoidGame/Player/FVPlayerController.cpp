@@ -10,6 +10,7 @@
 #include "Input/Components/FVInputComponent.h"
 #include "Input/Components/FVGestureComponent.h"
 #include "Components/FVInteractorComponent.h"
+#include "Core/FVInteractionGameplayTags.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVPlayerController)
 
@@ -278,7 +279,7 @@ void AFVPlayerController::Input_AbilityInputPressed(FGameplayTag InputTag)
         return;
     }
 	
-	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
+	if (InputTag.MatchesTag(FVInteractionGameplayTags::InputTag_Interaction))
 	{
 		if (UFVInteractorComponent* Interactor = FVPlayer->GetInteractorComponent())
 		{
@@ -300,7 +301,7 @@ void AFVPlayerController::Input_AbilityInputReleased(FGameplayTag InputTag)
 		return;
 	}
 
-	if (InputTag.MatchesTag(FVCoreTags::InputTag_Interaction))
+	if (InputTag.MatchesTag(FVInteractionGameplayTags::InputTag_Interaction))
 	{
 		if (UFVInteractorComponent* Interactor = FVPlayer->GetInteractorComponent())
 		{

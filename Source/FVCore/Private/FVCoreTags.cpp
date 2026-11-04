@@ -10,10 +10,6 @@ namespace FVCoreTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Sprint, "InputTag.Sprint", "Sprint input.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Jump, "InputTag.Jump", "Jump input.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Aim, "InputTag.Aim", "Aim input.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction, "InputTag.Interaction", "Root of interaction inputs.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Primary, "InputTag.Interaction.Primary", "Primary interaction.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Secondary, "InputTag.Interaction.Secondary", "Secondary interaction.");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_Interaction_Ternary, "InputTag.Interaction.Ternary", "Ternary interaction.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_UI, "InputTag.UI", "Root of UI inputs; the player controller forwards them to On UI Input Pressed.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_UI_HubMenu, "InputTag.UI.HubMenu", "Open or close the hub menu.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(InputTag_UI_Map, "InputTag.UI.Map", "Open or close the world map.");

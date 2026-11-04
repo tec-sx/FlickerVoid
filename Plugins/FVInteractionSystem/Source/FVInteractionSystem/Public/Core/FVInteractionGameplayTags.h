@@ -26,10 +26,7 @@ namespace FVInteractionGameplayTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Action_LockPick);
 
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_WalkedAway);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_HigherPriorityOffer);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_OfferExpired);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_CombatStarted);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_Death);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_Scripted);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_FocusLost);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Cancel_Suppressed);
@@ -40,7 +37,7 @@ namespace FVInteractionGameplayTags
 
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Primary);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Secondary);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Alternate);
+	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Interaction_Ternary);
 
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Idle);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Awake);
@@ -51,8 +48,6 @@ namespace FVInteractionGameplayTags
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_State_Completed);
 
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Suppression_Cutscene);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Suppression_Menu);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Suppression_Vehicle);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interaction_Suppression_Dependency);
 
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Relevance_Interactable);
@@ -61,7 +56,6 @@ namespace FVInteractionGameplayTags
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Mode);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Mode_Default);
 	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Mode_Aim);
-	UE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactor_Tag_AI);
 
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Interactable_Item);
