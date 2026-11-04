@@ -9,8 +9,11 @@ from .sides import SideNames
 ANIMATION_SETTINGS_SECTION = "/Script/FVAnimationSystem.FVAnimationSettings"
 DEFAULT_SIDE_PAIRS = (("_l", "_r"),)
 
+# Unreal makes the armature object the skeleton's root bone; the push names it ROOT_BONE, so no bone carries that name.
+ROOT_BONE = "root"
+
 MANNEQUIN_BODY_CHAIN = (
-    "root", "pelvis",
+    "pelvis",
     "spine_01", "spine_02", "spine_03", "spine_04", "spine_05",
     "neck_01", "neck_02", "head",
     "clavicle_l", "upperarm_l", "lowerarm_l", "hand_l",

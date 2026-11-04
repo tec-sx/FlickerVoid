@@ -79,11 +79,11 @@ No UE plugin and nothing in `Content/`: the UE-side code is sent with each reque
 ## Slice 1: Push to Unreal
 
 - **Link.** Each mesh or armature object stores its UE asset path in the custom property `fv_ue_asset` (for example `/Game/Characters/Bartender/SK_Bartender`) and, for skeletal meshes, the Skeleton in `fv_ue_skeleton`. **Use Selected Asset** fills them from the asset selected in the Content Browser.
-- **Export.** One locked FBX preset: selection only, armature and meshes, deform bones only, no leaf bones, `Y`/`X` bone axes, unit scale applied, tangent space, smoothing by face, shape keys as morph targets, no animation. The armature object is exported as `Armature` when its top bone is `root`, so UE doesn't add an extra root bone. Files go to a temp folder.
+- **Export.** One locked FBX preset: selection only, armature and meshes, deform bones only, no leaf bones, `Y`/`X` bone axes, unit scale applied, tangent space, smoothing by face, shape keys as morph targets, no animation. The armature object becomes UE's root bone, so it is exported named `root` and the armature has no `root` bone. Files go to a temp folder.
 - **Import.** In UE an `AssetImportTask` imports or reimports onto the linked path: skeletal mesh on the linked Skeleton, morph targets on, normals and tangents imported, no materials, textures or animations, existing asset replaced. The asset is not saved; you save in UE.
 - **Guard.** Push runs the validator first and stops on errors (warnings are listed and pushed anyway).
 
-## Slice 1: Contract Validator
+## Slice 1: Validate
 
 Checks the selected armatures and meshes and lists problems in the panel; select a row to select the bone or vertices.
 
@@ -91,16 +91,17 @@ Checks the selected armatures and meshes and lists problems in the panel; select
 |---|---|
 | Scene unit scale is the contract's (0.01) | Error |
 | Every `_l` bone has a `_r` counterpart and the other way round (side pairs from the ini) | Error |
-| Required body-chain bones exist (Mannequin names) | Error |
+| Required body-chain bones exist (Mannequin names, from `pelvis`) | Error |
+| No bone named `root` (the armature object is the root); fix deletes it | Error |
 | Bone count within the budget | Error |
 | Armature has one top bone | Error |
-| Vertex groups without a matching deform bone | Warning |
+| Vertex groups without a matching deform bone | Warning, fixable |
 | Vertices with more influences than the limit | Warning, fixable |
 | Vertices whose weights don't sum to 1 | Warning, fixable |
 | Vertices with no weight | Error |
 | Mesh has no Armature modifier pointing at the armature | Error |
 
-Fixes are only the safe ones (limit influences, normalize), each one undo step. Renames stay manual.
+Fixes are only the safe ones (remove unused groups, limit influences, normalize, remove the `root` bone), each one undo step; the weight fixes also have their own buttons and change a body's template when it has one. Renames stay manual.
 
 Later slices add rest-pose symmetry, bone roll and axis checks, and the leaf rule for extra bones.
 

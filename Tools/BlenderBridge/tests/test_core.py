@@ -63,18 +63,33 @@ class SideNameTests(unittest.TestCase):
 
 
 class RuleTests(unittest.TestCase):
-    contract = Contract(side_pairs=(("_l", "_r"),), required_bones=("root", "pelvis"), bone_budget=4, max_influences=2)
+    contract = Contract(side_pairs=(("_l", "_r"),), required_bones=("root", "pelvis"), bone_budget=3, max_influences=2)
 
     def test_armature(self):
-        bones = [("root", None), ("pelvis", "root"), ("thigh_l", "pelvis"), ("thigh_r", "pelvis"), ("calf_l", "thigh_l")]
+        bones = [("pelvis", None), ("thigh_l", "pelvis"), ("thigh_r", "pelvis"), ("calf_l", "thigh_l")]
         messages = [issue.message for issue in rules.check_armature("Arm", bones, self.contract)]
         self.assertTrue(any("calf_l" in message for message in messages))
         self.assertTrue(any("budget" in message for message in messages))
-        self.assertFalse(any("top bone" in message for message in messages))
+        self.assertFalse(any("top bone" in message or "Missing" in message for message in messages))
 
-    def test_two_top_bones(self):
+    def test_root_bone(self):
         issues = rules.check_armature("Arm", [("root", None), ("pelvis", None)], self.contract)
         self.assertEqual(len([issue for issue in issues if "top bone" in issue.message]), 1)
+        root = next(issue for issue in issues if issue.fix == rules.FIX_REMOVE_ROOT)
+        self.assertEqual((root.level, root.items), (rules.ERROR, ["root"]))
+
+    def test_unused_groups(self):
+        groups = ["thigh_l", "thigh_r", "calf_l", "calf_r", "mask", "MF_Changed", "old_bone", "spine"]
+        bones = {"thigh_l", "thigh_r", "calf_l", "calf_r", "spine"}
+        unused = rules.unused_groups(groups, bones, weighted={"thigh_l", "calf_l", "old_bone"}, kept={"mask"},
+                                     sides=self.contract.sides)
+        self.assertEqual(unused, ["old_bone", "spine"])
+
+    def test_limit_and_normalize_vertex(self):
+        self.assertEqual(sorted(rules.limited({"a": 0.5, "b": 0.1, "c": 0.4}, 2)), ["b"])
+        self.assertEqual(rules.limited({"a": 1.0}, 2), [])
+        self.assertAlmostEqual(sum(rules.normalized({"a": 0.2, "b": 0.2}).values()), 1.0)
+        self.assertEqual(rules.normalized({"a": 0.0}), {"a": 0.0})
 
     def test_weights(self):
         issues = rules.check_weights("Body", [[1.0], [0.5, 0.3, 0.2], [0.5, 0.2], []], 2)

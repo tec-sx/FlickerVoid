@@ -7,9 +7,8 @@ from contextlib import contextmanager
 import bpy
 
 from . import mirror
-from .. import preferences, scene_data
-
-UNREAL_ROOT_NODE = "Armature"
+from .. import preferences
+from ..core.contract import ROOT_BONE
 
 
 def temp_fbx_path(asset_path):
@@ -61,14 +60,14 @@ def _export_selection(context, armature, meshes):
                     disabled.append((modifier, modifier.show_viewport, modifier.show_render))
                     modifier.show_viewport = modifier.show_render = False
 
-        # Unreal drops a skeleton root node named Armature, so the top bone becomes the root bone.
-        if armature and scene_data.top_bone(armature) == "root" and armature.name != UNREAL_ROOT_NODE:
-            other = bpy.data.objects.get(UNREAL_ROOT_NODE)
+        # Unreal makes the armature object the root bone, so every character's skeleton gets the same root name.
+        if armature and armature.name != ROOT_BONE:
+            other = bpy.data.objects.get(ROOT_BONE)
             if other:
                 renamed.append((other, other.name))
-                other.name = UNREAL_ROOT_NODE + "_fv_tmp"
+                other.name = ROOT_BONE + "_fv_tmp"
             renamed.insert(0, (armature, armature.name))
-            armature.name = UNREAL_ROOT_NODE
+            armature.name = ROOT_BONE
         yield
     finally:
         for obj, name in renamed:

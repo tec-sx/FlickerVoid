@@ -128,7 +128,7 @@ class FV_OT_push(bpy.types.Operator):
         issues = checks.run(context, meshes)
         store_issues(context, issues)
         if checks.has_errors(issues):
-            self.report({"ERROR"}, f"Not pushed: {summary(issues)}. See the Contract panel.")
+            self.report({"ERROR"}, f"Not pushed: {summary(issues)}. See the Validate panel.")
             return {"CANCELLED"}
 
         groups = asset_groups(meshes)

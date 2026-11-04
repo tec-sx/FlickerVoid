@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass, field
 
+from .contract import ROOT_BONE
+
 ERROR = "ERROR"
 WARNING = "WARNING"
 
@@ -11,6 +13,8 @@ NONE = "NONE"
 
 FIX_LIMIT_INFLUENCES = "LIMIT_INFLUENCES"
 FIX_NORMALIZE = "NORMALIZE"
+FIX_REMOVE_GROUPS = "REMOVE_GROUPS"
+FIX_REMOVE_ROOT = "REMOVE_ROOT"
 
 WEIGHT_SUM_TOLERANCE = 1e-3
 
@@ -37,11 +41,15 @@ def check_armature(name, bones, contract):
     names = {bone for bone, _ in bones}
     sides = contract.sides
 
+    if ROOT_BONE in names:
+        issues.append(Issue(ERROR, f"Has a {ROOT_BONE} bone: Unreal makes the armature its {ROOT_BONE}, so the skeleton "
+                                   f"would get two", name, BONES, [ROOT_BONE], FIX_REMOVE_ROOT))
+
     unpaired = sorted(bone for bone in names if (mirror := sides.mirror_bone(bone)) and mirror not in names)
     if unpaired:
         issues.append(Issue(ERROR, f"{len(unpaired)} side bones have no counterpart: {preview(unpaired)}", name, BONES, unpaired))
 
-    missing = [bone for bone in contract.required_bones if bone not in names]
+    missing = [bone for bone in contract.required_bones if bone not in names and bone != ROOT_BONE]
     if missing:
         issues.append(Issue(ERROR, f"Missing required bones: {preview(missing)}", name))
 
@@ -57,7 +65,8 @@ def check_armature(name, bones, contract):
 def check_vertex_groups(name, group_names, bone_names):
     orphans = sorted(group for group in group_names if group not in bone_names)
     if orphans:
-        return [Issue(WARNING, f"{len(orphans)} vertex groups match no deform bone: {preview(orphans)}", name)]
+        return [Issue(WARNING, f"{len(orphans)} vertex groups match no deform bone: {preview(orphans)}", name,
+                      fix=FIX_REMOVE_GROUPS)]
     return []
 
 
@@ -82,6 +91,34 @@ def check_weights(name, vertex_weights, max_influences):
     if unnormalized:
         issues.append(Issue(WARNING, f"{len(unnormalized)} vertices have weights that don't sum to 1", name, VERTICES, unnormalized, FIX_NORMALIZE))
     return issues
+
+
+def limited(weights, limit):
+    """The bones to drop from one vertex's {bone: weight} so it keeps its `limit` largest influences."""
+    ranked = sorted(weights, key=lambda bone: weights[bone], reverse=True)
+    return ranked[limit:]
+
+
+def normalized(weights):
+    """One vertex's {bone: weight} scaled to sum to 1, or unchanged when it has no weight."""
+    total = sum(weights.values())
+    if total <= 0.0:
+        return dict(weights)
+    return {bone: weight / total for bone, weight in weights.items()}
+
+
+def unused_groups(groups, bone_names, weighted, kept, sides):
+    """Vertex groups to remove: empty ones and ones matching no deform bone, unless `kept` (used by modifiers, shape
+    keys or the tools) or the counterpart of a weighted group, which a Mirror modifier fills."""
+    unused = []
+    for group in groups:
+        if group in kept or group.startswith("MF_"):
+            continue
+        counterpart = sides.mirror_bone(group)
+        if group in bone_names and (group in weighted or counterpart in weighted):
+            continue
+        unused.append(group)
+    return unused
 
 
 def limit_and_normalize(weights, max_influences):

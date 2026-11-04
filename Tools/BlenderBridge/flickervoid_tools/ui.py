@@ -3,8 +3,8 @@ import bpy
 from . import preferences
 from .push.operators import FV_OT_push, FV_OT_test_connection, FV_OT_use_selected_asset
 from .meatbag_factory import sculpt
-from .core import locker
-from .meatbag_factory.contract.operators import (MEATBAG_OT_check_contract, MEATBAG_OT_check_skeleton,
+from .core import locker, rules
+from .meatbag_factory.contract.operators import (MEATBAG_OT_fix_weights, MEATBAG_OT_validate, MEATBAG_OT_check_skeleton,
                                                  MEATBAG_OT_sync_skeleton, MEATBAG_UL_issues)
 from .meatbag_factory.locker import characters
 from .meatbag_factory.locker.operators import (KIND_LABELS, MEATBAG_OT_locker_add, MEATBAG_OT_locker_delete,
@@ -103,9 +103,9 @@ class MEATBAG_PT_factory(bpy.types.Panel):
         pass
 
 
-class MEATBAG_PT_contract(bpy.types.Panel):
-    bl_label = "Contract"
-    bl_idname = "MEATBAG_PT_contract"
+class MEATBAG_PT_validate(bpy.types.Panel):
+    bl_label = "Validate"
+    bl_idname = "MEATBAG_PT_validate"
     bl_parent_id = MEATBAG_PT_factory.bl_idname
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -113,7 +113,12 @@ class MEATBAG_PT_contract(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator(MEATBAG_OT_check_contract.bl_idname, icon="CHECKMARK")
+        layout.operator(MEATBAG_OT_validate.bl_idname, icon="CHECKMARK")
+        row = layout.row(align=True)
+        row.operator(MEATBAG_OT_fix_weights.bl_idname, text="Remove Unused Groups", icon="GROUP_VERTEX").fix = rules.FIX_REMOVE_GROUPS
+        row = layout.row(align=True)
+        row.operator(MEATBAG_OT_fix_weights.bl_idname, text="Limit Total", icon="MOD_VERTEX_WEIGHT").fix = rules.FIX_LIMIT_INFLUENCES
+        row.operator(MEATBAG_OT_fix_weights.bl_idname, text="Normalize", icon="NORMALIZE_FCURVES").fix = rules.FIX_NORMALIZE
         wm = context.window_manager
         if wm.meat_locker_reference:
             row = layout.row(align=True)
@@ -297,5 +302,5 @@ class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
         layout.operator(MEATBAG_OT_send_poses.bl_idname, icon="EXPORT")
 
 
-classes = (MEATBAG_PT_locker, FV_PT_unreal, MEATBAG_PT_factory, MEATBAG_PT_body, MEATBAG_PT_contract, MEATBAG_PT_poses,
+classes = (MEATBAG_PT_locker, FV_PT_unreal, MEATBAG_PT_factory, MEATBAG_PT_body, MEATBAG_PT_validate, MEATBAG_PT_poses,
            MEATBAG_PT_correctives)

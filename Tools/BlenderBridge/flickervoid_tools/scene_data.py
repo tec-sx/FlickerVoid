@@ -53,11 +53,6 @@ def deform_bones(armature):
     return bones
 
 
-def top_bone(armature):
-    tops = [name for name, parent in deform_bones(armature) if parent is None]
-    return tops[0] if len(tops) == 1 else None
-
-
 def vertex_deform_weights(mesh, bone_names):
     groups = {group.index for group in mesh.vertex_groups if group.name in bone_names}
     return [[element.weight for element in vertex.groups if element.group in groups and element.weight > 0.0]

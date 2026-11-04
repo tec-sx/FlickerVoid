@@ -2,7 +2,7 @@ import json
 
 import bpy
 
-from . import checks, skeleton
+from . import checks, skeleton, weights
 from ... import preferences, scene_data
 from ...core import rules
 
@@ -36,9 +36,9 @@ def summary(issues):
     return f"{errors} errors, {warnings} warnings" if issues else "No problems found"
 
 
-class MEATBAG_OT_check_contract(bpy.types.Operator):
-    bl_idname = "meatbag.check_contract"
-    bl_label = "Check Contract"
+class MEATBAG_OT_validate(bpy.types.Operator):
+    bl_idname = "meatbag.validate"
+    bl_label = "Validate"
     bl_description = "Check the selected armatures and meshes against the character contract"
 
     @classmethod
@@ -107,32 +107,107 @@ class MEATBAG_OT_fix_issue(bpy.types.Operator):
     def execute(self, context):
         issue = context.window_manager.meatbag_issues[self.index]
         obj = context.scene.objects.get(issue.object_name)
-        if not obj or obj.type != "MESH" or not issue.fix:
+        if not obj or not issue.fix:
             return {"CANCELLED"}
+        selection = list(context.selected_objects) or [obj]
+        if issue.fix == rules.FIX_REMOVE_ROOT:
+            if obj.type != "ARMATURE":
+                return {"CANCELLED"}
+            weights.remove_root_bone(context, obj)
+            text = f"Removed {rules.ROOT_BONE} from {obj.name}"
+        else:
+            fix = _ISSUE_FIXES.get(issue.fix)
+            if obj.type != "MESH" or fix is None:
+                return {"CANCELLED"}
+            text = _apply(self, context, fix, [obj])
+            if text is None:
+                return {"CANCELLED"}
 
-        if context.mode != "OBJECT":
-            bpy.ops.object.mode_set(mode="OBJECT")
-        max_influences = preferences.contract(context).max_influences
-        selection = list(context.selected_objects)
-        active = context.view_layer.objects.active
-        # The vertex group operators act on the active object only while it is selected.
-        for other in selection:
-            other.select_set(False)
-        obj.select_set(True)
-        context.view_layer.objects.active = obj
-        try:
-            if issue.fix == rules.FIX_LIMIT_INFLUENCES:
-                bpy.ops.object.vertex_group_limit_total(group_select_mode="BONE_DEFORM", limit=max_influences)
-            bpy.ops.object.vertex_group_normalize_all(group_select_mode="BONE_DEFORM", lock_active=False)
-        finally:
-            obj.select_set(False)
-            for other in selection:
-                other.select_set(True)
-            context.view_layer.objects.active = active
-
-        issues = checks.run(context, selection or [obj])
+        issues = checks.run(context, selection)
         store_issues(context, issues)
-        self.report({"INFO"}, f"Fixed. {summary(issues)}")
+        self.report({"INFO"}, f"{text}. {summary(issues)}")
+        return {"FINISHED"}
+
+
+def _limit(context, meshes):
+    limit = preferences.contract(context).max_influences
+    changed = sum(weights.limit_total(mesh, limit) for mesh in meshes)
+    return f"Limited {changed} vertices to {limit} influences"
+
+
+def _normalize(context, meshes):
+    changed = sum(weights.normalize(mesh) for mesh in meshes)
+    return f"Normalized {changed} vertices"
+
+
+def _remove_groups(context, meshes):
+    sides = preferences.contract(context).sides
+    removed = [name for mesh in meshes for name in weights.remove_unused(mesh, sides)]
+    return f"Removed {len(removed)} vertex groups: {rules.preview(removed)}" if removed else "No unused vertex groups"
+
+
+def _limit_and_normalize(context, meshes):
+    return f"{_limit(context, meshes)}; {_normalize(context, meshes)}"
+
+
+_WEIGHT_FIXES = {
+    rules.FIX_REMOVE_GROUPS: _remove_groups,
+    rules.FIX_LIMIT_INFLUENCES: _limit,
+    rules.FIX_NORMALIZE: _normalize,
+}
+_ISSUE_FIXES = {**_WEIGHT_FIXES, rules.FIX_LIMIT_INFLUENCES: _limit_and_normalize}
+
+
+def _apply(operator, context, fix, meshes):
+    """Runs a weight fix on the meshes (their templates when they have one), then processes the changed bodies."""
+    from ..template.operators import ensure_current
+
+    if context.mode != "OBJECT":
+        bpy.ops.object.mode_set(mode="OBJECT")
+    text = fix(context, meshes)
+    for mesh in meshes:
+        if weights.target(mesh) is not mesh and not ensure_current(operator, context, mesh):
+            return None
+    return text
+
+
+def _selected_meshes(context):
+    objects = scene_data.expand_selection(context.selected_objects, context.scene)
+    return [obj for obj in objects if obj.type == "MESH" and not scene_data.is_helper(obj)]
+
+
+class MEATBAG_OT_fix_weights(bpy.types.Operator):
+    bl_idname = "meatbag.fix_weights"
+    bl_label = "Fix Weights"
+    bl_description = "Fix the weights of the selected meshes (and the meshes of selected armatures), then validate again"
+    bl_options = {"REGISTER", "UNDO"}
+
+    fix: bpy.props.EnumProperty(items=(
+        (rules.FIX_REMOVE_GROUPS, "Remove Unused Groups",
+         "Remove empty vertex groups and the ones matching no deform bone. Groups used by modifiers or shape keys stay, "
+         "and so do a template's empty counterpart groups, which its Mirror fills"),
+        (rules.FIX_LIMIT_INFLUENCES, "Limit Total",
+         "Keep each vertex's largest deform influences, up to Max Influences from the preferences"),
+        (rules.FIX_NORMALIZE, "Normalize", "Make each vertex's deform weights sum to 1"),
+    ))
+
+    @classmethod
+    def poll(cls, context):
+        return bool(_selected_meshes(context))
+
+    @classmethod
+    def description(cls, context, properties):
+        return next(item.description for item in cls.bl_rna.properties["fix"].enum_items if item.identifier == properties.fix)
+
+    def execute(self, context):
+        meshes = _selected_meshes(context)
+        selection = list(context.selected_objects)
+        text = _apply(self, context, _WEIGHT_FIXES[self.fix], meshes)
+        if text is None:
+            return {"CANCELLED"}
+        issues = checks.run(context, selection)
+        store_issues(context, issues)
+        self.report({"INFO"}, f"{text}. {summary(issues)}")
         return {"FINISHED"}
 
 
@@ -205,7 +280,7 @@ class MEATBAG_UL_issues(bpy.types.UIList):
             row.operator(MEATBAG_OT_fix_issue.bl_idname, text="", icon="TOOL_SETTINGS").index = index
 
 
-classes = (MeatbagIssue, MEATBAG_OT_check_contract, MEATBAG_OT_select_issue, MEATBAG_OT_fix_issue,
+classes = (MeatbagIssue, MEATBAG_OT_validate, MEATBAG_OT_select_issue, MEATBAG_OT_fix_issue, MEATBAG_OT_fix_weights,
            MEATBAG_OT_check_skeleton, MEATBAG_OT_sync_skeleton, MEATBAG_UL_issues)
 
 
