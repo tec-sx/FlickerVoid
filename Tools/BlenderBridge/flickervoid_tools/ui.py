@@ -268,6 +268,8 @@ class MEATBAG_PT_correctives(_MeatbagSubpanel, bpy.types.Panel):
         row = layout.row(align=True)
         if sculpting(context):
             row.operator(MEATBAG_OT_sculpt_back.bl_idname, icon="LOOP_BACK")
+            if sculpting(context) != "DETAIL":
+                row.operator("meatbag.sculpt_cancel", icon="CANCEL")
         else:
             row.operator(MEATBAG_OT_sculpt_shape.bl_idname, icon="SHAPEKEY_DATA")
             row.operator(MEATBAG_OT_sculpt_pose.bl_idname, icon="SCULPTMODE_HLT")

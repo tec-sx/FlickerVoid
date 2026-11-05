@@ -572,6 +572,27 @@ class MEATBAG_OT_solve_correctives(bpy.types.Operator):
         return solve(self, context, settings(context).solve_scope)
 
 
+# The shape key as it was when sculpting started, by (object name, key name), for Cancel.
+_snapshots = {}
+
+
+def _snapshot(obj, key):
+    co = np.empty(len(key.data) * 3, dtype=np.float32)
+    key.data.foreach_get("co", co)
+    _snapshots.clear()
+    _snapshots[(obj.name, key.name)] = co
+
+
+def _restore_snapshot(obj):
+    key = obj.active_shape_key
+    co = _snapshots.pop((obj.name, key.name), None) if key else None
+    if co is None or len(co) != len(key.data) * 3:
+        return False
+    key.data.foreach_set("co", co)
+    obj.data.update()
+    return True
+
+
 def _sculpt(context, obj):
     for other in context.selected_objects:
         other.select_set(False)
@@ -603,6 +624,7 @@ class MEATBAG_OT_sculpt_shape(_PoseOperator, bpy.types.Operator):
         show_only(context, action, index)
         s.mesh.show_only_shape_key = False
         s.mesh.active_shape_key_index = list(s.mesh.data.shape_keys.key_blocks).index(key)
+        _snapshot(s.mesh, key)
         # A blend shape on the modelled half would show on both sides; the push puts it on its own side.
         hidden = [m.name for m in s.mesh.modifiers if m.type == "MIRROR" and m.show_viewport]
         for modifier_name in hidden:
@@ -643,14 +665,20 @@ class MEATBAG_OT_sculpt_pose(_PoseOperator, bpy.types.Operator):
         if context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")
         show_only(context, action, index)
+        # The solve compares the target with the pose's helpers at rest, so it's sculpted that way too; posed helpers
+        # would add their correction on top of the sculpt.
+        for helper in _helpers(s, action.meatbag_poses[index]):
+            s.armature.pose.bones[helper].matrix_basis = Matrix.Identity(4)
+        context.view_layer.update()
 
         target.active_shape_key_index = list(target.data.shape_keys.key_blocks).index(key)
         target.show_only_shape_key = True
+        _snapshot(target, key)
         target.hide_set(False)
         s.mesh.hide_set(True)
         _symmetry_for(target, name, preferences.contract(context).sides)
         _sculpt(context, target)
-        self.report({"INFO"}, f"Sculpting {name}. Press Back when done")
+        self.report({"INFO"}, f"Sculpting {name} with its helper bones at rest. Press Back when done, or Cancel")
         return {"FINISHED"}
 
 
@@ -705,40 +733,65 @@ class MEATBAG_OT_sculpt_back(bpy.types.Operator):
 
     def execute(self, context):
         s = settings(context)
-        what = sculpting(context)
+        what = _leave(context, s)
+        if what == "TARGET" and s.solve_on_back and s.armature:
+            return solve(self, context, "ACTIVE")
+        return {"FINISHED"}
+
+
+class MEATBAG_OT_sculpt_cancel(bpy.types.Operator):
+    bl_idname = "meatbag.sculpt_cancel"
+    bl_label = "Cancel"
+    bl_description = "Leave sculpting and put the shape key back as it was when sculpting started, without solving"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return sculpting(context) in {"TARGET", "SHAPE"}
+
+    def execute(self, context):
+        s = settings(context)
+        obj = context.active_object
         if context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")
-        if what == "SHAPE":
-            for name in s.mesh.get(HIDDEN_MIRRORS, []):
-                modifier = s.mesh.modifiers.get(name)
-                if modifier:
-                    modifier.show_viewport = True
-            if HIDDEN_MIRRORS in s.mesh:
-                del s.mesh[HIDDEN_MIRRORS]
-            _restore_symmetry(s.mesh)
-            if s.armature and s.armature.meatbag_library:
-                show_preview(context, s.armature.meatbag_library)
-            return {"FINISHED"}
-        if what == "DETAIL":
-            s.mesh.meatbag_detail.hide_set(True)
-            s.mesh.hide_set(False)
-            for obj in context.selected_objects:
-                obj.select_set(False)
-            s.mesh.select_set(True)
-            context.view_layer.objects.active = s.mesh
-            return {"FINISHED"}
+        restored = _restore_snapshot(obj)
+        _leave(context, s)
+        if not restored:
+            self.report({"WARNING"}, "Left sculpting, but the shape from before couldn't be found: use Undo to go back")
+        return {"FINISHED"}
+
+
+def _leave(context, s):
+    """Leaves sculpting and shows the body again; returns what was sculpted."""
+    what = sculpting(context)
+    if context.mode != "OBJECT":
+        bpy.ops.object.mode_set(mode="OBJECT")
+    if what == "SHAPE":
+        for name in s.mesh.get(HIDDEN_MIRRORS, []):
+            modifier = s.mesh.modifiers.get(name)
+            if modifier:
+                modifier.show_viewport = True
+        if HIDDEN_MIRRORS in s.mesh:
+            del s.mesh[HIDDEN_MIRRORS]
+        _restore_symmetry(s.mesh)
+        if s.armature and s.armature.meatbag_library:
+            show_preview(context, s.armature.meatbag_library)
+        return what
+    if what == "DETAIL":
+        s.mesh.meatbag_detail.hide_set(True)
+    else:
         target = s.mesh.meatbag_target
         target.show_only_shape_key = False
         _restore_symmetry(target)
         target.hide_set(True)
-        s.mesh.hide_set(False)
-        for obj in context.selected_objects:
-            obj.select_set(False)
-        s.mesh.select_set(True)
-        context.view_layer.objects.active = s.mesh
-        if s.solve_on_back and s.armature:
-            return solve(self, context, "ACTIVE")
-        return {"FINISHED"}
+        if s.armature and s.armature.meatbag_library:
+            show_preview(context, s.armature.meatbag_library)
+    s.mesh.hide_set(False)
+    for obj in context.selected_objects:
+        obj.select_set(False)
+    s.mesh.select_set(True)
+    context.view_layer.objects.active = s.mesh
+    return what
 
 
 class MEATBAG_OT_send_poses(bpy.types.Operator):
@@ -870,6 +923,7 @@ classes = (
     MEATBAG_OT_pose_update_control,
     MEATBAG_OT_pose_bones_from_selection,
     MEATBAG_OT_pose_affected_add,
+    MEATBAG_OT_sculpt_cancel,
     MEATBAG_OT_pose_affected_remove,
     MEATBAG_OT_pose_remove,
     MEATBAG_OT_pose_move,
