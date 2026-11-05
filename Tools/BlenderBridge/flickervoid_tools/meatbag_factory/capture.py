@@ -41,9 +41,18 @@ def helper_bone_names(armature, collection_name):
 
 
 def is_selected(armature, bone):
+    # Edit mode keeps its selection on the edit bones until it's left.
+    if armature.mode == "EDIT":
+        edit_bone = armature.data.edit_bones.get(bone.name)
+        return bool(edit_bone and edit_bone.select)
     # Blender 5 keeps pose selection on the pose bone, 4.x on the bone.
     pose_bone = armature.pose.bones[bone.name]
     return pose_bone.select if hasattr(pose_bone, "select") else bone.select
+
+
+def active_bone_name(armature):
+    active = armature.data.edit_bones.active if armature.mode == "EDIT" else armature.data.bones.active
+    return active.name if active else ""
 
 
 def check_names(names):

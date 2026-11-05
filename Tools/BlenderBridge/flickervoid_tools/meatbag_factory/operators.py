@@ -203,8 +203,7 @@ class _LibraryOperator:
 
 def _selection(armature):
     """The active bone and the other selected bones of the armature."""
-    active = armature.data.bones.active
-    active_name = active.name if active else ""
+    active_name = capture.active_bone_name(armature)
     selected = [bone.name for bone in armature.data.bones if capture.is_selected(armature, bone) and bone.name != active_name]
     return active_name, selected
 
