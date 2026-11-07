@@ -1,6 +1,7 @@
 #include "FVNavigationSubsystem.h"
 
 #include "Conditions/FVCondition.h"
+#include "Engine/AssetManager.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
 #include "FVMapDefinition.h"
@@ -66,6 +67,13 @@ void UFVNavigationSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	{
 		FactChangedHandle = Facts->OnFactChangedNative().AddUObject(this, &UFVNavigationSubsystem::HandleFactChanged);
 	}
+
+	const TSoftObjectPtr<UFVMarkerDefinition>& WaypointMarker = UFVNavigationSettings::Get().WaypointMarker;
+	if (!WaypointMarker.IsNull())
+	{
+		FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+		WaypointHandle = Streamable.RequestAsyncLoad(WaypointMarker.ToSoftObjectPath(), FStreamableDelegate());
+	}
 }
 
 void UFVNavigationSubsystem::Deinitialize()
@@ -75,6 +83,11 @@ void UFVNavigationSubsystem::Deinitialize()
 		Facts->OnFactChangedNative().Remove(FactChangedHandle);
 	}
 	FactChangedHandle.Reset();
+	if (WaypointHandle.IsValid())
+	{
+		WaypointHandle->ReleaseHandle();
+		WaypointHandle.Reset();
+	}
 	Markers.Reset();
 	Maps.Reset();
 
@@ -289,7 +302,13 @@ void UFVNavigationSubsystem::SetTrackedMarker(FFVMarkerHandle Marker)
 
 FFVMarkerHandle UFVNavigationSubsystem::SetWaypoint(FVector Location)
 {
-	UFVMarkerDefinition* Definition = UFVNavigationSettings::Get().WaypointMarker.LoadSynchronous();
+	const TSoftObjectPtr<UFVMarkerDefinition>& WaypointMarker = UFVNavigationSettings::Get().WaypointMarker;
+	UFVMarkerDefinition* Definition = WaypointMarker.Get();
+	if (Definition == nullptr && !WaypointMarker.IsNull())
+	{
+		UE_LOG(LogFVNavigationSystem, Warning, TEXT("SetWaypoint: the waypoint marker hasn't finished loading; loading it now."));
+		Definition = WaypointMarker.LoadSynchronous();
+	}
 	if (Definition == nullptr)
 	{
 		UE_LOG(LogFVNavigationSystem, Warning, TEXT("SetWaypoint: no Waypoint Marker in Navigation settings."));

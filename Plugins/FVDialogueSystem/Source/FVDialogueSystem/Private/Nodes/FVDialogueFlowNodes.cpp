@@ -2,6 +2,7 @@
 
 #include "Components/AudioComponent.h"
 #include "Data/FVCharacterDefinition.h"
+#include "Engine/AssetManager.h"
 #include "Engine/World.h"
 #include "FlowAsset.h"
 #include "FVDialogueSubsystem.h"
@@ -13,6 +14,49 @@
 #include "TimerManager.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVDialogueFlowNodes)
+
+namespace
+{
+	/** Starts loading a node's content in the background; the node hears back through NotifyPreloadComplete. */
+	EFlowPreloadResult RequestPreload(UFlowNode* Node, const TArray<FSoftObjectPath>& Paths, TSharedPtr<FStreamableHandle>& OutHandle)
+	{
+		if (Paths.IsEmpty())
+		{
+			return EFlowPreloadResult::Completed;
+		}
+
+		FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+		const FStreamableDelegate OnLoaded = FStreamableDelegate::CreateUObject(Node, &UFlowNode::NotifyPreloadComplete);
+		OutHandle = Streamable.RequestAsyncLoad(Paths, OnLoaded);
+		if (OutHandle.IsValid() && !OutHandle->HasLoadCompleted())
+		{
+			return EFlowPreloadResult::PreloadInProgress;
+		}
+		return EFlowPreloadResult::Completed;
+	}
+
+	void ReleasePreload(TSharedPtr<FStreamableHandle>& Handle)
+	{
+		if (Handle.IsValid())
+		{
+			Handle->ReleaseHandle();
+		}
+		Handle.Reset();
+	}
+
+	/** The preloaded voice, or a synchronous load with a warning when the preload hasn't finished yet. */
+	USoundBase* ResolveVoice(const TSoftObjectPtr<USoundBase>& Voice)
+	{
+		USoundBase* Sound = Voice.Get();
+		if (Sound || Voice.IsNull())
+		{
+			return Sound;
+		}
+
+		UE_LOG(LogFVDialogueSystem, Warning, TEXT("Voice %s wasn't preloaded; loading it now."), *Voice.ToString());
+		return Voice.LoadSynchronous();
+	}
+}
 
 UFVFlowNode_DialogueBase::UFVFlowNode_DialogueBase()
 {
@@ -55,6 +99,11 @@ UFVFlowNode_DialogueLine::UFVFlowNode_DialogueLine()
 
 void UFVFlowNode_DialogueLine::ExecuteInput(const FName& PinName)
 {
+	if (DispatchExecuteInputToPreloadHelper(PinName))
+	{
+		return;
+	}
+
 	UFVDialogueSubsystem* Subsystem = EnsureConversation();
 	if (!Subsystem)
 	{
@@ -67,7 +116,7 @@ void UFVFlowNode_DialogueLine::ExecuteInput(const FName& PinName)
 	Line.Speaker = Speaker;
 	Line.SpeakerActor = Subsystem->ResolveSpeaker(Speaker);
 	Line.Text = Text;
-	Line.Voice = Voice.LoadSynchronous();
+	Line.Voice = ResolveVoice(Voice);
 	Line.Mood = Mood;
 	Line.Duration = Duration;
 	Line.bSkippable = bSkippable;
@@ -75,6 +124,21 @@ void UFVFlowNode_DialogueLine::ExecuteInput(const FName& PinName)
 
 	bPending = true;
 	Subsystem->PlayLine(Line, FFVDialogueLineFinished::CreateUObject(this, &UFVFlowNode_DialogueLine::HandleFinished));
+}
+
+EFlowPreloadResult UFVFlowNode_DialogueLine::PreloadContent()
+{
+	TArray<FSoftObjectPath> Paths;
+	if (!Voice.IsNull())
+	{
+		Paths.Add(Voice.ToSoftObjectPath());
+	}
+	return RequestPreload(this, Paths, VoiceHandle);
+}
+
+void UFVFlowNode_DialogueLine::FlushContent()
+{
+	ReleasePreload(VoiceHandle);
 }
 
 void UFVFlowNode_DialogueLine::HandleFinished()
@@ -211,6 +275,11 @@ UFVFlowNode_Bark::UFVFlowNode_Bark()
 
 void UFVFlowNode_Bark::ExecuteInput(const FName& PinName)
 {
+	if (DispatchExecuteInputToPreloadHelper(PinName))
+	{
+		return;
+	}
+
 	AActor* Speaker = TryGetRootFlowActorOwner();
 	FName RowName;
 	const FFVBarkTableRow* Row = Barks && Speaker ? PickRow(Speaker, RowName) : nullptr;
@@ -227,7 +296,7 @@ void UFVFlowNode_Bark::ExecuteInput(const FName& PinName)
 	}
 
 	float WaitTime = Row->DisplayDuration;
-	if (USoundBase* Sound = Row->Voice.LoadSynchronous())
+	if (USoundBase* Sound = ResolveVoice(Row->Voice))
 	{
 		PlayingVoice = UGameplayStatics::SpawnSoundAttached(Sound, Speaker->GetRootComponent());
 		WaitTime = FMath::Max(WaitTime, Sound->GetDuration());
@@ -308,6 +377,29 @@ void UFVFlowNode_Bark::Cleanup()
 	}
 	PlayingVoice.Reset();
 	Super::Cleanup();
+}
+
+EFlowPreloadResult UFVFlowNode_Bark::PreloadContent()
+{
+	TArray<FSoftObjectPath> Paths;
+	if (Barks)
+	{
+		TArray<FFVBarkTableRow*> Rows;
+		Barks->GetAllRows<FFVBarkTableRow>(TEXT("Bark preload"), Rows);
+		for (const FFVBarkTableRow* Row : Rows)
+		{
+			if (Row && !Row->Voice.IsNull())
+			{
+				Paths.AddUnique(Row->Voice.ToSoftObjectPath());
+			}
+		}
+	}
+	return RequestPreload(this, Paths, VoicesHandle);
+}
+
+void UFVFlowNode_Bark::FlushContent()
+{
+	ReleasePreload(VoicesHandle);
 }
 
 #if WITH_EDITOR

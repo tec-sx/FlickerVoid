@@ -43,8 +43,7 @@ class FVCORERUNTIME_API UFVCinematicSubsystem : public UWorldSubsystem
 public:
 	static UFVCinematicSubsystem* Get(const UObject* WorldContext);
 
-	/** Stops any current cinematic first. Returns false if the sequence failed to load. */
-	UFUNCTION(BlueprintCallable, Category = "Cinematic")
+	UFUNCTION(BlueprintCallable, Category = "Cinematic", meta = (ToolTip = "Stops any current cinematic first. A sequence that isn't loaded yet loads in the background and plays when ready. Returns false when there is no sequence or it can't play."))
 	bool Play(UFVCinematicDefinition* Cinematic);
 
 	/** Jumps to the end; finish handling runs as normal. No-op if not skippable. */
@@ -70,11 +69,16 @@ private:
 	UFUNCTION()
 	void HandleFinished();
 
+	bool PlayLoaded(UFVCinematicDefinition* Cinematic, ULevelSequence* Sequence);
 	void SetPlayerState(bool bInCinematic) const;
 	void Cleanup();
 
 	UPROPERTY()
 	TObjectPtr<UFVCinematicDefinition> Current;
+
+	/** Requested while its sequence was still loading. */
+	UPROPERTY()
+	TObjectPtr<UFVCinematicDefinition> Pending;
 
 	UPROPERTY()
 	TObjectPtr<ULevelSequencePlayer> Player;

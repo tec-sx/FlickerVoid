@@ -136,7 +136,7 @@ Use the **Time of Day** condition (a phase tag, or an hour range) for schedules 
 |---|---|---|
 | `DA_Cinematic_<Name>` | `FVCinematicDefinition` | Sequence, Skippable, Disable Player Input, Hide Player, On Finished effects. Optional Id = fact set to 1 once watched |
 
-Play one with the **Play Cinematic** effect (from quests, dialogue, Flow) or `UFVCinematicSubsystem::Play`.
+Play one with the **Play Cinematic** effect (from quests, dialogue, Flow) or `UFVCinematicSubsystem::Play`. A sequence that isn't loaded yet loads in the background and starts when ready.
 
 ## 8. Spawners
 
@@ -144,7 +144,7 @@ Play one with the **Play Cinematic** effect (from quests, dialogue, Flow) or `UF
 |---|---|---|
 | `DA_Spawn_<Name>` | `FVSpawnDefinition` | Actor Class, optional Payload data asset, Spawn When, Despawn When, Respawn |
 
-Place an `AFVSpawner` (or a Blueprint of it) in the level and set its **Definition**. It spawns and despawns as the conditions change, e.g. an NPC who only appears after a quest step.
+Place an `AFVSpawner` (or a Blueprint of it) in the level and set its **Definition**. It spawns and despawns as the conditions change, e.g. an NPC who only appears after a quest step. The actor class loads in the background from begin play, so a spawn due right away happens once it has loaded.
 
 ## 9. Flow and StateTree nodes
 
