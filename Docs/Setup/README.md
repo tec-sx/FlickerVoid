@@ -22,7 +22,7 @@ Game layer guides (the game modules and AngelScript built on the plugins):
 | [Social](Social.md) | Factions, standing, fame, notoriety, titles, relationships, gifts, disguise, all on scales |
 | [Items](Items.md) | Item types, world items, notes and investigation, money, loot containers, keys, item abilities and animations, held and thrown items, intoxication, trading, pickpocketing, giving from dialogue |
 | [Character movement](CharacterMovement.md) | Mover-driven characters, movement sets and AngelScript movement modes, traversal, animation on UAF |
-| [Character appearance](Appearance.md) | Garments fitted per body type, merged by Mutable into the player's outfit, skin hidden under clothes |
+| [Character appearance](Appearance.md) | Body types and garments fitted per body type, built by Mutable into the player's body and outfit, skin under clothes clipped away |
 
 ## Shared conventions
 

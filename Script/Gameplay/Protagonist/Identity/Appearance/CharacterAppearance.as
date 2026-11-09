@@ -1,34 +1,38 @@
 /**
- * Dresses a character from what it wears. Each worn item's garment, fitted to the body type, goes into the outfit's
- * Mutable instance under its slot tag; its clip tags hide the skin it covers on the body and turn on tucks.
+ * Dresses a character from what it wears. One Mutable instance builds the body and the outfit as two components: the body
+ * type is an option of the body, each worn item's garment, fitted to the body type, goes into the outfit under its slot
+ * tag, and its clip tags switch on the clipping meshes that cut the skin it covers out of the body and the tucks it needs.
  */
 class UCharacterAppearance : UObject
 {
-    private USkeletalMeshComponent Body;
     private UCustomizableObjectInstance Instance;
     private UFVEquipmentComponent Equipment;
     private FGameplayTag BodyType;
     private TArray<FString> DressedSlots;
     private TArray<FGameplayTag> ShownClipTags;
 
-    /** Copies the outfit's instance so runtime changes never touch the asset, then dresses from the equipment and follows its changes. */
-    void Start(USkeletalMeshComponent InBody, UCustomizableSkeletalComponent Outfit, UFVEquipmentComponent InEquipment, FGameplayTag InBodyType)
+    /** Copies the body's instance so runtime changes never touch the asset, gives the copy to the outfit too, then dresses from the equipment and follows its changes. */
+    void Start(UCustomizableSkeletalComponent Body, UCustomizableSkeletalComponent Outfit, UFVEquipmentComponent InEquipment, FGameplayTag InBodyType)
     {
-        Body = InBody;
         Equipment = InEquipment;
         BodyType = InBodyType;
 
         UCustomizableObjectInstance Source = nullptr;
 
-        if (Outfit != nullptr)
+        if (Body != nullptr)
         {
-            Source = Outfit.GetCustomizableObjectInstance();
+            Source = Body.GetCustomizableObjectInstance();
         }
 
         if (Source != nullptr)
         {
             Instance = Source.Clone();
-            Outfit.SetCustomizableObjectInstance(Instance);
+            Body.SetCustomizableObjectInstance(Instance);
+
+            if (Outfit != nullptr)
+            {
+                Outfit.SetCustomizableObjectInstance(Instance);
+            }
         }
 
         if (Equipment != nullptr)
@@ -45,25 +49,30 @@ class UCharacterAppearance : UObject
         return BodyType;
     }
 
-    /** Switches the body type and refits every worn garment. NewBody, when set, replaces the body mesh. */
-    void SetBodyType(FGameplayTag NewBodyType, USkeletalMesh NewBody)
+    /** Switches the body type and refits every worn garment. */
+    void SetBodyType(FGameplayTag NewBodyType)
     {
         BodyType = NewBodyType;
-
-        if (NewBody != nullptr && Body != nullptr)
-        {
-            Body.EmptyOverrideMaterials();
-            Body.SetSkeletalMeshAsset(NewBody);
-            ShownClipTags.Empty();
-        }
-
         Dress();
     }
 
-    /** Rebuilds the outfit from everything worn and sends one Mutable update. */
+    /** Sets the body type, everything worn and the clip tags it switches on, then sends one Mutable update. */
     UFUNCTION()
     void Dress()
     {
+        if (Instance == nullptr)
+        {
+            return;
+        }
+
+        FString BodyParameter = GameplayTags::Appearance_Body.ToString();
+
+        if (BodyType.IsValid() && Instance.ContainsEnumParameter(BodyParameter))
+        {
+            FString BodyOption = BodyType.ToString();
+            Instance.SetEnumParameterSelectedOption(BodyParameter, BodyOption, -1);
+        }
+
         TArray<FString> Slots;
         TArray<FGameplayTag> ClipTags;
 
@@ -73,7 +82,7 @@ class UCharacterAppearance : UObject
             {
                 FString Slot = Worn.Slot.ToString();
 
-                if (Instance != nullptr && Instance.ContainsSkeletalMeshParameter(Slot))
+                if (Instance.ContainsSkeletalMeshParameter(Slot))
                 {
                     USkeletalMesh Garment = FVItem::LoadAppearanceMesh(Worn.Item, BodyType);
 
@@ -96,14 +105,11 @@ class UCharacterAppearance : UObject
             }
         }
 
-        if (Instance != nullptr)
+        for (FString Slot : DressedSlots)
         {
-            for (FString Slot : DressedSlots)
+            if (!Slots.Contains(Slot))
             {
-                if (!Slots.Contains(Slot))
-                {
-                    Instance.SetDefaultValue(Slot);
-                }
+                Instance.SetDefaultValue(Slot);
             }
         }
 
@@ -123,10 +129,7 @@ class UCharacterAppearance : UObject
         DressedSlots = Slots;
         ShownClipTags = ClipTags;
 
-        if (Instance != nullptr)
-        {
-            Instance.UpdateSkeletalMeshAsync(false, true);
-        }
+        Instance.UpdateSkeletalMeshAsync(false, true);
     }
 
     UFUNCTION()
@@ -135,20 +138,14 @@ class UCharacterAppearance : UObject
         Dress();
     }
 
-    // A clip tag is a bool parameter in the instance (body clipping meshes, tucks) and a scalar on the body's materials (skin mask).
+    // A clip tag is a toggle of the same name in the instance: its clipping meshes cut the covered skin out of the body, and its tucks clip garments.
     private void SetClip(FGameplayTag Tag, bool bOn)
     {
         FString ParameterName = Tag.ToString();
 
-        if (Instance != nullptr && Instance.ContainsBoolParameter(ParameterName))
+        if (Instance.ContainsBoolParameter(ParameterName))
         {
             Instance.SetBoolParameterSelectedOption(ParameterName, bOn);
-        }
-
-        if (Body != nullptr)
-        {
-            float Mask = bOn ? 1.0 : 0.0;
-            Body.SetScalarParameterValueOnMaterials(Tag.GetTagName(), Mask);
         }
     }
 }

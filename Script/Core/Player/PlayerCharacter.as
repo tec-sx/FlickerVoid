@@ -25,7 +25,11 @@ class APlayerCharacter : AFVPlayerCharacter
     UPROPERTY(DefaultComponent, Category = Items)
     UFVIntoxicationComponent Intoxication;
 
-    // Mutable writes the worn garments into this mesh; it follows the body's pose.
+    // Mutable builds the body into Mesh, with the skin under worn garments clipped away.
+    UPROPERTY(DefaultComponent, Attach = Mesh, Category = Appearance)
+    UCustomizableSkeletalComponent BodyCustomization;
+
+    // Mutable builds the worn garments into this mesh; it follows the body's pose.
     UPROPERTY(DefaultComponent, Attach = Mesh, Category = Appearance)
     USkeletalMeshComponent Outfit;
 
@@ -91,7 +95,7 @@ class APlayerCharacter : AFVPlayerCharacter
 
         UFVEquipmentComponent Equipment = UFVEquipmentComponent::Get(this);
         Appearance = NewObject(this, UCharacterAppearance);
-        Appearance.Start(Mesh, OutfitCustomization, Equipment, BodyType);
+        Appearance.Start(BodyCustomization, OutfitCustomization, Equipment, BodyType);
 
         Traversal = UFVTraversalComponent::Get(this);
 

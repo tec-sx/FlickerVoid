@@ -90,6 +90,6 @@ struct FLICKERVOIDGAMEPLAY_API FFVItemFragment_Appearance : public FFVItemFragme
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Appearance", meta = (Categories = "Appearance.Body", ForceInlineRow, ToolTip = "The garment fitted to each body type. A body type missing here falls back to the Equippable fragment's Mesh."))
 	TMap<FGameplayTag, TSoftObjectPtr<USkeletalMesh>> Meshes;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Appearance", meta = (Categories = "Appearance.Clip", ToolTip = "Switched on while worn: hides the skin the garment covers and turns on tucks with other garments."))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Appearance", meta = (Categories = "Appearance.Clip", ToolTip = "Switched on while worn: clips the skin the garment covers out of the body and turns on tucks with other garments."))
 	TArray<FGameplayTag> ClipTags;
 };
