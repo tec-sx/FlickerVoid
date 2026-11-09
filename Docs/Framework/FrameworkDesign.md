@@ -345,7 +345,7 @@ A CVar that changes a rule (such as the two inventory limits) reads `-1` by defa
 ## Still open
 
 - 2D grid placement: space is counted in cells rather than packed into a layout. Real placement (rotation, per-slot grids) can come later if the game needs it.
-- Outfit meshes are not applied visually yet; the equipment component broadcasts and the game layer dresses the character.
+- Outfits: the player is dressed through Mutable from the equipment component's events (`Docs/Setup/Appearance.md`); NPC appearance is not built yet.
 - Item screens (take, trade, reader) and the hub's Use, Wear, Hold and Drop actions follow the hub menu PR (#55); the item layer already exposes the functions, events and messages they need.
 - Quest flow graphs restart from their beginning after a load.
 - Navigation: the waypoint and the tracked marker are not saved yet; there is no fog of war over unexplored map areas; navigation HUD widgets come later.

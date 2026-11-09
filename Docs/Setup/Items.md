@@ -298,5 +298,4 @@ Check every Blueprint deriving from `AItem`, `ARigidItem` or `ABeverageItem`, or
 ## 20. Not in this work
 
 - **Screens and hub actions**: the take screen (and the Search offer), the trade screen, the reader screen and the hub menu's Use, Wear, Hold and Drop actions come in a follow-up after the hub menu PR (#55). Everything they need is here: inventory functions and delegates, the merchant functions, `FVItem::SendItemEvent` for the item events, and the messages in section 16.
-- **Character and outfit visuals**: worn outfits don't change the character's meshes yet.
 - **Stealth reactions**: noticing theft by onlookers and AI reactions to `ItemNoise` come with the stealth system.

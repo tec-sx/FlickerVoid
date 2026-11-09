@@ -148,4 +148,10 @@ namespace FVGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Animation_Item_Pickup_High, "Animation.Item.Pickup.High", "Picking up an item above the shoulders.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Animation_Item_Give, "Animation.Item.Give", "Handing an item to another character.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Animation_Item_Throw, "Animation.Item.Throw", "Throwing an item.");
+
+	// ============================================================================
+	// APPEARANCE TAGS
+	// ============================================================================
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Appearance_Body, "Appearance.Body", "Root of body types, e.g. Appearance.Body.Female.Tall.Slim; garments are fitted per body type.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Appearance_Clip, "Appearance.Clip", "Root of clip tags: what a worn garment hides on the body or tucks into, e.g. Appearance.Clip.UpperBody.LongSleeve.");
 }

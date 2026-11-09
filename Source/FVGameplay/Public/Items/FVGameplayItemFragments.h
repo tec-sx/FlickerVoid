@@ -8,6 +8,7 @@
 class AActor;
 class UAnimMontage;
 class UFVInteractableDefinition;
+class USkeletalMesh;
 class USoundBase;
 class UStaticMesh;
 
@@ -78,4 +79,17 @@ struct FLICKERVOIDGAMEPLAY_API FFVItemFragment_Throwable : public FFVItemFragmen
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwable", meta = (ToolTip = "Played on the first impact."))
 	TSoftObjectPtr<USoundBase> ImpactSound;
+};
+
+/** How the item looks on the wearer: the garment fitted to each body type and the clip tags it switches on while worn. */
+USTRUCT(BlueprintType, meta = (DisplayName = "Appearance"))
+struct FLICKERVOIDGAMEPLAY_API FFVItemFragment_Appearance : public FFVItemFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Appearance", meta = (Categories = "Appearance.Body", ForceInlineRow, ToolTip = "The garment fitted to each body type. A body type missing here falls back to the Equippable fragment's Mesh."))
+	TMap<FGameplayTag, TSoftObjectPtr<USkeletalMesh>> Meshes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Appearance", meta = (Categories = "Appearance.Clip", ToolTip = "Switched on while worn: hides the skin the garment covers and turns on tucks with other garments."))
+	TArray<FGameplayTag> ClipTags;
 };
