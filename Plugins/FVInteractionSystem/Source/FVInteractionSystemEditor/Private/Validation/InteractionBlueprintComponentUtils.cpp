@@ -31,7 +31,7 @@ namespace
 	}
 }
 
-void InteractionBlueprintComponentUtils::CollectComponentTemplates(const UClass* ActorClass, TArray<const UActorComponent*>& OutTemplates)
+void InteractionBlueprintComponentUtils::CollectComponentTemplates(const UClass* ActorClass, bool bWithClassDefaults, TArray<const UActorComponent*>& OutTemplates)
 {
 	OutTemplates.Reset();
 	if (!ActorClass)
@@ -39,7 +39,8 @@ void InteractionBlueprintComponentUtils::CollectComponentTemplates(const UClass*
 		return;
 	}
 
-	if (const AActor* DefaultActor = Cast<AActor>(ActorClass->GetDefaultObject()))
+	const UObject* Defaults = bWithClassDefaults ? ActorClass->GetDefaultObject() : nullptr;
+	if (const AActor* DefaultActor = Cast<AActor>(Defaults))
 	{
 		for (const UActorComponent* Component : DefaultActor->GetComponents())
 		{

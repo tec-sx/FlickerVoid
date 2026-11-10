@@ -27,7 +27,8 @@ public class FVCoreEditor : ModuleRules
             "ToolMenus",
             "Settings",
             "DeveloperSettings",
-            "FVCoreUI"
+            "FVCoreUI",
+            "Projects"
         });
     }
 }

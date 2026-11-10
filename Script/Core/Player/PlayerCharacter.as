@@ -25,12 +25,10 @@ class APlayerCharacter : AFVPlayerCharacter
     UPROPERTY(DefaultComponent, Category = Items)
     UFVIntoxicationComponent Intoxication;
 
-    // Mutable builds the body into Mesh, with the skin under worn garments clipped away.
-    UPROPERTY(DefaultComponent, Attach = Mesh, Category = Appearance)
+    UPROPERTY(DefaultComponent, Attach = CharacterMesh0, Category = Appearance)
     UCustomizableSkeletalComponent BodyCustomization;
 
-    // Mutable builds the worn garments into this mesh; it follows the body's pose.
-    UPROPERTY(DefaultComponent, Attach = Mesh, Category = Appearance)
+    UPROPERTY(DefaultComponent, Attach = CharacterMesh0, Category = Appearance)
     USkeletalMeshComponent Outfit;
 
     UPROPERTY(DefaultComponent, Attach = Outfit, Category = Appearance)

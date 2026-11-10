@@ -17,7 +17,7 @@ void UInteractionBlueprintCompilerExtension::ProcessBlueprintCompiled(const FKis
 	}
 
 	TArray<const UActorComponent*> Templates;
-	InteractionBlueprintComponentUtils::CollectComponentTemplates(ActorClass, Templates);
+	InteractionBlueprintComponentUtils::CollectComponentTemplates(ActorClass, false, Templates);
 
 	FCompilerResultsLog& MessageLog = CompilationContext.MessageLog;
 	const FInteractionCompileContext Context(Templates, [&MessageLog](const EMessageSeverity::Type Severity, const FString& Message)

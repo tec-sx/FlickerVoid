@@ -51,7 +51,7 @@ EDataValidationResult UFVInteractionActorValidator::ValidateLoadedAsset_Implemen
 
 	if (const UClass* ActorClass = GetBlueprintActorClass(InAsset))
 	{
-		InteractionBlueprintComponentUtils::CollectComponentTemplates(ActorClass, Templates);
+		InteractionBlueprintComponentUtils::CollectComponentTemplates(ActorClass, true, Templates);
 	}
 	else if (const UWorld* World = Cast<UWorld>(InAsset))
 	{
