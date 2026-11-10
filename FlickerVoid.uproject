@@ -594,6 +594,55 @@
 		{
 			"Name": "ModelViewViewModelPreview",
 			"Enabled": true
+		},
+		{
+			"Name": "MetaHumanCharacter",
+			"Enabled": true
+		},
+		{
+			"Name": "MetaHumanCrowd",
+			"Enabled": true
+		},
+		{
+			"Name": "MetaHuman",
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+				"Win64",
+				"Linux",
+				"Mac"
+			]
+		},
+		{
+			"Name": "UAFAnimNode",
+			"Enabled": true
+		},
+		{
+			"Name": "UAFLayering",
+			"Enabled": true
+		},
+		{
+			"Name": "UAFMass",
+			"Enabled": true
+		},
+		{
+			"Name": "UAFSharedAssets",
+			"Enabled": true
+		},
+		{
+			"Name": "MutablePopulation",
+			"Enabled": true
+		},
+		{
+			"Name": "LiveLinkSoundDevice",
+			"Enabled": true
+		},
+		{
+			"Name": "LiveLinkExampleDevice",
+			"Enabled": true
+		},
+		{
+			"Name": "MounteaAdvancedInventorySystem",
+			"Enabled": false
 		}
 	]
 }

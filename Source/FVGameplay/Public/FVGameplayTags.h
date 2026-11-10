@@ -154,6 +154,13 @@ namespace FVGameplayTags
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Animation_Item_Pickup_High);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Animation_Item_Give);
 	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Animation_Item_Throw);
+
+	// ============================================================================
+	// APPEARANCE TAGS
+	// Roots only; body types and clip tags are data under them.
+	// ============================================================================
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Appearance_Body);
+	UE_API	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Appearance_Clip);
 }
 
 #undef UE_API

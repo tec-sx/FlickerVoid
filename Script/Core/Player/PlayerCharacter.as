@@ -25,6 +25,21 @@ class APlayerCharacter : AFVPlayerCharacter
     UPROPERTY(DefaultComponent, Category = Items)
     UFVIntoxicationComponent Intoxication;
 
+    UPROPERTY(DefaultComponent, Attach = CharacterMesh0, Category = Appearance)
+    UCustomizableSkeletalComponent BodyCustomization;
+
+    UPROPERTY(DefaultComponent, Attach = CharacterMesh0, Category = Appearance)
+    USkeletalMeshComponent Outfit;
+
+    UPROPERTY(DefaultComponent, Attach = Outfit, Category = Appearance)
+    UCustomizableSkeletalComponent OutfitCustomization;
+
+    UPROPERTY(EditAnywhere, Category = Appearance, Meta = (Categories = "Appearance.Body"))
+    FGameplayTag BodyType;
+
+    UPROPERTY(Transient)
+    UCharacterAppearance Appearance;
+
     UPROPERTY()
     UFVTraversalComponent Traversal;
     
@@ -65,10 +80,20 @@ class APlayerCharacter : AFVPlayerCharacter
     }
 
     UFUNCTION(BlueprintOverride)
+    void ConstructionScript()
+    {
+        Outfit.SetLeaderPoseComponent(Mesh);
+    }
+
+    UFUNCTION(BlueprintOverride)
     void BeginPlay()
     {
         HeldItems.OnHeldItemsChanged.AddUFunction(this, n"UpdateHoldPoses");
         UpdateHoldPoses();
+
+        UFVEquipmentComponent Equipment = UFVEquipmentComponent::Get(this);
+        Appearance = NewObject(this, UCharacterAppearance);
+        Appearance.Start(BodyCustomization, OutfitCustomization, Equipment, BodyType);
 
         Traversal = UFVTraversalComponent::Get(this);
 

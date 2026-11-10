@@ -15,6 +15,7 @@ class UFVInteractableDefinition;
 class UFVItemDefinition;
 class UFVItemEventPayload;
 class UFVItemSettings;
+class USkeletalMesh;
 class USkeletalMeshComponent;
 class USoundBase;
 class UStaticMesh;
@@ -36,8 +37,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FV|Item", meta = (ToolTip = "Copies the item's Throwable fragment; false without one."))
 	static bool GetThrowableFragment(const UFVItemDefinition* Item, FFVItemFragment_Throwable& OutFragment);
 
+	UFUNCTION(BlueprintPure, Category = "FV|Item", meta = (ToolTip = "Copies the item's Appearance fragment; false without one."))
+	static bool GetAppearanceFragment(const UFVItemDefinition* Item, FFVItemFragment_Appearance& OutFragment);
+
 	UFUNCTION(BlueprintCallable, Category = "FV|Item", meta = (ToolTip = "Loads the World fragment's mesh; none without one."))
 	static UStaticMesh* LoadWorldMesh(const UFVItemDefinition* Item);
+
+	UFUNCTION(BlueprintCallable, Category = "FV|Item", meta = (ToolTip = "Loads the garment fitted to the body type: the Appearance fragment's mesh for it, else the Equippable fragment's Mesh; none without either."))
+	static USkeletalMesh* LoadAppearanceMesh(const UFVItemDefinition* Item, FGameplayTag BodyType);
 
 	UFUNCTION(BlueprintCallable, Category = "FV|Item", meta = (ToolTip = "Loads the World fragment's Actor Class; none without one."))
 	static TSubclassOf<AActor> LoadActorClass(const UFVItemDefinition* Item);

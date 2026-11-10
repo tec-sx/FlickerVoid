@@ -38,17 +38,16 @@ bool UFVRelevanceSubsystem::Register(UFVRelevanceComponent* Component)
 	{
 		return false;
 	}
-
-	// Significance is the negative distance, so the manager keeps the closest viewpoint and sorts closest first.
-	USignificanceManager::FSignificanceFunction Score = [](USignificanceManager::FManagedObjectInfo* Info, const FTransform& Viewpoint)
+	
+	USignificanceManager::FManagedObjectSignificanceFunction Score = []
+	(USignificanceManager::FManagedObjectInfo* Info, const FTransform& Viewpoint)
 	{
 		const UFVRelevanceComponent* Scored = static_cast<const UFVRelevanceComponent*>(Info->GetObject());
 		return Scored->ScoreViewpoint(Viewpoint);
 	};
-
-	// Band changes are only collected here and broadcast after the update, so listeners may spawn or destroy
-	// relevance objects without touching the manager mid-update.
-	USignificanceManager::FPostSignificanceFunction CollectBandChange = [this](USignificanceManager::FManagedObjectInfo* Info, float, const float Significance, bool)
+	
+	USignificanceManager::FManagedObjectPostSignificanceFunction CollectBandChange = [this]
+	(USignificanceManager::FManagedObjectInfo* Info, float, const float Significance, bool)
 	{
 		UFVRelevanceComponent* Changed = static_cast<UFVRelevanceComponent*>(Info->GetObject());
 		Changed->UpdateBand(-Significance);

@@ -6,6 +6,7 @@
 #include "Editor.h"
 #include "FVCoreNames.h"
 #include "EditorValidatorSubsystem.h"
+#include "GameplayTagsManager.h"
 #include "Engine/DeveloperSettings.h"
 #include "ISettingsModule.h"
 #include "Layout/FVUILayout.h"
@@ -17,6 +18,7 @@
 #include "ToolMenus.h"
 #include "WorkspaceMenuStructure.h"
 #include "WorkspaceMenuStructureModule.h"
+#include "Interfaces/IPluginManager.h"
 
 DEFINE_LOG_CATEGORY(LogFVCoreEditor);
 
@@ -59,6 +61,11 @@ void FFVCoreEditorModule::StartupModule()
 		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFVConditionSetCustomization::MakeInstance));
 
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FFVCoreEditorModule::RegisterMenus));
+	
+	if (const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("FVFramework")))
+	{
+		UGameplayTagsManager::Get().AddTagIniSearchPath(FPaths::Combine(Plugin->GetBaseDir(), TEXT("Config"), TEXT("Tags")));
+	}
 }
 
 void FFVCoreEditorModule::RegisterMenus()

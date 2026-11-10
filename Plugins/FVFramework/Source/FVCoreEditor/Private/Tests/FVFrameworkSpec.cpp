@@ -16,11 +16,11 @@
 
 namespace FVFrameworkSpec
 {
-	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_Test_A, "Test.FVFramework.A");
-	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_Test_B, "Test.FVFramework.B");
-	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_Test_Group, "Test.FVFramework.Group");
-	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_Test_Group_One, "Test.FVFramework.Group.One");
-	UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_Test_Group_Two, "Test.FVFramework.Group.Two");
+	FGameplayTag TAG_Test_A;
+	FGameplayTag TAG_Test_B;
+	FGameplayTag TAG_Test_Group;
+	FGameplayTag TAG_Test_Group_One;
+	FGameplayTag TAG_Test_Group_Two;
 
 	struct FCompareCase
 	{
@@ -102,7 +102,16 @@ void FFVFrameworkSpec::EndWorld()
 void FFVFrameworkSpec::Define()
 {
 	using namespace FVFrameworkSpec;
-
+	
+	BeforeEach([this]()
+	{
+		TAG_Test_A = FGameplayTag::RequestGameplayTag(TEXT("Test.FVFramework.A"));
+		TAG_Test_B = FGameplayTag::RequestGameplayTag(TEXT("Test.FVFramework.B"));
+		TAG_Test_Group = FGameplayTag::RequestGameplayTag(TEXT("Test.FVFramework.Group"));
+		TAG_Test_Group_One = FGameplayTag::RequestGameplayTag(TEXT("Test.FVFramework.Group.One"));
+		TAG_Test_Group_Two = FGameplayTag::RequestGameplayTag(TEXT("Test.FVFramework.Group.Two"));
+	});
+	
 	Describe("Compare", [this]()
 	{
 		It("compares integers with every operator", [this]()

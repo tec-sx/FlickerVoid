@@ -11,6 +11,7 @@
 #include "Data/FVCharacterDefinition.h"
 #include "Data/FVInteractableDefinition.h"
 #include "Engine/Engine.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "FVGameplayModule.h"
@@ -21,6 +22,7 @@
 #include "Items/FVItemAnimationFragment.h"
 #include "Items/FVItemDefinition.h"
 #include "Items/FVItemEventPayload.h"
+#include "Items/FVItemFragments.h"
 #include "Items/FVItemSettings.h"
 #include "Pickup/FVPickupComponent.h"
 #include "Sound/SoundBase.h"
@@ -88,10 +90,34 @@ bool UFVItemLibrary::GetThrowableFragment(const UFVItemDefinition* Item, FFVItem
 	return FVItems::CopyFragment(Item, OutFragment);
 }
 
+bool UFVItemLibrary::GetAppearanceFragment(const UFVItemDefinition* Item, FFVItemFragment_Appearance& OutFragment)
+{
+	return FVItems::CopyFragment(Item, OutFragment);
+}
+
 UStaticMesh* UFVItemLibrary::LoadWorldMesh(const UFVItemDefinition* Item)
 {
 	const FFVItemFragment_World* World = Item ? Item->FindFragment<FFVItemFragment_World>() : nullptr;
 	return World ? World->Mesh.LoadSynchronous() : nullptr;
+}
+
+USkeletalMesh* UFVItemLibrary::LoadAppearanceMesh(const UFVItemDefinition* Item, FGameplayTag BodyType)
+{
+	if (!Item)
+	{
+		return nullptr;
+	}
+
+	const FFVItemFragment_Appearance* Appearance = Item->FindFragment<FFVItemFragment_Appearance>();
+	const TSoftObjectPtr<USkeletalMesh>* Fitted = Appearance ? Appearance->Meshes.Find(BodyType) : nullptr;
+
+	if (Fitted && !Fitted->IsNull())
+	{
+		return Fitted->LoadSynchronous();
+	}
+
+	const FFVItemFragment_Equippable* Equippable = Item->FindFragment<FFVItemFragment_Equippable>();
+	return Equippable ? Equippable->Mesh.LoadSynchronous() : nullptr;
 }
 
 TSubclassOf<AActor> UFVItemLibrary::LoadActorClass(const UFVItemDefinition* Item)

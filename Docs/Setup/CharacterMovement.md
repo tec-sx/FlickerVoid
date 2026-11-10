@@ -48,11 +48,13 @@ Behaviour kept from the handlers: the character turns towards its movement, and 
 6. **Animation now**: the current Anim Blueprint keeps working; it reads `UFVLocomotionComponent` through `UFVCharacterAnimInstance`.
 7. **Animation on UAF**, following the Game Animation Sample's Mover and UAF characters:
    - Create a UAF Workspace, a System and an Animation Graph (*Animation > Animation Framework*).
-   - System: reference pose on initialize; on update, build the motion matching trajectory from the Mover component (MoverAnimNext), run the graph, write the pose.
+   - System: on *Initialize*, make the reference pose; on *PrePhysics*, build the motion matching trajectory with *Generate Trajectory from Mover* (MoverAnimNext), then *Run Graph* and *Write Pose*.
    - Graph: chooser, then motion matching with the pose search databases and the trajectory.
-   - Bind graph variables to the locomotion component: `GetGait`, `GetStance`, `GetMovementMode`, `IsAiming`, `IsTraversing`, `JustLanded`, `GetGroundSpeed`, `GetRuntimeState`.
+   - Bind graph variables to the locomotion component: `GetGait`, `GetStance`, `GetMovementMode`, `IsAiming`, `IsTraversing`, `JustLanded`, `GetGroundSpeed`, `GetRuntimeState`. UAF has no Calculate Direction node, so a direction the chooser needs comes from a binding (the locomotion component has `GetMoveDirection`) or is computed in the graph.
    - On the player Blueprint add the UAF (AnimNext) component with the System, and turn animation off on the skeletal mesh (no Anim Blueprint), or UAF won't run.
-   - Correctives: the corrective Control Rig (Spherical Pose Reader helper bones and corrective morph curves) currently runs in the mesh's Post Process Anim Blueprint. Under UAF, run it as the last step of the System through `UAFControlRig` (its Control Rig task), after the graph and before the pose is written to the mesh. Check once whether the Post Process Anim Blueprint still runs when the mesh has no Anim Blueprint; if it doesn't, the correctives stop without an error.
+   - Debugging: UAF variables can't be watched like an Anim Blueprint's, so record a session with the Rewind Debugger instead. A forum report saw the System's *Current Actor* come back None at times, so when the mesh stays in the reference pose, check the bindings first.
+   - Correctives: the corrective Control Rig (Spherical Pose Reader helper bones and corrective morph curves) currently runs in the mesh's Post Process Anim Blueprint. Under UAF, run it as the last step of the System through `UAFControlRig` (its Control Rig task), after the graph and before the pose is written to the mesh. Check once whether the Post Process Anim Blueprint still runs when the mesh has no Anim Blueprint; if it doesn't, the correctives stop without an error. A blog author couldn't expose Control Rig variables in UAF; the correctives rig reads only the pose, so it should need none (inferred).
+   - Mutable builds the player's body into *Mesh* and the garments into *Outfit*, which follows the body through leader pose ([Character appearance](Appearance.md)); check once that UAF keeps animating the built body and that the outfit moves with it.
    - Once it works, `UFVCharacterAnimInstance`, its proxy, `UFVAnimationConfigData` and `Script/Animation/FVPlayerAnimInstance.as` can go.
 
 ## Adding a movement ability in AngelScript
