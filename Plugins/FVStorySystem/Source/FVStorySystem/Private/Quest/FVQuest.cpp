@@ -1,6 +1,7 @@
 #include "Quest/FVQuest.h"
 
 #include "Conditions/FVConditionLibrary.h"
+#include "Data/FVDefinitionLibrary.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
@@ -46,20 +47,25 @@ void UFVQuestSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
-	for (const TSoftObjectPtr<UFVQuestDefinition>& Soft : GetDefault<UFVQuestSettings>()->Quests)
-	{
-		if (UFVQuestDefinition* Quest = Soft.LoadSynchronous())
-		{
-			Quests.AddUnique(Quest);
-		}
-	}
-
 	if (UFVFactDatabase* Facts = GetFacts())
 	{
 		FactHandle = Facts->OnFactChangedNative().AddUObject(this, &UFVQuestSubsystem::HandleFactChanged);
 	}
+
+	const FSimpleDelegate OnLoaded = FSimpleDelegate::CreateUObject(this, &UFVQuestSubsystem::HandleQuestsLoaded);
+	UFVDefinitionLibrary::LoadDefinitions(UFVQuestDefinition::StaticClass(), OnLoaded);
+}
+
+void UFVQuestSubsystem::HandleQuestsLoaded()
+{
+	const TArray<UFVQuestDefinition*> Loaded = UFVDefinitionLibrary::GetLoadedDefinitions<UFVQuestDefinition>();
+	for (UFVQuestDefinition* Quest : Loaded)
+	{
+		Quests.AddUnique(Quest);
+	}
 	Evaluate();
 	StartActiveQuestFlows();
+	OnQuestsChanged.Broadcast();
 }
 
 void UFVQuestSubsystem::Deinitialize()

@@ -128,7 +128,7 @@ How it plays: select a stack in Storage; Information shows it with Use, Wear/Tak
 | `WBP_Character_Social` | `FVCharacterSocialSection` | (list bindings, FilterTabs required for the two tabs) | **Factions Label**, **Relationships Label**, **Disguised As Label**, **Attitude Labels** (Hostile, Unfriendly, Neutral, Friendly, Allied) |
 | `WBP_Character_Abilities` | `FVCharacterAbilitiesSection` | (list bindings + FilterTabs) | **Tabs** = Skills / Perks / Kinks, each with an attribute category tag (e.g. `Attribute.Skill`, `Attribute.Perk`, `Attribute.Kink`; create the tags) |
 
-Social lists the factions in *FlickerVoid > Social > Factions* and the characters in the new **Relationships** list there (shown once their relationship fact is set). Abilities reads the player's FV Attribute Component until the skill tree replaces it: each attribute under the tab's category is a row, value and bar from its min/max, dimmed at its minimum.
+Social lists every faction definition (`Get Factions`) and the characters in the new **Relationships** list there (shown once their relationship fact is set). Abilities reads the player's FV Attribute Component until the skill tree replaces it: each attribute under the tab's category is a row, value and bar from its min/max, dimmed at its minimum.
 
 ### Journal sections
 
@@ -138,7 +138,7 @@ Social lists the factions in *FlickerVoid > Social > Factions* and the character
 | `WBP_Journal_Notes` | `FVJournalKnowledgeSection` | list bindings + FilterTabs | **Filters**: Clues [Clue], Topics [Topic] |
 | `WBP_Journal_Memories` | `FVJournalKnowledgeSection` | list bindings | **Filters**: Thoughts [Thought] |
 
-Quests come from the quest subsystem (tracked quests in *FlickerVoid > Quests*), knowledge from the facts through `Get Known Knowledge`.
+Quests come from the quest subsystem (every quest definition the Asset Manager finds), knowledge from the facts through `Get Known Knowledge`.
 
 ## 7. Map screen: `WBP_MapScreen`
 

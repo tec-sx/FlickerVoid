@@ -52,6 +52,7 @@ protected:
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 
 private:
+	void HandleTitlesLoaded();
 	void HandleFactChanged(FGameplayTag Tag, int32 OldValue, int32 NewValue);
 
 	/** Titles check the player pawn, which may spawn or change after world begin play. */

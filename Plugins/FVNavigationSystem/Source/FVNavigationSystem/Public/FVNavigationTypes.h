@@ -206,10 +206,6 @@ public:
 
 	static const UFVNavigationSettings& Get() { return *GetDefault<UFVNavigationSettings>(); }
 
-	/** Maps the player can stand on. Where they overlap, the highest priority wins. */
-	UPROPERTY(Config, EditAnywhere, Category = "Maps")
-	TArray<TSoftObjectPtr<UFVMapDefinition>> Maps;
-
 	/** Marker used for the waypoint the player places on the world map. */
 	UPROPERTY(Config, EditAnywhere, Category = "Markers")
 	TSoftObjectPtr<UFVMarkerDefinition> WaypointMarker;

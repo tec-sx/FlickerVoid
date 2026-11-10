@@ -79,6 +79,8 @@ The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own to c
 |---|---|---|
 | `DA_Character_Player`, `DA_Character_<Npc>` | `FVCharacterDefinition` | One per named character or NPC archetype. Other plugins add fragments here: **Social** (faction, relationship fact), **Attributes** (starting attributes) |
 
+Systems that go through every definition of a kind (quests, titles, factions, maps) find them through the Asset Manager instead of a settings list: each native definition class is a primary asset type in *Project Settings > Asset Manager* (`PrimaryAssetTypesToScan` in `Config/DefaultGame.ini`). `UFVDefinitionLibrary::LoadDefinitions` loads a type in the background when a world begins play and `Get Loaded Definitions` lists it, sorted by asset name. A new kind that needs this gets its own scan entry.
+
 - Add an **FV Identity Component** to every character Blueprint (player and NPCs) and set its **Definition**. Systems find actors by definition through `UFVIdentitySubsystem` (`Find Actor`, `Find Actors`).
 - Dialogue speakers, faction membership and relationships all resolve through this component.
 
@@ -216,3 +218,4 @@ Tests live in each plugin's Editor module under `Private/Tests`, one spec per pl
 | Log says `HUD is not an AFVHUD` | Set the game mode's HUD Class to `AFVHUD` |
 | Widgets pushed but invisible | The layer tag isn't registered in the layout's Event Construct |
 | A definition fails validation with "has no Id tag" | Quests, knowledge, factions and titles store their state in the fact their Id names, so they need one |
+| A quest, title, faction or map is never evaluated, log says `isn't a primary asset type` | Its class has no `PrimaryAssetTypesToScan` entry, or the asset is outside the entry's directories |

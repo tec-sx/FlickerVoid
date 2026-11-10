@@ -7,7 +7,7 @@ Modules: `FVStorySystem`, `FVStorySystemDebug`, `FVStorySystemEditor` (Save Insp
 ## 1. Quick start
 
 1. Create fact tags for the quest and its objectives (`Fact.Quest.FindTheKey`, `Fact.Quest.FindTheKey.TalkToGuard`).
-2. Make a quest definition (section 2) and add it to *FlickerVoid > Quests > Quests*.
+2. Make a quest definition (section 2) anywhere under `/Game`. The Asset Manager finds it (`FVQuestDefinition` in *Project Settings > Asset Manager*), so there's no list to add it to.
 3. Start it from data (**Set Quest State** effect or Flow node, or **Auto Start When**) or call `Start Quest`.
 4. Turn on `FVCvar.Story.Debug.HUD 1` and play.
 
@@ -55,7 +55,6 @@ Get `UFVQuestSubsystem`, bind **On Quests Changed** (read `Get Last Changed Ques
 
 | Settings page | Setting | Meaning |
 |---|---|---|
-| *FlickerVoid > Quests* | Quests | Every quest the subsystem tracks (auto start, objectives, failure) |
 | *FlickerVoid > Save* | Checkpoint Slot, Slot Index Name | Slot names |
 | *FlickerVoid > Save* | Participants | Classes that add their own data to saves (section 5) |
 

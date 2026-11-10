@@ -1,6 +1,7 @@
 #include "Social/FVSocialSubsystem.h"
 
 #include "Conditions/FVConditionLibrary.h"
+#include "Data/FVDefinitionLibrary.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Facts/FVFactDatabase.h"
@@ -10,6 +11,7 @@
 #include "GameFramework/Pawn.h"
 #include "Items/FVItemDefinition.h"
 #include "Items/FVItemMessages.h"
+#include "Social/FVFactionDefinition.h"
 #include "Social/FVSocialLibrary.h"
 #include "Social/FVSocialTypes.h"
 #include "Social/FVTitleDefinition.h"
@@ -31,14 +33,6 @@ void UFVSocialSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
-	for (const TSoftObjectPtr<UFVTitleDefinition>& Soft : UFVSocialSettings::Get().Titles)
-	{
-		if (const UFVTitleDefinition* Title = Soft.LoadSynchronous())
-		{
-			Titles.Add(Title);
-		}
-	}
-
 	if (UFVFactDatabase* Facts = UFVFactDatabase::Get(this))
 	{
 		FactChangedHandle = Facts->OnFactChangedNative().AddUObject(this, &UFVSocialSubsystem::HandleFactChanged);
@@ -52,6 +46,19 @@ void UFVSocialSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	UGameplayMessageSubsystem& MessageSystem = UGameplayMessageSubsystem::Get(&InWorld);
 	GiveListener = MessageSystem.RegisterListener(FVGameplayTags::Message_Item_GiveFinished, this, &UFVSocialSubsystem::HandleGiveFinished);
 
+	const FSimpleDelegate OnTitlesLoaded = FSimpleDelegate::CreateUObject(this, &UFVSocialSubsystem::HandleTitlesLoaded);
+	UFVDefinitionLibrary::LoadDefinitions(UFVTitleDefinition::StaticClass(), OnTitlesLoaded);
+	UFVDefinitionLibrary::LoadDefinitions(UFVFactionDefinition::StaticClass(), FSimpleDelegate());
+}
+
+void UFVSocialSubsystem::HandleTitlesLoaded()
+{
+	const TArray<UFVTitleDefinition*> Loaded = UFVDefinitionLibrary::GetLoadedDefinitions<UFVTitleDefinition>();
+	Titles.Reset();
+	for (const UFVTitleDefinition* Title : Loaded)
+	{
+		Titles.Add(Title);
+	}
 	EvaluateTitles();
 }
 
