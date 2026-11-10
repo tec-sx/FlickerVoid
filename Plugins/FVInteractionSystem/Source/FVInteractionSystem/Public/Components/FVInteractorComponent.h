@@ -119,12 +119,6 @@ public:
 	/** Called by an interactable leaving play, so its focus, offers and running interaction don't outlive it. */
 	UE_API void HandleInteractableRemoved(UFVInteractableComponent* Removed);
 
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Identity")
-	UE_API void GrantTag(const FGameplayTag NewTag);
-
-	UFUNCTION(BlueprintCallable, Category = "Interaction|Identity")
-	UE_API void RemoveTag(const FGameplayTag OldTag);
-	
 	UFUNCTION(BlueprintCallable, Category = "Interaction|Input")
 	UE_API bool PushInput(const FGameplayTag InputTag, const EFVInputPhase Phase);
 
@@ -154,9 +148,6 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
 	TObjectPtr<UFVInteractorDefinition> Definition;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Interaction|Identity", meta = (Tooltip = "Runtime tags this interactor presents to offer conditions. Initialized from Definition."))
-	FGameplayTagContainer GrantedTags;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Interaction|Requirements", meta = (Tooltip = "Runtime blocked action tags. Initialized from Definition."))
 	FGameplayTagContainer BlockedActionTags;

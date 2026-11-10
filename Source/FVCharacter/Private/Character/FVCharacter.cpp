@@ -1,13 +1,12 @@
 #include "Character/FVCharacter.h"
 
-#include "AbilitySystemComponent.h"
-#include "AbilitySystemGlobals.h"
 #include "FlowComponent.h"
 #include "FVCharacterTags.h"
 #include "FVCharacterTypes.h"
 #include "FVCoreTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Movement/FVCharacterMovementComponent.h"
+#include "Tags/FVTagLibrary.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVCharacter)
 
@@ -116,13 +115,8 @@ bool AFVCharacter::CanMove() const
 		return true;
 	}
 
-	if (OwnedTags.HasAny(MovementBlockingTags))
-	{
-		return false;
-	}
-
-	const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(this);
-	return !ASC || !ASC->HasAnyMatchingGameplayTags(MovementBlockingTags);
+	const FGameplayTagContainer Tags = UFVTagLibrary::GetActorTags(this);
+	return !Tags.HasAny(MovementBlockingTags);
 }
 
 bool AFVCharacter::CanSprint() const
@@ -180,22 +174,6 @@ void AFVCharacter::RequestJump()
 FGameplayTagContainer AFVCharacter::GetIdentityTags() const
 {
 	return GetFlowComponent() ? GetFlowComponent()->IdentityTags : FGameplayTagContainer();
-}
-
-void AFVCharacter::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
-{
-	TagContainer.Reset();
-	TagContainer.AppendTags(OwnedTags);
-}
-
-void AFVCharacter::AddGameplayTag(FGameplayTag Tag)
-{
-	OwnedTags.AddTag(Tag);
-}
-
-void AFVCharacter::RemoveGameplayTag(FGameplayTag Tag)
-{
-	OwnedTags.RemoveTag(Tag);
 }
 
 EFVGait AFVCharacter::GetGait() const

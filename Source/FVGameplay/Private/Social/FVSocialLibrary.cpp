@@ -1,28 +1,17 @@
 #include "Social/FVSocialLibrary.h"
 
-#include "AbilitySystemComponent.h"
-#include "AbilitySystemGlobals.h"
 #include "Facts/FVFactDatabase.h"
 #include "Identity/FVIdentityComponent.h"
 #include "Scales/FVScaleDefinition.h"
 #include "Scales/FVScaleLibrary.h"
 #include "Social/FVFactionDefinition.h"
 #include "Social/FVTitleDefinition.h"
+#include "Tags/FVTagLibrary.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FVSocialLibrary)
 
 namespace FVSocial
 {
-	bool HasTag(const AActor* Actor, const FGameplayTag Tag)
-	{
-		if (!Actor || !Tag.IsValid())
-		{
-			return false;
-		}
-		const UAbilitySystemComponent* AbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Actor);
-		return AbilitySystem && AbilitySystem->HasMatchingGameplayTag(Tag);
-	}
-
 	int32 Recognize(const AActor* Actor, const int32 Value)
 	{
 		if (!UFVSocialLibrary::IsDisguised(Actor))
@@ -71,12 +60,12 @@ UFVFactionDefinition* UFVSocialLibrary::GetActorFaction(const AActor* Actor)
 
 bool UFVSocialLibrary::IsDisguised(const AActor* Actor)
 {
-	return FVSocial::HasTag(Actor, UFVSocialSettings::Get().DisguiseRoot);
+	return UFVTagLibrary::ActorHasTag(Actor, UFVSocialSettings::Get().DisguiseRoot);
 }
 
 bool UFVSocialLibrary::IsDisguisedAs(const AActor* Actor, const UFVFactionDefinition* Faction)
 {
-	if (!Faction || !FVSocial::HasTag(Actor, Faction->DisguiseTag))
+	if (!Faction || !UFVTagLibrary::ActorHasTag(Actor, Faction->DisguiseTag))
 	{
 		return false;
 	}

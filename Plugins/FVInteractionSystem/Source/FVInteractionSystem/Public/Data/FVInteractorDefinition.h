@@ -18,9 +18,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity", meta = (Categories = "Interactor.Tag"))
 	FGameplayTag InteractorTag;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity", meta = (Tooltip = "Tags this interactor initially presents to offer conditions."))
-	FGameplayTagContainer GrantedTags;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity", meta = (Tooltip = "Any offer whose ActionTag matches these is gated off entirely."))
 	FGameplayTagContainer BlockedActionTags;
 

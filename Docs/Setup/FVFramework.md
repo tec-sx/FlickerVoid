@@ -82,13 +82,19 @@ The plugin ships one in `FVFramework/Content/WBP_FVUILayout`; make your own to c
 - Add an **FV Identity Component** to every character Blueprint (player and NPCs) and set its **Definition**. Systems find actors by definition through `UFVIdentitySubsystem` (`Find Actor`, `Find Actors`).
 - Dialogue speakers, faction membership and relationships all resolve through this component.
 
+### Gameplay tags on actors
+
+An actor's gameplay tags (disguises, states, identity) live in its components: the ability system component on the player (loose tags, tags granted by equipment, abilities and Gameplay Effects), and an **FV Tag Component** on actors without one, such as NPCs and world objects (set its **Tags**, or call `Add Tag` / `Remove Tag`). Give an actor one of the two, not both.
+
+Every system reads them through `UFVTagLibrary` (`Get Actor Tags`, `Actor Has Tag`, `Actor Matches Tags`), which merges every tag owning component, so it doesn't matter where a tag was granted. In rules, use the **Actor Tags** condition.
+
 ## 5. Conditions and effects
 
 Built-in types you can pick anywhere a rule appears:
 
 | Conditions | Effects |
 |---|---|
-| Fact, Time of Day, Group (nested set), Object (Scale, or a C++ or AngelScript condition class) | Fact (set, add or remove), Advance Time, Play Cinematic, Object (Modify Scale, or a C++ or AngelScript effect class) |
+| Fact, Time of Day, Actor Tags (the instigator or target has, or lacks, tags), Group (nested set), Object (Scale, or a C++ or AngelScript condition class) | Fact (set, add or remove), Advance Time, Play Cinematic, Object (Modify Scale, or a C++ or AngelScript effect class) |
 
 - A condition set has **Mode** (All or Any) and **Failure Presentation** (Hidden, Show Locked, Show Locked With Reason), which UIs use for offers and dialogue choices.
 - **Rule classes**: new conditions and effects are instanced objects, `UFVCondition` and `UFVEffect`, subclassed the same way from C++ and AngelScript. Override `Evaluate` (and `Score` for at-least conditions, see below) and `GetDescription`, or `Apply` and `GetDescription`. Every condition object has **Invert**. Pick them in data through the **Object** condition or effect, then choose the class; once condition sets hold objects directly, the Object step goes away.
